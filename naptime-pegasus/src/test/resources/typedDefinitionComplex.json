@@ -1,0 +1,99 @@
+{
+  "int": 1,
+  "long": 100,
+  "float": 3.14,
+  "double": 2.71,
+  "boolean": true,
+  "string": "hello",
+  "record": { "int": 1 },
+  "union": {
+    "org.example.Complex": {
+      "union": {
+        "org.example.Complex": {
+        }
+      },
+      "typedDefinition": {
+        "typeName": "record",
+        "definition": {
+          "int": 1
+        }
+      },
+      "flatTypedDefinition": {
+        "typeName": "record",
+        "int": 1
+      }
+    }
+  },
+  "map": {
+    "key1": {
+      "union": {
+        "org.example.Complex": {
+        }
+      },
+      "typedDefinition": {
+        "typeName": "record",
+        "definition": {
+          "int": 1
+        }
+      },
+      "flatTypedDefinition": {
+        "typeName": "record",
+        "int": 1
+      }
+    }
+  },
+  "array": [
+    {
+      "union": {
+        "org.example.Complex": {
+        }
+      },
+      "typedDefinition": {
+        "typeName": "record",
+        "definition": {
+          "int": 1
+        }
+      },
+      "flatTypedDefinition": {
+        "typeName": "record",
+        "int": 1
+      }
+    }
+  ],
+  "typedDefinition": {
+    "typeName": "complex",
+    "definition": {
+      "union": {
+        "org.example.Complex": {
+        }
+      },
+      "typedDefinition": {
+        "typeName": "record",
+        "definition": {
+          "int": 1
+        }
+      },
+      "flatTypedDefinition": {
+        "typeName": "record",
+        "int": 1
+      }
+    }
+  },
+  "flatTypedDefinition": {
+    "typeName": "complex",
+    "union": {
+      "org.example.Complex": {
+      }
+    },
+    "typedDefinition": {
+      "typeName": "record",
+      "definition": {
+        "int": 1
+      }
+    },
+    "flatTypedDefinition": {
+      "typeName": "record",
+      "int": 1
+    }
+  }
+}

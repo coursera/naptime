@@ -1,0 +1,27 @@
+{
+  "name": "TypedDefinitionWithPrimitive",
+  "type": "record",
+  "fields": [
+    {
+      "name": "typedDefinition",
+      "type": {
+        "name": "typedDefinitionUnionWithPrimitiveTyperef",
+        "type": "typeref",
+        "ref": [
+          {
+            "name": "UnionMember1",
+            "type": "record",
+            "fields": [
+              { "name": "x", "type": "int" }
+            ]
+          },
+          "string"
+        ],
+        "typedDefinition": {
+          "UnionMember1": "memberOne",
+          "string": "str"
+        }
+      }
+    }
+  ]
+}

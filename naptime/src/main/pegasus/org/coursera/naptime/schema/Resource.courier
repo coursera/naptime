@@ -1,0 +1,47 @@
+namespace org.coursera.naptime.schema
+
+/**
+ * The schema for representing a Naptime resource.
+ */
+record Resource {
+
+  /**
+   * The kind of the resource.
+   */
+  kind: ResourceKind
+
+  /**
+   * The name of the resource.
+   */
+  name: string
+
+  /**
+   * The version of the resource.
+   */
+  version: long?
+
+  /**
+   * The className of the parent class resource.
+   */
+  parentClass: string?
+
+  /**
+   * The fully qualified name of the type corresponding to the keys for this resource.
+   */
+  keyType: TypeName
+
+  /**
+   * The fully qualified name of the type corresponding to response elements for this resource.
+   */
+  bodyType: TypeName
+
+  /**
+   * The supported operations.
+   */
+  handlers: array[Handler]
+
+  /**
+   * The fully qualified name of the class that implements this resource.
+   */
+  className: string
+}

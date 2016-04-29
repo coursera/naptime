@@ -1,0 +1,23 @@
+namespace org.coursera.naptime.schema
+
+/**
+ * Information regarding a [query] parameter to a Naptime Handler.
+ */
+record Parameter {
+  /**
+   * The name of the parameter (usually used to form the HTTP query parameter).
+   */
+  name: string
+
+  type: TypeName
+
+  attributes: array[Attribute]
+
+  /**
+   * The default value used if no parameter is passed upon invoking the enclosing Handler.
+   *
+   * Note: this is computed on a best-effort basis and should be used only for documentation
+   * purposes.
+   */
+  default: JsValue?
+}

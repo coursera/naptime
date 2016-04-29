@@ -1,0 +1,6 @@
+namespace org.coursera.naptime.actions
+
+record SessionId {
+  courseId: string
+  iterationId: int
+}

@@ -1,0 +1,54 @@
+{
+  "name": "Complex",
+  "namespace": "org.example",
+  "type": "record",
+  "fields": [
+    { "name": "int", "type": "int", "optional": true },
+    { "name": "long", "type": "long", "optional": true },
+    { "name": "float", "type": "float", "optional": true },
+    { "name": "double", "type": "double", "optional": true },
+    { "name": "boolean", "type": "boolean", "optional": true },
+    { "name": "string", "type": "string", "optional": true },
+    {
+      "name": "record",
+      "type": {
+        "name": "Record",
+        "namespace": "org.example",
+        "type": "record",
+        "fields": [
+          { "name": "int", "type": "int", "optional": true }
+        ]
+      },
+      "optional": true
+    },
+    { "name": "union", "type": [ "string", "Complex" ], "optional": true },
+    { "name": "map", "type": { "type": "map", "values": "Complex" }, "optional": true },
+    { "name": "array", "type": { "type": "array", "items": "Complex" }, "optional": true },
+    {
+      "name": "typedDefinition", "type": {
+      "name": "TypedDefinition",
+      "namespace": "org.example",
+      "type": "typeref",
+      "ref": [ "org.example.Complex", "Record" ],
+      "typedDefinition": {
+        "org.example.Complex": "complex",
+        "Record": "record"
+      }
+    },
+      "optional": true
+    },
+    {
+      "name": "flatTypedDefinition", "type": {
+      "name": "FlatTypedDefinition",
+      "namespace": "org.example",
+      "type": "typeref",
+      "ref": [ "Complex", "org.example.Record" ],
+      "flatTypedDefinition": {
+        "Complex": "complex",
+        "org.example.Record": "record"
+      }
+    },
+      "optional": true
+    }
+  ]
+}

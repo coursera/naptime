@@ -1,0 +1,10 @@
+namespace org.coursera.naptime.schema
+
+/**
+ * The schema of a naptime resource plus the data schemas used in that resourceSchema.
+ */
+record ResourceSchemas {
+  resourceSchema: Resource
+
+  dataSchemas: map[string, ResourceDataSchema]
+}

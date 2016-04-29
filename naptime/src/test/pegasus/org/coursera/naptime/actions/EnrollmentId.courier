@@ -1,0 +1,6 @@
+namespace org.coursera.naptime.actions
+
+record EnrollmentId {
+  userId: int
+  courseId: SessionId
+}

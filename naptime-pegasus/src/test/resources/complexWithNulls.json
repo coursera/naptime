@@ -1,0 +1,25 @@
+{
+  "int": 1,
+  "long": null,
+  "string": null,
+  "record": { "int": 1 },
+  "union": {
+    "org.example.Complex": {
+      "union": {
+        "org.example.Complex": {
+          "int": null
+        }
+      }
+    }
+  },
+  "map": null,
+  "array": [
+    {
+      "union": {
+        "org.example.Complex": {
+          "int": null
+        }
+      }
+    }
+  ]
+}

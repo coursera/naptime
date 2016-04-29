@@ -1,0 +1,8 @@
+{
+  "typedDefinition": {
+    "UnionMember1": {
+      "x": 1
+    }
+  },
+  "unrecognizedField": 2
+}

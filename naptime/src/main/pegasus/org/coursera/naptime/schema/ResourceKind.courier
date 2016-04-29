@@ -1,0 +1,9 @@
+namespace org.coursera.naptime.schema
+
+/**
+ * An enumeration of the main types of resources.
+ */
+enum ResourceKind {
+  COLLECTION
+  SINGLETON
+}

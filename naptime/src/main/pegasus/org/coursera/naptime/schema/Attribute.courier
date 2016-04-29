@@ -1,0 +1,21 @@
+namespace org.coursera.naptime.schema
+
+/**
+ * Extra data related to an entity including deprecation information or documentation.
+ *
+ * Other uses of attributes include annotations to override defaults for code-generated clients.
+ *
+ * TODO(saeta): Move this to a proper scala type with a coercer and extra information.
+ * 
+ */
+record Attribute {
+  /**
+   * The name of the attribute.
+   */
+  name: string
+
+  /**
+   * Arbitrary structured data to go along with the annotation.
+   */
+  value: JsValue?
+}

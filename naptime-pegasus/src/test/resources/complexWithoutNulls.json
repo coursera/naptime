@@ -1,0 +1,20 @@
+{
+  "int": 1,
+  "record": { "int": 1 },
+  "union": {
+    "org.example.Complex": {
+      "union": {
+        "org.example.Complex": {
+        }
+      }
+    }
+  },
+  "array": [
+    {
+      "union": {
+        "org.example.Complex": {
+        }
+      }
+    }
+  ]
+}

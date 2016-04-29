@@ -1,0 +1,12 @@
+namespace org.coursera.naptime.schema
+
+/**
+ * If a resource would like to return arbitrary bodies, it should have this as its schema.
+ * (e.g. if a resource would like to return an image as part of an operation.
+ *
+ * TODO(saeta): Determine if we want to even include this in Naptime, or if we want to support this
+ * in some other manner.
+ */
+record ArbitraryBytesBody {
+  mimeType: string?
+}

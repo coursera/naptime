@@ -1,0 +1,9 @@
+namespace org.coursera.naptime
+
+/**
+ * A resource model.
+ */
+record Person {
+  name: string
+  email: string = "a@b.c"
+}

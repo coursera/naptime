@@ -1,0 +1,6 @@
+namespace org.coursera.naptime.actions
+
+record Course {
+  name: string
+  description: string
+}

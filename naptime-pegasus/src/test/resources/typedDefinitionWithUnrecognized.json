@@ -1,0 +1,9 @@
+{
+  "typedDefinition": {
+    "typeName": "memberOne",
+    "definition": {
+      "x": 1
+    }
+  },
+  "unrecognizedField": 2
+}

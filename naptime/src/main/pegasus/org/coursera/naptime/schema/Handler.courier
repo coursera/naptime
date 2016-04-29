@@ -1,0 +1,38 @@
+namespace org.coursera.naptime.schema
+
+/**
+ * The schema for a particular resource's Naptime handler.
+ */
+record Handler {
+  /**
+   * The type of operation for this handler.
+   */
+  kind: HandlerKind
+
+  /**
+   * The name of the function that implements this handler. For FINDER and ACTION kinds, this is
+   * also the name used to invoke the handler.
+   */
+  name: string
+
+  /**
+   * The query parameters for the handler.
+   */
+  parameters: array[Parameter]
+
+  /**
+   * If the handler consumes a request body, the type is specified here.
+   */
+  inputBody: CustomBodyType?
+
+  /**
+   * If the handler produces a custom response body that is not the expected based on the Resource,
+   * the type is specified here.
+   */
+  customOutputBody: CustomBodyType?
+
+  /**
+   * A list of attributes related to this handler.
+   */
+  attributes: array[Attribute]
+}

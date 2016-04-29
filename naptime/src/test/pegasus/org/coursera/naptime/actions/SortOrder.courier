@@ -1,0 +1,9 @@
+namespace org.coursera.naptime.actions
+
+/**
+ * A horribly simple sort order query parameter field used for testing.
+ */
+record SortOrder {
+  field: string
+  descending: boolean = true
+}

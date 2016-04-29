@@ -1,0 +1,7 @@
+namespace org.coursera.naptime.schema
+
+/**
+ * Some endpoints consume or produce custom body types. These could be either other Courier-schema'd
+ * JSON (or other codec) bodies. Or they could be arbitrary bytes (e.g. an image).
+ */
+typeref CustomBodyType = union[TypeName, ArbitraryBytesBody]

@@ -1,0 +1,13 @@
+namespace org.coursera.naptime.schema
+
+enum HandlerKind {
+  GET
+  MULTI_GET
+  GET_ALL
+  CREATE
+  UPSERT
+  DELETE
+  PATCH
+  FINDER
+  ACTION
+}

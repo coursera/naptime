@@ -1,0 +1,6 @@
+namespace org.coursera.naptime.schema
+
+/**
+ * The fully qualified name to a Courier type.
+ */
+typeref TypeName = string
