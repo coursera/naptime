@@ -1,0 +1,84 @@
+---
+layout: default
+---
+
+<!DOCTYPE html>
+<html lang="en-us">
+  <head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Naptime</title>
+    <link rel="icon" type="image/png" href="{{ site.github.url }}/images/courier3.png">
+    <link rel="stylesheet" type="text/css" href="{{ site.github.url }}/css/bootstrap.min.css">
+    <link rel="stylesheet" type="text/css" href="{{ site.github.url }}/css/jekyll-bw.css" media="screen"> <!-- For markdown -->
+    <link rel="stylesheet" type="text/css" href="{{ site.github.url }}/css/stylesheet.css" media="screen">
+  </head>
+  <body>
+     <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.3/jquery.min.js"></script>
+     <script src="{{ site.github.url }}/js/bootstrap.min.js"></script>
+
+    <div class="page-header">
+      <div class="project-name"><a href="{{ site.github.url }}/" style="color: white; text-decoration: none;">Naptime</a></div>
+      <div class="project-tagline">Making REST APIs so easy, you can build them in your sleep!</div>
+      <a href="{{ site.github.url }}/gettingstarted" class="topbtn">Getting Started</a>
+      <a href="https://github.com/coursera/naptime" class="topbtn">GitHub Page</a>
+    </div>
+
+    <div class="container">
+      <div class="col-md-9" role="main">
+        {{content}}
+      </div>
+      <div class="col-md-3" role="complementary">
+        <div class="hidden-xs hidden-print hidden-sm sidebar">
+          <ul id="right-nav" class="list-unstyled sidenav" data-spy="affix">
+            <li>
+              <a href="{{ site.github.url }}/#overview"><h4>Overview</h4></a>
+              <ul>
+                <li>
+                  <a href="{{ site.github.url }}/#why-naptime">
+                    Why Naptime?
+                  </a>
+                </li>
+                <li>
+                  <a href="{{ site.github.url }}/#features">
+                    Features
+                  </a>
+                </li>
+                <li>
+                  <a href="{{ site.github.url }}/#how-development-with-naptime-works">
+                    How Naptime works
+                  </a>
+                </li>
+              </ul>
+            </li>
+            <li>
+              <a href="{{ site.github.url }}/gettingstarted"><h4>Getting Started</h4></a>
+              <ul>
+                <li>
+                  <a href="{{ site.github.url }}/gettingstarted#scala-sbt">
+                    Scala (SBT)
+                  </a>
+                </li>
+              </ul>
+            </li>
+
+            <li>
+              <a href="{{ site.github.url }}/#community"><h4>Community</h4></a>
+            </li>
+            <li>
+              <a href="{{ site.github.url }}/#license"><h4>License</h4></a>
+            </li>
+          </ul>
+        </div>
+      </div>
+    </div>
+    <div class="container">
+      <hr>
+      <div class="col-md-9">
+      </div>
+    </div>
+    <script src="{{ site.github.url }}/js/anchor.min.js"></script>
+    <script src="{{ site.github.url }}/js/courier.js"></script>
+  </body>
+</html>
