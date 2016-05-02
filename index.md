@@ -16,8 +16,34 @@ layout: page
     <a id="why-naptime"></a>
     <h2>Why Naptime?</h2>
     <p class="lead">
-      The Naptime REST framework pushes type safety further...
+      The Naptime REST API system pushes type safety further...
     </p>
+  </div>
+</div>
+
+<div class="row">
+
+  <div class="col-md-12">
+    <a id="components"></a>
+    <h2>Components</h2>
+    <p>
+      The Naptime API system has a number of components:
+    </p>
+    <ul>
+      <li>
+        <strong>Scala server library</strong>: The advanced Scala library helps developers quickly
+        author canonical APIs.
+      </li>
+      <li>
+        <strong>Test Kit</strong>: This library (included on the test classpath) adds additional
+        test helpers to make it easier to test business logic within Naptime APIs.
+      </li>
+      <li>
+        <strong>API Explorer</strong>: This is a library and optionally standalone server that
+        aggregates schemas of Naptime resources, and exposes an interactive UI to allow developers
+        to explore the available APIs. <em>(Coming soon...)</em>
+      </li>
+    </ul>
   </div>
 </div>
 
