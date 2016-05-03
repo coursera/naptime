@@ -7,3 +7,7 @@ resolvers += Resolver.bintrayRepo("coursera", "sbt-plugins")
 
 // Courier binding generator plugin
 addSbtPlugin("org.coursera.courier" % "courier-sbt-plugin" % "2.0.2")
+
+addSbtPlugin("org.xerial.sbt" % "sbt-sonatype" % "1.1")
+
+addSbtPlugin("com.jsuereth" % "sbt-pgp" % "1.0.0")

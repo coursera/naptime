@@ -33,21 +33,20 @@ import java.io.Writer;
  * serializations originally used in our Play! JSON classes. (See
  * JsonFormats.typedDefinitionFormat() and JsonFormats.flatTypedDefinitionFormat() in infra-services
  * for the Play! JSON implementation).
- * <p/>
+ * <br>
  * WARNING: This codec filters out unrecognized fields (any fields in the data that are not defined
  * in the schema) when reading and writing data by default.
  * It is only when this codec is used exclusively for reading and writing of data that passthrough
  * is guaranteed to propagate data in unrecognized fields correctly, in which case the
  * 'passthroughEnabled' may be safely set to true.
- * <p/>
+ * <br>
  * Usage:
  * In order to indicate a Pegasus union should be serialized using "typedDefinition" or
  * "flatTypedDefinition", a typeref must be defined for the union and annotated with a property
  * defining the mapping between the "memberKeys" of the Pegasus union and the "typeNames" of the
  * typed definition format.
- * <p/>
+ * <br>
  * For example, the Peagsus schema:
- * <p/>
  * <pre>
  * {@code
  * {
@@ -61,12 +60,11 @@ import java.io.Writer;
  * }
  * }
  * </pre>
- * <p/>
  * defines a "typedDefinition" union where the "memberKeys" of "org.example.TextEntry" and
  * "org.example.MultipleChoice" map to the "typeNames" of "textEntry" and "multipleChoice".
- * <p/>
+ * <br>
  * For a "flatTypedDefinition", instead do:
- * <p/>
+ * <br>
  * <pre>
  * {@code
  * {
@@ -80,7 +78,7 @@ import java.io.Writer;
  * }
  * }
  * </pre>
- * <p/>
+ * <br>
  * "memberKeys" referencing types in the same namespace as the typeref may use simple names.
  * Fully qualified names are only required when referencing types in other namespaces.
  */

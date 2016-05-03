@@ -34,7 +34,7 @@ import java.util.Set;
  * WARNING: This coercer mutates data in-place! Please do not use directly unless you are
  * sure you know what you are doing.  For most applications [[TypedDefinitionCodec]] should
  * be used.
- * <p/>
+ * <br>
  * See [[TypedDefinitionCodec]] for additional documentation.
  */
 public class TypedDefinitionDataCoercer {
