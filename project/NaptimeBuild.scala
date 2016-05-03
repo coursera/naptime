@@ -52,6 +52,7 @@ object NaptimeBuild extends Build with NamedDependencies with PluginVersionProvi
       .enablePlugins(play.sbt.PlayScala)
       .disablePlugins(play.sbt.PlayLayoutPlugin)
       .settings(testSettings)
+      .settings(org.coursera.naptime.sbt.Sonatype.Settings)
   }
 
 }
