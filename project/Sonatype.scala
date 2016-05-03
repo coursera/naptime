@@ -1,6 +1,5 @@
-
 /*
- Copyright 2015 Coursera Inc.
+ Copyright 2016 Coursera Inc.
 
  Licensed under the Apache License, Version 2.0 (the "License");
  you may not use this file except in compliance with the License.
@@ -14,14 +13,13 @@
  See the License for the specific language governing permissions and
  limitations under the License.
  */
-package org.coursera.naptime.sbt
 
 import sbt._
 import Keys._
 
 object Sonatype {
 
-  val Settings: Seq[Def.Setting[_]] = Seq(
+  val settings: Seq[Def.Setting[_]] = Seq(
     publishMavenStyle := true,
     publishTo := {
       val nexus = "https://oss.sonatype.org"
@@ -58,11 +56,11 @@ object Sonatype {
           </developer>
           <developer>
             <id>Nick Dellamaggiore</id>
-            <name>nick</name>
+            <name>nickdella</name>
           </developer>
           <developer>
             <id>Josh Newman</id>
-            <name>josh</name>
+            <name>josh-newman</name>
           </developer>
         </developers>
     }
