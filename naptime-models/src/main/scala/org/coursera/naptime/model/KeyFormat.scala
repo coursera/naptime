@@ -16,6 +16,8 @@
 
 package org.coursera.naptime.model
 
+import java.util.UUID
+
 import org.coursera.common.jsonformat.JsonFormats
 import org.coursera.common.stringkey.StringKey
 import org.coursera.common.stringkey.StringKeyFormat
@@ -157,6 +159,8 @@ private object DefaultPrimitiveFormats {
 
   val defaultStringFormat: Format[String] = implicitly
 
+  val defaultUuidFormat: Format[UUID] = JsonFormats.stringKeyFormat
+
 }
 
 sealed trait PrimitiveFormats {
@@ -168,6 +172,8 @@ sealed trait PrimitiveFormats {
   implicit val longKeyFormat: KeyFormat[Long] = new PrimitiveKeyFormat(defaultLongFormat)
 
   implicit val stringKeyFormat: KeyFormat[String] = new PrimitiveKeyFormat(defaultStringFormat)
+
+  implicit val uuidKeyFormat: KeyFormat[UUID] = new PrimitiveKeyFormat(defaultUuidFormat)
 
   /**
    * Format for primitive key types that serializes the primitives to native JSON types
