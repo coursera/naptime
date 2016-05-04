@@ -28,6 +28,9 @@ libraryDependencies += "org.coursera.naptime" %% "naptime" % "0.0.1"
 
 to your `build.sbt` file.
 
+If you would like to use Courier models (recommended), please also follow the
+[Courier setup instructions for sbt](http://coursera.github.io/courier/gettingstarted/#scala-sbt).
+
 #### Defining the model
 
 Models for Naptime are declared in Courier.  See the
@@ -69,7 +72,7 @@ object User {
 ```
 
 > <small>Note: IntelliJ will flag the type annotation `OFormat[User]` as unable to compile.
-> This is normal, and `sbt` should be able to compile correctly.[^1]</small>
+> This is (unfortunately) normal, and `sbt` should be able to compile correctly.[^1]</small>
 
 #### Resource Collection Class
 
@@ -78,18 +81,20 @@ a collection of resources each identified by a key (`Int` in our case) and of a
 particular type (the case class `User`).
 
 Naptime supports all kinds of key types natively, including `UUID`, `Int`, `Long`, `String` and
-arbitrary user-defined types. (Note: must use the macro router.)
+arbitrary user-defined types.
 
 Note that resource names for collections (like users) should be plural.
 
 ```scala
 import javax.inject.Inject
+import javax.inject.Singleton
 import org.coursera.model.Keyed
 import org.coursera.playcour.naptime.router2.Router
 import org.coursera.playcour.naptime.resources.ResourceCaches
 import org.coursera.playcour.naptime.resources.DefaultCollectionResource
 
-class UserCollectionResource @Inject() (
+@Singleton
+class UsersResource @Inject() (
     userStore: UserStore,
     banManager: UserBanManager)
   extends TopLevelCollectionResource[Int, User] {
@@ -194,7 +199,7 @@ Let's take a look a how we would enable creation of a user.
 
 ```scala
 def create() = Rest
-  .jsonBody[User]()  // parse request body as User
+  .jsonBody[User]  // parse request body as User
   .create { context =>
 
     val user = context.body

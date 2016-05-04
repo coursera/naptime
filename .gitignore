@@ -5,4 +5,4 @@ _site
 # Ignore generated output on the gh-pages branch to make branch-switching less
 # likely to accidentally include inappropriate files.
 target
-.idea
+/.idea
