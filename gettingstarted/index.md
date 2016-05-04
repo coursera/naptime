@@ -233,7 +233,7 @@ import org.coursera.playcour.naptime.Errors
 /*             SNIP                 */
 
 def update(id: Int) = Rest
-  .jsonBody[User]()  // parse request body as User
+  .jsonBody[User]  // parse request body as User
   .update { context =>
 
     val user = context.body
