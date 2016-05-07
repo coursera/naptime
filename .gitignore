@@ -1,3 +1,7 @@
 /.idea
 target
 logs
+
+# Ignore build targets from gh-pages branch
+Gemfile.lock
+_site
