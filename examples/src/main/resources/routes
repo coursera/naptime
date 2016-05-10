@@ -1,0 +1,9 @@
+# Routes
+# This file defines all application routes (Higher priority routes first)
+# ~~~~
+
+# An example controller showing a sample home page
+GET     /                           @controllers.HomeController.index
+
+# Hook in Naptime to the URL space
+->      /api                        org.coursera.naptime.router2.NaptimePlayRouter
