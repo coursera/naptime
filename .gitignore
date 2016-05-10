@@ -1,7 +1,9 @@
 /.idea
+/.idea_modules
 target
 logs
+RUNNING_PID
 
-# Ignore build targets from gh-pages branch
-Gemfile.lock
+# .gitignore files from gh-pages branch
 _site
+Gemfile.lock

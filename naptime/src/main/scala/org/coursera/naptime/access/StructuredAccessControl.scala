@@ -48,5 +48,4 @@ case class StructuredAccessControl[A](
       }
     }
   }
-
 }

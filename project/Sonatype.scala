@@ -14,6 +14,8 @@
  limitations under the License.
  */
 
+package org.coursera.naptime.sbt
+
 import sbt._
 import Keys._
 

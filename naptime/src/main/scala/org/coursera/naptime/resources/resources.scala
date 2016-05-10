@@ -17,7 +17,10 @@
 package org.coursera.naptime.resources
 
 import org.coursera.naptime.model.KeyFormat
-import org.coursera.naptime.PaginationConfiguration
+import org.coursera.naptime.model.Keyed
+import org.coursera.naptime._
+import org.coursera.naptime.access.HeaderAccessControl
+import org.coursera.naptime.actions.RestActionBuilder
 import org.coursera.naptime.path.CollectionResourcePathParser
 import org.coursera.naptime.path.NestedPathKeyParser
 import org.coursera.naptime.path.ParsedPathKey
@@ -27,6 +30,8 @@ import org.coursera.naptime.path.RootPathParser
 import org.coursera.naptime.path.:::
 import org.coursera.naptime.path.UrlParseResult
 import play.api.libs.json.OFormat
+import play.api.mvc.AnyContent
+import play.api.mvc.BodyParsers
 
 /**
  * Base Resource trait: mostly a marker trait wrapper methods for model serialization
@@ -122,4 +127,41 @@ trait CollectionResource[ParentResource <: Resource[_], K, M] extends Resource[M
  */
 trait TopLevelCollectionResource[K, M] extends CollectionResource[RootResource, K, M] {
   override val parentResource: RootResource = RootResource
+}
+
+trait RestActionHelpers[K, M] extends FieldsBuilder[M] {
+
+  def OkIfPresent[T](a: Option[T]): RestResponse[T] = {
+    a.map(Ok(_)).getOrElse(RestError(NaptimeActionException(404, Some("notFound"), Some("not found"), None)))
+  }
+
+  def OkIfPresent(key: K, maybeElement: Option[M]): RestResponse[Keyed[K, M]] = {
+    maybeElement.map {
+      element =>
+        Ok(Keyed(key, element))
+    }.getOrElse(RestError(NaptimeActionException(404, Some("notFound"), Some("not found"), None)))
+  }
+
+  /**
+    * Helper to easily construct Rest actions.
+    *
+    * Typically, all actions in a naptime resource will all use the same auth parser and policy, or
+    * will want to use the same error handling function for all requests. These resources should do
+    * something similar to the following:
+    *
+    * {{{
+    *   class MyResource extends RestActionHelpers[Foo, Bar] {
+    *     def RRest[RACType, ResponseType] =
+    *       Rest[RACType, ResponseType].auth(myAuthPolicy).catching(errorFn)
+    *
+    *   ...
+    *   }
+    *
+    * }}}
+    */
+  def Rest[RACType, ResponseType]()
+      (implicit keyFormat: KeyFormat[K],
+      resourceFormat: OFormat[M]) =
+    new RestActionBuilder[RACType, Unit, AnyContent, K, M, ResponseType](
+      HeaderAccessControl.allowAll, BodyParsers.parse.anyContent, PartialFunction.empty)
 }

@@ -41,7 +41,10 @@ object NaptimeBuild extends Build with NamedDependencies with PluginVersionProvi
 
   lazy val pegasus = configure(project)
     .in(file("naptime-pegasus"))
-    .settings(testSettings)
+
+  lazy val examples = configure(project)
+    .in(file("examples"))
+    .dependsOn(naptime, testing)
 
   lazy val testSettings = Seq(
     Keys.testFrameworks := Seq(sbt.TestFrameworks.JUnit),
@@ -52,7 +55,7 @@ object NaptimeBuild extends Build with NamedDependencies with PluginVersionProvi
       .enablePlugins(play.sbt.PlayScala)
       .disablePlugins(play.sbt.PlayLayoutPlugin)
       .settings(testSettings)
-      .settings(Sonatype.settings)
+      .settings(org.coursera.naptime.sbt.Sonatype.settings)
   }
 
 }

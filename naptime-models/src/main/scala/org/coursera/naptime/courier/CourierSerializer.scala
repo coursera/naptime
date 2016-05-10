@@ -166,7 +166,7 @@ object CourierSerializer {
   private[this] def companion(clazz: Class[_]): AnyRef = {
     import scala.reflect.runtime.universe
 
-    val mirror = universe.runtimeMirror(getClass.getClassLoader)
+    val mirror = universe.runtimeMirror(clazz.getClassLoader)
     val classSymbol = mirror.classSymbol(clazz)
     val companionMirror = mirror.reflectModule(classSymbol.companion.asModule)
     companionMirror.instance.asInstanceOf[AnyRef]
