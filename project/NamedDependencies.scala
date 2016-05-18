@@ -26,7 +26,7 @@ trait PluginVersionProvider {
 trait NamedDependencies { this: PluginVersionProvider =>
 
   val courierRuntime = "org.coursera.courier" %% "courier-runtime" % courierVersion
-  val courscala = "org.coursera" %% "courscala" % "0.0.6"
+  val courscala = "org.coursera" %% "courscala" % "0.0.12"
   val governator = "com.netflix.governator" % "governator" % "1.10.5"
   val guice = "com.google.inject" % "guice" % "4.0"
   val guiceMultibindings = "com.google.inject.extensions" % "guice-multibindings" % "4.0"
