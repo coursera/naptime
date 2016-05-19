@@ -5,6 +5,7 @@ namespace org.coursera.naptime.schema
  *
  * Note: this is entirely an escape hatch from the Schema type system. Use judiciously!
  */
+@passthroughExempt
 record JsValue {
   // Intentionally empty!
 }

@@ -187,7 +187,8 @@ class MacroImpls(val c: blackbox.Context) {
             bodyType = ${bodyType(resourceType)},
             parentClass = $parentResourceName,
             handlers = List(..${trees.flatMap(_._2)}),
-            className = ${resourceType.toString})
+            className = ${resourceType.toString},
+            attributes = List.empty)
         }
         override def types = ${computeTypes(resourceType)}
       }

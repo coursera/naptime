@@ -44,4 +44,9 @@ record Resource {
    * The fully qualified name of the class that implements this resource.
    */
   className: string
+
+  /**
+   * A list of attributes related to this resource.
+   */
+  attributes: array[Attribute]
 }
