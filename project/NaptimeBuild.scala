@@ -23,7 +23,7 @@ object NaptimeBuild extends Build with NamedDependencies with PluginVersionProvi
   def akkaVersion = "2.3.13" // Akka version must match the one Play is built with.
   def courierVersion = "2.0.2"
 
-  lazy val root = configure(project)
+  lazy val root = project
     .in(file("."))
     .aggregate(naptime, models, testing, pegasus)
 
