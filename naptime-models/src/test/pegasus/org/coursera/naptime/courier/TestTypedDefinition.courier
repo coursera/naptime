@@ -1,0 +1,10 @@
+namespace org.coursera.naptime.courier
+
+@typedDefinition = {
+  "org.coursera.naptime.courier.TestTypedDefinitionAlpha": "alpha",
+  "org.coursera.naptime.courier.TestTypedDefinitionBeta": "beta"
+}
+typeref TestTypedDefinition = union[
+  record TestTypedDefinitionAlpha {}
+  record TestTypedDefinitionBeta {}
+]

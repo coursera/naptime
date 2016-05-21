@@ -7,3 +7,5 @@ libraryDependencies ++= Seq(
   scalaLogging,
   junitInterface,
   scalatest)
+
+org.coursera.courier.sbt.CourierPlugin.courierSettings
