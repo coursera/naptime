@@ -1,0 +1,3 @@
+# check if the resource is created.
+> package
+$ exists target/scala-2.10/resource_managed/main/naptime.scaladoc.json

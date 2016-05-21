@@ -8,11 +8,9 @@ resolvers += Resolver.bintrayRepo("coursera", "sbt-plugins")
 // Courier binding generator plugin
 addSbtPlugin("org.coursera.courier" % "courier-sbt-plugin" % "2.0.2")
 
-addSbtPlugin("org.xerial.sbt" % "sbt-sonatype" % "1.1")
-
-addSbtPlugin("com.jsuereth" % "sbt-pgp" % "1.0.0")
-
-// Add build information for the Scaladoc plugin.
-addSbtPlugin("com.eed3si9n" % "sbt-buildinfo" % "0.3.1")
-
-libraryDependencies += { "org.scala-sbt" % "scripted-plugin" % sbtVersion.value }
+// From http://www.scala-sbt.org/0.13/docs/Testing-sbt-plugins.html#step+3%3A+src%2Fsbt-test
+sys.props.get("plugin.version") match {
+  case Some(x) => addSbtPlugin("org.coursera.naptime" % "sbt-naptime" % x)
+  case _ => sys.error("""|The system property 'plugin.version' is not defined.
+                         |Specify this property using the scriptedLaunchOpts -D.""".stripMargin)
+}
