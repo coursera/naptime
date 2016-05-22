@@ -16,6 +16,9 @@
 
 import sbt._
 import sbt.Keys
+import de.heikoseeberger.sbtheader.HeaderKey.headers
+import de.heikoseeberger.sbtheader.license.Apache2_0
+
 
 object NaptimeBuild extends Build with NamedDependencies with PluginVersionProvider {
 
@@ -54,11 +57,21 @@ object NaptimeBuild extends Build with NamedDependencies with PluginVersionProvi
     Keys.testFrameworks := Seq(sbt.TestFrameworks.JUnit),
     Keys.testOptions += Tests.Argument(TestFrameworks.JUnit, "-v", "-q", "-a"))
 
+  lazy val headerSettings = Seq(
+    headers := Map(
+      "scala" -> Apache2_0("2016", "Coursera Inc."),
+      "conf" -> Apache2_0("2016", "Coursera Inc.", "#"),
+      "courier" -> Apache2_0("2016", "Coursera Inc.")
+    )
+  )
+
+
   private[this] def configure(project: Project): Project = {
     project
       .enablePlugins(play.sbt.PlayScala)
       .disablePlugins(play.sbt.PlayLayoutPlugin)
       .settings(testSettings)
+      .settings(headerSettings)
       .settings(org.coursera.naptime.sbt.Sonatype.settings)
   }
 
