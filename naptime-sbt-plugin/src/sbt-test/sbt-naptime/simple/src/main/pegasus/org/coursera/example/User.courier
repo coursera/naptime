@@ -1,0 +1,7 @@
+namespace org.coursera.example
+
+record User {
+  name: string,
+  email: string,
+  selfDescription: string?
+}

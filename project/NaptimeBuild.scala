@@ -46,6 +46,10 @@ object NaptimeBuild extends Build with NamedDependencies with PluginVersionProvi
     .in(file("examples"))
     .dependsOn(naptime, testing)
 
+  lazy val plugin = project
+    .in(file("naptime-sbt-plugin"))
+    .settings(org.coursera.naptime.sbt.Sonatype.settings)
+
   lazy val testSettings = Seq(
     Keys.testFrameworks := Seq(sbt.TestFrameworks.JUnit),
     Keys.testOptions += Tests.Argument(TestFrameworks.JUnit, "-v", "-q", "-a"))
