@@ -21,3 +21,13 @@ buildInfoPackage := "sbtbuildinfo"
 
 // Use the Play sbt plugin for Play projects
 addSbtPlugin("com.typesafe.play" % "sbt-plugin" % "2.4.4")
+
+licenses += ("Apache-2", url("https://opensource.org/licenses/Apache-2.0"))
+
+description := "API Framework for developer productivity. http://coursera.github.io/naptime/"
+
+publishMavenStyle := false
+
+bintrayRepository := "sbt-plugins"
+
+bintrayOrganization := Some("coursera")

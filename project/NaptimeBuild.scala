@@ -25,7 +25,9 @@ object NaptimeBuild extends Build with NamedDependencies with PluginVersionProvi
 
   lazy val root = project
     .in(file("."))
+    .settings(org.coursera.naptime.sbt.Sonatype.settings)
     .aggregate(naptime, models, testing, pegasus)
+    .disablePlugins(bintray.BintrayPlugin)
 
   lazy val naptime = configure(project)
     .in(file("naptime"))
@@ -48,7 +50,7 @@ object NaptimeBuild extends Build with NamedDependencies with PluginVersionProvi
 
   lazy val plugin = project
     .in(file("naptime-sbt-plugin"))
-    .settings(org.coursera.naptime.sbt.Sonatype.settings)
+    .disablePlugins(xerial.sbt.Sonatype)
 
   lazy val testSettings = Seq(
     Keys.testFrameworks := Seq(sbt.TestFrameworks.JUnit),
@@ -60,6 +62,7 @@ object NaptimeBuild extends Build with NamedDependencies with PluginVersionProvi
       .disablePlugins(play.sbt.PlayLayoutPlugin)
       .settings(testSettings)
       .settings(org.coursera.naptime.sbt.Sonatype.settings)
+      .disablePlugins(bintray.BintrayPlugin)
   }
 
 }
