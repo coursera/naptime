@@ -22,6 +22,7 @@ import org.coursera.naptime.NaptimeActionException
 import org.coursera.naptime.access.authenticator.combiner.And
 import org.coursera.naptime.access.authenticator.combiner.AnyOf
 import org.coursera.naptime.access.authenticator.combiner.FirstOf
+import org.coursera.naptime.access.authenticator.combiner.NoRestrictions
 import play.api.http.Status.FORBIDDEN
 import play.api.http.Status.UNAUTHORIZED
 import play.api.mvc.RequestHeader
@@ -71,7 +72,7 @@ trait Authenticator[+A] {
 
 }
 
-object Authenticator extends StrictLogging with AnyOf with FirstOf with And {
+object Authenticator extends StrictLogging with AnyOf with FirstOf with And with NoRestrictions{
 
   def apply[P, A](
       parser: HeaderAuthenticationParser[P],
