@@ -45,6 +45,27 @@ trait Decorator[-I, +O] {
     }
   }
 
+  def map[O2](other: O => O2): Decorator[I, O2] = {
+    val self = this
+    new Decorator[I, O2] {
+      override def apply(input: I)(implicit ec: ExecutionContext): Future[Either[String, O2]] = {
+        self.apply(input).map { eitherO =>
+          eitherO.right.map(other.apply)
+        }
+      }
+    }
+  }
+
+  def flatMap[O2](other: O => Either[String, O2]): Decorator[I, O2] = {
+    val self = this
+    new Decorator[I, O2] {
+      override def apply(input: I)(implicit ec: ExecutionContext): Future[Either[String, O2]] = {
+        self.apply(input).map { eitherO =>
+          eitherO.right.flatMap(other.apply)
+        }
+      }
+    }
+  }
 }
 
 object Decorator {

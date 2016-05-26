@@ -80,8 +80,7 @@ object Authenticator extends StrictLogging with AnyOf with FirstOf with And {
     new Authenticator[A] {
       def maybeAuthenticate(
           requestHeader: RequestHeader)
-          (implicit ec: ExecutionContext):
-        Future[Option[Either[NaptimeActionException, A]]] = {
+          (implicit ec: ExecutionContext): Future[Option[Either[NaptimeActionException, A]]] = {
 
         parser.parseHeader(requestHeader) match {
           case ParseResult.Success(parsed) =>
