@@ -145,6 +145,28 @@ object KeyFormat extends PrimitiveFormats {
 
   }
 
+  /**
+   * Augment [[K]]'s format with an additional fallback JsReads implementation.
+   *
+   * @param altReads An alternate JsValue to [[K]] Reads implementation.
+   * @param keyFormat The standard KeyFormat to augment.
+   * @tparam K The key type.
+   * @return The augmented KeyFormat.
+   */
+  def withFallbackReads[K](altReads: Reads[K])(keyFormat: KeyFormat[K]): KeyFormat[K] = {
+    new KeyFormat[K] {
+
+      override implicit def stringKeyFormat: StringKeyFormat[K] = keyFormat.stringKeyFormat
+
+      override implicit def format: OFormat[K] = keyFormat.format
+
+      override def reads(json: JsValue): JsResult[K] = {
+        keyFormat.reads(json).orElse(altReads.reads(json))
+      }
+
+      override def writes(o: K): JsValue = keyFormat.writes(o)
+    }
+  }
 }
 
 /**
