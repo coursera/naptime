@@ -12,3 +12,6 @@ addSbtPlugin("com.jsuereth" % "sbt-pgp" % "1.0.0")
 addSbtPlugin("com.eed3si9n" % "sbt-buildinfo" % "0.3.1")
 
 libraryDependencies += { "org.scala-sbt" % "scripted-plugin" % sbtVersion.value }
+
+// addSbtPlugin("de.heikoseeberger" % "sbt-header" % "1.5.1")
+addSbtPlugin("de.heikoseeberger" % "sbt-header" % "1.5.1-2-g8b57b53")
