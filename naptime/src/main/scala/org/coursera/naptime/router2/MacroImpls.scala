@@ -188,7 +188,8 @@ class MacroImpls(val c: blackbox.Context) {
             parentClass = $parentResourceName,
             handlers = List(..${trees.flatMap(_._2)}),
             className = ${resourceType.toString},
-            attributes = List.empty)
+            attributes = org.coursera.naptime.router2.AttributesProvider
+                .getResourceAttributes(resourceClass.getName))
         }
         override def types = ${computeTypes(resourceType)}
       }
@@ -325,7 +326,8 @@ class MacroImpls(val c: blackbox.Context) {
         kind = ${handlerKind(category)},
         name = ${method.name.toString},
         parameters = List(..$parameterTrees),
-        attributes = List.empty)
+        attributes = org.coursera.naptime.router2.AttributesProvider
+            .getMethodAttributes(resourceClass.getName, ${method.name.toString}))
       """
     }
 
