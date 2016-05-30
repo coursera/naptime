@@ -18,7 +18,6 @@ package org.coursera.naptime.access
 
 import org.coursera.naptime.NaptimeActionException
 import org.coursera.naptime.access.authenticator.Authenticator
-import org.coursera.naptime.access.authenticator.HeaderAuthenticationParser
 import org.coursera.naptime.access.authorizer.AuthorizeResult
 import org.coursera.naptime.access.authorizer.Authorizer
 import play.api.http.Status
@@ -218,6 +217,54 @@ trait StructuredAccessControlCombinators {
               val l = lh.right.toOption
               val r = rh.right.toOption
               Some(Right(l, r))
+            }
+          }
+        }
+      }
+    }
+    StructuredAccessControl(authn, Authorizer(_ => AuthorizeResult.Authorized))
+  }
+
+  def anyOf[A, B, C](
+      first: StructuredAccessControl[A],
+      second: StructuredAccessControl[B],
+      third: StructuredAccessControl[C]): StructuredAccessControl[(Option[A], Option[B], Option[C])] = {
+    val authn = new Authenticator[(Option[A], Option[B], Option[C])] {
+      override def maybeAuthenticate(
+          requestHeader: RequestHeader)
+          (implicit ec: ExecutionContext):
+          Future[Option[Either[NaptimeActionException, (Option[A], Option[B], Option[C])]]] = {
+        val firstF = first.authenticator.maybeAuthenticate(requestHeader)
+        val secondF = second.authenticator.maybeAuthenticate(requestHeader)
+        val thirdF = third.authenticator.maybeAuthenticate(requestHeader)
+        for {
+          oneOptEither <- firstF
+          twoOptEither <- secondF
+          threeOptEither <- thirdF
+        } yield {
+          if (oneOptEither.isEmpty && twoOptEither.isEmpty && threeOptEither.isEmpty) {
+            None
+          } else {
+            def filterResponse[T](
+              authResult: Option[Either[NaptimeActionException, T]],
+              authorizer: Authorizer[T]): Either[NaptimeActionException, T] = {
+              authResult.map { authEither =>
+                authEither.right.flatMap { decorated =>
+                  Authorizer.toResponse(authorizer.authorize(decorated), decorated)
+                }
+              }.getOrElse(StructuredAccessControl.missingResponse)
+            }
+            val oneEither = filterResponse(oneOptEither, first.authorizer)
+            val twoEither = filterResponse(twoOptEither, second.authorizer)
+            val thirdEither = filterResponse(threeOptEither, third.authorizer)
+            if (oneEither.isLeft && twoEither.isLeft && thirdEither.isLeft) {
+              Some(oneEither.asInstanceOf[Left[NaptimeActionException, Nothing]])
+            } else {
+              // At least one is acceptable.
+              val one = oneEither.right.toOption
+              val two = twoEither.right.toOption
+              val three = thirdEither.right.toOption
+              Some(Right(one, two, three))
             }
           }
         }
