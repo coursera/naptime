@@ -5,6 +5,7 @@ libraryDependencies ++= Seq(
   junitCompile,
   junitInterface,
   scalatestCompile,
+  playTestCompile,
   mockitoCompile,
   "com.chuusai" %% "shapeless" % "2.2.5" % "test" // Added for illTyped macro.
 )

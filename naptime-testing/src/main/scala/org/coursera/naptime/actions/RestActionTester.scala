@@ -1,11 +1,16 @@
 package org.coursera.naptime.actions
 
 import org.coursera.naptime.NaptimeActionException
+import org.coursera.naptime.QueryFields
+import org.coursera.naptime.QueryIncludes
+import org.coursera.naptime.RequestEvidence
+import org.coursera.naptime.RequestPagination
 import org.coursera.naptime.RestContext
 import org.coursera.naptime.RestError
 import org.coursera.naptime.RestResponse
-import org.coursera.naptime.actions.RestAction
+import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.exceptions.TestFailedException
+import play.api.test.FakeRequest
 
 import scala.concurrent.Future
 import scala.util.Try
@@ -14,21 +19,25 @@ import scala.util.Try
  * Mix in to resource unit tests to invoke resource actions with `.testAction`.
  */
 trait RestActionTester { this: ScalaFutures =>
-
-
   /**
-   * Unfortunately, `.futureValue` wraps the resulting exception in a `TestFailedException`.
-   * Here, we unwrap it, in case tests care about the original exception's type.
+   * Allow access to the request to facilitate testing.
    */
-  implicit class UnwrappedFutureValue[T](future: Future[T]) {
-    def unwrappedFutureValue: T = {
-      Try(future.futureValue).recover {
-        case e: TestFailedException => e.cause.map(throw _).getOrElse(throw e)
-      }.get
-    }
+  protected[this] implicit def requestEvidence: RequestEvidence = RequestEvidence
+
+  protected[this] def buildRestContext[AuthType, BodyType](
+      auth: AuthType,
+      body: BodyType,
+      request: FakeRequest[BodyType],
+      paging: RequestPagination,
+      fields: String = "",
+      includes: String = ""): RestContext[AuthType, BodyType] = {
+    new RestContext(body, auth, request, paging, QueryIncludes(includes).get, QueryFields(fields).get)
   }
 
-  implicit class RestActionTestOps[AuthType, BodyType, ResponseType](
+  /**
+   * Add an extra `.testAction` method to [[RestAction]] to make testing easier.
+   */
+  protected[this] implicit class RestActionTestOps[AuthType, BodyType, ResponseType](
     action: RestAction[_, AuthType, BodyType, _, _, ResponseType]) {
 
     def testAction(ctx: RestContext[AuthType, BodyType]): RestResponse[ResponseType] = {
@@ -36,14 +45,17 @@ trait RestActionTester { this: ScalaFutures =>
 
       val responseFuture = for {
         _ <- Future.successful(())
-        _ = action.restAuth.check(ctx.auth).foreach(throw _)
         response <- action.safeApply(ctx)
       } yield response
 
-      responseFuture.recover {
+      val withRecover = responseFuture.recover {
         case e: NaptimeActionException => RestError(e)
-      }.unwrappedFutureValue
-    }
+      }
 
+      // Handle TestFailedExceptions correctly.
+      Try(withRecover.futureValue).recover {
+        case e: TestFailedException => e.cause.map(throw _).getOrElse(throw e)
+      }.get
+    }
   }
 }
