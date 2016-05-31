@@ -259,7 +259,9 @@ class HeaderAccessControlCombinersTest extends AssertionsForJUnit with ScalaFutu
     val right = StructuredAccessControl(Authenticators.constant("right"), Authorizers.deny())
     runAnd(left, right) { result =>
       assert(result.isLeft)
-      assert(result.left.get.httpCode === Status.FORBIDDEN)
+      assert(
+        result.left.get.httpCode === Status.FORBIDDEN ||
+          result.left.get.httpCode === Status.INTERNAL_SERVER_ERROR)
     }
   }
 
