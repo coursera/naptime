@@ -16,6 +16,7 @@
 
 package org.coursera.naptime.access
 
+import org.coursera.common.concurrent.Futures
 import org.coursera.naptime.NaptimeActionException
 import org.coursera.naptime.access.authenticator.Authenticator
 import org.coursera.naptime.access.authorizer.AuthorizeResult
@@ -67,18 +68,17 @@ trait StructuredAccessControlCombinators {
    *     StructuredAccessControl.either(Auth.superuser, Auth.admin)).get(ctx => ???)
    * }}}
    *
-   * If there is only one parsing error, it is ignored. If there are two, the right one masks the
-   * left one.
+   * If there is only one error, it is ignored. If there are two, the right one masks the left one.
    */
   def either[A, B](
       left: StructuredAccessControl[A],
       right: StructuredAccessControl[B]): StructuredAccessControl[Either[A, B]] = {
-    val authn = new Authenticator[Either[A, B]] {
+    val authenticator = new Authenticator[Either[A, B]] {
       override def maybeAuthenticate(
           requestHeader: RequestHeader)
           (implicit ec: ExecutionContext): Future[Option[Either[NaptimeActionException, Either[A, B]]]] = {
-        val lhsF = left.authenticator.maybeAuthenticate(requestHeader)
-        val rhsF = right.authenticator.maybeAuthenticate(requestHeader)
+        val lhsF = Futures.safelyCall(left.authenticator.maybeAuthenticate(requestHeader))
+        val rhsF = Futures.safelyCall(right.authenticator.maybeAuthenticate(requestHeader))
         for {
           lhs <- lhsF
           rhs <- rhsF
@@ -111,7 +111,7 @@ trait StructuredAccessControlCombinators {
       }
     }
     StructuredAccessControl(
-      authenticator = authn,
+      authenticator = authenticator,
       authorizer = Authorizer(_ => AuthorizeResult.Authorized))
   }
 
@@ -124,19 +124,18 @@ trait StructuredAccessControlCombinators {
    *     StructuredAccessControl.and(Auth.superuser, Auth.admin)).get(ctx => ???)
    * }}}
    *
-   * If there is only one parsing error, it is ignored. If there are two, the left one masks the
-   * right one.
+   * If there is only one error, it is ignored. If there are two, the left one masks the right one.
    */
   def and[A, B](
       left: StructuredAccessControl[A],
       right: StructuredAccessControl[B]): StructuredAccessControl[(A, B)] = {
-    val authn = new Authenticator[(A, B)] {
+    val authenticator = new Authenticator[(A, B)] {
       override def maybeAuthenticate(
         requestHeader: RequestHeader)
         (implicit ec: ExecutionContext):
       Future[Option[Either[NaptimeActionException, (A, B)]]] = {
-        val lhsF = left.authenticator.maybeAuthenticate(requestHeader)
-        val rhsF = right.authenticator.maybeAuthenticate(requestHeader)
+        val lhsF = Futures.safelyCall(left.authenticator.maybeAuthenticate(requestHeader))
+        val rhsF = Futures.safelyCall(right.authenticator.maybeAuthenticate(requestHeader))
         for {
           lhs <- lhsF
           rhs <- rhsF
@@ -155,7 +154,7 @@ trait StructuredAccessControlCombinators {
         }
       }
     }
-    val authz = Authorizer.apply[(A, B)] { pair =>
+    val authorizer = Authorizer.apply[(A, B)] { pair =>
       val lhs = left.authorizer.authorize(pair._1)
       val rhs = right.authorizer.authorize(pair._2)
       if (lhs.isAuthorized && rhs.isAuthorized) {
@@ -172,7 +171,7 @@ trait StructuredAccessControlCombinators {
         lhs
       }
     }
-    StructuredAccessControl(authn, authz)
+    StructuredAccessControl(authenticator, authorizer)
   }
 
   /**
@@ -184,13 +183,13 @@ trait StructuredAccessControlCombinators {
   def anyOf[A, B](
       left: StructuredAccessControl[A],
       right: StructuredAccessControl[B]): StructuredAccessControl[(Option[A], Option[B])] = {
-    val authn = new Authenticator[(Option[A], Option[B])] {
+    val authenticator = new Authenticator[(Option[A], Option[B])] {
       override def maybeAuthenticate(
           requestHeader: RequestHeader)
           (implicit ec: ExecutionContext):
           Future[Option[Either[NaptimeActionException, (Option[A], Option[B])]]] = {
-        val lhsF = left.authenticator.maybeAuthenticate(requestHeader)
-        val rhsF = right.authenticator.maybeAuthenticate(requestHeader)
+        val lhsF = Futures.safelyCall(left.authenticator.maybeAuthenticate(requestHeader))
+        val rhsF = Futures.safelyCall(right.authenticator.maybeAuthenticate(requestHeader))
         for {
           lhs <- lhsF
           rhs <- rhsF
@@ -222,21 +221,21 @@ trait StructuredAccessControlCombinators {
         }
       }
     }
-    StructuredAccessControl(authn, Authorizer(_ => AuthorizeResult.Authorized))
+    StructuredAccessControl(authenticator, Authorizer(_ => AuthorizeResult.Authorized))
   }
 
   def anyOf[A, B, C](
       first: StructuredAccessControl[A],
       second: StructuredAccessControl[B],
       third: StructuredAccessControl[C]): StructuredAccessControl[(Option[A], Option[B], Option[C])] = {
-    val authn = new Authenticator[(Option[A], Option[B], Option[C])] {
+    val authenticator = new Authenticator[(Option[A], Option[B], Option[C])] {
       override def maybeAuthenticate(
           requestHeader: RequestHeader)
           (implicit ec: ExecutionContext):
           Future[Option[Either[NaptimeActionException, (Option[A], Option[B], Option[C])]]] = {
-        val firstF = first.authenticator.maybeAuthenticate(requestHeader)
-        val secondF = second.authenticator.maybeAuthenticate(requestHeader)
-        val thirdF = third.authenticator.maybeAuthenticate(requestHeader)
+        val firstF = Futures.safelyCall(first.authenticator.maybeAuthenticate(requestHeader))
+        val secondF = Futures.safelyCall(second.authenticator.maybeAuthenticate(requestHeader))
+        val thirdF = Futures.safelyCall(third.authenticator.maybeAuthenticate(requestHeader))
         for {
           oneOptEither <- firstF
           twoOptEither <- secondF
@@ -270,6 +269,6 @@ trait StructuredAccessControlCombinators {
         }
       }
     }
-    StructuredAccessControl(authn, Authorizer(_ => AuthorizeResult.Authorized))
+    StructuredAccessControl(authenticator, Authorizer(_ => AuthorizeResult.Authorized))
   }
 }
