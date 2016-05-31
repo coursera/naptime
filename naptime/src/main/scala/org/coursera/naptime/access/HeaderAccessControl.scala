@@ -49,11 +49,9 @@ trait HeaderAccessControl[A] {
 }
 
 object HeaderAccessControl {
-
   def allowAll: HeaderAccessControl[Unit] = {
     val parser = HeaderAuthenticationParser.constant(())
     val authorizer = Authorizer[Unit](_ => AuthorizeResult.Authorized)
     StructuredAccessControl(Authenticator(parser, Decorator.identity[Unit]), authorizer)
   }
-
 }

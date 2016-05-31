@@ -16,6 +16,8 @@
 
 package org.coursera.naptime.access.authenticator
 
+import play.api.http.Status
+
 /**
  * Output of [[HeaderAuthenticationParser]].
  *
@@ -41,10 +43,10 @@ object ParseResult {
   }
 
   /**
-   * Fatal error while parsing this authentication type. Always returns HTTP 401 to the client.
+   * Fatal error while parsing this authentication type. By default, it returns HTTP 401 (Unauthorized)
+   * to the client.
    */
-  case class Error(message: String) extends ParseResult[Nothing] {
+  case class Error(message: String, code: Int = Status.UNAUTHORIZED) extends ParseResult[Nothing] {
     override def flatMap[Q](f: Nothing => ParseResult[Q]): ParseResult[Q] = this
   }
-
 }

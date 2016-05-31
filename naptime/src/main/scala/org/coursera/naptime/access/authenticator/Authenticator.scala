@@ -22,7 +22,6 @@ import org.coursera.naptime.NaptimeActionException
 import org.coursera.naptime.access.authenticator.combiner.And
 import org.coursera.naptime.access.authenticator.combiner.AnyOf
 import org.coursera.naptime.access.authenticator.combiner.FirstOf
-import org.coursera.naptime.access.authenticator.combiner.NoRestrictions
 import play.api.http.Status.FORBIDDEN
 import play.api.http.Status.UNAUTHORIZED
 import play.api.mvc.RequestHeader
@@ -72,7 +71,7 @@ trait Authenticator[+A] {
 
 }
 
-object Authenticator extends StrictLogging with AnyOf with FirstOf with And with NoRestrictions{
+object Authenticator extends StrictLogging with AnyOf with FirstOf with And {
 
   def apply[P, A](
       parser: HeaderAuthenticationParser[P],
@@ -81,8 +80,7 @@ object Authenticator extends StrictLogging with AnyOf with FirstOf with And with
     new Authenticator[A] {
       def maybeAuthenticate(
           requestHeader: RequestHeader)
-          (implicit ec: ExecutionContext):
-        Future[Option[Either[NaptimeActionException, A]]] = {
+          (implicit ec: ExecutionContext): Future[Option[Either[NaptimeActionException, A]]] = {
 
         parser.parseHeader(requestHeader) match {
           case ParseResult.Success(parsed) =>
@@ -93,9 +91,9 @@ object Authenticator extends StrictLogging with AnyOf with FirstOf with And with
                 Some(Right(decorated))
               }.merge
             }.recover(errorRecovery)
-          case ParseResult.Error(message) =>
+          case ParseResult.Error(message, status) =>
             Future.successful(
-              Some(Left(NaptimeActionException(UNAUTHORIZED, Some("auth.perms"), Some(message)))))
+              Some(Left(NaptimeActionException(status, Some("auth.parse"), Some(message)))))
           case ParseResult.Skip => Future.successful(None)
         }
       }
