@@ -16,10 +16,8 @@
 
 package org.coursera.naptime.access
 
-import org.coursera.common.concurrent.Futures
 import org.coursera.naptime.NaptimeActionException
 import org.coursera.naptime.access.authenticator.Authenticator
-import org.coursera.naptime.access.authorizer.AuthorizeResult
 import org.coursera.naptime.access.authorizer.Authorizer
 import play.api.http.Status
 import play.api.mvc.RequestHeader
@@ -59,22 +57,6 @@ object StructuredAccessControl {
       Status.UNAUTHORIZED,
       Some("auth.perms"),
       Some("Missing authentication")))
-  }
-
-  /**
-   * Left-leaning combiner. That is, it tries to return each of these, in order:
-   *   - Left access control's successful result.
-   *   - Right access control's successful result.
-   *   - Left access control's error.
-   *   - Right access control's error.
-   */
-  def eitherOf[A, B](
-      left: StructuredAccessControl[A],
-      right: StructuredAccessControl[B])
-      (implicit ec: ExecutionContext): StructuredAccessControl[Either[A, B]] = {
-    StructuredAccessControl(
-      Authenticator.eitherOf(left.authenticator, right.authenticator),
-      Authorizer.eitherOf(left.authorizer, right.authorizer))
   }
 
 }
