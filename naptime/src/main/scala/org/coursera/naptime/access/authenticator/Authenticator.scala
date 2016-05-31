@@ -21,6 +21,7 @@ import org.coursera.common.concurrent.Futures
 import org.coursera.naptime.NaptimeActionException
 import org.coursera.naptime.access.authenticator.combiner.And
 import org.coursera.naptime.access.authenticator.combiner.AnyOf
+import org.coursera.naptime.access.authenticator.combiner.EitherOf
 import org.coursera.naptime.access.authenticator.combiner.FirstOf
 import play.api.http.Status.FORBIDDEN
 import play.api.http.Status.UNAUTHORIZED
@@ -71,7 +72,12 @@ trait Authenticator[+A] {
 
 }
 
-object Authenticator extends StrictLogging with AnyOf with FirstOf with And {
+object Authenticator
+  extends StrictLogging
+  with AnyOf
+  with FirstOf
+  with And
+  with EitherOf {
 
   def apply[P, A](
       parser: HeaderAuthenticationParser[P],
@@ -99,6 +105,15 @@ object Authenticator extends StrictLogging with AnyOf with FirstOf with And {
       }
     }
 
+  }
+
+  private[authenticator] def safelyAuthenticate[A](
+      authenticator: Authenticator[A],
+      requestHeader: RequestHeader)
+      (implicit ec: ExecutionContext): Future[Option[Either[NaptimeActionException, A]]] = {
+    Futures
+      .safelyCall(authenticator.maybeAuthenticate(requestHeader))
+      .recover(errorRecovery)
   }
 
   def errorRecovery[A]: PartialFunction[Throwable, Option[Either[NaptimeActionException, A]]] = {
