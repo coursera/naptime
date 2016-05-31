@@ -105,4 +105,16 @@ object Authorizer {
     }
   }
 
+  /**
+   * Combines two authorizers and invokes the appropriate one for the authentication
+   * (matching left and right). This is probably useful when combining authenticators
+   * with [[org.coursera.naptime.access.authenticator.Authenticator.eitherOf]].
+   */
+  def eitherOf[A, B](left: Authorizer[A], right: Authorizer[B]): Authorizer[Either[A, B]] = {
+    apply {
+      case Left(authentication) => left.authorize(authentication)
+      case Right(authentication) => right.authorize(authentication)
+    }
+  }
+
 }
