@@ -14,6 +14,8 @@ import scala.util.control.NonFatal
 
 object AttributesProvider extends StrictLogging {
 
+  val SCALADOC_ATTRIBUTE_NAME = "scaladocs"
+
   lazy val scaladocs: Map[String, JsObject] = {
     val scaladocPath = "/naptime.scaladoc.json"
     (for {
@@ -46,14 +48,14 @@ object AttributesProvider extends StrictLogging {
   def getResourceAttributes(className: String): Seq[Attribute] = {
     scaladocs
       .get(className)
-      .map(value => Attribute("scaladocs", Some(jsObjToJsValue(value))))
+      .map(value => Attribute(SCALADOC_ATTRIBUTE_NAME, Some(jsObjToJsValue(value))))
       .toList
   }
 
   def getMethodAttributes(className: String, methodName: String): Seq[Attribute] = {
     scaladocs
       .get(s"$className.$methodName")
-      .map(value => Attribute("scaladocs", Some(jsObjToJsValue(value))))
+      .map(value => Attribute(SCALADOC_ATTRIBUTE_NAME, Some(jsObjToJsValue(value))))
       .toList
   }
 
