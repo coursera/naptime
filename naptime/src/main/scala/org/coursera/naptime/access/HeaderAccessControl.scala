@@ -22,6 +22,7 @@ import org.coursera.naptime.access.authenticator.Decorator
 import org.coursera.naptime.access.authenticator.HeaderAuthenticationParser
 import org.coursera.naptime.access.authorizer.AuthorizeResult
 import org.coursera.naptime.access.authorizer.Authorizer
+import org.coursera.naptime.access.combiner.And
 import org.coursera.naptime.access.combiner.AnyOf
 import play.api.mvc.RequestHeader
 
@@ -49,7 +50,7 @@ trait HeaderAccessControl[A] {
 
 }
 
-object HeaderAccessControl extends AnyOf {
+object HeaderAccessControl extends AnyOf with And {
 
   def allowAll: HeaderAccessControl[Unit] = {
     val parser = HeaderAuthenticationParser.constant(())
