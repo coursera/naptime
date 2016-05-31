@@ -24,7 +24,7 @@ import play.api.mvc.RequestHeader
 import scala.concurrent.ExecutionContext
 import scala.concurrent.Future
 
-private[access] trait AnyOf {
+private[authenticator] trait AnyOf {
 
   /**
    * Combines an UNORDERED collection of [[Authenticator]]s into an authenticator that:

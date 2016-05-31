@@ -24,7 +24,7 @@ import play.api.mvc.RequestHeader
 import scala.concurrent.ExecutionContext
 import scala.concurrent.Future
 
-private[access] trait And {
+private[authenticator] trait And {
 
   def and[A, A1, A2](
       authenticator1: Authenticator[A1],

@@ -7,7 +7,7 @@ import play.api.mvc.RequestHeader
 import scala.concurrent.ExecutionContext
 import scala.concurrent.Future
 
-private[access] trait EitherOf {
+private[authenticator] trait EitherOf {
 
   /**
    * Left-leaning combiner. That is, it tries to return each of these, in order:
