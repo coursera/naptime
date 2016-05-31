@@ -24,6 +24,7 @@ import org.coursera.naptime.access.authorizer.AuthorizeResult
 import org.coursera.naptime.access.authorizer.Authorizer
 import org.coursera.naptime.access.combiner.And
 import org.coursera.naptime.access.combiner.AnyOf
+import org.coursera.naptime.access.combiner.EitherOf
 import play.api.mvc.RequestHeader
 
 import scala.concurrent.ExecutionContext
@@ -50,7 +51,7 @@ trait HeaderAccessControl[A] {
 
 }
 
-object HeaderAccessControl extends AnyOf with And {
+object HeaderAccessControl extends AnyOf with And with EitherOf {
 
   def allowAll: HeaderAccessControl[Unit] = {
     val parser = HeaderAuthenticationParser.constant(())

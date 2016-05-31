@@ -17,14 +17,15 @@ import play.api.test.FakeRequest
 
 import scala.concurrent.ExecutionContext.Implicits.global
 
-class StructuredAccessControlCombinatorsTest extends AssertionsForJUnit with ScalaFutures {
-  import StructuredAccessControlCombinatorsTest._
+class HeaderAccessControlCombinersTest extends AssertionsForJUnit with ScalaFutures {
+
+  import HeaderAccessControlCombinersTest._
 
   def runEither(
       left: StructuredAccessControl[String] = LEFT,
       right: StructuredAccessControl[String] = RIGHT)
       (checks: Either[NaptimeActionException, Either[String, String]] => Unit): Unit = {
-    val either = StructuredAccessControl.either(left, right)
+    val either = StructuredAccessControl.eitherOf(left, right)
     val result = either.run(FakeRequest())
     checks(result.futureValue)
   }
@@ -33,7 +34,7 @@ class StructuredAccessControlCombinatorsTest extends AssertionsForJUnit with Sca
       left: StructuredAccessControl[String] = LEFT,
       right: StructuredAccessControl[String] = RIGHT)
       (checks: Either[NaptimeActionException, (Option[String], Option[String])] => Unit): Unit = {
-    val anyOf = StructuredAccessControl.anyOf(left, right)
+    val anyOf = HeaderAccessControl.anyOf(left, right)
     val result = anyOf.run(FakeRequest())
     checks(result.futureValue)
   }
@@ -42,7 +43,7 @@ class StructuredAccessControlCombinatorsTest extends AssertionsForJUnit with Sca
     left: StructuredAccessControl[String] = LEFT,
     right: StructuredAccessControl[String] = RIGHT)
     (checks: Either[NaptimeActionException, (String, String)] => Unit): Unit = {
-    val and = StructuredAccessControl.and(left, right)
+    val and = HeaderAccessControl.and(left, right)
     val result = and.run(FakeRequest())
     checks(result.futureValue)
   }
@@ -273,7 +274,7 @@ class StructuredAccessControlCombinatorsTest extends AssertionsForJUnit with Sca
   }
 }
 
-object StructuredAccessControlCombinatorsTest {
+object HeaderAccessControlCombinersTest {
   val LEFT = StructuredAccessControl(Authenticators.constant("left"), Authorizers.allowed)
   val RIGHT = StructuredAccessControl(Authenticators.constant("right"), Authorizers.allowed)
 
