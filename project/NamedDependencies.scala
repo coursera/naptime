@@ -33,6 +33,8 @@ trait NamedDependencies { this: PluginVersionProvider =>
   val jodaConvert = "org.joda" % "joda-convert" % "1.2"
   val jodaTime = "joda-time" % "joda-time" % "2.2"
   val playJson = "com.typesafe.play" %% "play-json" % playVersion
+  val playTestCompile = ("com.typesafe.play" %% "play-test" % playVersion)
+    .excludeAll(new ExclusionRule(organization="org.specs2"))
   val scalaGuice = "net.codingwell" %% "scala-guice" % "4.0.0"
   val scalaLogging = "com.typesafe.scala-logging" %% "scala-logging" % "3.1.0"
 
