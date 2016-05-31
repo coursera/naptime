@@ -38,7 +38,7 @@ case class StructuredAccessControl[A](
       requestHeader: RequestHeader)
       (implicit executionContext: ExecutionContext): Future[Either[NaptimeActionException, A]] = {
 
-    authenticator.maybeAuthenticate(requestHeader).map { decoratedOption =>
+    Authenticator.authenticateAndRecover(authenticator, requestHeader).map { decoratedOption =>
       decoratedOption.map { either =>
         either.right.flatMap { decorated =>
           Authorizer.toResponse(authorizer.authorize(decorated), decorated)

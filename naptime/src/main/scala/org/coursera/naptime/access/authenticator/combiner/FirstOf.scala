@@ -42,7 +42,7 @@ private[authenticator] trait FirstOf {
         Future[Option[Either[NaptimeActionException, A]]] = {
 
         val authenticationResponses = authenticators
-          .map(Authenticator.safelyAuthenticate(_, requestHeader))
+          .map(Authenticator.authenticateAndRecover(_, requestHeader))
 
         /**
          * @return the first non-`None` element from the list of `Future`s, or `None` if all

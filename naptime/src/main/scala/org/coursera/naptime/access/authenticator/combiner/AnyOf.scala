@@ -46,7 +46,7 @@ private[authenticator] trait AnyOf {
       Future[Option[Either[NaptimeActionException, A]]] = {
 
       val authenticationResponses = authenticators
-        .map(Authenticator.safelyAuthenticate(_, requestHeader))
+        .map(Authenticator.authenticateAndRecover(_, requestHeader))
 
       val successOptionFuture = Futures.findMatch(authenticationResponses) {
         case Some(Right(authentication)) => Right(authentication)

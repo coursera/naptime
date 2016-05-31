@@ -25,8 +25,8 @@ private[authenticator] trait EitherOf {
       override def maybeAuthenticate(requestHeader: RequestHeader)(implicit ec: ExecutionContext):
         Future[Option[Either[NaptimeActionException, Either[A, B]]]] = {
 
-        val leftFuture = Authenticator.safelyAuthenticate(left, requestHeader)
-        val rightFuture = Authenticator.safelyAuthenticate(right, requestHeader)
+        val leftFuture = Authenticator.authenticateAndRecover(left, requestHeader)
+        val rightFuture = Authenticator.authenticateAndRecover(right, requestHeader)
 
         for {
           leftResponse <- leftFuture

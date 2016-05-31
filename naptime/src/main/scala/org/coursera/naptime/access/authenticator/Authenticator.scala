@@ -107,7 +107,7 @@ object Authenticator
 
   }
 
-  private[authenticator] def safelyAuthenticate[A](
+  private[access] def authenticateAndRecover[A](
       authenticator: Authenticator[A],
       requestHeader: RequestHeader)
       (implicit ec: ExecutionContext): Future[Option[Either[NaptimeActionException, A]]] = {

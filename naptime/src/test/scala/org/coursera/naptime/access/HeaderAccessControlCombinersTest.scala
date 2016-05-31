@@ -25,7 +25,7 @@ class HeaderAccessControlCombinersTest extends AssertionsForJUnit with ScalaFutu
       left: StructuredAccessControl[String] = LEFT,
       right: StructuredAccessControl[String] = RIGHT)
       (checks: Either[NaptimeActionException, Either[String, String]] => Unit): Unit = {
-    val either = StructuredAccessControl.eitherOf(left, right)
+    val either = HeaderAccessControl.eitherOf(left, right)
     val result = either.run(FakeRequest())
     checks(result.futureValue)
   }

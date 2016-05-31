@@ -17,7 +17,7 @@ private[access] trait EitherOf {
    *   - Left access control's error.
    *   - Right access control's error.
    */
-  def either[A, B](
+  def eitherOf[A, B](
       controlA: HeaderAccessControl[A],
       controlB: HeaderAccessControl[B]):
     HeaderAccessControl[Either[A, B]] = {
