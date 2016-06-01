@@ -74,6 +74,10 @@ class RestContext[+AuthType, +BodyType] private[naptime] (
 
     findPreferredLanguage(acceptLanguages)
   }
+
+  private[naptime] def copyWithAuth[NewAuth](newAuth: NewAuth): RestContext[NewAuth, BodyType] = {
+    new RestContext(body, newAuth, _request, paging, includes, fields)
+  }
 }
 
 /**

@@ -19,6 +19,7 @@ package org.coursera.naptime.access.combiner
 import org.coursera.common.concurrent.Futures
 import org.coursera.naptime.NaptimeActionException
 import org.coursera.naptime.access.HeaderAccessControl
+import org.coursera.naptime.access.StructuredAccessControl
 import play.api.mvc.RequestHeader
 
 import scala.concurrent.ExecutionContext
@@ -56,6 +57,18 @@ private[access] trait AnyOf {
           }
         }
       }
+
+      override private[naptime] def check(
+          authInfo: (Option[A], Option[B])): Either[NaptimeActionException, (Option[A], Option[B])] = {
+        val resultA = computeCheckResult(authInfo._1, controlA)
+        val resultB = computeCheckResult(authInfo._2, controlB)
+
+        (resultA, resultB) match {
+          case (Left(errorA), Left(_)) => Left(errorA)
+          case _ =>
+            Right((resultA.right.toOption, resultB.right.toOption))
+        }
+      }
     }
   }
 
@@ -86,7 +99,32 @@ private[access] trait AnyOf {
           }
         }
       }
+
+      override private[naptime] def check(
+          authInfo: (Option[A], Option[B], Option[C])):
+          Either[NaptimeActionException, (Option[A], Option[B], Option[C])] = {
+
+
+        val resultA = computeCheckResult(authInfo._1, controlA)
+        val resultB = computeCheckResult(authInfo._2, controlB)
+        val resultC = computeCheckResult(authInfo._3, controlC)
+
+        (resultA, resultB, resultC) match {
+          case (Left(errorA), Left(_), Left(_)) => Left(errorA)
+          case _ =>
+            Right((resultA.right.toOption, resultB.right.toOption, resultC.right.toOption))
+        }
+      }
     }
+  }
+
+  /**
+   * Helper for the `check` functions to run the check functionality of a HeaderAccessControl.
+   */
+  private[this] def computeCheckResult[T](
+      elem: Option[T],
+      accessControl: HeaderAccessControl[T]): Either[NaptimeActionException, T] = {
+    elem.map(e => accessControl.check(e)).getOrElse(StructuredAccessControl.missingResponse)
   }
 
 }
