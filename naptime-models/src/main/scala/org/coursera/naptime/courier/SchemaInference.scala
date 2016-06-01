@@ -115,9 +115,15 @@ private[courier] class ScalaClassTraverser(rootType: ru.Type) {
     } else if (typ <:< ru.typeOf[scala.Enumeration#Value]) {
       inferEnum(typ)
     } else if (typ <:< ru.typeOf[Option[_]]) {
-      val optionalType = typ.asInstanceOf[ru.TypeRefApi].args.head
-      val inferred = inferSchema(optionalType)
-      InferredSchema(inferred.schema, isOptional = true)
+      if (typ <:< ru.typeOf[None.type]) {
+        InferredSchema(Json.obj(
+          "name" -> typeName,
+          "type" -> "null"))
+      } else {
+        val optionalType = typ.asInstanceOf[ru.TypeRefApi].args.head
+        val inferred = inferSchema(optionalType)
+        InferredSchema(inferred.schema, isOptional = true)
+      }
     } else if (typ <:< ru.typeOf[Map[_, _]]) {
       inferMap(typ)
     } else if (typ <:< ru.typeOf[Traversable[_]] || typ <:< ru.typeOf[Array[_]]) {
