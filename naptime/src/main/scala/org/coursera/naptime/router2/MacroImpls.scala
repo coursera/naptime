@@ -183,8 +183,8 @@ class MacroImpls(val c: blackbox.Context) {
             name = Option(stubInstance.resourceName).getOrElse(
               "??? (resourceName should be def not val)"),
             version = Some(stubInstance.resourceVersion),
-            keyType = ${keyType(resourceType)},
-            bodyType = ${bodyType(resourceType)},
+            keyType = ${keyTypeName(resourceType)},
+            bodyType = ${mergedTypeName(resourceType)},
             parentClass = $parentResourceName,
             handlers = List(..${trees.flatMap(_._2)}),
             className = ${resourceType.toString},
@@ -197,11 +197,7 @@ class MacroImpls(val c: blackbox.Context) {
       finalResource
     }
 
-    private[this] def bodyType(resourceType: c.Type): String = {
-      resourceType.toString + ".Model"
-    }
-
-    private[this] def keyType(resourceType: c.Type): c.Tree = {
+    private[this] def keyTypeName(resourceType: c.Type): c.Tree = {
       val collectionTypeView = resourceType.baseType(COLLECTION_RESOURCE_TYPE.typeSymbol)
       val keyType = collectionTypeView.typeArgs(1)
       if (keyType <:< ANY_VAL || keyType =:= typeOf[String]) {
@@ -214,40 +210,64 @@ class MacroImpls(val c: blackbox.Context) {
       }
     }
 
+    private[this] def mergedTypeName(resourceType: c.Type): String = {
+      resourceType.toString + ".Model"
+    }
+
+    private[this] def getRecordSchemaForType(targetType: c.Type): c.Tree = {
+      if (targetType <:< SCALA_RECORD_TEMPLATE) {
+        q"""Some(
+          org.coursera.courier.templates.DataTemplates
+            .getSchema[$targetType]
+            .asInstanceOf[com.linkedin.data.schema.RecordDataSchema])"""
+      } else {
+        q"""
+          scala.util.Try {
+            import scala.collection.JavaConversions._
+            val resolver = new com.linkedin.data.schema.resolver.DefaultDataSchemaResolver()
+            val parser = new com.linkedin.data.schema.SchemaParser(resolver)
+            val schemaJson = org.coursera.naptime.courier.SchemaInference.inferSchema(
+              scala.reflect.runtime.universe.typeTag[$targetType])
+            parser.parse(schemaJson.toString)
+            parser.topLevelDataSchemas.head.asInstanceOf[com.linkedin.data.schema.RecordDataSchema]
+          }.toOption"""
+      }
+    }
+
     private[this] def computeTypes(resourceType: c.Type): c.Tree = {
       val collectionTypeView = resourceType.baseType(COLLECTION_RESOURCE_TYPE.typeSymbol)
       val keyType = collectionTypeView.typeArgs(1)
-      val valueType = collectionTypeView.typeArgs(2)
+      val bodyType = collectionTypeView.typeArgs(2)
 
-      def computeAsymType(keySchema: c.Tree): c.Tree = {
-        val typeName = bodyType(resourceType)
-        q"""
-          List(
-            org.coursera.naptime.model.Keyed($typeName,
-              org.coursera.naptime.Types.computeAsymType(
-                $typeName,
-                $keySchema,
-                org.coursera.courier.templates.DataTemplates.getSchema[$valueType].asInstanceOf[
-                  com.linkedin.data.schema.RecordDataSchema])))"""
+      // Add additional types here
+      val keySchemaOption = keyType match {
+        case _ if keyType =:= typeOf[Int] =>
+          q"Some(new com.linkedin.data.schema.IntegerDataSchema)"
+        case _ if keyType =:= typeOf[String] =>
+          q"Some(new com.linkedin.data.schema.StringDataSchema)"
+        case _ if keyType =:= typeOf[Long] =>
+          q"Some(new com.linkedin.data.schema.LongDataSchema)"
+        case _ =>
+          getRecordSchemaForType(keyType)
       }
+      val bodySchemaOption = getRecordSchemaForType(bodyType)
 
-      if (valueType <:< SCALA_RECORD_TEMPLATE) {
-        keyType match {
-          case _ if keyType <:< SCALA_RECORD_TEMPLATE =>
-            computeAsymType(
-              q"""org.coursera.courier.templates.DataTemplates.getSchema[$keyType].asInstanceOf[
-                  com.linkedin.data.schema.RecordDataSchema]""")
-          case _ if keyType =:= typeOf[Int] =>
-            computeAsymType(q"new com.linkedin.data.schema.IntegerDataSchema")
-          case _ if keyType =:= typeOf[String] =>
-            computeAsymType(q"new com.linkedin.data.schema.StringDataSchema")
-          case _ if keyType =:= typeOf[Long] =>
-            computeAsymType(q"new com.linkedin.data.schema.LongDataSchema")
-          case _ => q"List()" // Can't compute the asymmetric type.
-        }
-      } else {
-        q"List()" // TODO: compute asymmetric type via reflection.
-      }
+      q"""{
+        val mergedTypeName: String = ${mergedTypeName(resourceType)}
+        val keySchemaOption: Option[com.linkedin.data.schema.DataSchema] = $keySchemaOption
+        val bodySchemaOption: Option[com.linkedin.data.schema.RecordDataSchema] = $bodySchemaOption
+        (for {
+          keySchema <- keySchemaOption
+          bodySchema <- bodySchemaOption
+        } yield {
+          org.coursera.naptime.model.Keyed(
+            mergedTypeName,
+            org.coursera.naptime.Types.computeAsymType(
+              mergedTypeName,
+              keySchema,
+              bodySchema))
+        }).toList
+      }"""
     }
 
     private[this] def handlerKind(actionCategory: RestActionCategory) = {
