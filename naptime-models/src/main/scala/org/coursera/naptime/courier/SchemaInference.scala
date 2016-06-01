@@ -116,13 +116,11 @@ private[courier] class ScalaClassTraverser(rootType: ru.Type) {
       inferEnum(typ)
     } else if (typ <:< ru.typeOf[Option[_]]) {
       if (typ <:< ru.typeOf[None.type]) {
-        InferredSchema(Json.obj(
-          "name" -> typeName,
-          "type" -> "null"))
+        InferredSchema(JsString("null"))
       } else {
         val optionalType = typ.asInstanceOf[ru.TypeRefApi].args.head
         val inferred = inferSchema(optionalType)
-        InferredSchema(inferred.schema, isOptional = true)
+        InferredSchema(inferred.schema, isOptional = !(typ <:< ru.typeOf[Some[_]]))
       }
     } else if (typ <:< ru.typeOf[Map[_, _]]) {
       inferMap(typ)
