@@ -18,6 +18,7 @@ package org.coursera.naptime.access
 
 import org.coursera.naptime.NaptimeActionException
 import org.coursera.naptime.access.authenticator.Authenticator
+import org.coursera.naptime.access.authorizer.AuthorizeResult
 import org.coursera.naptime.access.authorizer.Authorizer
 import play.api.http.Status
 import play.api.mvc.RequestHeader
@@ -47,6 +48,10 @@ case class StructuredAccessControl[A](
         StructuredAccessControl.missingResponse
       }
     }
+  }
+
+  override private[naptime] def check(authInfo: A): Either[NaptimeActionException, A] = {
+    Authorizer.toResponse(authorizer.authorize(authInfo), authInfo)
   }
 }
 

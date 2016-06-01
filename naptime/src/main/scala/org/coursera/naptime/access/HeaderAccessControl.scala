@@ -49,6 +49,10 @@ trait HeaderAccessControl[A] {
       requestHeader: RequestHeader)
       (implicit executionContext: ExecutionContext): Future[Either[NaptimeActionException, A]]
 
+  /**
+   * Used for testing access control configurations in Naptime tests.
+   */
+  private[naptime] def check(authInfo: A): Either[NaptimeActionException, A]
 }
 
 object HeaderAccessControl extends AnyOf with And with EitherOf {

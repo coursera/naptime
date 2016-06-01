@@ -59,6 +59,16 @@ private[access] trait EitherOf {
           }
         }
       }
+
+      override private[naptime] def check(
+          authInfo: Either[A, B]): Either[NaptimeActionException, Either[A, B]] = {
+        authInfo match {
+          case Left(authA) =>
+            controlA.check(authA).right.map(Left.apply)
+          case Right(authB) =>
+            controlB.check(authB).right.map(Right.apply)
+        }
+      }
     }
   }
 

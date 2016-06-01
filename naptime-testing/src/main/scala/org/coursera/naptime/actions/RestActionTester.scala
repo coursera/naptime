@@ -43,19 +43,19 @@ trait RestActionTester { this: ScalaFutures =>
     def testAction(ctx: RestContext[AuthType, BodyType]): RestResponse[ResponseType] = {
       import play.api.libs.concurrent.Execution.Implicits.defaultContext
 
-      val responseFuture = for {
-        _ <- Future.successful(())
-        response <- action.safeApply(ctx)
-      } yield response
+      val updatedAuthEither = action.restAuth.check(ctx.auth)
 
-      val withRecover = responseFuture.recover {
-        case e: NaptimeActionException => RestError(e)
+      updatedAuthEither match {
+        case Left(error) => RestError(error)
+        case Right(updatedAuth) =>
+          val responseFuture = action.safeApply(ctx.copyWithAuth(updatedAuth)).recover {
+            case e: NaptimeActionException => RestError(e)
+          }
+
+          Try(responseFuture.futureValue).recover {
+            case e: TestFailedException => e.cause.map(throw _).getOrElse(throw e)
+          }.get
       }
-
-      // Handle TestFailedExceptions correctly.
-      Try(withRecover.futureValue).recover {
-        case e: TestFailedException => e.cause.map(throw _).getOrElse(throw e)
-      }.get
     }
   }
 }
