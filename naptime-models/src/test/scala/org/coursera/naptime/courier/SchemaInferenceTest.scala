@@ -56,6 +56,36 @@ class SchemaInferenceTest extends AssertionsForJUnit {
   }
 
   @Test
+  def testWithNone(): Unit = {
+    assert(inferSchema[WithNone] ===
+      Json.parse(
+        """{
+          |  "name": "WithNone",
+          |  "namespace": "org.coursera.naptime.courier",
+          |  "type": "record",
+          |  "fields": [
+          |    {"name": "none", "type": "null"}
+          |  ]
+          |}
+          |""".stripMargin))
+  }
+
+  @Test
+  def testWithSome(): Unit = {
+    assert(inferSchema[WithSome] ===
+      Json.parse(
+        """{
+          |  "name": "WithSome",
+          |  "namespace": "org.coursera.naptime.courier",
+          |  "type": "record",
+          |  "fields": [
+          |    {"name": "int", "type": "int"}
+          |  ]
+          |}
+          |""".stripMargin))
+  }
+
+  @Test
   def testWithRecord(): Unit = {
     assert(inferSchema[WithRecord] ===
       Json.parse(
@@ -192,6 +222,8 @@ class SchemaInferenceTest extends AssertionsForJUnit {
 
 case class WithPrimitives(int: Int)
 case class WithOptional(int: Option[Int])
+case class WithSome(int: Some[Int])
+case class WithNone(none: None.type)
 
 case class Simple(message: String)
 case class WithRecord(record: Simple)
