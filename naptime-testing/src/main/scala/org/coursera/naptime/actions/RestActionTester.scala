@@ -8,6 +8,7 @@ import org.coursera.naptime.RequestPagination
 import org.coursera.naptime.RestContext
 import org.coursera.naptime.RestError
 import org.coursera.naptime.RestResponse
+import org.coursera.naptime.access.StructuredAccessControl
 import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.exceptions.TestFailedException
 import play.api.test.FakeRequest
@@ -43,8 +44,16 @@ trait RestActionTester { this: ScalaFutures =>
     def testAction(ctx: RestContext[AuthType, BodyType]): RestResponse[ResponseType] = {
       import play.api.libs.concurrent.Execution.Implicits.defaultContext
 
+      val authorizer = action.restAuth match {
+        case StructuredAccessControl(_, testAuthorizer) => testAuthorizer
+        case _ =>
+          throw new UnsupportedOperationException(
+            "`RestActionTester` only supports `StructuredAccessControl` right now")
+      }
+
       val responseFuture = for {
         _ <- Future.successful(())
+        _ = authorizer.check(ctx.auth)
         response <- action.safeApply(ctx)
       } yield response
 
