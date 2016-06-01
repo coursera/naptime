@@ -1,3 +1,19 @@
+/*
+ * Copyright 2016 Coursera Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package org.coursera.naptime.access
 
 import org.coursera.naptime.NaptimeActionException
@@ -17,14 +33,15 @@ import play.api.test.FakeRequest
 
 import scala.concurrent.ExecutionContext.Implicits.global
 
-class StructuredAccessControlCombinatorsTest extends AssertionsForJUnit with ScalaFutures {
-  import StructuredAccessControlCombinatorsTest._
+class HeaderAccessControlCombinersTest extends AssertionsForJUnit with ScalaFutures {
+
+  import HeaderAccessControlCombinersTest._
 
   def runEither(
       left: StructuredAccessControl[String] = LEFT,
       right: StructuredAccessControl[String] = RIGHT)
       (checks: Either[NaptimeActionException, Either[String, String]] => Unit): Unit = {
-    val either = StructuredAccessControl.either(left, right)
+    val either = HeaderAccessControl.eitherOf(left, right)
     val result = either.run(FakeRequest())
     checks(result.futureValue)
   }
@@ -33,7 +50,7 @@ class StructuredAccessControlCombinatorsTest extends AssertionsForJUnit with Sca
       left: StructuredAccessControl[String] = LEFT,
       right: StructuredAccessControl[String] = RIGHT)
       (checks: Either[NaptimeActionException, (Option[String], Option[String])] => Unit): Unit = {
-    val anyOf = StructuredAccessControl.anyOf(left, right)
+    val anyOf = HeaderAccessControl.anyOf(left, right)
     val result = anyOf.run(FakeRequest())
     checks(result.futureValue)
   }
@@ -42,7 +59,7 @@ class StructuredAccessControlCombinatorsTest extends AssertionsForJUnit with Sca
     left: StructuredAccessControl[String] = LEFT,
     right: StructuredAccessControl[String] = RIGHT)
     (checks: Either[NaptimeActionException, (String, String)] => Unit): Unit = {
-    val and = StructuredAccessControl.and(left, right)
+    val and = HeaderAccessControl.and(left, right)
     val result = and.run(FakeRequest())
     checks(result.futureValue)
   }
@@ -258,7 +275,9 @@ class StructuredAccessControlCombinatorsTest extends AssertionsForJUnit with Sca
     val right = StructuredAccessControl(Authenticators.constant("right"), Authorizers.deny())
     runAnd(left, right) { result =>
       assert(result.isLeft)
-      assert(result.left.get.httpCode === Status.FORBIDDEN)
+      assert(
+        result.left.get.httpCode === Status.FORBIDDEN ||
+          result.left.get.httpCode === Status.INTERNAL_SERVER_ERROR)
     }
   }
 
@@ -273,7 +292,7 @@ class StructuredAccessControlCombinatorsTest extends AssertionsForJUnit with Sca
   }
 }
 
-object StructuredAccessControlCombinatorsTest {
+object HeaderAccessControlCombinersTest {
   val LEFT = StructuredAccessControl(Authenticators.constant("left"), Authorizers.allowed)
   val RIGHT = StructuredAccessControl(Authenticators.constant("right"), Authorizers.allowed)
 

@@ -24,7 +24,7 @@ import scala.collection.immutable
 import scala.concurrent.ExecutionContext
 import scala.concurrent.Future
 
-private[access] trait FirstOf {
+private[authenticator] trait FirstOf {
 
   /**
    * Combines an ORDERED collection of [[Authenticator]]s into an authenticator that:
@@ -42,7 +42,7 @@ private[access] trait FirstOf {
         Future[Option[Either[NaptimeActionException, A]]] = {
 
         val authenticationResponses = authenticators
-          .map(_.maybeAuthenticate(requestHeader).recover(Authenticator.errorRecovery))
+          .map(Authenticator.authenticateAndRecover(_, requestHeader))
 
         /**
          * @return the first non-`None` element from the list of `Future`s, or `None` if all

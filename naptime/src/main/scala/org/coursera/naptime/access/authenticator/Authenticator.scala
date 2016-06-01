@@ -101,6 +101,15 @@ object Authenticator extends StrictLogging with AnyOf with FirstOf with And {
 
   }
 
+  private[access] def authenticateAndRecover[A](
+      authenticator: Authenticator[A],
+      requestHeader: RequestHeader)
+      (implicit ec: ExecutionContext): Future[Option[Either[NaptimeActionException, A]]] = {
+    Futures
+      .safelyCall(authenticator.maybeAuthenticate(requestHeader))
+      .recover(errorRecovery)
+  }
+
   def errorRecovery[A]: PartialFunction[Throwable, Option[Either[NaptimeActionException, A]]] = {
     case NonFatal(e) =>
       logger.error("Unexpected authentication error", e)

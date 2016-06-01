@@ -16,7 +16,6 @@
 
 package org.coursera.naptime.access.authenticator.combiner
 
-import org.coursera.common.concurrent.Futures
 import org.coursera.naptime.NaptimeActionException
 import org.coursera.naptime.access.authenticator.Authenticator
 import play.api.mvc.RequestHeader
@@ -24,7 +23,7 @@ import play.api.mvc.RequestHeader
 import scala.concurrent.ExecutionContext
 import scala.concurrent.Future
 
-private[access] trait And {
+private[authenticator] trait And {
 
   def and[A, A1, A2](
       authenticator1: Authenticator[A1],
@@ -38,10 +37,8 @@ private[access] trait And {
         Future[Option[Either[NaptimeActionException, A]]] = {
 
         for {
-          response1 <- Futures.safelyCall(authenticator1.maybeAuthenticate(requestHeader))
-            .recover(Authenticator.errorRecovery)
-          response2 <- Futures.safelyCall(authenticator2.maybeAuthenticate(requestHeader))
-            .recover(Authenticator.errorRecovery)
+          response1 <- Authenticator.authenticateAndRecover(authenticator1, requestHeader)
+          response2 <- Authenticator.authenticateAndRecover(authenticator2, requestHeader)
         } yield {
           val combine = partialCombine.lift
           (response1, response2) match {

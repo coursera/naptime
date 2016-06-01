@@ -24,7 +24,7 @@ import play.api.mvc.RequestHeader
 import scala.concurrent.ExecutionContext
 import scala.concurrent.Future
 
-private[access] trait AnyOf {
+private[authenticator] trait AnyOf {
 
   /**
    * Combines an UNORDERED collection of [[Authenticator]]s into an authenticator that:
@@ -46,7 +46,7 @@ private[access] trait AnyOf {
       Future[Option[Either[NaptimeActionException, A]]] = {
 
       val authenticationResponses = authenticators
-        .map(_.maybeAuthenticate(requestHeader).recover(Authenticator.errorRecovery))
+        .map(Authenticator.authenticateAndRecover(_, requestHeader))
 
       val successOptionFuture = Futures.findMatch(authenticationResponses) {
         case Some(Right(authentication)) => Right(authentication)

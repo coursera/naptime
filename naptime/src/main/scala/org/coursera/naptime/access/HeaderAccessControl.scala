@@ -22,6 +22,9 @@ import org.coursera.naptime.access.authenticator.Decorator
 import org.coursera.naptime.access.authenticator.HeaderAuthenticationParser
 import org.coursera.naptime.access.authorizer.AuthorizeResult
 import org.coursera.naptime.access.authorizer.Authorizer
+import org.coursera.naptime.access.combiner.And
+import org.coursera.naptime.access.combiner.AnyOf
+import org.coursera.naptime.access.combiner.EitherOf
 import play.api.mvc.RequestHeader
 
 import scala.concurrent.ExecutionContext
@@ -43,15 +46,17 @@ trait HeaderAccessControl[A] {
     Future[A] = run(requestHeader).map(_.left.map(throw _).merge)
 
   def run(
-      rh: RequestHeader)
+      requestHeader: RequestHeader)
       (implicit executionContext: ExecutionContext): Future[Either[NaptimeActionException, A]]
 
 }
 
-object HeaderAccessControl {
+object HeaderAccessControl extends AnyOf with And with EitherOf {
+
   def allowAll: HeaderAccessControl[Unit] = {
     val parser = HeaderAuthenticationParser.constant(())
     val authorizer = Authorizer[Unit](_ => AuthorizeResult.Authorized)
     StructuredAccessControl(Authenticator(parser, Decorator.identity[Unit]), authorizer)
   }
+
 }
