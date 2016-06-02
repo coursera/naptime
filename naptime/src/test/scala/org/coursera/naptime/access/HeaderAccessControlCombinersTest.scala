@@ -67,7 +67,7 @@ class HeaderAccessControlCombinersTest extends AssertionsForJUnit with ScalaFutu
   @Test
   def eitherSimple(): Unit = {
     runEither() { result =>
-      assert(Right(Left("left")) === result)
+      assert(Right(Right("right")) === result)
     }
   }
 
