@@ -290,6 +290,20 @@ class HeaderAccessControlCombinersTest extends AssertionsForJUnit with ScalaFutu
       assert(result.left.get.httpCode === Status.INTERNAL_SERVER_ERROR)
     }
   }
+
+  @Test
+  def complexTest(): Unit = {
+    val acceptingParser = StructuredAccessControl(Authenticators.constant(true), Authorizers.allowed)
+    val notParsing = StructuredAccessControl(Authenticators.parseMissing[String], Authorizers.deny())
+    val innerEither = HeaderAccessControl.eitherOf(acceptingParser, notParsing)
+    val acceptingOuter = StructuredAccessControl(Authenticators.constant("foo"), Authorizers.allowed)
+    val denyingOuter = StructuredAccessControl(Authenticators.constant("foo"), Authorizers.deny())
+    val wrapped = HeaderAccessControl.anyOf(
+      HeaderAccessControl.and(innerEither, acceptingOuter),
+      HeaderAccessControl.and(innerEither, denyingOuter))
+    val result = wrapped.run(FakeRequest()).futureValue
+    assert(Right((Some((Left(true), "foo")), None)) === result)
+  }
 }
 
 object HeaderAccessControlCombinersTest {
