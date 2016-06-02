@@ -22,7 +22,6 @@ import org.coursera.naptime.model.Keyed
 import org.coursera.naptime.RestError
 import org.coursera.naptime.NaptimeActionException
 import org.coursera.naptime.Errors
-import org.coursera.naptime.FieldsBuilder
 import org.coursera.naptime.Ok
 import org.coursera.naptime.access.HeaderAccessControl
 import org.coursera.naptime.resources.TopLevelCollectionResource
@@ -58,40 +57,35 @@ object RestActionCategoryEngine2Test {
    * In general, it is a very bad idea to have multiple gets, creates, etc, in a single resource.
    */
   object PlayJsonTestResource
-    extends TopLevelCollectionResource[String, Person]
-    with FieldsBuilder[Person] {
+    extends TopLevelCollectionResource[String, Person] {
     override def keyFormat: KeyFormat[String] = KeyFormat.stringKeyFormat
     override def resourceName: String = "testResource"
     override implicit val resourceFormat: OFormat[Person] = Json.format[Person]
     implicit val fields = Fields.withDefaultFields("name")
 
-    def Rest[RACType, ResponseType] =
-      new RestActionBuilder[RACType, Unit, AnyContent, String, Person, ResponseType](
-        HeaderAccessControl.allowAll, BodyParsers.parse.anyContent, PartialFunction.empty)
-
-    def get1(id: String) = Rest.get { ctx =>
+    def get1(id: String) = Nap.get { ctx =>
       Ok(Keyed(id, Person(id, s"$id@coursera.org")))
     }
 
-    def get2(id: String) = Rest.get { ctx =>
+    def get2(id: String) = Nap.get { ctx =>
       Errors.NotFound(errorCode = "id", msg = s"Bad id $id")
     }
 
-    def create1 = Rest.create { ctx =>
+    def create1 = Nap.create { ctx =>
       Ok(Keyed("newId", Some(Person("newId", "newId@coursera.org"))))
     }
 
-    def create2 = Rest.create { ctx =>
+    def create2 = Nap.create { ctx =>
       Ok(Keyed("newId2", None))
     }
 
-    def create3 = Rest.catching {
+    def create3 = Nap.catching {
       case e: RuntimeException => RestError(NaptimeActionException(Status.BAD_REQUEST, Some("boom"), None))
     }.create { ctx =>
       throw new RuntimeException("boooooooom")
     }
 
-    def delete1(id: String) = Rest.delete {
+    def delete1(id: String) = Nap.delete {
       Ok(())
     }
   }
@@ -105,8 +99,7 @@ object RestActionCategoryEngine2Test {
    * In general, it is a very bad idea to have multiple gets, creates, etc, in a single resource.
    */
   object CourierTestResource
-    extends TopLevelCollectionResource[String, Course]
-    with FieldsBuilder[Course] {
+    extends TopLevelCollectionResource[String, Course] {
     override def keyFormat: KeyFormat[String] = KeyFormat.stringKeyFormat
     override def resourceName: String = "testResource"
     override implicit val resourceFormat: OFormat[Course] =
@@ -115,33 +108,29 @@ object RestActionCategoryEngine2Test {
 
     def mk(id: String): Course = Course(s"$id name", s"$id description")
 
-    def Rest[RACType, ResponseType] =
-      new RestActionBuilder[RACType, Unit, AnyContent, String, Course, ResponseType](
-        HeaderAccessControl.allowAll, BodyParsers.parse.anyContent, PartialFunction.empty)
-
-    def get1(id: String) = Rest.get { ctx =>
+    def get1(id: String) = Nap.get { ctx =>
       Ok(Keyed(id, mk(id)))
     }
 
-    def get2(id: String) = Rest.get { ctx =>
+    def get2(id: String) = Nap.get { ctx =>
       Errors.NotFound(errorCode = "id", msg = s"Bad id: $id")
     }
 
-    def create1 = Rest.create { ctx =>
+    def create1 = Nap.create { ctx =>
       Ok(Keyed("1", Some(mk("1"))))
     }
 
-    def create2 = Rest.create { ctx =>
+    def create2 = Nap.create { ctx =>
       Ok(Keyed("1", None))
     }
 
-    def create3 = Rest.catching {
+    def create3 = Nap.catching {
       case e: RuntimeException => RestError(NaptimeActionException(Status.BAD_REQUEST, Some("boom"), None))
     }.create { ctx =>
       throw new RuntimeException("boooooooom")
     }
 
-    def delete1(id: String) = Rest.delete {
+    def delete1(id: String) = Nap.delete {
       Ok(())
     }
   }

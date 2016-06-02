@@ -18,7 +18,6 @@ package org.coursera.naptime.router2
 
 import org.coursera.common.stringkey.StringKeyFormat
 import org.coursera.naptime.model.KeyFormat
-import org.coursera.naptime.Fields
 import org.coursera.naptime.actions.RestActionBuilder
 import org.coursera.naptime.access.HeaderAccessControl
 import org.coursera.naptime.path.:::
@@ -53,45 +52,41 @@ object NestingCollectionResourceRouterTest {
     override def keyFormat: KeyFormat[KeyType] = KeyFormat.stringKeyFormat
     override implicit def resourceFormat: OFormat[Person] = Person.jsonFormat
     override def resourceName: String = "myResource"
-    implicit val fields = Fields.apply[Person]
+    implicit val fields = Fields
 
-    def Rest[RACType, ResponseType] =
-      new RestActionBuilder[RACType, Unit, AnyContent, String, Person, ResponseType](
-        HeaderAccessControl.allowAll, BodyParsers.parse.anyContent, PartialFunction.empty)
-
-    def get(id: String) = Rest.get { ctx =>
+    def get(id: String) = Nap.get { ctx =>
       ???
     }
 
-    def multiGet(ids: Set[String]) = Rest.multiGet { ctx =>
+    def multiGet(ids: Set[String]) = Nap.multiGet { ctx =>
       ???
     }
 
-    def getAll = Rest.getAll { ctx =>
+    def getAll = Nap.getAll { ctx =>
       ???
     }
 
-    def me = Rest.finder { ctx =>
+    def me = Nap.finder { ctx =>
       ???
     }
 
-    def create = Rest.create { ctx =>
+    def create = Nap.create { ctx =>
       ???
     }
 
-    def delete(id: String) = Rest.delete { ctx =>
+    def delete(id: String) = Nap.delete { ctx =>
       ???
     }
 
-    def update(id: String) = Rest.update { ctx =>
+    def update(id: String) = Nap.update { ctx =>
       ???
     }
 
-    def patch(id: String) = Rest.patch { ctx =>
+    def patch(id: String) = Nap.patch { ctx =>
       ???
     }
 
-    def myAwesomeAction = Rest.action { ctx =>
+    def myAwesomeAction = Nap.action { ctx =>
       ???
     }
   }
@@ -179,48 +174,44 @@ object NestingCollectionResourceRouterTest {
     override def keyFormat: KeyFormat[KeyType] = KeyFormat.stringKeyFormat
     override implicit def resourceFormat: OFormat[Person] = Person.jsonFormat
     override def resourceName: String = "myNestedResource"
-    implicit val fields = Fields.apply[Person]
+    implicit val fields = Fields
 
     val ANCESTOR_KEY: AncestorKeys = ("parentKey" ::: RootParsedPathKey).asInstanceOf[AncestorKeys]
     val PATH_KEY: PathKey = ("resourceId" ::: ANCESTOR_KEY).asInstanceOf[PathKey]
 
-    def Rest[RACType, ResponseType] =
-      new RestActionBuilder[RACType, Unit, AnyContent, String, Person, ResponseType](
-        HeaderAccessControl.allowAll, BodyParsers.parse.anyContent, PartialFunction.empty)
-
-    def get(id: String, parentKeys: AncestorKeys) = Rest.get { ctx =>
+    def get(id: String, parentKeys: AncestorKeys) = Nap.get { ctx =>
       ???
     }
 
-    def multiGet(ids: Set[String], parentKeys: AncestorKeys) = Rest.multiGet { ctx =>
+    def multiGet(ids: Set[String], parentKeys: AncestorKeys) = Nap.multiGet { ctx =>
       ???
     }
 
-    def getAll(parentKeys: AncestorKeys) = Rest.getAll { ctx =>
+    def getAll(parentKeys: AncestorKeys) = Nap.getAll { ctx =>
       ???
     }
 
-    def me = Rest.finder { ctx =>
+    def me = Nap.finder { ctx =>
       ???
     }
 
-    def create(parentKeys: AncestorKeys) = Rest.create { ctx =>
+    def create(parentKeys: AncestorKeys) = Nap.create { ctx =>
       ???
     }
 
-    def delete(id: String, pathKey: PathKey) = Rest.delete { ctx =>
+    def delete(id: String, pathKey: PathKey) = Nap.delete { ctx =>
       ???
     }
 
-    def update(pathKey: PathKey) = Rest.update { ctx =>
+    def update(pathKey: PathKey) = Nap.update { ctx =>
       ???
     }
 
-    def patch(id: String, parentKeys: AncestorKeys) = Rest.patch { ctx =>
+    def patch(id: String, parentKeys: AncestorKeys) = Nap.patch { ctx =>
       ???
     }
 
-    def myAwesomeAction = Rest.action { ctx =>
+    def myAwesomeAction = Nap.action { ctx =>
       ???
     }
   }

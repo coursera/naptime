@@ -330,15 +330,6 @@ object Fields {
   val FIELDS_HEADER = "X-Coursera-Naptime-Fields"
 }
 
-/**
- * Mix this trait in to make it easy to generate an appropriate Fields object.
- *
- * @tparam T The type of the field.
- */
-trait FieldsBuilder[T] {
-  def Fields(implicit format: OFormat[T]): Fields[T] = org.coursera.naptime.Fields[T](format)
-}
-
 // TODO(saeta): FieldFn should also take advantage of the authentication applied. This will require
 // adding additional type information to many models.
 sealed trait FieldsFunction extends ((RequestHeader, QueryFields) => QueryFields) {

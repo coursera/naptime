@@ -51,33 +51,9 @@ import scala.collection.JavaConversions._
  * The top level resource in our fledgling social network.
  */
 class PersonResource
-  extends TopLevelCollectionResource[String, Person]
-  with FieldsBuilder[Person] {
+  extends TopLevelCollectionResource[String, Person] {
 
   val PATH_KEY: PathKey = ("myPathKeyId" ::: RootParsedPathKey).asInstanceOf[PathKey]
-
-  /**
-   * Helper to easily construct Rest actions.
-   *
-   * Typically, all actions in a naptime resource will all use the same auth parser and policy, or
-   * will want to use the same error handling function for all requests. These resources should do
-   * something similar to the following:
-   *
-   * {{{
-   *   class MyResource extends RestActionHelpers[Foo, Bar] {
-   *     def RRest[RACType, ResponseType] =
-   *       Rest[RACType, ResponseType].auth(myAuthPolicy).catching(errorFn)
-   *
-   *   ...
-   *   }
-   *
-   * }}}
-   */
-  def Rest[RACType, ResponseType]()
-    (implicit keyFormat: KeyFormat[String],
-      resourceFormat: OFormat[Person]) =
-    new RestActionBuilder[RACType, Unit, AnyContent, String, Person, ResponseType](
-      HeaderAccessControl.allowAll, BodyParsers.parse.anyContent, PartialFunction.empty)
 
   override def keyFormat: KeyFormat[String] = KeyFormat.stringKeyFormat
 
@@ -93,40 +69,40 @@ class PersonResource
     Keyed("3", Person("fred")),
     Keyed("4", Person("bill")))
 
-  def getAll = Rest.getAll { implicit ctx =>
+  def getAll = Nap.getAll { implicit ctx =>
     Ok(allItems)
   }
 
-  def get(id: PathKey) = Rest.get { ctx =>
+  def get(id: PathKey) = Nap.get { ctx =>
     Ok(allItems.head)
   }
 
-  def multiGet(ids: Set[String]) = Rest.multiGet { ctx =>
+  def multiGet(ids: Set[String]) = Nap.multiGet { ctx =>
     Ok(allItems.filter(item => ids.contains(item.key)))
   }
 
-  def update(id: String, message: Option[String]) = Rest.update(ctx => ???)
+  def update(id: String, message: Option[String]) = Nap.update(ctx => ???)
 
   // Required argument with default allowed.
-  def delete(id: KeyType, message: String = "Something?") = Rest.delete(ctx => ???)
+  def delete(id: KeyType, message: String = "Something?") = Nap.delete(ctx => ???)
 
-  def create = Rest.create(ctx => ???)
+  def create = Nap.create(ctx => ???)
 
-  def byEmail(email: String) = Rest.finder(ctx => ???)
+  def byEmail(email: String) = Nap.finder(ctx => ???)
 
-  def byUsernameAndDomain(userName: String, domain: String) = Rest.finder(ctx => ???)
+  def byUsernameAndDomain(userName: String, domain: String) = Nap.finder(ctx => ???)
 
-  def byUsernameSorted(userName: String, sort: SortOrder) = Rest.finder(ctx => ???)
+  def byUsernameSorted(userName: String, sort: SortOrder) = Nap.finder(ctx => ???)
 
   def complex(complex: ComplexEmailType, extra: Option[String], skipCache: Boolean) =
-    Rest.finder(ctx => ???)
+    Nap.finder(ctx => ???)
 
   def complexWithDefault(complex: ComplexEmailType = ComplexEmailType("daphne", "coursera.org")) =
-    Rest.finder(ctx => ???)
+    Nap.finder(ctx => ???)
 
-  def batchModify(someParam: Option[ComplexEmailType]) = Rest.action(ctx => ???)
+  def batchModify(someParam: Option[ComplexEmailType]) = Nap.action(ctx => ???)
 
-  def parameterless() = Rest.action(ctx => ???)
+  def parameterless() = Nap.action(ctx => ???)
 }
 
 object PersonResource {
@@ -142,8 +118,7 @@ object FriendshipInfo {
 }
 
 class FriendsResource(val parentResource: PersonResource)
-  extends CollectionResource[PersonResource, String, FriendshipInfo]
-  with FieldsBuilder[FriendshipInfo] {
+  extends CollectionResource[PersonResource, String, FriendshipInfo] {
   override def keyFormat: KeyFormat[KeyType] = KeyFormat.stringKeyFormat
 
   override implicit def resourceFormat: OFormat[FriendshipInfo] = FriendshipInfo.jsonFormat
@@ -157,61 +132,37 @@ class FriendsResource(val parentResource: PersonResource)
   val PATH_KEY: PathKey = ("friendId" ::: ANCESTOR_KEY).asInstanceOf[PathKey]
   val OPT_PATH_KEY: OptPathKey = (None ::: ANCESTOR_KEY).asInstanceOf[OptPathKey]
 
-  /**
-   * Helper to easily construct Rest actions.
-   *
-   * Typically, all actions in a naptime resource will all use the same auth parser and policy, or
-   * will want to use the same error handling function for all requests. These resources should do
-   * something similar to the following:
-   *
-   * {{{
-   *   class MyResource extends RestActionHelpers[Foo, Bar] {
-   *     def RRest[RACType, ResponseType] =
-   *       Rest[RACType, ResponseType].auth(myAuthPolicy).catching(errorFn)
-   *
-   *   ...
-   *   }
-   *
-   * }}}
-   */
-  def Rest[RACType, ResponseType]()
-    (implicit keyFormat: KeyFormat[String],
-      resourceFormat: OFormat[FriendshipInfo]) =
-    new RestActionBuilder[RACType, Unit, AnyContent, String, FriendshipInfo, ResponseType](
-      HeaderAccessControl.allowAll, BodyParsers.parse.anyContent, PartialFunction.empty)
-
-
-  def getAll(ancestorKeys: AncestorKeys) = Rest.getAll { implicit ctx =>
+  def getAll(ancestorKeys: AncestorKeys) = Nap.getAll { implicit ctx =>
     ???
   }
 
-  def get(id: PathKey) = Rest.get(ctx => ???)
+  def get(id: PathKey) = Nap.get(ctx => ???)
 
-  def multiGet(ids: Set[String], parentIds: AncestorKeys) = Rest.multiGet(ctx => ???)
+  def multiGet(ids: Set[String], parentIds: AncestorKeys) = Nap.multiGet(ctx => ???)
 
-  def update(id: String, parentIds: AncestorKeys) = Rest.update(ctx => ???)
+  def update(id: String, parentIds: AncestorKeys) = Nap.update(ctx => ???)
 
-  def delete(id: KeyType, fullId: PathKey) = Rest.delete(ctx => ???)
+  def delete(id: KeyType, fullId: PathKey) = Nap.delete(ctx => ???)
 
-  def create(ancestorKeys: AncestorKeys) = Rest.create(ctx => ???)
+  def create(ancestorKeys: AncestorKeys) = Nap.create(ctx => ???)
 
-  def byEmail(optPathKey: OptPathKey, email: String) = Rest.finder(ctx => ???)
+  def byEmail(optPathKey: OptPathKey, email: String) = Nap.finder(ctx => ???)
 
   def byUsernameAndDomain(
       ancestorKeys: AncestorKeys,
       userName: String,
-      domain: String) = Rest.finder(ctx => ???)
+      domain: String) = Nap.finder(ctx => ???)
 
   def withDefaults(
     ancestorKeys: AncestorKeys,
     userName: String,
-    domain: String = "defaultDomain") = Rest.finder(ctx => ???)
+    domain: String = "defaultDomain") = Nap.finder(ctx => ???)
 
-  def complex(complex: ComplexEmailType, extra: Option[String]) = Rest.finder(ctx => ???)
+  def complex(complex: ComplexEmailType, extra: Option[String]) = Nap.finder(ctx => ???)
 
   def batchModify(
       ancestorKeys: AncestorKeys,
-      someParam: Option[ComplexEmailType]) = Rest.action(ctx => ???)
+      someParam: Option[ComplexEmailType]) = Nap.action(ctx => ???)
 }
 
 object FriendsResource {
@@ -732,19 +683,14 @@ class NestedMacroTests extends AssertionsForJUnit with MockitoSugar {
 
   def shouldNotCompileTests(): Unit = {
     shapeless.test.illTyped("""
-      class MyResource extends TopLevelCollectionResource[String, FriendshipInfo]
-        with FieldsBuilder[FriendshipInfo] {
+      class MyResource extends TopLevelCollectionResource[String, FriendshipInfo] {
 
         override def keyFormat: KeyFormat[KeyType] = KeyFormat.stringKeyFormat
         override implicit def resourceFormat: OFormat[FriendshipInfo] = FriendshipInfo.jsonFormat
         override def resourceName: String = "friends"
         implicit val fields = Fields.withDefaultFields("friendshipQuality")
-        def Rest[RACType, ResponseType]()(implicit keyFormat: KeyFormat[String],
-            resourceFormat: OFormat[FriendshipInfo]) =
-          new RestActionBuilder[RACType, Unit, AnyContent, String, FriendshipInfo, ResponseType](
-            HeaderAccessControl.allowAll, BodyParsers.parse.anyContent, PartialFunction.empty)
 
-        def get(id: PathKey, optPath: OptPathKey) = Rest.get { ctx => ??? }
+        def get(id: PathKey, optPath: OptPathKey) = Nap.get { ctx => ??? }
       }
       object MyResource {
         val router = Router.build[MyResource]
@@ -753,19 +699,14 @@ class NestedMacroTests extends AssertionsForJUnit with MockitoSugar {
     )
 
     shapeless.test.illTyped("""
-      class MyResource extends TopLevelCollectionResource[String, FriendshipInfo]
-        with FieldsBuilder[FriendshipInfo] {
+      class MyResource extends TopLevelCollectionResource[String, FriendshipInfo] {
 
         override def keyFormat: KeyFormat[KeyType] = KeyFormat.stringKeyFormat
         override implicit def resourceFormat: OFormat[FriendshipInfo] = FriendshipInfo.jsonFormat
         override def resourceName: String = "friends"
         implicit val fields = Fields.withDefaultFields("friendshipQuality")
-        def Rest[RACType, ResponseType]()(implicit keyFormat: KeyFormat[String],
-            resourceFormat: OFormat[FriendshipInfo]) =
-          new RestActionBuilder[RACType, Unit, AnyContent, String, FriendshipInfo, ResponseType](
-            HeaderAccessControl.allowAll, BodyParsers.parse.anyContent, PartialFunction.empty)
 
-        def getAll(pathKey: PathKey) = Rest.getAll { ctx => ??? }
+        def getAll(pathKey: PathKey) = Nap.getAll { ctx => ??? }
       }
       object MyResource {
         val router = Router.build[MyResource]
@@ -774,19 +715,14 @@ class NestedMacroTests extends AssertionsForJUnit with MockitoSugar {
     )
 
     shapeless.test.illTyped("""
-      class MyResource extends TopLevelCollectionResource[String, FriendshipInfo]
-        with FieldsBuilder[FriendshipInfo] {
+      class MyResource extends TopLevelCollectionResource[String, FriendshipInfo] {
 
         override def keyFormat: KeyFormat[KeyType] = KeyFormat.stringKeyFormat
         override implicit def resourceFormat: OFormat[FriendshipInfo] = FriendshipInfo.jsonFormat
         override def resourceName: String = "friends"
         implicit val fields = Fields.withDefaultFields("friendshipQuality")
-        def Rest[RACType, ResponseType]()(implicit keyFormat: KeyFormat[String],
-            resourceFormat: OFormat[FriendshipInfo]) =
-          new RestActionBuilder[RACType, Unit, AnyContent, String, FriendshipInfo, ResponseType](
-            HeaderAccessControl.allowAll, BodyParsers.parse.anyContent, PartialFunction.empty)
 
-        def myFinder(pathKey: PathKey) = Rest.finder { ctx => ??? }
+        def myFinder(pathKey: PathKey) = Nap.finder { ctx => ??? }
       }
       object MyResource {
         val router = Router.build[MyResource]
@@ -795,19 +731,14 @@ class NestedMacroTests extends AssertionsForJUnit with MockitoSugar {
     )
 
     shapeless.test.illTyped("""
-      class MyResource extends TopLevelCollectionResource[String, FriendshipInfo]
-        with FieldsBuilder[FriendshipInfo] {
+      class MyResource extends TopLevelCollectionResource[String, FriendshipInfo] {
 
         override def keyFormat: KeyFormat[KeyType] = KeyFormat.stringKeyFormat
         override implicit def resourceFormat: OFormat[FriendshipInfo] = FriendshipInfo.jsonFormat
         override def resourceName: String = "friends"
         implicit val fields = Fields.withDefaultFields("friendshipQuality")
-        def Rest[RACType, ResponseType]()(implicit keyFormat: KeyFormat[String],
-            resourceFormat: OFormat[FriendshipInfo]) =
-          new RestActionBuilder[RACType, Unit, AnyContent, String, FriendshipInfo, ResponseType](
-            HeaderAccessControl.allowAll, BodyParsers.parse.anyContent, PartialFunction.empty)
 
-        def getall(randomParameter: String) = Rest.getAll { ctx => ??? }
+        def getall(randomParameter: String) = Nap.getAll { ctx => ??? }
       }
       object MyResource {
         val router = Router.build[MyResource]
