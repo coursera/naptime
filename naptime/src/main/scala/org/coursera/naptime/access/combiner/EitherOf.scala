@@ -27,11 +27,11 @@ import scala.concurrent.Future
 private[access] trait EitherOf {
 
   /**
-   * Left-leaning combiner. That is, it tries to return each of these, in order:
-   *   - Left access control's successful result.
+   * Right-leaning combiner. That is, it tries to return each of these, in order:
    *   - Right access control's successful result.
-   *   - Left access control's error.
+   *   - Left access control's successful result.
    *   - Right access control's error.
+   *   - Left access control's error.
    */
   def eitherOf[A, B](
       controlA: HeaderAccessControl[A],
@@ -52,10 +52,10 @@ private[access] trait EitherOf {
           resultB <- futureB
         } yield {
           (resultA, resultB) match {
-            case (Right(authentication), _) => Right(Left(authentication))
             case (_, Right(authentication)) => Right(Right(authentication))
-            case (Left(error), _) => Left(error)
+            case (Right(authentication), _) => Right(Left(authentication))
             case (_, Left(error)) => Left(error)
+            case (Left(error), _) => Left(error)
           }
         }
       }
