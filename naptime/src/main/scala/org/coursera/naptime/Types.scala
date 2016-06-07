@@ -84,7 +84,7 @@ object Types extends StrictLogging {
     val fields = idField :: fieldsMinusId
     recordDataSchema.setFields(fields.asJava, errorMessageBuilder)
     if (errorMessageBuilder.length() > 0) {
-      logger.warning(s"Error while computing asymmetric type $typeName: $errorMessageBuilder")
+      logger.warn(s"Error while computing asymmetric type $typeName: $errorMessageBuilder")
     }
     recordDataSchema
   }
@@ -112,7 +112,7 @@ object Types extends StrictLogging {
     val fields = idField :: valueType.getFields().asScala.toList
     recordDataSchema.setFields(fields.asJava, errorMessageBuilder)
     if (errorMessageBuilder.length() > 0) {
-      logger.warning(s"Error while computing asymmetric type $typeName: $errorMessageBuilder")
+      logger.warn(s"Error while computing asymmetric type $typeName: $errorMessageBuilder")
     }
     recordDataSchema
   }
