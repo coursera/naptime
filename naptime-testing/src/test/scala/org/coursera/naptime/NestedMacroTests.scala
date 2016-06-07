@@ -687,6 +687,8 @@ class NestedMacroTests extends AssertionsForJUnit with MockitoSugar {
     assert(types.head.value.getType === DataSchema.Type.RECORD)
     assert(types.head.value.isInstanceOf[RecordDataSchema])
     assert(types.head.value.asInstanceOf[RecordDataSchema].getFields.size() === 3)
+    assert(types.head.value.asInstanceOf[RecordDataSchema].getFields.toList.map(_.getName).toSet ===
+      Set("id", "name", "email"))
   }
 
   @Test
