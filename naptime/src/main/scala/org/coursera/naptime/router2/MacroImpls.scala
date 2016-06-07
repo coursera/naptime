@@ -183,8 +183,8 @@ class MacroImpls(val c: blackbox.Context) {
             name = Option(stubInstance.resourceName).getOrElse(
               "??? (resourceName should be def not val)"),
             version = Some(stubInstance.resourceVersion),
-            keyType = ${keyTypeName(resourceType)},
-            bodyType = ${mergedTypeName(resourceType)},
+            keyType = ${keyType(resourceType)},
+            bodyType = ${mergedType(resourceType)},
             parentClass = $parentResourceName,
             handlers = List(..${trees.flatMap(_._2)}),
             className = ${resourceType.toString},
@@ -197,7 +197,11 @@ class MacroImpls(val c: blackbox.Context) {
       finalResource
     }
 
-    private[this] def keyTypeName(resourceType: c.Type): c.Tree = {
+    private[this] def mergedType(resourceType: c.Type): String = {
+      resourceType.toString + ".Model"
+    }
+
+    private[this] def keyType(resourceType: c.Type): c.Tree = {
       val collectionTypeView = resourceType.baseType(COLLECTION_RESOURCE_TYPE.typeSymbol)
       val keyType = collectionTypeView.typeArgs(1)
       if (keyType <:< ANY_VAL || keyType =:= typeOf[String]) {
@@ -208,10 +212,6 @@ class MacroImpls(val c: blackbox.Context) {
       } else {
         q"${keyType.toString}"
       }
-    }
-
-    private[this] def mergedTypeName(resourceType: c.Type): String = {
-      resourceType.toString + ".Model"
     }
 
     private[this] def getRecordSchemaForType(targetType: c.Type): c.Tree = {
@@ -253,7 +253,7 @@ class MacroImpls(val c: blackbox.Context) {
       val bodySchemaOption = getRecordSchemaForType(bodyType)
 
       q"""{
-        val mergedTypeName: String = ${mergedTypeName(resourceType)}
+        val mergedType: String = ${mergedType(resourceType)}
         val keySchemaOption: Option[com.linkedin.data.schema.DataSchema] = $keySchemaOption
         val bodySchemaOption: Option[com.linkedin.data.schema.RecordDataSchema] = $bodySchemaOption
         (for {
@@ -261,9 +261,9 @@ class MacroImpls(val c: blackbox.Context) {
           bodySchema <- bodySchemaOption
         } yield {
           org.coursera.naptime.model.Keyed(
-            mergedTypeName,
+            mergedType,
             org.coursera.naptime.Types.computeAsymType(
-              mergedTypeName,
+              mergedType,
               keySchema,
               bodySchema))
         }).toList
