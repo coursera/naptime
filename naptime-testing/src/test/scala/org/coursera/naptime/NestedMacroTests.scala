@@ -45,6 +45,7 @@ import play.api.mvc.AnyContentAsEmpty
 import play.api.mvc.BodyParsers
 import play.api.mvc.RequestHeader
 import play.api.test.FakeRequest
+import scala.collection.JavaConversions._
 
 /**
  * The top level resource in our fledgling social network.
@@ -686,6 +687,8 @@ class NestedMacroTests extends AssertionsForJUnit with MockitoSugar {
     assert(types.head.value.getType === DataSchema.Type.RECORD)
     assert(types.head.value.isInstanceOf[RecordDataSchema])
     assert(types.head.value.asInstanceOf[RecordDataSchema].getFields.size() === 3)
+    assert(types.head.value.asInstanceOf[RecordDataSchema].getFields.toList.map(_.getName).toSet ===
+      Set("id", "name", "email"))
   }
 
   @Test
@@ -714,7 +717,15 @@ class NestedMacroTests extends AssertionsForJUnit with MockitoSugar {
   @Test
   def nestedTypes(): Unit = {
     val types = FriendsResource.routerBuilder.types
-    assert(types.size === 0) // Case-class-based resource doesn't yet have type information.
+    assert(types.size === 1)
+    assert(types.head.key === "org.coursera.naptime.FriendsResource.Model")
+    assert(!types.head.value.hasError)
+    assert(types.head.value.isComplex)
+    assert(types.head.value.getType === DataSchema.Type.RECORD)
+    assert(types.head.value.isInstanceOf[RecordDataSchema])
+    assert(types.head.value.asInstanceOf[RecordDataSchema].getFields.size() === 3)
+    assert(types.head.value.asInstanceOf[RecordDataSchema].getFields.toList.map(_.getName).toSet ===
+      Set("id", "friendshipQuality", "friendsSince"))
   }
 
   // TODO(saeta): test the generated pegasus asymmetric body types for correctness.
