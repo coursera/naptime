@@ -119,15 +119,22 @@ def expensiveFinder() = Nap.auth(Auths.hasRole(Role.POWER_USER)).finder(ctx => ?
 def deleteAllTheThings() = Nap.auth(Auths.administrator).action(ctx => ???)
 ```
 
-## Advanced Access Control FAQs ##
+## Access Control Combinators ##
 
-_What if I want to allow access to a resource whether a user is authenticated or not?_
+You can combine different `StructuredAccessControl`s together to create more sophisticated policies.
+The available combinators are:
+ - **`either[A, B](left: StructuredAccessControl[A], right: StructuredAccessControl[B]): StructuredAccessControl[Either[A, B]]`**: This combinator will run the `left` and the `right` access control policies. If the left one allows the request through, the `context.auth` will be `Left[A]`. If the left one encounters a error or denies the request, `right` is applied. (Note: in practice, both are run concurrently to avoid paying a latency penalty.) If neither `left` nor `right` admit the request, then the request is denied with an error message.
+ - **`and[A, B](left: StructuredAccessControl[A], right: StructuredAccessControl[B]): StructuredAccessControl[(A, B)]`**: This combinator will run both the `left` and the `right` access control policies, and will admit the request if and only if both policies allow it.
+ - **`anyOf[A, B](left: StructuredAccessControl[A], right: StructuredAccessControl[B]): StructuredAccessControl[(Option[A], Option[B])]`**: This combinator will let the request pass as long as _at least_ one of `left` and `right` would allow the request. If `left` would allow the request, and `right` would not, then `context.auth` will be `(Some[A], None)`. If both would allow the request, `context.auth` will be: `(Some[A], Some[B])`. If neither would allow the request, the request will be denied; there will never be a request allowed where `context.auth` is `(None, None)`.
+ - **`anyOf[A, B, C](...): StructuredAccessControl[(Option[A], Option[B], Option[C])]`**: This one works the same as the previous one, but allows combining three `StructuredAccessControl`s.
 
-If you would like to allow access irrespective of a particular user agent's authentication status,
-simply use the `HeaderAccessControl.allowAll` access control implementation.
+#### Advanced Combinators ####
 
-_What if I want to let a request through if it satisfies one of multiple access control policies?
-What about if I want to only let a request through if it satisfies all of a set of access controls?_
+The previous combinator mechanism can become cumbersome when designing subtle access control policies. If a particular combinator is used frequently, consider using `AuthenticationTransformer`s to make a more convenient type.
+
+## Access Control FAQs ##
+
+#### What if I want to let a request through if it satisfies one of multiple access control policies?
 
 You can flexibly combine decorators, authenticators, authorizers and even `StructuredAccessControl`
 policies using provided helpers. For example, if you have already defined a couple
@@ -143,8 +150,14 @@ def myFunction(...) = Nap.auth(StructuredAccessControl.anyOf(
 }
 ```
 
-_What if I want to have the resource behave differently if the user is authenticated, while still
-allowing access if they are unauthenticated?_
+#### What if I want to allow access to a resource whether a user is authenticated or not?
+
+If you would like to allow access irrespective of a particular user agent's authentication status,
+simply use the `HeaderAccessControl.allowAll` access control implementation.
+
+
+
+#### What if I want to have the resource behave differently if the user is authenticated, while still allowing access if they are unauthenticated?
 
 To do this, you should design your `HeaderAuthenticationParser` to return an `Option[Something]`,
 and return either `ParseResult.Success(Some(...))` or `ParseResult.Success(None)` if the user agent
@@ -154,19 +167,19 @@ Alternatively, you can use combinators to mix the access policies. For example, 
 StructuredAccessControl.anyOf(...) combinator to allow access whether they are authenticated or not
 while still capturing the authentication information.
 
-_What if I want to do something different for a mobile client vs a web client?_
+#### What if I want to do something different for a mobile client vs a web client?
 
 In general, this is not recommended because this subverts the principle of re-using the same APIs
 across all client platforms. If this is required, the `HeaderAuthenticationParser` should also parse
 the `User-Agent` string as appropriate. Beware, however, that this can easily be spoofed.
 
-_What if an access control decision must be made based on the output of the request body?_
+#### What if an access control decision must be made based on the output of the request body?
 
 At this time, it is not possible to make an authorization decision based on the content of the
 request body as part of this framework. Instead, you should make this authorization decision as
 part of your resource implementation based on the `ctx.auth` and `ctx.body`.
 
-_What if I want to return an `WWW-Authenticate` header in my 401 response?_
+#### What if I want to return an `WWW-Authenticate` header in my 401 response?
 
 Unfortunately, this is not supported at this time. Given the complex nature of authentication today,
 we don't often see this header used except by HTTP Basic and Digest authentication mechanisms, which
