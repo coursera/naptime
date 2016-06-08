@@ -51,30 +51,7 @@ object ComplexEmailType {
     ComplexEmailType.unapply)
 }
 
-class Resource extends TopLevelCollectionResource[String, Item] with FieldsBuilder[Item] {
-
-  /**
-   * Helper to easily construct Rest actions.
-   *
-   * Typically, all actions in a naptime resource will all use the same auth parser and policy, or
-   * will want to use the same error handling function for all requests. These resources should do
-   * something similar to the following:
-   *
-   * {{{
-   *   class MyResource extends RestActionHelpers[Foo, Bar] {
-   *     def RRest[RACType, ResponseType] =
-   *       Rest[RACType, ResponseType].auth(myAuthPolicy).catching(errorFn)
-   *
-   *   ...
-   *   }
-   *
-   * }}}
-   */
-  def Rest[RACType, ResponseType]()
-    (implicit keyFormat: KeyFormat[String],
-      resourceFormat: OFormat[Item]) =
-    new RestActionBuilder[RACType, Unit, AnyContent, String, Item, ResponseType](
-      HeaderAccessControl.allowAll, BodyParsers.parse.anyContent, PartialFunction.empty)
+class Resource extends TopLevelCollectionResource[String, Item] {
 
   override def keyFormat: KeyFormat[String] = KeyFormat.stringKeyFormat
 
@@ -90,47 +67,47 @@ class Resource extends TopLevelCollectionResource[String, Item] with FieldsBuild
     Keyed("3", Item("tree", "with branches and leaves")),
     Keyed("4", Item("flour", "make bread with me")))
 
-  def getAll = Rest.getAll { implicit ctx =>
+  def getAll = Nap.getAll { implicit ctx =>
     Ok(allItems)
   }
 
-  def get(id: String) = Rest.get { ctx =>
+  def get(id: String) = Nap.get { ctx =>
     Ok(allItems.head)
   }
 
-  def multiGet(ids: Set[String]) = Rest.multiGet { ctx =>
+  def multiGet(ids: Set[String]) = Nap.multiGet { ctx =>
     Ok(allItems.filter(item => ids.contains(item.key)))
   }
 
-  def update(id: String) = Rest.update { ctx =>
+  def update(id: String) = Nap.update { ctx =>
     ???
   }
 
-  def delete(id: String) = Rest.delete { ctx =>
+  def delete(id: String) = Nap.delete { ctx =>
     ???
   }
 
-  def create = Rest.create { ctx =>
+  def create = Nap.create { ctx =>
     ???
   }
 
-  def byEmail(email: String) = Rest.finder { ctx =>
+  def byEmail(email: String) = Nap.finder { ctx =>
     ???
   }
 
-  def byUsernameAndDomain(userName: String, domain: String) = Rest.finder { ctx =>
+  def byUsernameAndDomain(userName: String, domain: String) = Nap.finder { ctx =>
     ???
   }
 
-  def complex(complex: ComplexEmailType, extra: Option[String]) = Rest.finder { ctx =>
+  def complex(complex: ComplexEmailType, extra: Option[String]) = Nap.finder { ctx =>
     ???
   }
 
-  def batchModify(someParam: Option[ComplexEmailType]) = Rest.action { ctx =>
+  def batchModify(someParam: Option[ComplexEmailType]) = Nap.action { ctx =>
     ???
   }
 
-  def parameterless() = Rest.action { ctx =>
+  def parameterless() = Nap.action { ctx =>
     ???
   }
 

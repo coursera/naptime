@@ -20,11 +20,8 @@ import com.google.inject.Guice
 import org.coursera.naptime.model.KeyFormat
 import org.coursera.naptime.model.Keyed
 import org.coursera.naptime.ComplexEmailType
-import org.coursera.naptime.FieldsBuilder
 import org.coursera.naptime.NaptimeModule
 import org.coursera.naptime.Ok
-import org.coursera.naptime.actions.RestActionBuilder
-import org.coursera.naptime.access.HeaderAccessControl
 import org.coursera.naptime.path.ParseFailure
 import org.coursera.naptime.path.ParseSuccess
 import org.coursera.naptime.path.RootParsedPathKey
@@ -38,9 +35,7 @@ import org.scalatest.junit.AssertionsForJUnit
 import org.scalatest.mock.MockitoSugar
 import play.api.libs.json.Json
 import play.api.libs.json.OFormat
-import play.api.mvc.AnyContent
 import play.api.mvc.AnyContentAsEmpty
-import play.api.mvc.BodyParsers
 import play.api.mvc.RequestHeader
 import play.api.test.FakeRequest
 
@@ -58,33 +53,10 @@ object PlayNaptimeRouterIntegrationTest {
    * The top level resource in our fledgling social network.
    */
   class PersonResource
-    extends TopLevelCollectionResource[String, Person]
-    with FieldsBuilder[Person] {
+    extends TopLevelCollectionResource[String, Person] {
 
     val PATH_KEY: PathKey = ("myPathKeyId" ::: RootParsedPathKey).asInstanceOf[PathKey]
 
-    /**
-     * Helper to easily construct Rest actions.
-     *
-     * Typically, all actions in a naptime resource will all use the same auth parser and policy, or
-     * will want to use the same error handling function for all requests. These resources should do
-     * something similar to the following:
-     *
-     * {{{
-     *   class MyResource extends RestActionHelpers[Foo, Bar] {
-     *     def RRest[RACType, ResponseType] =
-     *       Rest[RACType, ResponseType].auth(myAuthPolicy).catching(errorFn)
-     *
-     *   ...
-     *   }
-     *
-     * }}}
-     */
-    def Rest[RACType, ResponseType]()
-      (implicit keyFormat: KeyFormat[String],
-        resourceFormat: OFormat[Person]) =
-      new RestActionBuilder[RACType, Unit, AnyContent, String, Person, ResponseType](
-        HeaderAccessControl.allowAll, BodyParsers.parse.anyContent, PartialFunction.empty)
 
     override def keyFormat: KeyFormat[String] = KeyFormat.stringKeyFormat
 
@@ -100,29 +72,29 @@ object PlayNaptimeRouterIntegrationTest {
       Keyed("3", Person("fred")),
       Keyed("4", Person("bill")))
 
-    def getAll = Rest.getAll(implicit ctx => Ok(allItems))
+    def getAll = Nap.getAll(implicit ctx => Ok(allItems))
 
-    def get(id: PathKey) = Rest.get(ctx => Ok(allItems.head))
+    def get(id: PathKey) = Nap.get(ctx => Ok(allItems.head))
 
-    def multiGet(ids: Set[String]) = Rest.multiGet { ctx =>
+    def multiGet(ids: Set[String]) = Nap.multiGet { ctx =>
       Ok(allItems.filter(item => ids.contains(item.key)))
     }
 
-    def update(id: String) = Rest.update(ctx => ???)
+    def update(id: String) = Nap.update(ctx => ???)
 
-    def delete(id: KeyType) = Rest.delete(ctx => ???)
+    def delete(id: KeyType) = Nap.delete(ctx => ???)
 
-    def create = Rest.create(ctx => ???)
+    def create = Nap.create(ctx => ???)
 
-    def byEmail(email: String) = Rest.finder(ctx => ???)
+    def byEmail(email: String) = Nap.finder(ctx => ???)
 
-    def byUsernameAndDomain(userName: String, domain: String) = Rest.finder(ctx => ???)
+    def byUsernameAndDomain(userName: String, domain: String) = Nap.finder(ctx => ???)
 
-    def complex(complex: ComplexEmailType, extra: Option[String]) = Rest.finder(ctx => ???)
+    def complex(complex: ComplexEmailType, extra: Option[String]) = Nap.finder(ctx => ???)
 
-    def batchModify(someParam: Option[ComplexEmailType]) = Rest.action(ctx => ???)
+    def batchModify(someParam: Option[ComplexEmailType]) = Nap.action(ctx => ???)
 
-    def parameterless() = Rest.action(ctx => ???)
+    def parameterless() = Nap.action(ctx => ???)
   }
 
   case class FriendshipInfo(
@@ -134,8 +106,7 @@ object PlayNaptimeRouterIntegrationTest {
   }
 
   class FriendsResource(val parentResource: PersonResource)
-    extends CollectionResource[PersonResource, String, FriendshipInfo]
-    with FieldsBuilder[FriendshipInfo] {
+    extends CollectionResource[PersonResource, String, FriendshipInfo] {
     override def keyFormat: KeyFormat[KeyType] = KeyFormat.stringKeyFormat
 
     override implicit def resourceFormat: OFormat[FriendshipInfo] = FriendshipInfo.jsonFormat
@@ -149,59 +120,35 @@ object PlayNaptimeRouterIntegrationTest {
     val PATH_KEY: PathKey = ("friendId" ::: ANCESTOR_KEY).asInstanceOf[PathKey]
     val OPT_PATH_KEY: OptPathKey = (None ::: ANCESTOR_KEY).asInstanceOf[OptPathKey]
 
-    /**
-     * Helper to easily construct Rest actions.
-     *
-     * Typically, all actions in a naptime resource will all use the same auth parser and policy, or
-     * will want to use the same error handling function for all requests. These resources should do
-     * something similar to the following:
-     *
-     * {{{
-     *   class MyResource extends RestActionHelpers[Foo, Bar] {
-     *     def RRest[RACType, ResponseType] =
-     *       Rest[RACType, ResponseType].auth(myAuthPolicy).catching(errorFn)
-     *
-     *   ...
-     *   }
-     *
-     * }}}
-     */
-    def Rest[RACType, ResponseType]()
-      (implicit keyFormat: KeyFormat[String],
-        resourceFormat: OFormat[FriendshipInfo]) =
-      new RestActionBuilder[RACType, Unit, AnyContent, String, FriendshipInfo, ResponseType](
-        HeaderAccessControl.allowAll, BodyParsers.parse.anyContent, PartialFunction.empty)
+    def getAll(ancestorKeys: AncestorKeys) = Nap.getAll(ctx => ???)
 
+    def get(id: PathKey) = Nap.get(ctx => ???)
 
-    def getAll(ancestorKeys: AncestorKeys) = Rest.getAll(ctx => ???)
+    def multiGet(ids: Set[String], parentIds: AncestorKeys) = Nap.multiGet(ctx => ???)
 
-    def get(id: PathKey) = Rest.get(ctx => ???)
+    def update(id: String, parentIds: AncestorKeys) = Nap.update(ctx => ???)
 
-    def multiGet(ids: Set[String], parentIds: AncestorKeys) = Rest.multiGet(ctx => ???)
+    def delete(id: KeyType, fullId: PathKey) = Nap.delete(ctx => ???)
 
-    def update(id: String, parentIds: AncestorKeys) = Rest.update(ctx => ???)
+    def create(ancestorKeys: AncestorKeys) = Nap.create(ctx => ???)
 
-    def delete(id: KeyType, fullId: PathKey) = Rest.delete(ctx => ???)
-
-    def create(ancestorKeys: AncestorKeys) = Rest.create(ctx => ???)
-
-    def byEmail(optPathKey: OptPathKey, email: String) = Rest.finder(ctx => ???)
+    def byEmail(optPathKey: OptPathKey, email: String) = Nap.finder(ctx => ???)
 
     def byUsernameAndDomain(
       ancestorKeys: AncestorKeys,
       userName: String,
-      domain: String) = Rest.finder(ctx => ???)
+      domain: String) = Nap.finder(ctx => ???)
 
     def withDefaults(
       ancestorKeys: AncestorKeys,
       userName: String,
-      domain: String = "defaultDomain") = Rest.finder(ctx => ???)
+      domain: String = "defaultDomain") = Nap.finder(ctx => ???)
 
-    def complex(complex: ComplexEmailType, extra: Option[String]) = Rest.finder(ctx => ???)
+    def complex(complex: ComplexEmailType, extra: Option[String]) = Nap.finder(ctx => ???)
 
     def batchModify(
       ancestorKeys: AncestorKeys,
-      someParam: Option[ComplexEmailType]) = Rest.action(ctx => ???)
+      someParam: Option[ComplexEmailType]) = Nap.action(ctx => ???)
   }
 }
 

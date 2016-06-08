@@ -41,6 +41,9 @@ trait Resource[M] {
 
   def resourceName: String
   def resourceVersion: Int = 1
+
+  def Fields: Fields[M] = org.coursera.naptime.Fields[M](resourceFormat)
+
   type PathKey <: ParsedPathKey
   type PathParser <: PathKeyParser[PathKey]
   private[naptime] def pathParser: PathParser
@@ -102,6 +105,40 @@ trait CollectionResource[ParentResource <: Resource[_], K, M] extends Resource[M
   protected[this] val parentResource: ParentResource
 
   /**
+   * Helper to easily construct Naptime actions.
+   *
+   * Typically, all actions in a naptime resource will all use the same auth parser and policy, or
+   * will want to use the same error handling function for all requests. These resources should do
+   * something similar to the following:
+   *
+   * {{{
+   *   class MyResource extends TopLevelCollectionResource[MyKeyType, MyValueType] {
+   *     def Rest[RACType, ResponseType] =
+   *       Nap[RACType, ResponseType].auth(myAuthPolicy).catching(errorFn)
+   *
+   *   ...
+   *   }
+   * }}}
+   */
+  def Nap[RACType, ResponseType] =
+    new RestActionBuilder[RACType, Unit, AnyContent, K, M, ResponseType](
+      HeaderAccessControl.allowAll, BodyParsers.parse.anyContent, PartialFunction.empty)(
+        keyFormat, resourceFormat)
+
+
+  def OkIfPresent[T](a: Option[T]): RestResponse[T] = {
+    a.map(Ok(_)).getOrElse(
+      RestError(NaptimeActionException(404, Some("notFound"), Some("not found"), None)))
+  }
+
+  def OkIfPresent(key: K, maybeElement: Option[M]): RestResponse[Keyed[K, M]] = {
+    maybeElement.map {
+      element =>
+        Ok(Keyed(key, element))
+    }.getOrElse(RestError(NaptimeActionException(404, Some("notFound"), Some("not found"), None)))
+  }
+
+  /**
    * Obtain an instance of the pathParser.
    */
   private[naptime] def pathParser: PathParser = {
@@ -127,41 +164,4 @@ trait CollectionResource[ParentResource <: Resource[_], K, M] extends Resource[M
  */
 trait TopLevelCollectionResource[K, M] extends CollectionResource[RootResource, K, M] {
   override val parentResource: RootResource = RootResource
-}
-
-trait RestActionHelpers[K, M] extends FieldsBuilder[M] {
-
-  def OkIfPresent[T](a: Option[T]): RestResponse[T] = {
-    a.map(Ok(_)).getOrElse(RestError(NaptimeActionException(404, Some("notFound"), Some("not found"), None)))
-  }
-
-  def OkIfPresent(key: K, maybeElement: Option[M]): RestResponse[Keyed[K, M]] = {
-    maybeElement.map {
-      element =>
-        Ok(Keyed(key, element))
-    }.getOrElse(RestError(NaptimeActionException(404, Some("notFound"), Some("not found"), None)))
-  }
-
-  /**
-    * Helper to easily construct Rest actions.
-    *
-    * Typically, all actions in a naptime resource will all use the same auth parser and policy, or
-    * will want to use the same error handling function for all requests. These resources should do
-    * something similar to the following:
-    *
-    * {{{
-    *   class MyResource extends RestActionHelpers[Foo, Bar] {
-    *     def RRest[RACType, ResponseType] =
-    *       Rest[RACType, ResponseType].auth(myAuthPolicy).catching(errorFn)
-    *
-    *   ...
-    *   }
-    *
-    * }}}
-    */
-  def Rest[RACType, ResponseType]()
-      (implicit keyFormat: KeyFormat[K],
-      resourceFormat: OFormat[M]) =
-    new RestActionBuilder[RACType, Unit, AnyContent, K, M, ResponseType](
-      HeaderAccessControl.allowAll, BodyParsers.parse.anyContent, PartialFunction.empty)
 }
