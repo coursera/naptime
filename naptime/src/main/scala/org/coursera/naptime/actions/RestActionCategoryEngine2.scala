@@ -427,8 +427,8 @@ object RestActionCategoryEngine2 {
       implicit naptimeSerializer: NaptimeSerializer[Resource], keyFormat: KeyFormat[Key]):
     RestActionCategoryEngine[FinderRestActionCategory, Key, Resource, Seq[Keyed[Key, Resource]]] = {
 
-    new RestActionCategoryEngine[
-      FinderRestActionCategory, Key, Resource, Seq[Keyed[Key, Resource]]] {
+    new RestActionCategoryEngine[FinderRestActionCategory,
+        Key, Resource, Seq[Keyed[Key, Resource]]] {
       override def mkResponse(
           request: RequestHeader,
           resourceFields: Fields[Resource],
@@ -500,6 +500,7 @@ object RestActionCategoryEngine2 {
 
     private[this] class FilteringJsonTraverseCallback(jsonGenerator: JsonGenerator)
       extends JsonTraverseCallback(jsonGenerator) {
+      // scalastyle:off null
       private[this] var inElements = false
       private[this] var levelsDeep = 0
       private[this] var inLinked = false
@@ -576,6 +577,7 @@ object RestActionCategoryEngine2 {
         }
         super.key(key)
       }
+      // scalastyle:on null
     }
   }
 

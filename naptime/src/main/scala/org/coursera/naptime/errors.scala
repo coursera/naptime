@@ -86,6 +86,8 @@ trait Errors {
 
   import play.api.http.Status._
 
+  // scalastyle:off null
+
   /**
    * Error out with a BadRequest (400) response.
    *
@@ -210,8 +212,14 @@ trait Errors {
   /**
    * Generate your own HTTP 4XX or 5XX response, specifying your own HTTP code.
    */
-  def error(httpCode: Int, errorCode: String = null, msg: String = null, details: Option[JsValue] = None) =
+  def error(
+      httpCode: Int,
+      errorCode: String = null,
+      msg: String = null,
+      details: Option[JsValue] = None) =
     throw new NaptimeActionException(httpCode, Option(errorCode), Option(msg), details)
+
+  // scalastyle:on null
 }
 
 object Errors extends Errors

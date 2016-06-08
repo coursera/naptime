@@ -86,7 +86,8 @@ object CourierFormats extends StrictLogging {
     dataTemplateFormats(tag.runtimeClass.asInstanceOf[Class[T]])
   }
 
-  def enumerationFormat[T <: ScalaEnumTemplateSymbol](enumeration: ScalaEnumTemplate[T]) =
+  def enumerationFormat[T <: ScalaEnumTemplateSymbol](
+      enumeration: ScalaEnumTemplate[T]): Format[T] =
     new Format[T] {
 
     def reads(json: JsValue) = {

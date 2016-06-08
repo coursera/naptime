@@ -41,7 +41,9 @@ object CourierFilters {
 
   private[this] object AbsentSchemaPredicate extends Predicate {
     override def evaluate(element: DataElement): Boolean = {
+      // scalastyle:off null
       element.getSchema == null
+      // scalastyle:on null
     }
   }
 }

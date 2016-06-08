@@ -76,7 +76,9 @@ private[courier] class ScalaClassTraverser(rootType: ru.Type) {
   private[this] val visited = mutable.Set[String]()
 
   private[this] val runtimeMirror = ru.runtimeMirror(getClass.getClassLoader)
+  // scalastyle:off
   private[this] type CourierCompanionObject = { def SCHEMA: DataSchema }
+  // scalastyle:on
 
   def inferSchema(): InferredSchema = {
     inferSchema(rootType)
@@ -133,7 +135,8 @@ private[courier] class ScalaClassTraverser(rootType: ru.Type) {
     } else {
       // We don't know how to infer a schema for this type
       visitNamedSchema(typeName) {
-        val message = s"Unable to infer schema. See the $typeName Scala type for data model structure."
+        val message =
+          s"Unable to infer schema. See the $typeName Scala type for data model structure."
         InferredSchema(Json.obj(
           "name" -> typeName,
           "type" -> "record",

@@ -15,3 +15,5 @@ libraryDependencies += { "org.scala-sbt" % "scripted-plugin" % sbtVersion.value 
 
 // addSbtPlugin("de.heikoseeberger" % "sbt-header" % "1.5.1")
 addSbtPlugin("de.heikoseeberger" % "sbt-header" % "1.5.1-2-g8b57b53")
+
+addSbtPlugin("org.scalastyle" %% "scalastyle-sbt-plugin" % "0.8.0")
