@@ -47,6 +47,7 @@ import play.api.mvc.Result
 import play.api.mvc.Results
 import java.io.IOException
 
+import org.coursera.naptime.RequestIncludes
 import org.coursera.naptime.model.KeyFormat
 import org.coursera.naptime.model.Keyed
 
@@ -145,8 +146,10 @@ object RestActionCategoryEngine2 {
       for (elem <- keyMap.entrySet()) {
         dataMap.put(elem.getKey, elem.getValue)
       }
-      // Always add the "id" field as the stringKeyFormat of the key.
-      dataMap.put("id", keyFormat.stringKeyFormat.writes(elem.key).key)
+      // Include the id field if it hasn't been included already.
+      if (!dataMap.containsKey("id")) {
+        dataMap.put("id", keyFormat.stringKeyFormat.writes(elem.key).key)
+      }
     }
     requestFields.mergeWithDefaults(keyFields ++ fields.defaultFields)
   }
@@ -159,13 +162,17 @@ object RestActionCategoryEngine2 {
   private[this] def serializeRelated[T](
       linked: DataMap,
       response: Ok[T],
+      resourceFields: Fields[_],
+      requestIncludes: RequestIncludes,
       requestFields: RequestFields): RequestFields = {
     val updatedRelatedFields = for {
       (resourceName, relation) <- response.related
-      relationFields <- requestFields.forResource(resourceName)
+      fieldName <- resourceFields.inverseRelations.get(resourceName)
+      if requestIncludes.includeFieldsRelatedResource(fieldName)
     } yield {
       val dataList = new DataList()
       linked.put(resourceName.identifier, dataList)
+      val relationFields = requestFields.forResource(resourceName).getOrElse(RequestFields.empty)
       resourceName -> relation.toPegasus(relationFields, dataList)
     }
     DelegateFields(requestFields, updatedRelatedFields)
@@ -229,16 +236,17 @@ object RestActionCategoryEngine2 {
       keyFormat: KeyFormat[K],
       serializer: NaptimeSerializer[V],
       requestFields: RequestFields,
+      requestIncludes: RequestIncludes,
       fields: Fields[V],
       pagination: RequestPagination): ProcessedResponse = {
     val (response, elements, paging, linked) = mkDataCollections()
     val elementsFields = serializeCollection(
       elements, things, keyFormat, serializer, requestFields, fields)
-    ok.pagination.map { pagination =>
-      pagination.next.map { next =>
+    ok.pagination.foreach { pagination =>
+      pagination.next.foreach { next =>
         paging.put("next", next)
       }
-      pagination.total.map { total =>
+      pagination.total.foreach { total =>
         paging.put("total", new java.lang.Long(total))
       }
       pagination.facets.foreach { facets =>
@@ -247,7 +255,7 @@ object RestActionCategoryEngine2 {
         serializeFacets(facetsMap, facets)
       }
     }
-    val newFields = serializeRelated(linked, ok, elementsFields)
+    val newFields = serializeRelated(linked, ok, fields, requestIncludes, elementsFields)
     val codec = new FlattenedFilteringJacksonDataCodec(newFields)
     val etag = mkETagHeader(pagination, ok, response)
     ProcessedResponse(response, codec, etag)
@@ -266,7 +274,7 @@ object RestActionCategoryEngine2 {
           response: RestResponse[Keyed[Key, Resource]]): Result = {
         mkOkResponse(response) { ok =>
           val response = buildResponse(List(ok.content), ok, keyFormat, naptimeSerializer,
-            requestFields, resourceFields, pagination)
+            requestFields, requestIncludes, resourceFields, pagination)
           response.playResponse(Status.OK, request.headers.get(HeaderNames.IF_NONE_MATCH))
         }
       }
@@ -298,7 +306,7 @@ object RestActionCategoryEngine2 {
 
           ok.content.value.map { value =>
             val response = buildResponse(List(Keyed(ok.content.key, value)), ok, keyFormat,
-              naptimeSerializer, requestFields, resourceFields, pagination)
+              naptimeSerializer, requestFields, requestIncludes, resourceFields, pagination)
             response.playResponse(Status.CREATED, None).withHeaders(baseHeaders: _*)
           }.getOrElse {
             // No body, just a 201 Created.
@@ -327,7 +335,7 @@ object RestActionCategoryEngine2 {
         mkOkResponse(response) { ok =>
           ok.content.map { result =>
             val response = buildResponse(List(result), ok, keyFormat,
-              naptimeSerializer, requestFields, resourceFields, pagination)
+              naptimeSerializer, requestFields, requestIncludes, resourceFields, pagination)
             response.playResponse(Status.OK, None)
           }.getOrElse {
             Results.NoContent.withHeaders(mkETagHeaderOpt(pagination, ok, None).toList: _*)
@@ -351,7 +359,7 @@ object RestActionCategoryEngine2 {
           response: RestResponse[Keyed[Key, Resource]]): Result = {
         mkOkResponse(response) { ok =>
           val response = buildResponse(List(ok.content), ok, keyFormat, naptimeSerializer,
-            requestFields, resourceFields, pagination)
+            requestFields, requestIncludes, resourceFields, pagination)
           response.playResponse(Status.OK, None)
         }
       }
@@ -393,7 +401,7 @@ object RestActionCategoryEngine2 {
           response: RestResponse[Seq[Keyed[Key, Resource]]]): Result = {
         mkOkResponse(response) { ok =>
           val response = buildResponse(ok.content, ok, keyFormat, naptimeSerializer, requestFields,
-            resourceFields, pagination)
+            requestIncludes, resourceFields, pagination)
           response.playResponse(Status.OK, request.headers.get(HeaderNames.IF_NONE_MATCH))
         }
       }
@@ -416,7 +424,7 @@ object RestActionCategoryEngine2 {
           response: RestResponse[Seq[Keyed[Key, Resource]]]): Result = {
         mkOkResponse(response) { ok =>
           val response = buildResponse(ok.content, ok, keyFormat, naptimeSerializer, requestFields,
-            resourceFields, pagination)
+            requestIncludes, resourceFields, pagination)
           response.playResponse(Status.OK, request.headers.get(HeaderNames.IF_NONE_MATCH))
         }
       }
@@ -438,7 +446,7 @@ object RestActionCategoryEngine2 {
           response: RestResponse[Seq[Keyed[Key, Resource]]]): Result = {
         mkOkResponse(response) { ok =>
           val response = buildResponse(ok.content, ok, keyFormat, naptimeSerializer, requestFields,
-            resourceFields, pagination)
+            requestIncludes, resourceFields, pagination)
           response.playResponse(Status.OK, request.headers.get(HeaderNames.IF_NONE_MATCH))
         }
       }
@@ -532,15 +540,6 @@ object RestActionCategoryEngine2 {
           }.getOrElse {
             unfiltered
           }
-        } else if (levelsDeep == 1) {
-          // TODO: after ensuring this won't break the world, consider un-commenting the block below
-//          val unfiltered = super.orderMap(map)
-//          unfiltered.asScala.filter { entry =>
-//            // Filter out empty top-level DataMaps.
-//            !entry.getValue.isInstanceOf[DataMap] ||
-//              entry.getValue.asInstanceOf[DataMap].size() > 0
-//          }.asJava
-          super.orderMap(map)
         } else {
           super.orderMap(map)
         }

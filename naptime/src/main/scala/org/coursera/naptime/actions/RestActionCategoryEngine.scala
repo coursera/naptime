@@ -57,6 +57,8 @@ trait RestActionCategoryEngine[Category, Key, Resource, Response] {
       response: RestResponse[Response]): Result
 }
 
+object RestActionCategoryEngine extends PlayJsonRestActionCategoryEngine
+
 /**
  * Define the mappings between category engines.
  *
@@ -65,7 +67,7 @@ trait RestActionCategoryEngine[Category, Key, Resource, Response] {
  * trait, this would allow for different resources to have different engines available. That said,
  * this must all be sealed to disallow further 'customization'.
  */
-object RestActionCategoryEngine {
+trait PlayJsonRestActionCategoryEngine {
 
   private[this] def mkOkResponse[T](r: RestResponse[T])(fn: Ok[T] => Result) = {
     r match {
@@ -352,3 +354,5 @@ object RestActionCategoryEngine {
     }
   }
 }
+
+object PlayJsonRestActionCategoryEngine extends PlayJsonRestActionCategoryEngine

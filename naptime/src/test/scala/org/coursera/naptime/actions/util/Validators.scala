@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package org.coursera.naptime.util
+package org.coursera.naptime.actions.util
 
 import org.scalatest.junit.AssertionsForJUnit
 import play.api.http.HeaderNames
