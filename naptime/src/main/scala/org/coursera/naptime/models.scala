@@ -262,6 +262,8 @@ sealed case class Fields[T](
     JsObject(filtered)
   }
 
+  private[naptime] val inverseRelations = relations.map(_.swap)
+
   private[naptime] def computeFields(rh: RequestHeader): Try[RequestFields] = {
     // Try the header override first
     rh.headers.get(Fields.FIELDS_HEADER).map { fieldsHeader =>

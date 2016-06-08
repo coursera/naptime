@@ -42,7 +42,6 @@ private[naptime] object JsonUtilities {
       (implicit writes: OWrites[T], keyFormat: KeyFormat[K]): JsObject = {
     val filtered = JsonUtilities.filterJsonFields(Keyed.writes.writes(obj), fields)
 
-    // TODO(saeta): Modify this to reflect the resolution in INFRA-2754.
     val keyFields = keyFormat.format.writes(obj.key)
 
     keyFields ++ filtered

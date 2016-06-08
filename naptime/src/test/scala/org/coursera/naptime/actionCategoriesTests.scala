@@ -5,9 +5,9 @@ import org.coursera.naptime.model.Keyed
 import org.coursera.common.stringkey.StringKeyFormat
 import org.coursera.naptime.actions.RestAction
 import org.coursera.naptime.actions.RestActionCategoryEngine
+import org.coursera.naptime.actions.util.Validators
 import org.coursera.naptime.resources.CollectionResource
 import org.coursera.naptime.resources.TopLevelCollectionResource
-import org.coursera.naptime.util.Validators
 import org.junit.Test
 import org.scalatest.concurrent.IntegrationPatience
 import org.scalatest.concurrent.ScalaFutures
