@@ -184,7 +184,8 @@ class MacroImpls(val c: blackbox.Context) {
               "??? (resourceName should be def not val)"),
             version = Some(stubInstance.resourceVersion),
             keyType = ${keyType(resourceType)},
-            bodyType = ${mergedType(resourceType)},
+            valueType = ${valueType(resourceType)},
+            mergedType = ${mergedType(resourceType)},
             parentClass = $parentResourceName,
             handlers = List(..${trees.flatMap(_._2)}),
             className = ${resourceType.toString},
@@ -196,10 +197,6 @@ class MacroImpls(val c: blackbox.Context) {
       """
       debug(s"NaptimeRouterBuilder macro code for $resourceType : ${showCode(finalResource)}")
       finalResource
-    }
-
-    private[this] def mergedType(resourceType: c.Type): String = {
-      resourceType.toString + ".Model"
     }
 
     private[this] def keyType(resourceType: c.Type): c.Tree = {
@@ -214,6 +211,17 @@ class MacroImpls(val c: blackbox.Context) {
         q"${keyType.toString}"
       }
     }
+
+    private[this] def valueType(resourceType: c.Type): c.Tree = {
+      val collectionTypeView = resourceType.baseType(COLLECTION_RESOURCE_TYPE.typeSymbol)
+      val bodyType = collectionTypeView.typeArgs(2)
+      q"${bodyType.toString}"
+    }
+
+    private[this] def mergedType(resourceType: c.Type): String = {
+      resourceType.toString + ".Model"
+    }
+
 
     private[this] def getRecordSchemaForType(targetType: c.Type): c.Tree = {
       if (targetType <:< SCALA_RECORD_TEMPLATE) {
