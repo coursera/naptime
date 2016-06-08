@@ -658,7 +658,8 @@ class NestedMacroTests extends AssertionsForJUnit with MockitoSugar {
     assert(schema.name === "people")
     assert(schema.version === Some(1))
     assert(schema.keyType === "string")
-    assert(schema.bodyType === "org.coursera.naptime.PersonResource.Model")
+    assert(schema.valueType === "org.coursera.naptime.Person")
+    assert(schema.mergedType === "org.coursera.naptime.PersonResource.Model")
     assert(schema.handlers.length === 13)
     assert(schema.handlers.filter(_.kind == HandlerKind.FINDER).map(_.name).toSet ===
       Set("byEmail", "byUsernameAndDomain", "complex", "complexWithDefault", "byUsernameSorted"))
@@ -698,7 +699,9 @@ class NestedMacroTests extends AssertionsForJUnit with MockitoSugar {
     assert(schema.kind === ResourceKind.COLLECTION)
     assert(schema.name === "friends")
     assert(schema.version === Some(1))
-    assert(schema.bodyType === "org.coursera.naptime.FriendsResource.Model")
+    assert(schema.keyType === "string")
+    assert(schema.valueType === "org.coursera.naptime.FriendshipInfo")
+    assert(schema.mergedType === "org.coursera.naptime.FriendsResource.Model")
     assert(schema.handlers.length === 11)
     assert(schema.handlers.filter(_.kind == HandlerKind.FINDER).map(_.name).toSet ===
       Set("byEmail", "byUsernameAndDomain", "withDefaults", "complex"))

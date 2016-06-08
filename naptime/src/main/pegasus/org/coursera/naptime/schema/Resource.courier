@@ -31,9 +31,14 @@ record Resource {
   keyType: TypeName
 
   /**
+   * The fully qualified name of the type corresponding to the values for this resource.
+   */
+  valueType: TypeName
+
+  /**
    * The fully qualified name of the type corresponding to response elements for this resource.
    */
-  bodyType: TypeName
+  mergedType: TypeName
 
   /**
    * The supported operations.
