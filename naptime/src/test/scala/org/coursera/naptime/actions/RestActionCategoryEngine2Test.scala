@@ -301,8 +301,6 @@ class RestActionCategoryEngine2Test extends AssertionsForJUnit with ScalaFutures
   // Increase timeout a bit.
   override def spanScaleFactor: Double = 10
 
-  // TODO(saeta): Unit test ETag construction.
-
   @Test
   def playJsonGet1(): Unit = {
     val response = testEmptyRequestBody(PlayJsonTestResource.get1(1))
@@ -325,6 +323,24 @@ class RestActionCategoryEngine2Test extends AssertionsForJUnit with ScalaFutures
         "id" -> 1,
         "name" -> "1"))
     assert(expected === elements)
+  }
+
+  @Test
+  def playJsonGet1Etags(): Unit = {
+    val response1 = testEmptyRequestBody(PlayJsonTestResource.get1(1))
+    val responseNoRelated = testEmptyRequestBody(PlayJsonTestResource.get1(1), FakeRequest())
+    val response2 = testEmptyRequestBody(PlayJsonTestResource.get1(1))
+
+    assert(response1.header.status === Status.OK)
+    assert(response1.header.headers.contains(HeaderNames.ETAG))
+    assert(responseNoRelated.header.status === Status.OK)
+    assert(responseNoRelated.header.headers.contains(HeaderNames.ETAG))
+    assert(response2.header.status === Status.OK)
+    assert(response2.header.headers.contains(HeaderNames.ETAG))
+    assert(response1.header.headers.get(HeaderNames.ETAG) != responseNoRelated.header.headers.get(HeaderNames.ETAG))
+    assert(response1.header.headers.get(HeaderNames.ETAG) === response2.header.headers.get(HeaderNames.ETAG))
+    // Check for stability in ETag computation.
+    assert(Some("\"-981723117\"") === response1.header.headers.get(HeaderNames.ETAG))
   }
 
   @Test
@@ -386,6 +402,24 @@ class RestActionCategoryEngine2Test extends AssertionsForJUnit with ScalaFutures
         "id" -> "test",
         "name" -> "test name"))
     assert(expected === elements)
+  }
+
+  @Test
+  def courierGet1Etags(): Unit = {
+    val response1 = testEmptyRequestBody(CourierTestResource.get1("test"))
+    val response2 = testEmptyRequestBody(CourierTestResource.get1("test"))
+    val responseNoRelated = testEmptyRequestBody(CourierTestResource.get1("test"), FakeRequest())
+
+    assert(response1.header.status === Status.OK)
+    assert(response2.header.status === Status.OK)
+    assert(responseNoRelated.header.status === Status.OK)
+    assert(response1.header.headers.contains(HeaderNames.ETAG))
+    assert(response2.header.headers.contains(HeaderNames.ETAG))
+    assert(responseNoRelated.header.headers.contains(HeaderNames.ETAG))
+    assert(response1.header.headers.get(HeaderNames.ETAG) != responseNoRelated.header.headers.get(HeaderNames.ETAG))
+    assert(response1.header.headers.get(HeaderNames.ETAG) === response2.header.headers.get(HeaderNames.ETAG))
+    // Check for stability in ETag computation.
+    assert(Some("\"1468630371\"") === response1.header.headers.get(HeaderNames.ETAG))
   }
 
   @Test
