@@ -25,6 +25,7 @@ import play.api.libs.json.JsString
 import play.api.libs.json.JsValue
 import play.api.libs.json.JsNull
 import play.api.mvc.Result
+import play.api.test.Helpers.contentAsBytes
 import play.api.test.Helpers.contentAsJson
 import play.api.test.Helpers.defaultAwaitTimeout
 import play.api.http.MimeTypes
@@ -48,6 +49,10 @@ object Validators extends AssertionsForJUnit {
     result.header.status match {
       case Status.OK | Status.CREATED | Status.NO_CONTENT =>
         assertValidSuccessResponse(result, strictMode)
+      case Status.NOT_MODIFIED =>
+        assert(result.header.headers.get(HeaderNames.CONTENT_TYPE).isEmpty)
+        assert(result.header.headers.get(HeaderNames.ETAG).isDefined)
+        assert(0 === contentAsBytes(Future.successful(result)).length)
       case code if code >= 400 && code < 500 =>
         assertClientErrorResponse(result)
       case code if code >= 500 =>
