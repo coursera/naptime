@@ -59,7 +59,7 @@ trait RestActionCategoryEngine[Category, Key, Resource, Response] {
       response: RestResponse[Response]): Result
 }
 
-object RestActionCategoryEngine extends PlayJsonRestActionCategoryEngine
+object RestActionCategoryEngine extends RestActionCategoryEngine2 // Courier-centric engines
 
 /**
  * Define the mappings between category engines.

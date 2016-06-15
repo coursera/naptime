@@ -17,6 +17,7 @@
 package org.coursera.naptime
 
 import org.coursera.common.stringkey.StringKeyFormat
+import org.coursera.naptime.actions.NaptimeSerializer.AnyWrites._
 import org.coursera.naptime.model.KeyFormat
 import org.coursera.naptime.model.Keyed
 import org.coursera.naptime.actions.RestActionBuilder

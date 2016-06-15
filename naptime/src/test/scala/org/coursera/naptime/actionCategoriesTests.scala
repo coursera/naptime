@@ -3,6 +3,7 @@ package org.coursera.naptime
 import org.coursera.naptime.model.KeyFormat
 import org.coursera.naptime.model.Keyed
 import org.coursera.common.stringkey.StringKeyFormat
+import org.coursera.naptime.actions.PlayJsonRestActionCategoryEngine
 import org.coursera.naptime.actions.RestAction
 import org.coursera.naptime.actions.RestActionCategoryEngine
 import org.coursera.naptime.actions.util.Validators
@@ -227,7 +228,7 @@ class ETagRestActionCategoryEngineTest extends AssertionsForJUnit with ScalaFutu
     val result = "test result"
     val okResponse = Ok(result)
 
-    val etag = RestActionCategoryEngine.mkETagHeader(testPagination, okResponse, jsObject)
+    val etag = PlayJsonRestActionCategoryEngine.mkETagHeader(testPagination, okResponse, jsObject)
     assert(etag._1 === HeaderNames.ETAG)
     assertETagHeaderValueFormat(etag._2)
   }
@@ -240,7 +241,7 @@ class ETagRestActionCategoryEngineTest extends AssertionsForJUnit with ScalaFutu
     val pagination = RequestPagination(20, None, isDefault = true)
     val naptimeResponse = Ok(Keyed(1, TestResponse(foo = "bar"))).withETag(ETag("asdf"))
 
-    val engine = RestActionCategoryEngine.getActionCategoryEngine[Int, TestResponse](
+    val engine = PlayJsonRestActionCategoryEngine.getActionCategoryEngine[Int, TestResponse](
       TestResponse.writes, intKeyFormat)
 
     val response = engine.mkResponse(req, fields, QueryFields.empty, QueryIncludes.empty,
