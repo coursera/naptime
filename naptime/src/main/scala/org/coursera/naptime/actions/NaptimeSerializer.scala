@@ -79,7 +79,7 @@ object NaptimeSerializer {
               map.put(name, list)
               serializeList(a, list)
             case o: JsObject =>
-              val childMap = new DataMap(o.value.size)
+              val childMap = new DataMap(o.value.size) // TODO: verify Map.size is fast.
               map.put(name, childMap)
               serializeMap(o, childMap)
           }

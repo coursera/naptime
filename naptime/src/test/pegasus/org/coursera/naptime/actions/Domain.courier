@@ -1,0 +1,6 @@
+namespace org.coursera.naptime.actions
+
+record Domain {
+  domain: DomainId
+  subdomain: SubDomainId?
+}

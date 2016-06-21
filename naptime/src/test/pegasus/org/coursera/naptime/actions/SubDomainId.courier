@@ -1,0 +1,4 @@
+namespace org.coursera.naptime.actions
+
+@scala.class = "org.coursera.naptime.actions.SubdomainId"
+typeref SubDomainId = Slug

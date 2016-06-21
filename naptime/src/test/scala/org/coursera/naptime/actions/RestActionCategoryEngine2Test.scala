@@ -16,7 +16,9 @@
 
 package org.coursera.naptime.actions
 
+import com.linkedin.data.DataList
 import org.coursera.common.stringkey.StringKey
+import org.coursera.courier.templates.DataTemplates.DataConversion
 import org.coursera.naptime.courier.CourierFormats
 import org.coursera.naptime.model.KeyFormat
 import org.coursera.naptime.model.Keyed
@@ -25,6 +27,8 @@ import org.coursera.naptime.NaptimeActionException
 import org.coursera.naptime.Errors
 import org.coursera.naptime.Fields
 import org.coursera.naptime.Ok
+import org.coursera.naptime.QueryFields
+import org.coursera.naptime.RequestFields
 import org.coursera.naptime.ResourceName
 import org.coursera.naptime.actions.util.Validators
 import org.coursera.naptime.resources.TopLevelCollectionResource
@@ -530,6 +534,41 @@ class RestActionCategoryEngine2Test extends AssertionsForJUnit with ScalaFutures
   @Test
   def courierKeyedDelete1(): Unit = {
     testEmptyRequestBody(CourierKeyedTestResource.delete1(CourierKeyedTestResource.EnrollmentIds.b))
+  }
+
+  @Test
+  def serializeCollectionCourierModelsTest(): Unit = {
+    def mkModel(id: String): ExpandedCourse = {
+      ExpandedCourse(
+        name = id,
+        description = s"$id description",
+        platform = CoursePlatform.NewPlatform,
+        domains = List(Domain(DomainId(Slug("my-domain")))))
+    }
+    val fields = QueryFields(Set("name", "description", "domains"), Map.empty)
+    val model1 = mkModel("test-course-1")
+
+    assert(model1.data().isMadeReadOnly)
+    assert(model1.domains.data().isMadeReadOnly)
+    assert(model1.domains.head.data.isMadeReadOnly)
+
+    RestActionCategoryEngine2.serializeCollection(
+      new DataList(),
+      List(Keyed("test-course-id", model1)),
+      KeyFormat.stringKeyFormat,
+      NaptimeSerializer.courierModels,
+      fields,
+      Fields(CourierFormats.recordTemplateFormats[ExpandedCourse]))
+
+    val model2 = mkModel("test-course-2").copy(model1.data(), DataConversion.SetReadOnly)
+
+    RestActionCategoryEngine2.serializeCollection(
+      new DataList(),
+      List(Keyed("test-course-id2", model2)),
+      KeyFormat.stringKeyFormat,
+      NaptimeSerializer.courierModels,
+      fields,
+      Fields(CourierFormats.recordTemplateFormats[ExpandedCourse]))
   }
 
 

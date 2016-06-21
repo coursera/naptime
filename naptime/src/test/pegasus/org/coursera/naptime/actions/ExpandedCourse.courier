@@ -1,0 +1,8 @@
+namespace org.coursera.naptime.actions
+
+record ExpandedCourse {
+  name: string
+  description: string
+  platform: CoursePlatform = "OldPlatform"
+  domains: array[Domain]
+}

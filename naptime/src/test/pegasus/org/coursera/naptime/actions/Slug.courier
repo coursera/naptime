@@ -1,0 +1,15 @@
+namespace org.coursera.naptime.actions
+
+/**
+ * It is a human-readable identifier such as &quot;machine-learning&quot;, which is suitable for URL.
+ * Previously it has been mostly used for ondemand course. This is now being shared for other purposes.
+ * It has arbitrary restrictions on the slug. Changing its validation may cause ondemand course to have
+ * unexpected behavior
+ */
+@scala.class = "org.coursera.naptime.actions.Slug"
+@scala.validate = {
+  "regex": {
+    "regex": "[a-z0-9-]{1,80}"
+  }
+}
+typeref Slug = string
