@@ -1,0 +1,6 @@
+namespace org.coursera.naptime.actions
+
+enum CoursePlatform {
+  OldPlatform
+  NewPlatform
+}

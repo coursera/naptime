@@ -47,7 +47,9 @@ import play.api.mvc.Result
 import play.api.mvc.Results
 import java.io.IOException
 
+import com.linkedin.data.ByteString
 import org.coursera.naptime.RequestIncludes
+import org.coursera.naptime.actions.util.DataMapUtils
 import org.coursera.naptime.model.KeyFormat
 import org.coursera.naptime.model.Keyed
 
@@ -117,6 +119,7 @@ object RestActionCategoryEngine2 {
       serializer: NaptimeSerializer[V],
       requestFields: RequestFields,
       fields: Fields[V]): RequestFields = {
+
     // Compute the set of field names provided by the Key type to avoid filtering them out in the
     // response serializer. (This is to maintain backwards compatibility with the legacy Rest
     // Engines.)
@@ -137,7 +140,7 @@ object RestActionCategoryEngine2 {
       val keyMap = NaptimeSerializer.PlayJson.serialize(key)
       // Insert all the value entries into the data map.
       for (elem <- valueDataMap.entrySet) {
-        dataMap.put(elem.getKey, elem.getValue)
+        dataMap.put(elem.getKey, DataMapUtils.ensureMutable(elem.getValue))
       }
       wireConverter.foreach { converter =>
         converter.convertUnionToTypedDefinitionInPlace(dataMap)
