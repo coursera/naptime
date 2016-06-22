@@ -543,7 +543,9 @@ class RestActionCategoryEngine2Test extends AssertionsForJUnit with ScalaFutures
         name = id,
         description = s"$id description",
         platform = CoursePlatform.NewPlatform,
-        domains = List(Domain(DomainId(Slug("my-domain")))))
+        domains = List(Domain(DomainId(Slug("my-domain")))),
+        courseQnAs = List(CourseQnA(
+          question = "How hard?", answer = CmlContentType(dtdId = "myDtd", value = "Very!"))))
     }
     val fields = QueryFields(Set("name", "description", "domains"), Map.empty)
     val model1 = mkModel("test-course-1")

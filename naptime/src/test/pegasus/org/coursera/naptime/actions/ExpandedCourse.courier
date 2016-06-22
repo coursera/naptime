@@ -5,4 +5,5 @@ record ExpandedCourse {
   description: string
   platform: CoursePlatform = "OldPlatform"
   domains: array[Domain]
+  courseQnAs: array[CourseQnA]
 }

@@ -22,7 +22,7 @@ object DataMapUtils {
       val iterator = list.iterator()
       while (iterator.hasNext) {
         val i = iterator.next()
-        mutableList.add(i)
+        mutableList.add(ensureMutable(i))
       }
       mutableList
     } else {

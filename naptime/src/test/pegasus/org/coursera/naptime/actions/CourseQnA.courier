@@ -1,0 +1,6 @@
+namespace org.coursera.naptime.actions
+
+record CourseQnA {
+  question: TranslatableString
+  answer: CmlContent
+}

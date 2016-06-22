@@ -1,0 +1,9 @@
+namespace org.coursera.naptime.actions
+
+/**
+ * the pegasus schema CmlContent
+ */
+record CmlContentType {
+  dtdId: string
+  value: TranslatableString
+}
