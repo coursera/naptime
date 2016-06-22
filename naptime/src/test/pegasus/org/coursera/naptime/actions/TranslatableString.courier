@@ -1,0 +1,7 @@
+namespace org.coursera.naptime.actions
+
+/**
+ * Typeref for string that defines the isTranslatable property to true
+ */
+@isTranslatable
+typeref TranslatableString = string

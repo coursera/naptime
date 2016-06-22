@@ -1,0 +1,9 @@
+namespace org.coursera.naptime.actions
+
+/**
+ * the pegasus schema for org.coursera.ondemand.content.CmlContent.
+ */
+@typedDefinition = {
+  "CmlContentType": "cml"
+}
+typeref CmlContent = union[CmlContentType]
