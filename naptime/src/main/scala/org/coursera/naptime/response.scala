@@ -17,6 +17,7 @@
 package org.coursera.naptime
 
 import com.linkedin.data.DataList
+import org.coursera.common.stringkey.StringKeyFormat
 import org.coursera.naptime.model.KeyFormat
 import org.coursera.naptime.model.Keyed
 import org.coursera.naptime.actions.NaptimeSerializer
@@ -42,7 +43,7 @@ final case class Ok[+T](
      * Optional ETag to be returned in the response. Note that quotes required for ETag response
      * header are added by Naptime, so `eTag` should be without quotes.
      */
-    eTag: Option[String] = None) extends RestResponse[T] {
+    eTag: Option[ETag] = None) extends RestResponse[T] {
 
   override val isOk = true
   override val isError = false
@@ -75,7 +76,7 @@ final case class Ok[+T](
     copy(related = newRelated)
   }
 
-  def withETag(eTag: String): Ok[T] = copy(eTag = Some(eTag))
+  def withETag(eTag: ETag): Ok[T] = copy(eTag = Some(eTag))
 
 }
 
