@@ -202,7 +202,7 @@ class ETagRestActionCategoryEngineTest extends AssertionsForJUnit with ScalaFutu
   @Test
   def mkETagHeader(): Unit = {
     val result = "test result"
-    val eTag = ETag.Strong("1")
+    val eTag = ETag("1")
     val okResponse = Ok(result).withETag(eTag)
     val expectedHeader = "ETag" -> "\"1\""
 
@@ -236,7 +236,7 @@ class ETagRestActionCategoryEngineTest extends AssertionsForJUnit with ScalaFutu
     val req = FakeRequest().withHeaders(HeaderNames.IF_NONE_MATCH -> "\"asdf\"")
     val fields = Fields[TestResponse](TestResponse.fmt)
     val pagination = RequestPagination(20, None, isDefault = true)
-    val naptimeResponse = Ok(Keyed(1, TestResponse(foo = "bar"))).withETag(ETag.Strong("asdf"))
+    val naptimeResponse = Ok(Keyed(1, TestResponse(foo = "bar"))).withETag(ETag("asdf"))
 
     val engine = RestActionCategoryEngine.getActionCategoryEngine[Int, TestResponse](
       TestResponse.writes, intKeyFormat)

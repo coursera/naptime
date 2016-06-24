@@ -19,50 +19,24 @@ package org.coursera.naptime
 import org.coursera.common.stringkey.StringKeyFormat
 import org.coursera.common.stringkey.StringKeyFormat.Implicits.OrFormat
 
-sealed trait ETag
+/**
+ * Note: Naptime always uses weak validators because the framework does not guarantee byte-equality
+ * between responses.
+ *
+ * @param weakValidator tag without surrounding `"`s; these are added by Naptime
+ */
+case class ETag(weakValidator: String)
 
 object ETag {
 
+  private[this] val weakValidatorRegex = "W/\"(.*)\"".r
+
   implicit val stringKeyFormat: StringKeyFormat[ETag] = {
-    StringKeyFormat.unimplementedFormat[ETag]
-      .orFormat[Strong]
-      .orFormat[Weak]
-  }
-
-  /**
-   * TODO(josh): Should Naptime support this at all? Play JSON serialization doesn't allow
-   * byte-level response consistency, so using strong ETags may not be appropriate for Naptime
-   * APIs (since they all return Play JSON objects).
-   *
-   * @param tag tag without surrounding `"`s; these are added by Naptime
-   */
-  case class Strong(tag: String) extends ETag
-
-  object Strong {
-    private[this] val regex = "\"(.*)\"".r
-    implicit val stringKeyFormat: StringKeyFormat[Strong] = {
-      def from(s: String): Option[Strong] = s match {
-        case regex(tag) => Some(Strong(tag))
-        case _ => None
-      }
-      StringKeyFormat.delegateFormat(from, strong => s""""${strong.tag}"""")
+    def from(s: String): Option[ETag] = s match {
+      case weakValidatorRegex(tag) => Some(ETag(tag))
+      case _ => None
     }
-  }
-
-  /**
-   * @param tag tag without surrounding `"`s; these are added by Naptime
-   */
-  case class Weak(tag: String) extends ETag
-
-  object Weak {
-    private[this] val regex = "W/\"(.*)\"".r
-    implicit val stringKeyFormat: StringKeyFormat[Weak] = {
-      def from(s: String): Option[Weak] = s match {
-        case regex(tag) => Some(Weak(tag))
-        case _ => None
-      }
-      StringKeyFormat.delegateFormat(from, weak => s"""W/"${weak.tag}"""")
-    }
+    StringKeyFormat.delegateFormat(from, eTag => s"""W/"${eTag.weakValidator}"""")
   }
 
 }

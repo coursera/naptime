@@ -23,31 +23,18 @@ import org.scalatest.junit.AssertionsForJUnit
 class ETagTest extends AssertionsForJUnit {
 
   @Test
-  def strongSerialization(): Unit = {
-    assertResult("\"abc\"")(StringKey(ETag.Strong("abc")).key)
-    assertResult("\"abc\"")(StringKey(ETag.Strong("abc"): ETag).key)
+  def serialization(): Unit = {
+    assertResult("W/\"abc\"")(StringKey(ETag("abc")).key)
   }
 
   @Test
-  def strongDeserialization(): Unit = {
-    val stringKey = StringKey("\"abc\"")
-    assertResult(stringKey.asOpt[ETag.Strong])(Some(ETag.Strong("abc")))
-    assertResult(stringKey.asOpt[ETag])(Some(ETag.Strong("abc")))
-    assertResult(stringKey.asOpt[ETag.Weak])(None)
+  def deserialization(): Unit = {
+    assertResult(StringKey("W/\"abc\"").asOpt[ETag])(Some(ETag("abc")))
   }
 
   @Test
-  def weakSerialization(): Unit = {
-    assertResult("W/\"abc\"")(StringKey(ETag.Weak("abc")).key)
-    assertResult("W/\"abc\"")(StringKey(ETag.Weak("abc"): ETag).key)
-  }
-
-  @Test
-  def weakDeserialization(): Unit = {
-    val stringKey = StringKey("W/\"abc\"")
-    assertResult(stringKey.asOpt[ETag.Weak])(Some(ETag.Weak("abc")))
-    assertResult(stringKey.asOpt[ETag])(Some(ETag.Weak("abc")))
-    assertResult(stringKey.asOpt[ETag.Strong])(None)
+  def deserializationRejectStrong(): Unit = {
+    assertResult(StringKey("\"abc\"").asOpt[ETag])(None)
   }
 
 }

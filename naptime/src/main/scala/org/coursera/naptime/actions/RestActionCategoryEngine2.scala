@@ -90,9 +90,7 @@ object RestActionCategoryEngine2 {
       // Note: for pagination, we explicitly call the eTagHashCode that excludes some fields.
       val hashCode = Set(dataMap.hashCode(), pagination.eTagHashCode()).hashCode()
 
-      // TODO(saeta): Consider switching to weak ETag here since we can't guarantee byte-level
-      // equality. Right now we use strong for backwards-compatibility with older Naptime APIs.
-      constructEtagHeader(ETag.Strong(hashCode.toString))
+      constructEtagHeader(ETag(hashCode.toString))
     }
 
   }
