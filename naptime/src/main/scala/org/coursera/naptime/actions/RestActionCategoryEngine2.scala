@@ -168,17 +168,28 @@ object RestActionCategoryEngine2 {
       resourceFields: Fields[_],
       requestIncludes: RequestIncludes,
       requestFields: RequestFields): RequestFields = {
-    val updatedRelatedFields = for {
+    val firstHopModelsToInclude = resourceFields.relations.filter { relationTuple =>
+      requestIncludes.includeFieldsRelatedResource(relationTuple._1)
+    }.values
+    val multiHopModelsToInclude = for {
       (resourceName, relation) <- response.related
-      fieldName <- resourceFields.inverseRelations.get(resourceName)
-      if requestIncludes.includeFieldsRelatedResource(fieldName)
+      queryIncludes <- requestIncludes.forResource(resourceName).toIterable
+      hopRelation <- relation.fields.relations
+      if queryIncludes.includeFieldsRelatedResource(hopRelation._1)
+    } yield hopRelation._2
+
+    val modelsToInclude = firstHopModelsToInclude.toSet ++ multiHopModelsToInclude
+
+    val updatedRelatedFields = for {
+      relationName <- modelsToInclude
+      relation <- response.related.get(relationName)
     } yield {
       val dataList = new DataList()
-      linked.put(resourceName.identifier, dataList)
-      val relationFields = requestFields.forResource(resourceName).getOrElse(RequestFields.empty)
-      resourceName -> relation.toPegasus(relationFields, dataList)
+      linked.put(relationName.identifier, dataList)
+      val relationFields = requestFields.forResource(relationName).getOrElse(RequestFields.empty)
+      relationName -> relation.toPegasus(relationFields, dataList)
     }
-    DelegateFields(requestFields, updatedRelatedFields)
+    DelegateFields(requestFields, updatedRelatedFields.toMap)
   }
 
   private[this] def mkDataCollections() = {

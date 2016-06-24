@@ -6,4 +6,5 @@ record ExpandedCourse {
   platform: CoursePlatform = "OldPlatform"
   domains: array[Domain]
   courseQnAs: array[CourseQnA]
+  instructorIds: array[InstructorId]
 }

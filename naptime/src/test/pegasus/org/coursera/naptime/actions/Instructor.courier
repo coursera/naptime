@@ -1,0 +1,12 @@
+namespace org.coursera.naptime.actions
+
+/**
+ * An instructor teaches a course.
+ *
+ * Note: this is a very incomplete representation.
+ */
+record Instructor {
+  name: string
+  bio: TranslatableString?
+  partner: PartnerId
+}

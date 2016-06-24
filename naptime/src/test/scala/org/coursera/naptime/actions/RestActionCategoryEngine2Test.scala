@@ -28,7 +28,9 @@ import org.coursera.naptime.Errors
 import org.coursera.naptime.Fields
 import org.coursera.naptime.Ok
 import org.coursera.naptime.QueryFields
+import org.coursera.naptime.QueryIncludes
 import org.coursera.naptime.RequestFields
+import org.coursera.naptime.RequestPagination
 import org.coursera.naptime.ResourceName
 import org.coursera.naptime.actions.util.Validators
 import org.coursera.naptime.resources.TopLevelCollectionResource
@@ -41,6 +43,7 @@ import play.api.http.Writeable
 import play.api.libs.iteratee.Enumerator
 import play.api.libs.json.JsArray
 import play.api.libs.json.JsObject
+import play.api.libs.json.JsValue
 import play.api.libs.json.Json
 import play.api.libs.json.OFormat
 import play.api.mvc.AnyContent
@@ -545,7 +548,8 @@ class RestActionCategoryEngine2Test extends AssertionsForJUnit with ScalaFutures
         platform = CoursePlatform.NewPlatform,
         domains = List(Domain(DomainId(Slug("my-domain")))),
         courseQnAs = List(CourseQnA(
-          question = "How hard?", answer = CmlContentType(dtdId = "myDtd", value = "Very!"))))
+          question = "How hard?", answer = CmlContentType(dtdId = "myDtd", value = "Very!"))),
+        instructorIds = List(1L, 2L))
     }
     val fields = QueryFields(Set("name", "description", "domains"), Map.empty)
     val model1 = mkModel("test-course-1")
@@ -571,6 +575,115 @@ class RestActionCategoryEngine2Test extends AssertionsForJUnit with ScalaFutures
       NaptimeSerializer.courierModels,
       fields,
       Fields(CourierFormats.recordTemplateFormats[ExpandedCourse]))
+  }
+
+  @Test
+  def multiHopRelatedIncludes(): Unit = {
+    val partnersResourceName = ResourceName("partners", 1)
+    val instructorsResourceName = ResourceName("instructors", 1)
+
+    implicit val courseFormat = CourierFormats.recordTemplateFormats[ExpandedCourse]
+    implicit val instructorFormats = CourierFormats.recordTemplateFormats[Instructor]
+    implicit val partnerFormats = CourierFormats.recordTemplateFormats[Partner]
+
+    implicit val coursesFields = Fields[ExpandedCourse].withRelated("instructorIds" -> instructorsResourceName)
+    implicit val instructorFields = Fields[Instructor].withRelated("partner" -> partnersResourceName)
+    implicit val partnerFields = Fields[Partner]
+
+    val queryFields = QueryFields(Set("name", "description", "instructorIds"),
+      Map(instructorsResourceName -> Set("name"), partnersResourceName -> Set("name", "slug")))
+    val queryIncludes = QueryIncludes(Set("instructorIds"), Map(instructorsResourceName -> Set("partner")))
+
+    val course = Keyed("my-course-id", ExpandedCourse(
+      name = "my best course",
+      description = "My favorite course",
+      platform = CoursePlatform.NewPlatform,
+      domains = List.empty,
+      courseQnAs = List.empty,
+      instructorIds = List(3L)))
+    val instructor = Keyed(3L, Instructor(
+      name = "Prof Example",
+      bio = None,
+      partner = "uuid-abc_123"))
+    val partner = Keyed("uuid-abc_123", Partner(
+      name = "School of awesome",
+      slug = Slug("school-of-awesome")))
+
+    val response = Ok(course)
+      .withRelated(instructorsResourceName, List(instructor))
+      .withRelated(partnersResourceName, List(partner))
+
+    val engine = RestActionCategoryEngine2.getActionCategoryEngine[String, ExpandedCourse]
+    val wireResponse = engine.mkResponse(
+      request = FakeRequest(),
+      resourceFields = coursesFields,
+      requestFields = queryFields,
+      requestIncludes = queryIncludes,
+      pagination = RequestPagination(limit = 10, start = None, isDefault = true),
+      response = response)
+
+    val content: JsValue = Helpers.contentAsJson(Future.successful(wireResponse))
+    val expected = Json.obj(
+      "elements" -> Json.arr(
+        Json.obj(
+          "id" -> "my-course-id",
+          "name" -> "my best course",
+          "description" -> "My favorite course",
+          "instructorIds" -> Json.arr(3L))),
+      "paging" -> Json.obj(),
+      "linked" -> Json.obj(
+        "partners.v1" -> Json.arr(
+          Json.obj(
+            "id" -> "uuid-abc_123",
+            "name" -> "School of awesome",
+            "slug" -> "school-of-awesome")),
+        "instructors.v1" -> Json.arr(
+          Json.obj(
+            "id" -> 3L,
+            "name" -> "Prof Example"))))
+    assert(expected === content)
+
+    val wireResponse2 = engine.mkResponse(
+      request = FakeRequest(),
+      resourceFields = coursesFields,
+      requestFields = queryFields,
+      requestIncludes = queryIncludes.copy(resources = Map.empty),
+      pagination = RequestPagination(limit = 10, start = None, isDefault = true),
+      response = response)
+    val content2: JsValue = Helpers.contentAsJson(Future.successful(wireResponse2))
+    val expected2 = Json.obj(
+      "elements" -> Json.arr(
+        Json.obj(
+          "id" -> "my-course-id",
+          "name" -> "my best course",
+          "description" -> "My favorite course",
+          "instructorIds" -> Json.arr(3L))),
+      "paging" -> Json.obj(),
+      "linked" -> Json.obj(
+        "instructors.v1" -> Json.arr(
+          Json.obj(
+            "id" -> 3L,
+            "name" -> "Prof Example"))))
+    assert(expected2 === content2)
+
+    val wireResponse3 = engine.mkResponse(
+      request = FakeRequest(),
+      resourceFields = coursesFields,
+      requestFields = queryFields,
+      requestIncludes = QueryIncludes(Set.empty, Map.empty),
+      pagination = RequestPagination(limit = 10, start = None, isDefault = true),
+      response = response)
+    val content3: JsValue = Helpers.contentAsJson(Future.successful(wireResponse3))
+    val expected3 = Json.obj(
+      "elements" -> Json.arr(
+        Json.obj(
+          "id" -> "my-course-id",
+          "name" -> "my best course",
+          "description" -> "My favorite course",
+          "instructorIds" -> Json.arr(3L))),
+      "paging" -> Json.obj(),
+      "linked" -> Json.obj())
+    assert(expected3 === content3)
   }
 
 

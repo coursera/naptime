@@ -1,0 +1,8 @@
+namespace org.coursera.naptime.actions
+
+/**
+ * Partners are identified by a long id
+ *
+ * TODO: add validation (e.g. min)
+ */
+typeref InstructorId = long
