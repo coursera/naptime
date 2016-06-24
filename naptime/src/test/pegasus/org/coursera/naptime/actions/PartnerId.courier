@@ -1,0 +1,9 @@
+namespace org.coursera.naptime.actions
+
+/**
+ * Partners are identified by a UUID type string.
+ *
+ * TODO: typeref a UUID instead of a generic string.
+ * TODO: add validation on the type (including length limits, allowed characters, etc.)
+ */
+typeref PartnerId = string

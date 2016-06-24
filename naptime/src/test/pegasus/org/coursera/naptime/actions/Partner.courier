@@ -1,0 +1,29 @@
+namespace org.coursera.naptime.actions
+
+/**
+ * A partner to our hypothetical catalog of courses.
+ */
+record Partner {
+  /**
+   * A human readable name corresponding to the partner.
+   *
+   * Note: because some partners may have different names for different
+   * languages, we mark the name as a TranslatableString.
+   */
+  name: TranslatableString
+
+  /**
+   * An alternate "id" for the name. (Used in URLs)
+   */
+  slug: Slug
+
+  /**
+   * Biographical information about the partner.
+   */
+  description: TranslatableString?
+
+  /**
+   * The instructors associated with this partner.
+   */
+  instructorIds: array[InstructorId] = []
+}
