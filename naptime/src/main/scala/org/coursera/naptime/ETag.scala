@@ -25,7 +25,12 @@ import org.coursera.common.stringkey.StringKeyFormat.Implicits.OrFormat
  *
  * @param weakValidator tag without surrounding `"`s; these are added by Naptime
  */
-case class ETag(weakValidator: String)
+case class ETag(weakValidator: String) {
+  // See https://tools.ietf.org/html/rfc7232#section-2.3.
+  require(
+    !weakValidator.contains("\"\\"),
+    """Characters '"' and '\' not allowed in ETags""")
+}
 
 object ETag {
 
