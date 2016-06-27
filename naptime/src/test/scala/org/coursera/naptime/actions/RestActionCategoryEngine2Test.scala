@@ -347,7 +347,7 @@ class RestActionCategoryEngine2Test extends AssertionsForJUnit with ScalaFutures
     assert(response1.header.headers.get(HeaderNames.ETAG) != responseNoRelated.header.headers.get(HeaderNames.ETAG))
     assert(response1.header.headers.get(HeaderNames.ETAG) === response2.header.headers.get(HeaderNames.ETAG))
     // Check for stability in ETag computation.
-    assert(Some("\"-981723117\"") === response1.header.headers.get(HeaderNames.ETAG))
+    assert(Some("W/\"-981723117\"") === response1.header.headers.get(HeaderNames.ETAG))
   }
 
   @Test
@@ -426,7 +426,7 @@ class RestActionCategoryEngine2Test extends AssertionsForJUnit with ScalaFutures
     assert(response1.header.headers.get(HeaderNames.ETAG) != responseNoRelated.header.headers.get(HeaderNames.ETAG))
     assert(response1.header.headers.get(HeaderNames.ETAG) === response2.header.headers.get(HeaderNames.ETAG))
     // Check for stability in ETag computation.
-    assert(Some("\"1468630371\"") === response1.header.headers.get(HeaderNames.ETAG))
+    assert(Some("W/\"1468630371\"") === response1.header.headers.get(HeaderNames.ETAG))
   }
 
   @Test

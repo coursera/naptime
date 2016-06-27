@@ -204,7 +204,7 @@ class ETagRestActionCategoryEngineTest extends AssertionsForJUnit with ScalaFutu
     val result = "test result"
     val eTag = ETag("1")
     val okResponse = Ok(result).withETag(eTag)
-    val expectedHeader = "ETag" -> "\"1\""
+    val expectedHeader = "ETag" -> "W/\"1\""
 
     val header = RestActionCategoryEngine.mkETagHeaderOpt(testPagination, okResponse, None)
     assert(Some(expectedHeader) === header)
@@ -233,7 +233,7 @@ class ETagRestActionCategoryEngineTest extends AssertionsForJUnit with ScalaFutu
   @Test
   def etagShouldShortCircuitResponse(): Unit = {
     implicit val intKeyFormat = KeyFormat.intKeyFormat
-    val req = FakeRequest().withHeaders(HeaderNames.IF_NONE_MATCH -> "\"asdf\"")
+    val req = FakeRequest().withHeaders(HeaderNames.IF_NONE_MATCH -> "W/\"asdf\"")
     val fields = Fields[TestResponse](TestResponse.fmt)
     val pagination = RequestPagination(20, None, isDefault = true)
     val naptimeResponse = Ok(Keyed(1, TestResponse(foo = "bar"))).withETag(ETag("asdf"))
@@ -249,7 +249,8 @@ class ETagRestActionCategoryEngineTest extends AssertionsForJUnit with ScalaFutu
   }
 
   private[this] def assertETagHeaderValueFormat(etagHeaderValue: String) = {
-    assert(etagHeaderValue.startsWith("\""), "ETag header values must start with a quote character")
+    assert(
+      etagHeaderValue.startsWith("W/\""), "ETag header values must start with a quote character")
     assert(etagHeaderValue.endsWith("\""), "ETag header values must end with a quote character.")
 
     assert(etagHeaderValueRegex.pattern.matcher(etagHeaderValue).matches)
@@ -257,7 +258,7 @@ class ETagRestActionCategoryEngineTest extends AssertionsForJUnit with ScalaFutu
 }
 
 object ETagRestActionCategoryEngineTest {
-  val etagHeaderValueRegex = "^\"[A-z0-9-]+\"".r
+  val etagHeaderValueRegex = "^W/\"[A-z0-9-]+\"".r
 }
 
 case class TestResponse(foo: String)
