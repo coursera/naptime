@@ -107,6 +107,8 @@ object RestActionCategoryEngineTest {
 class RestActionCategoryEngineTest extends AssertionsForJUnit with ScalaFutures {
   import RestActionCategoryEngineTest._
 
+  override def spanScaleFactor: Double = 10
+
   @Test
   def get1(): Unit = {
     testEmptyBody(SampleResource.get1(1))
