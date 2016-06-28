@@ -488,16 +488,9 @@ object RestActionCategoryEngine2 {
       }
     }
   }
-
-  object FlattenedFilteringJacksonDataCodec {
-    private val prettyPrinter = new DefaultPrettyPrinter()
-  }
+  
   private[naptime] class FlattenedFilteringJacksonDataCodec(fields: RequestFields)
     extends JacksonDataCodec {
-    // Quick extra feature in order to differentiate between new and old engines.
-    if (fields != AllFields && fields.hasField("_prettyPrint")) {
-      setPrettyPrinter(FlattenedFilteringJacksonDataCodec.prettyPrinter)
-    }
 
     override def writeObject(`object`: scala.Any, generator: JsonGenerator): Unit = {
       try {
