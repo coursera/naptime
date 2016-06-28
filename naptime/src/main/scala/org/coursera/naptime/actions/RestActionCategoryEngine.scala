@@ -16,6 +16,8 @@
 
 package org.coursera.naptime.actions
 
+import org.coursera.common.stringkey.StringKey
+import org.coursera.naptime.ETag
 import org.coursera.naptime.model.KeyFormat
 import org.coursera.naptime.model.Keyed
 import org.coursera.naptime.RestError
@@ -78,10 +80,8 @@ trait PlayJsonRestActionCategoryEngine {
   }
 
   private[this] object ETagHelpers {
-    private[this] def constructEtagHeader(etag: String): (String, String) = {
-      // ETag needs to be a quoted string. See specs here:
-      // http://www.w3.org/Protocols/rfc2616/rfc2616-sec3.html#sec3.11
-      HeaderNames.ETAG -> ("\"" + etag + "\"")
+    private[this] def constructEtagHeader(etag: ETag): (String, String) = {
+      HeaderNames.ETAG -> StringKey(etag).key
     }
 
     private[naptime] def addProvidedETag[T](ok: Ok[T]): Option[(String, String)] = {
@@ -90,8 +90,9 @@ trait PlayJsonRestActionCategoryEngine {
       }
     }
 
-    private[naptime] def computeETag(jsValue: JsValue,
-      pagination: RequestPagination): (String, String) = {
+    private[naptime] def computeETag(
+        jsValue: JsValue,
+        pagination: RequestPagination): (String, String) = {
       // For now, use Play!'s built-in hashcode implementations. This should be good enough for now.
       // Note: upgrading Play! versions (even point releases) could change the output of hashCode.
       // Because ETags are just an optimization, we are okay with that for now.
@@ -101,7 +102,8 @@ trait PlayJsonRestActionCategoryEngine {
       // for a particular key.
       // Note: for pagination, we explicitly call the eTagHashCode that excludes some fields.
       val hashCode = Set(jsValue.hashCode(), pagination.eTagHashCode()).hashCode()
-      constructEtagHeader(hashCode.toString)
+
+      constructEtagHeader(ETag(hashCode.toString))
     }
 
   }

@@ -50,6 +50,8 @@ import java.io.IOException
 import com.linkedin.data.ByteString
 import org.coursera.naptime.RequestIncludes
 import org.coursera.naptime.actions.util.DataMapUtils
+import org.coursera.common.stringkey.StringKey
+import org.coursera.naptime.ETag
 import org.coursera.naptime.model.KeyFormat
 import org.coursera.naptime.model.Keyed
 
@@ -70,10 +72,8 @@ object RestActionCategoryEngine2 {
   }
 
   private[this] object ETagHelpers {
-    private[this] def constructEtagHeader(etag: String): (String, String) = {
-      // ETag needs to be a quoted string. See specs here:
-      // http://www.w3.org/Protocols/rfc2616/rfc2616-sec3.html#sec3.11
-      HeaderNames.ETAG -> ("\"" + etag + "\"")
+    private[this] def constructEtagHeader(etag: ETag): (String, String) = {
+      HeaderNames.ETAG -> StringKey(etag).key
     }
 
     private[naptime] def addProvidedETag[T](ok: Ok[T]): Option[(String, String)] = {
@@ -89,7 +89,8 @@ object RestActionCategoryEngine2 {
       // Because ETags are just an optimization, we are okay with that for now.
       // Note: for pagination, we explicitly call the eTagHashCode that excludes some fields.
       val hashCode = Set(dataMap.hashCode(), pagination.eTagHashCode()).hashCode()
-      constructEtagHeader(hashCode.toString)
+
+      constructEtagHeader(ETag(hashCode.toString))
     }
 
   }
