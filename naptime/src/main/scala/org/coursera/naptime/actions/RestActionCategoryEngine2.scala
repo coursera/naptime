@@ -245,6 +245,26 @@ object RestActionCategoryEngine2 {
     }
   }
 
+  private[this] def addLinks(
+      response: DataMap,
+      request: RequestIncludes,
+      requestFields: RequestFields,
+      fields: Fields[_],
+      ok: Ok[_]): Unit = {
+    if (request.includeFieldsRelatedResource("_links")) {
+      val links = new DataMap()
+      response.put("links", links)
+      val visibleIncludes = ok.related.filterKeys(requestFields.forResource(_).isDefined)
+      visibleIncludes.foreach { case (name, related) =>
+        related.fields.makeLinksRelationsMap(
+          links,
+          name.identifier,
+          request.forResource(name).getOrElse(QueryIncludes.empty))
+      }
+      fields.makeLinksRelationsMap(links, "elements", request)
+    }
+  }
+
   private[this] def buildResponse[K, V](
       things: scala.collection.Iterable[Keyed[K, V]],
       ok: Ok[_],
@@ -273,6 +293,7 @@ object RestActionCategoryEngine2 {
     val newFields = serializeRelated(linked, ok, fields, requestIncludes, elementsFields)
     val codec = new FlattenedFilteringJacksonDataCodec(newFields)
     val etag = mkETagHeader(pagination, ok, response)
+    addLinks(response, requestIncludes, newFields, fields, ok)
     ProcessedResponse(response, codec, etag)
   }
 

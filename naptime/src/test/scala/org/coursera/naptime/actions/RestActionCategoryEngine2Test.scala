@@ -684,6 +684,40 @@ class RestActionCategoryEngine2Test extends AssertionsForJUnit with ScalaFutures
       "paging" -> Json.obj(),
       "linked" -> Json.obj())
     assert(expected3 === content3)
+
+    val wireResponse4 = engine.mkResponse(
+      request = FakeRequest(),
+      resourceFields = coursesFields,
+      requestFields = queryFields,
+      requestIncludes = queryIncludes.copy(fields = queryIncludes.fields + "_links"),
+      pagination = RequestPagination(limit = 10, start = None, isDefault = true),
+      response = response)
+    val content4: JsValue = Helpers.contentAsJson(Future.successful(wireResponse4))
+    val expected4 = Json.obj(
+      "elements" -> Json.arr(
+        Json.obj(
+          "id" -> "my-course-id",
+          "name" -> "my best course",
+          "description" -> "My favorite course",
+          "instructorIds" -> Json.arr(3L))),
+      "paging" -> Json.obj(),
+      "linked" -> Json.obj(
+        "partners.v1" -> Json.arr(
+          Json.obj(
+            "id" -> "uuid-abc_123",
+            "name" -> "School of awesome",
+            "slug" -> "school-of-awesome")),
+        "instructors.v1" -> Json.arr(
+          Json.obj(
+            "id" -> 3L,
+            "name" -> "Prof Example"))),
+      "links" -> Json.obj(
+        "elements" -> Json.obj(
+          "instructorIds" -> "instructors.v1"),
+        "instructors.v1" -> Json.obj(
+          "partner" -> "partners.v1"),
+        "partners.v1" -> Json.obj()))
+    assert(expected4 === content4)
   }
 
 
