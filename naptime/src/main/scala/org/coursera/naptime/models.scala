@@ -16,6 +16,7 @@
 
 package org.coursera.naptime
 
+import com.linkedin.data.DataMap
 import org.coursera.naptime.QueryStringParser.NaptimeParseError
 import play.api.http.Status
 import play.api.i18n.Lang
@@ -26,6 +27,7 @@ import play.api.mvc.RequestHeader
 
 import scala.annotation.implicitNotFound
 import play.api.libs.json.OFormat
+
 import scala.annotation.tailrec
 import scala.collection.immutable
 import scala.util.Failure
@@ -257,9 +259,26 @@ sealed case class Fields[T](
     field -> JsString(resourceName.identifier)
   }.toList
 
+  /**
+   * Generates the JsObject that goes inside the `links` field in responses for
+   * Play-Json engines.
+   * @param fieldsToInclude
+   * @return
+   */
   private[naptime] def makeMetaRelationsMap(fieldsToInclude: Set[String]): JsObject = {
     val filtered = relationsInJson.filter(field => fieldsToInclude.contains(field._1))
     JsObject(filtered)
+  }
+
+  private[naptime] def makeLinksRelationsMap(
+      links: DataMap,
+      name: String,
+      includes: RequestIncludes): Unit = {
+    val relationMap = new DataMap()
+    links.put(name, relationMap)
+    relations.foreach { case (field, resourceName) =>
+      relationMap.put(field, resourceName.identifier)
+    }
   }
 
   private[naptime] def computeFields(rh: RequestHeader): Try[RequestFields] = {
