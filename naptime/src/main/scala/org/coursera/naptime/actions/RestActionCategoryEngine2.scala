@@ -229,7 +229,7 @@ object RestActionCategoryEngine2 {
       val facetArray = new DataList()
       val facetMap = new DataMap()
       facetMap.put("facetEntries", facetArray)
-      dataMap.put(key, facetArray)
+      dataMap.put(key, facetMap)
       value.fieldCardinality.foreach { cardinality =>
         facetMap.put("fieldCardinality", new java.lang.Long(cardinality))
       }

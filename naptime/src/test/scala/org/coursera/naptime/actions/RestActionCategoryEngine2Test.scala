@@ -25,6 +25,8 @@ import org.coursera.naptime.model.Keyed
 import org.coursera.naptime.RestError
 import org.coursera.naptime.NaptimeActionException
 import org.coursera.naptime.Errors
+import org.coursera.naptime.FacetField
+import org.coursera.naptime.FacetFieldValue
 import org.coursera.naptime.Fields
 import org.coursera.naptime.Ok
 import org.coursera.naptime.QueryFields
@@ -684,6 +686,59 @@ class RestActionCategoryEngine2Test extends AssertionsForJUnit with ScalaFutures
       "paging" -> Json.obj(),
       "linked" -> Json.obj())
     assert(expected3 === content3)
+  }
+
+  @Test
+  def serializeFacetsCorrectly(): Unit = {
+    implicit val courseFormat = CourierFormats.recordTemplateFormats[Course]
+    implicit val coursesFields = Fields[Course]
+
+    val engine = RestActionCategoryEngine2.finderActionCategoryEngine[String, Course]
+
+    val response = Ok(List(
+      Keyed("abc", Course("course 101", "101 course description")),
+      Keyed("zyx", Course("course 999", "999 course description")))).withPagination(
+        next = None,
+        total = Some(2L),
+        facets = Some(Map(
+          "languages" -> FacetField(
+            facetEntries = List(
+              FacetFieldValue("en", Some("English"), 2),
+              FacetFieldValue("fr", Some("French"), 0)),
+            fieldCardinality = Some(23)))))
+
+    val wireResponse = engine.mkResponse(
+      request = FakeRequest(),
+      resourceFields = coursesFields,
+      requestFields = QueryFields(Set("name"), Map.empty),
+      requestIncludes = QueryIncludes.empty,
+      pagination = RequestPagination(limit = 10, start = None, isDefault = true),
+      response = response)
+    val content: JsValue = Helpers.contentAsJson(Future.successful(wireResponse))
+    val expected = Json.obj(
+      "elements" -> Json.arr(
+        Json.obj(
+          "id" -> "abc",
+          "name" -> "course 101"),
+        Json.obj(
+          "id" -> "zyx",
+          "name" -> "course 999")),
+      "paging" -> Json.obj(
+        "total" -> 2,
+        "facets" -> Json.obj(
+          "languages" -> Json.obj(
+            "facetEntries" -> Json.arr(
+              Json.obj(
+                "id" -> "en",
+                "name" -> "English",
+                "count" -> 2),
+              Json.obj(
+                "id" -> "fr",
+                "name" -> "French",
+                "count" -> 0)),
+          "fieldCardinality" -> 23))),
+      "linked" -> Json.obj())
+    assert(expected === content)
   }
 
 
