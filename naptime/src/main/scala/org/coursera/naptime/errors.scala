@@ -159,7 +159,7 @@ trait Errors {
       details)
 
   /**
-   * Error out with a precondition failed (411) response.
+   * Error out with a precondition failed (412) response.
    *
    * Note: Only use this within a Rest Action, and not a general action.
    */
@@ -178,6 +178,18 @@ trait Errors {
   def InternalServerError(
       errorCode: String = null, msg: String = null, details: Option[JsValue] = None) =
     throw new NaptimeActionException(INTERNAL_SERVER_ERROR,
+      Option(errorCode),
+      Option(msg),
+      details)
+
+  /**
+   * Error out with a bad gateway error (502) response.
+   *
+   * Note: Only use this within a Rest Action, and not a general action.
+   */
+  def BadGateway(
+      errorCode: String = null, msg: String = null, details: Option[JsValue] = None) =
+    throw new NaptimeActionException(BAD_GATEWAY,
       Option(errorCode),
       Option(msg),
       details)
