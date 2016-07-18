@@ -17,6 +17,7 @@
 package org.coursera.naptime.router2
 
 import org.coursera.common.stringkey.StringKeyFormat
+import org.coursera.naptime.actions.NaptimeSerializer.AnyWrites._
 import org.coursera.naptime.model.KeyFormat
 import org.coursera.naptime.actions.RestActionBuilder
 import org.coursera.naptime.access.HeaderAccessControl

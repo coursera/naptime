@@ -57,11 +57,13 @@ import org.coursera.naptime.model.Keyed
 
 import scala.collection.JavaConversions._
 
+object RestActionCategoryEngine2 extends RestActionCategoryEngine2
+
 /**
  * 2nd generation engines with Pegasus DataMaps at the core. To use, import them at the top of your
  * file.
  */
-object RestActionCategoryEngine2 {
+trait RestActionCategoryEngine2 {
 
   private[this] def mkOkResponse[T](r: RestResponse[T])(fn: Ok[T] => Result) = {
     r match {
