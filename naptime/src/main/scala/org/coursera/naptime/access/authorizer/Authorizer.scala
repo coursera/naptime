@@ -29,7 +29,7 @@ trait Authorizer[-A] {
   def authorize(authentication: A): AuthorizeResult
 
   def check(authentication: A): Unit = {
-    Authorizer.toResponse(authorize(authentication), ()).left.foreach(throw _)
+    Authorizer.toResponse(this, authentication).left.foreach(throw _)
   }
 
   /**
@@ -45,9 +45,10 @@ object Authorizer {
     override def authorize(authentication: A): AuthorizeResult = f(authentication)
   }
 
-  def toResponse[T](result: AuthorizeResult, rawResponse: T): Either[NaptimeActionException, T] = {
-    result match {
-      case AuthorizeResult.Authorized => Right(rawResponse)
+  private[access] def toResponse[A](authorizer: Authorizer[A], authentication: A):
+    Either[NaptimeActionException, A] = {
+    authorizer.authorize(authentication) match {
+      case AuthorizeResult.Authorized => Right(authentication)
       case AuthorizeResult.Rejected(message, details) =>
         Left(NaptimeActionException(FORBIDDEN, Some("auth.perms"), Some(message), details))
       case AuthorizeResult.Failed(message, details) =>

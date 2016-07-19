@@ -42,7 +42,7 @@ case class StructuredAccessControl[A](
     Authenticator.authenticateAndRecover(authenticator, requestHeader).map { decoratedOption =>
       decoratedOption.map { either =>
         either.right.flatMap { decorated =>
-          Authorizer.toResponse(authorizer.authorize(decorated), decorated)
+          Authorizer.toResponse(authorizer, decorated)
         }
       }.getOrElse {
         StructuredAccessControl.missingResponse
@@ -51,7 +51,7 @@ case class StructuredAccessControl[A](
   }
 
   override private[naptime] def check(authInfo: A): Either[NaptimeActionException, A] = {
-    Authorizer.toResponse(authorizer.authorize(authInfo), authInfo)
+    Authorizer.toResponse(authorizer, authInfo)
   }
 }
 
@@ -62,6 +62,50 @@ object StructuredAccessControl {
       Status.UNAUTHORIZED,
       Some("auth.perms"),
       Some("Missing authentication")))
+  }
+
+  /**
+   * Implementation note: The [[Authenticator]] is supposed to generate the authentication data.
+   * In this case, the resulting authentication data depends on the _authorizers_ in the input
+   * access controls because it reflects which authorizers accepted. Thus we run the individual
+   * authorizers in the combined access control's authenticator.
+   */
+  def anyOf[A, B](
+      controlA: StructuredAccessControl[A],
+      controlB: StructuredAccessControl[B]):
+    StructuredAccessControl[(Option[A], Option[B])] = {
+
+    type AA = (Option[A], Option[B])
+
+    val authenticator: Authenticator[AA] = new Authenticator[AA] {
+      def maybeAuthenticate(
+          requestHeader: RequestHeader)
+          (implicit ec: ExecutionContext): Future[Option[Either[NaptimeActionException, AA]]] = {
+        for {
+          maybeAuthenticationA <- Authenticator.authenticateAndRecover(
+            controlA.authenticator, requestHeader)
+          maybeAuthenticationB <- Authenticator.authenticateAndRecover(
+            controlB.authenticator, requestHeader)
+        } yield {
+          val resultA = maybeAuthenticationA
+            .map(_.right.flatMap(Authorizer.toResponse(controlA.authorizer, _)))
+          val resultB = maybeAuthenticationB
+            .map(_.right.flatMap(Authorizer.toResponse(controlB.authorizer, _)))
+
+          (resultA, resultB) match {
+            case (None, None) => None
+            case (Some(Left(errorA)), Some(Left(_))) =>
+              Some(Left(errorA))  // Ignore the other error.
+            case _ =>
+              Some(Right((resultA.flatMap(_.right.toOption), resultB.flatMap(_.right.toOption))))
+          }
+        }
+      }
+    }
+
+    val authorizer: Authorizer[AA] = Authorizer(_ => AuthorizeResult.Authorized)
+
+    StructuredAccessControl(authenticator, authorizer)
   }
 
 }
