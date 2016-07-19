@@ -56,8 +56,13 @@ private[access] trait And {
           }
         }
       }
-      override private[naptime] def simulateAuthentication(authInfo: (A, B)): Either[NaptimeActionException, (A, B)] = {
-        (controlA.simulateAuthentication(authInfo._1), controlB.simulateAuthentication(authInfo._2)) match {
+
+      override def simulateAuthentication(authentication: (A, B)):
+        Either[NaptimeActionException, (A, B)] = {
+        val results = Tuple2(
+          controlA.simulateAuthentication(authentication._1),
+          controlB.simulateAuthentication(authentication._2))
+        results match {
           case (Right(resultA), Right(resultB)) => Right((resultA, resultB))
           case (Left(err), _) => Left(err)
           case (_, Left(err)) => Left(err)
@@ -90,15 +95,20 @@ private[access] trait And {
             case (Right(authenticationA), Right(authenticationB), Right(authenticationC)) =>
               Right((authenticationA, authenticationB, authenticationC))
             case _ =>
-              List(resultA, resultB)
+              List(resultA, resultB, resultC)
                 .collectFirst { case Left(error) => Left(error) }
                 .head
           }
         }
       }
 
-      override private[naptime] def simulateAuthentication(authInfo: (A, B, C)): Either[NaptimeActionException, (A, B, C)] = {
-        (controlA.simulateAuthentication(authInfo._1), controlB.simulateAuthentication(authInfo._2), controlC.simulateAuthentication(authInfo._3)) match {
+      override private[naptime] def simulateAuthentication(authentication: (A, B, C)):
+        Either[NaptimeActionException, (A, B, C)] = {
+        val results = Tuple3(
+          controlA.simulateAuthentication(authentication._1),
+          controlB.simulateAuthentication(authentication._2),
+          controlC.simulateAuthentication(authentication._3))
+        results match {
           case (Right(a), Right(b), Right(c)) => Right((a, b, c))
           case (Left(err), _, _) => Left(err)
           case (_, Left(err), _) => Left(err)
@@ -107,4 +117,5 @@ private[access] trait And {
       }
     }
   }
+
 }

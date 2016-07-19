@@ -60,13 +60,13 @@ private[access] trait EitherOf {
         }
       }
 
-      override private[naptime] def simulateAuthentication(
-          authInfo: Either[A, B]): Either[NaptimeActionException, Either[A, B]] = {
-        authInfo match {
-          case Left(authA) =>
-            controlA.simulateAuthentication(authA).right.map(Left.apply)
-          case Right(authB) =>
-            controlB.simulateAuthentication(authB).right.map(Right.apply)
+      override def simulateAuthentication(
+          authentication: Either[A, B]): Either[NaptimeActionException, Either[A, B]] = {
+        authentication match {
+          case Left(authenticationA) =>
+            controlA.simulateAuthentication(authenticationA).right.map(Left.apply)
+          case Right(authenticationB) =>
+            controlB.simulateAuthentication(authenticationB).right.map(Right.apply)
         }
       }
     }

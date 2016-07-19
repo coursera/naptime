@@ -58,10 +58,11 @@ private[access] trait AnyOf {
         }
       }
 
-      override private[naptime] def simulateAuthentication(
-          authInfo: (Option[A], Option[B])): Either[NaptimeActionException, (Option[A], Option[B])] = {
-        val resultA = computeCheckResult(authInfo._1, controlA)
-        val resultB = computeCheckResult(authInfo._2, controlB)
+      override def simulateAuthentication(authentication: (Option[A], Option[B])):
+        Either[NaptimeActionException, (Option[A], Option[B])] = {
+
+        val resultA = simulateElement(authentication._1, controlA)
+        val resultB = simulateElement(authentication._2, controlB)
 
         (resultA, resultB) match {
           case (Left(errorA), Left(_)) => Left(errorA)
@@ -101,13 +102,12 @@ private[access] trait AnyOf {
       }
 
       override private[naptime] def simulateAuthentication(
-          authInfo: (Option[A], Option[B], Option[C])):
-          Either[NaptimeActionException, (Option[A], Option[B], Option[C])] = {
+          authentication: (Option[A], Option[B], Option[C])):
+        Either[NaptimeActionException, (Option[A], Option[B], Option[C])] = {
 
-
-        val resultA = computeCheckResult(authInfo._1, controlA)
-        val resultB = computeCheckResult(authInfo._2, controlB)
-        val resultC = computeCheckResult(authInfo._3, controlC)
+        val resultA = simulateElement(authentication._1, controlA)
+        val resultB = simulateElement(authentication._2, controlB)
+        val resultC = simulateElement(authentication._3, controlC)
 
         (resultA, resultB, resultC) match {
           case (Left(errorA), Left(_), Left(_)) => Left(errorA)
@@ -118,13 +118,11 @@ private[access] trait AnyOf {
     }
   }
 
-  /**
-   * Helper for the `check` functions to run the check functionality of a HeaderAccessControl.
-   */
-  private[this] def computeCheckResult[T](
-      elem: Option[T],
-      accessControl: HeaderAccessControl[T]): Either[NaptimeActionException, T] = {
-    elem.map(e => accessControl.simulateAuthentication(e)).getOrElse(StructuredAccessControl.missingResponse)
+  private[this] def simulateElement[T](element: Option[T], accessControl: HeaderAccessControl[T]):
+    Either[NaptimeActionException, T] = {
+    element
+      .map(accessControl.simulateAuthentication)
+      .getOrElse(StructuredAccessControl.missingResponse)
   }
 
 }

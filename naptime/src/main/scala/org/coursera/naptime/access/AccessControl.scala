@@ -36,6 +36,6 @@ trait AccessControl[A] {
    * the authentication process (since that often involves data fetching, and should be unit tested
    * separately from resources).
    */
-  private[naptime] def simulateAuthentication(authInfo: A): Either[NaptimeActionException, A]
+  private[naptime] def simulateAuthentication(authentication: A): Either[NaptimeActionException, A]
 
 }
