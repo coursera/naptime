@@ -32,8 +32,10 @@ import org.coursera.naptime.NaptimeActionException
 trait AccessControl[A] {
 
   /**
-   * Used for exercising access control configurations in resource tests.
+   * Used for exercising access control configurations in resource tests. Simulates the result of
+   * the authentication process (since that often involves data fetching, and should be unit tested
+   * separately from resources).
    */
-  private[naptime] def check(authInfo: A): Either[NaptimeActionException, A]
+  private[naptime] def simulateAuthentication(authInfo: A): Either[NaptimeActionException, A]
 
 }

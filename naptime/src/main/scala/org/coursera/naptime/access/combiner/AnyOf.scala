@@ -58,7 +58,7 @@ private[access] trait AnyOf {
         }
       }
 
-      override private[naptime] def check(
+      override private[naptime] def simulateAuthentication(
           authInfo: (Option[A], Option[B])): Either[NaptimeActionException, (Option[A], Option[B])] = {
         val resultA = computeCheckResult(authInfo._1, controlA)
         val resultB = computeCheckResult(authInfo._2, controlB)
@@ -100,7 +100,7 @@ private[access] trait AnyOf {
         }
       }
 
-      override private[naptime] def check(
+      override private[naptime] def simulateAuthentication(
           authInfo: (Option[A], Option[B], Option[C])):
           Either[NaptimeActionException, (Option[A], Option[B], Option[C])] = {
 
@@ -124,7 +124,7 @@ private[access] trait AnyOf {
   private[this] def computeCheckResult[T](
       elem: Option[T],
       accessControl: HeaderAccessControl[T]): Either[NaptimeActionException, T] = {
-    elem.map(e => accessControl.check(e)).getOrElse(StructuredAccessControl.missingResponse)
+    elem.map(e => accessControl.simulateAuthentication(e)).getOrElse(StructuredAccessControl.missingResponse)
   }
 
 }

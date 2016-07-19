@@ -50,7 +50,7 @@ case class StructuredAccessControl[A](
     }
   }
 
-  override private[naptime] def check(authInfo: A): Either[NaptimeActionException, A] = {
+  override private[naptime] def simulateAuthentication(authInfo: A): Either[NaptimeActionException, A] = {
     Authorizer.toResponse(authorizer.authorize(authInfo), authInfo)
   }
 }

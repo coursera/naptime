@@ -43,7 +43,7 @@ trait RestActionTester { this: ScalaFutures =>
     def testAction(ctx: RestContext[AuthType, BodyType]): RestResponse[ResponseType] = {
       import play.api.libs.concurrent.Execution.Implicits.defaultContext
 
-      val updatedAuthEither = action.restAuth.check(ctx.auth)
+      val updatedAuthEither = action.restAuth.simulateAuthentication(ctx.auth)
 
       updatedAuthEither match {
         case Left(error) => RestError(error)
