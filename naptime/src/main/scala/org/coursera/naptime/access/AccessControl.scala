@@ -18,18 +18,24 @@ package org.coursera.naptime.access
 
 import org.coursera.naptime.NaptimeActionException
 
+import scala.concurrent.ExecutionContext
+import scala.concurrent.Future
+
 /**
- * Control access to an API using Naptime's DSL.
+ * Control access to a resource method. Arbitrary, asynchronous logic may be executed, but
+ * successful access grant must produce an authentication object of type [[A]].
  *
- * Implementation note: This access control abstraction is independent of whether requests arrive
- * via HTTP or other means; until Naptime supports those other means, [[HeaderAccessControl]] is
- * the only access control type. When that's supported, this trait will likely have more methods
- * that make it more directly useful.
- *
+ * @tparam R request data (for example, for Play HTTP requests, this is
+ *           [[play.api.mvc.RequestHeader]])
  * @tparam A structured authentication result which is available to the API implementation after
  *           access control is successful
  */
-trait AccessControl[A] {
+trait AccessControl[-R, A] {
+
+  def run(request: R)(implicit ec: ExecutionContext): Future[Either[NaptimeActionException, A]]
+
+  final def runAndCheck(request: R)(implicit ec: ExecutionContext): Future[A] =
+    run(request).map(_.left.map(throw _).merge)
 
   /**
    * Used for exercising access control configurations in resource tests. Simulates the result of
