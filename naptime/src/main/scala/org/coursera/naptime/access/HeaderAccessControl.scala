@@ -40,7 +40,7 @@ import scala.concurrent.Future
  * construction your [[HeaderAccessControl]] (using body parameters as necessary) and invoking
  * `runAndCheck` in your API body.
  */
-trait HeaderAccessControl[A] {
+trait HeaderAccessControl[A] extends AccessControl[A] {
 
   def runAndCheck(requestHeader: RequestHeader)(implicit executionContext: ExecutionContext):
     Future[A] = run(requestHeader).map(_.left.map(throw _).merge)
@@ -49,10 +49,6 @@ trait HeaderAccessControl[A] {
       requestHeader: RequestHeader)
       (implicit executionContext: ExecutionContext): Future[Either[NaptimeActionException, A]]
 
-  /**
-   * Used for testing access control configurations in Naptime tests.
-   */
-  private[naptime] def check(authInfo: A): Either[NaptimeActionException, A]
 }
 
 object HeaderAccessControl extends AnyOf with And with EitherOf {
