@@ -303,6 +303,20 @@ class HeaderAccessControlCombinersTest extends AssertionsForJUnit with ScalaFutu
   }
 
   @Test
+  def successfulOfOneDeny(): Unit = {
+    runSuccessfulOf(leftDeny) { result =>
+      assertResult(Right(Set("right")))(result)
+    }
+  }
+
+  @Test
+  def successfulOfOneFail(): Unit = {
+    runSuccessfulOf(right = rightFail) { result =>
+      assertResult(Right(Set("left")))(result)
+    }
+  }
+
+  @Test
   def complexTest(): Unit = {
     val acceptingParser = StructuredAccessControl(Authenticators.constant(true), Authorizers.allowed)
     val notParsing = StructuredAccessControl(Authenticators.parseMissing[String], Authorizers.deny())
