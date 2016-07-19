@@ -68,7 +68,8 @@ object StructuredAccessControl {
    * Implementation note: The [[Authenticator]] is supposed to generate the authentication data.
    * In this case, the resulting authentication data depends on the _authorizers_ in the input
    * access controls because it reflects which authorizers accepted. Thus we run the individual
-   * authorizers in the combined access control's authenticator.
+   * authorizers in the combined access control's authenticator and generate an aggregated result
+   * in the combined authorizer.
    */
   def anyOf[A, B](
       controlA: StructuredAccessControl[A],
@@ -93,9 +94,9 @@ object StructuredAccessControl {
             .map(_.right.flatMap(Authorizer.toResponse(controlB.authorizer, _)))
 
           (resultA, resultB) match {
-            case (None, None) => None
             case (Some(Left(errorA)), Some(Left(_))) =>
-              Some(Left(errorA))  // Ignore the other error.
+              // If all return errors, return one of them, just so error information is not lost.
+              Some(Left(errorA))
             case _ =>
               Some(Right((resultA.flatMap(_.right.toOption), resultB.flatMap(_.right.toOption))))
           }
@@ -103,7 +104,10 @@ object StructuredAccessControl {
       }
     }
 
-    val authorizer: Authorizer[AA] = Authorizer(_ => AuthorizeResult.Authorized)
+    val authorizer: Authorizer[AA] = Authorizer {
+      case (None, None) => AuthorizeResult.Rejected("No successful checks")
+      case _ => AuthorizeResult.Authorized
+    }
 
     StructuredAccessControl(authenticator, authorizer)
   }
