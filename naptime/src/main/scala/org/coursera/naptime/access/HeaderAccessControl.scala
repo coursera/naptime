@@ -42,12 +42,12 @@ import scala.concurrent.Future
  */
 trait HeaderAccessControl[A] extends AccessControl[A] {
 
-  def runAndCheck(requestHeader: RequestHeader)(implicit executionContext: ExecutionContext):
-    Future[A] = run(requestHeader).map(_.left.map(throw _).merge)
+  def runAndCheck(requestHeader: RequestHeader)(implicit ec: ExecutionContext): Future[A] =
+    run(requestHeader).map(_.left.map(throw _).merge)
 
   def run(
       requestHeader: RequestHeader)
-      (implicit executionContext: ExecutionContext): Future[Either[NaptimeActionException, A]]
+      (implicit ec: ExecutionContext): Future[Either[NaptimeActionException, A]]
 
 }
 
