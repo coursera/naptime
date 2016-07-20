@@ -19,6 +19,7 @@ package org.coursera.naptime
 import com.linkedin.data.schema.DataSchema
 import com.linkedin.data.schema.RecordDataSchema
 import org.coursera.naptime.actions.NaptimeSerializer.AnyWrites._
+import org.coursera.naptime.actions.NaptimeActionSerializer.AnyWrites._
 import org.coursera.naptime.courier.CourierFormats
 import org.coursera.naptime.model.KeyFormat
 import org.coursera.naptime.model.Keyed

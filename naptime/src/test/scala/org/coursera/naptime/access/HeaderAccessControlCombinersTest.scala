@@ -37,6 +37,8 @@ class HeaderAccessControlCombinersTest extends AssertionsForJUnit with ScalaFutu
 
   import HeaderAccessControlCombinersTest._
 
+  override def spanScaleFactor: Double = 10
+
   def runEither(
       left: StructuredAccessControl[String] = LEFT,
       right: StructuredAccessControl[String] = RIGHT)

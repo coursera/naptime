@@ -492,8 +492,7 @@ trait RestActionCategoryEngine2 {
   }
 
   implicit def actionActionCategoryEngine[Key, Resource, Response](
-      implicit naptimeSerializer: NaptimeSerializer[Resource], keyFormat: KeyFormat[Key],
-      responseWrites: NaptimeSerializer[Response]):
+      implicit responseWrites: NaptimeActionSerializer[Response]):
     RestActionCategoryEngine[ActionRestActionCategory, Key, Resource, Response] = {
 
     new RestActionCategoryEngine[ActionRestActionCategory, Key, Resource, Response] {
@@ -506,8 +505,7 @@ trait RestActionCategoryEngine2 {
           response: RestResponse[Response]): Result = {
         mkOkResponse(response) { ok =>
           val responseBody = responseWrites.serialize(ok.content)
-          val codec = new JacksonDataCodec() // No filtering (maintains backwards compatibility)
-          Results.Ok(codec.mapToBytes(responseBody)).as(ContentTypes.JSON)
+          Results.Ok(responseBody).as(responseWrites.contentType(ok.content))
         }
       }
     }
