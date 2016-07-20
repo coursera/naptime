@@ -41,18 +41,18 @@ case class StructuredAccessControl[A](
 
     Authenticator.authenticateAndRecover(authenticator, requestHeader).map { decoratedOption =>
       decoratedOption.map { either =>
-        either.right.flatMap { decorated =>
-          Authorizer.toResponse(authorizer.authorize(decorated), decorated)
-        }
+        either.right.flatMap(simulateAuthentication)
       }.getOrElse {
         StructuredAccessControl.missingResponse
       }
     }
   }
 
-  override private[naptime] def check(authInfo: A): Either[NaptimeActionException, A] = {
-    Authorizer.toResponse(authorizer.authorize(authInfo), authInfo)
+  private[naptime] override def simulateAuthentication(authentication: A):
+    Either[NaptimeActionException, A] = {
+    Authorizer.toResponse(authorizer.authorize(authentication), authentication)
   }
+
 }
 
 object StructuredAccessControl {

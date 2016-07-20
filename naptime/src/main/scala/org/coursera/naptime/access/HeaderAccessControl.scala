@@ -16,7 +16,6 @@
 
 package org.coursera.naptime.access
 
-import org.coursera.naptime.NaptimeActionException
 import org.coursera.naptime.access.authenticator.Authenticator
 import org.coursera.naptime.access.authenticator.Decorator
 import org.coursera.naptime.access.authenticator.HeaderAuthenticationParser
@@ -26,9 +25,6 @@ import org.coursera.naptime.access.combiner.And
 import org.coursera.naptime.access.combiner.AnyOf
 import org.coursera.naptime.access.combiner.EitherOf
 import play.api.mvc.RequestHeader
-
-import scala.concurrent.ExecutionContext
-import scala.concurrent.Future
 
 /**
  * Control access to an API based on the [[RequestHeader]].
@@ -40,20 +36,7 @@ import scala.concurrent.Future
  * construction your [[HeaderAccessControl]] (using body parameters as necessary) and invoking
  * `runAndCheck` in your API body.
  */
-trait HeaderAccessControl[A] {
-
-  def runAndCheck(requestHeader: RequestHeader)(implicit executionContext: ExecutionContext):
-    Future[A] = run(requestHeader).map(_.left.map(throw _).merge)
-
-  def run(
-      requestHeader: RequestHeader)
-      (implicit executionContext: ExecutionContext): Future[Either[NaptimeActionException, A]]
-
-  /**
-   * Used for testing access control configurations in Naptime tests.
-   */
-  private[naptime] def check(authInfo: A): Either[NaptimeActionException, A]
-}
+trait HeaderAccessControl[A] extends AccessControl[RequestHeader, A]
 
 object HeaderAccessControl extends AnyOf with And with EitherOf {
 
