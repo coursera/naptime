@@ -353,6 +353,16 @@ class RestActionCategoryEngine2Test extends AssertionsForJUnit with ScalaFutures
   }
 
   @Test
+  def playJsonGet1IfNoneMatch(): Unit = {
+    val response1 = testEmptyRequestBody(PlayJsonTestResource.get1(4))
+    assert(response1.header.headers.contains(HeaderNames.ETAG))
+    val etag = response1.header.headers(HeaderNames.ETAG)
+    val request2 = standardFakeRequest.withHeaders(HeaderNames.IF_NONE_MATCH -> etag)
+    val response2 = testEmptyRequestBody(PlayJsonTestResource.get1(4), request2)
+    assert(response2.header.status === Status.NOT_MODIFIED)
+  }
+
+  @Test
   def playJsonGet2(): Unit = {
     testEmptyRequestBody(PlayJsonTestResource.get2(1))
   }
@@ -429,6 +439,16 @@ class RestActionCategoryEngine2Test extends AssertionsForJUnit with ScalaFutures
     assert(response1.header.headers.get(HeaderNames.ETAG) === response2.header.headers.get(HeaderNames.ETAG))
     // Check for stability in ETag computation.
     assert(Some("W/\"1468630371\"") === response1.header.headers.get(HeaderNames.ETAG))
+  }
+
+  @Test
+  def courierGet1IfNoneMatch(): Unit = {
+    val response1 = testEmptyRequestBody(CourierTestResource.get1("etagTest"))
+    assert(response1.header.headers.contains(HeaderNames.ETAG))
+    val etag = response1.header.headers(HeaderNames.ETAG)
+    val request2 = standardFakeRequest.withHeaders(HeaderNames.IF_NONE_MATCH -> etag)
+    val response2 = testEmptyRequestBody(CourierTestResource.get1("etagTest"), request2)
+    assert(response2.header.status === Status.NOT_MODIFIED)
   }
 
   @Test
@@ -780,10 +800,11 @@ class RestActionCategoryEngine2Test extends AssertionsForJUnit with ScalaFutures
 
   private[this] val fieldsQueryParam = s"${RelatedResources.CaseClass.relatedName.identifier}(name)," +
     s"${RelatedResources.Courier.relatedName.identifier}(name)"
+  private[this] val standardFakeRequest =
+    FakeRequest("GET", s"/?includes=relatedCaseClass,relatedCourier&fields=$fieldsQueryParam")
   private[this] def testEmptyRequestBody(
       actionToTest: RestAction[_, _, AnyContent, _, _, _],
-      request: FakeRequest[AnyContentAsEmpty.type] =
-        FakeRequest("GET", s"/?includes=relatedCaseClass,relatedCourier&fields=$fieldsQueryParam"),
+      request: FakeRequest[AnyContentAsEmpty.type] = standardFakeRequest,
       strictMode: Boolean = false): Result = {
     val result = runTestRequest(actionToTest, request)
     Validators.assertValidResponse(result, strictMode = strictMode)
