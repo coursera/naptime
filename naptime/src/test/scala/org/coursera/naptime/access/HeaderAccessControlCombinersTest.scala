@@ -40,8 +40,8 @@ class HeaderAccessControlCombinersTest extends AssertionsForJUnit with ScalaFutu
   override def spanScaleFactor: Double = 10
 
   def runEither(
-      left: StructuredAccessControl[String] = LEFT,
-      right: StructuredAccessControl[String] = RIGHT)
+      left: StructuredAccessControl[String] = leftSuccess,
+      right: StructuredAccessControl[String] = rightSuccess)
       (checks: Either[NaptimeActionException, Either[String, String]] => Unit): Unit = {
     val either = HeaderAccessControl.eitherOf(left, right)
     val result = either.run(FakeRequest())
@@ -49,8 +49,8 @@ class HeaderAccessControlCombinersTest extends AssertionsForJUnit with ScalaFutu
   }
 
   def runAnyOf(
-      left: StructuredAccessControl[String] = LEFT,
-      right: StructuredAccessControl[String] = RIGHT)
+      left: StructuredAccessControl[String] = leftSuccess,
+      right: StructuredAccessControl[String] = rightSuccess)
       (checks: Either[NaptimeActionException, (Option[String], Option[String])] => Unit): Unit = {
     val anyOf = HeaderAccessControl.anyOf(left, right)
     val result = anyOf.run(FakeRequest())
@@ -58,11 +58,20 @@ class HeaderAccessControlCombinersTest extends AssertionsForJUnit with ScalaFutu
   }
 
   def runAnd(
-    left: StructuredAccessControl[String] = LEFT,
-    right: StructuredAccessControl[String] = RIGHT)
-    (checks: Either[NaptimeActionException, (String, String)] => Unit): Unit = {
+      left: StructuredAccessControl[String] = leftSuccess,
+      right: StructuredAccessControl[String] = rightSuccess)
+      (checks: Either[NaptimeActionException, (String, String)] => Unit): Unit = {
     val and = HeaderAccessControl.and(left, right)
     val result = and.run(FakeRequest())
+    checks(result.futureValue)
+  }
+
+  def runSuccessfulOf(
+      left: StructuredAccessControl[String] = leftSuccess,
+      right: StructuredAccessControl[String] = rightSuccess)
+      (checks: Either[NaptimeActionException, Set[String]] => Unit): Unit = {
+    val successfulOf = HeaderAccessControl.successfulOf(List(left, right))
+    val result = successfulOf.run(FakeRequest())
     checks(result.futureValue)
   }
 
@@ -91,16 +100,14 @@ class HeaderAccessControlCombinersTest extends AssertionsForJUnit with ScalaFutu
 
   @Test
   def eitherFallbackToRightUnauthorized(): Unit = {
-    val left = StructuredAccessControl(Authenticators.constant("left"), Authorizers.deny())
-    runEither(left) { result =>
+    runEither(leftDeny) { result =>
       assert(Right(Right("right")) === result)
     }
   }
 
   @Test
   def eitherFallbackToRightError(): Unit = {
-    val left = StructuredAccessControl(Authenticators.constant("left"), Authorizers.fail())
-    runEither(left) { result =>
+    runEither(leftFail) { result =>
       assert(Right(Right("right")) === result)
     }
   }
@@ -123,16 +130,14 @@ class HeaderAccessControlCombinersTest extends AssertionsForJUnit with ScalaFutu
 
   @Test
   def eitherIgnoreRightUnauthorized(): Unit = {
-    val right = StructuredAccessControl(Authenticators.constant("right"), Authorizers.deny())
-    runEither(right = right) { result =>
+    runEither(right = rightDeny) { result =>
       assert(Right(Left("left")) === result)
     }
   }
 
   @Test
   def eitherIgnoreRightError(): Unit = {
-    val right = StructuredAccessControl(Authenticators.constant("right"), Authorizers.fail())
-    runEither(right = right) { result =>
+    runEither(right = rightFail) { result =>
       assert(Right(Left("left")) === result)
     }
   }
@@ -149,9 +154,7 @@ class HeaderAccessControlCombinersTest extends AssertionsForJUnit with ScalaFutu
 
   @Test
   def eitherBothDenied(): Unit = {
-    val left = StructuredAccessControl(Authenticators.constant("left"), Authorizers.deny())
-    val right = StructuredAccessControl(Authenticators.constant("right"), Authorizers.deny())
-    runEither(left, right) { result =>
+    runEither(leftDeny, rightDeny) { result =>
       assert(result.isLeft)
       assert(result.left.get.httpCode === Status.FORBIDDEN)
     }
@@ -182,25 +185,21 @@ class HeaderAccessControlCombinersTest extends AssertionsForJUnit with ScalaFutu
 
   @Test
   def anyOfLeftDeny(): Unit = {
-    val left = StructuredAccessControl(Authenticators.constant("left"), Authorizers.deny())
-    runAnyOf(left) { result =>
+    runAnyOf(leftDeny) { result =>
       assert(Right((None, Some("right"))) === result)
     }
   }
 
   @Test
   def anyOfRightDeny(): Unit = {
-    val right = StructuredAccessControl(Authenticators.constant("right"), Authorizers.deny())
-    runAnyOf(right = right) { result =>
+    runAnyOf(right = rightDeny) { result =>
       assert(Right((Some("left"), None)) === result)
     }
   }
 
   @Test
   def anyOfBothDeny(): Unit = {
-    val left = StructuredAccessControl(Authenticators.constant("left"), Authorizers.deny())
-    val right = StructuredAccessControl(Authenticators.constant("right"), Authorizers.deny())
-    runAnyOf(left, right) { result =>
+    runAnyOf(leftDeny, rightDeny) { result =>
       assert(result.isLeft)
       assert(result.left.get.httpCode === Status.FORBIDDEN)
     }
@@ -218,9 +217,7 @@ class HeaderAccessControlCombinersTest extends AssertionsForJUnit with ScalaFutu
 
   @Test
   def anyOfFailAndSkip(): Unit = {
-    val left = StructuredAccessControl(Authenticators.constant("left"), Authorizers.fail())
-    val right = StructuredAccessControl(Authenticators.constant("right"), Authorizers.deny())
-    runAnyOf(left, right) { result =>
+    runAnyOf(leftFail, rightDeny) { result =>
       assert(result.isLeft)
       // Behavior is unspecified as to the response code returned.
     }
@@ -229,8 +226,7 @@ class HeaderAccessControlCombinersTest extends AssertionsForJUnit with ScalaFutu
   @Test
   def anyOfParseErrorAndDeny(): Unit = {
     val left = StructuredAccessControl(Authenticators.parseError[String](), Authorizers.allowed)
-    val right = StructuredAccessControl(Authenticators.constant("right"), Authorizers.deny())
-    runAnyOf(left, right) { result =>
+    runAnyOf(left, rightDeny) { result =>
       assert(result.isLeft)
       // Behavior is unspecified as to the response code.
     }
@@ -245,8 +241,7 @@ class HeaderAccessControlCombinersTest extends AssertionsForJUnit with ScalaFutu
 
   @Test
   def andLeftDeny(): Unit = {
-    val left = StructuredAccessControl(Authenticators.constant("left"), Authorizers.deny())
-    runAnd(left) { result =>
+    runAnd(leftDeny) { result =>
       assert(result.isLeft)
       assert(result.left.get.httpCode === Status.FORBIDDEN)
     }
@@ -254,8 +249,7 @@ class HeaderAccessControlCombinersTest extends AssertionsForJUnit with ScalaFutu
 
   @Test
   def andRightDeny(): Unit = {
-    val right = StructuredAccessControl(Authenticators.constant("right"), Authorizers.deny())
-    runAnd(right = right) { result =>
+    runAnd(right = rightDeny) { result =>
       assert(result.isLeft)
       assert(result.left.get.httpCode === Status.FORBIDDEN)
     }
@@ -263,9 +257,7 @@ class HeaderAccessControlCombinersTest extends AssertionsForJUnit with ScalaFutu
 
   @Test
   def andBothDeny(): Unit = {
-    val left = StructuredAccessControl(Authenticators.constant("left"), Authorizers.deny())
-    val right = StructuredAccessControl(Authenticators.constant("right"), Authorizers.deny())
-    runAnd(left, right) { result =>
+    runAnd(leftDeny, rightDeny) { result =>
       assert(result.isLeft)
       assert(result.left.get.httpCode === Status.FORBIDDEN)
     }
@@ -273,9 +265,7 @@ class HeaderAccessControlCombinersTest extends AssertionsForJUnit with ScalaFutu
 
   @Test
   def andDenyAndFail(): Unit = {
-    val left = StructuredAccessControl(Authenticators.constant("left"), Authorizers.fail())
-    val right = StructuredAccessControl(Authenticators.constant("right"), Authorizers.deny())
-    runAnd(left, right) { result =>
+    runAnd(leftFail, rightDeny) { result =>
       assert(result.isLeft)
       assert(
         result.left.get.httpCode === Status.FORBIDDEN ||
@@ -285,11 +275,46 @@ class HeaderAccessControlCombinersTest extends AssertionsForJUnit with ScalaFutu
 
   @Test
   def andBothFail(): Unit = {
-    val left = StructuredAccessControl(Authenticators.constant("left"), Authorizers.fail())
-    val right = StructuredAccessControl(Authenticators.constant("right"), Authorizers.fail())
-    runAnd(left, right) { result =>
+    runAnd(leftFail, rightFail) { result =>
       assert(result.isLeft)
       assert(result.left.get.httpCode === Status.INTERNAL_SERVER_ERROR)
+    }
+  }
+
+  @Test
+  def successfulOfBothSucceed(): Unit = {
+    runSuccessfulOf() { result =>
+      assertResult(Right(Set("left", "right")))(result)
+    }
+  }
+
+  @Test
+  def successfulOfBothDeny(): Unit = {
+    runSuccessfulOf(leftDeny, rightDeny) { result =>
+      assert(result.isLeft)
+      assert(result.left.get.httpCode === Status.FORBIDDEN)
+    }
+  }
+
+  @Test
+  def successfulOfBothFail(): Unit = {
+    runSuccessfulOf(leftFail, rightFail) { result =>
+      assert(result.isLeft)
+      assert(result.left.get.httpCode === Status.INTERNAL_SERVER_ERROR)
+    }
+  }
+
+  @Test
+  def successfulOfOneDeny(): Unit = {
+    runSuccessfulOf(leftDeny) { result =>
+      assertResult(Right(Set("right")))(result)
+    }
+  }
+
+  @Test
+  def successfulOfOneFail(): Unit = {
+    runSuccessfulOf(right = rightFail) { result =>
+      assertResult(Right(Set("left")))(result)
     }
   }
 
@@ -309,8 +334,14 @@ class HeaderAccessControlCombinersTest extends AssertionsForJUnit with ScalaFutu
 }
 
 object HeaderAccessControlCombinersTest {
-  val LEFT = StructuredAccessControl(Authenticators.constant("left"), Authorizers.allowed)
-  val RIGHT = StructuredAccessControl(Authenticators.constant("right"), Authorizers.allowed)
+  val leftSuccess = StructuredAccessControl(Authenticators.constant("left"), Authorizers.allowed)
+  val rightSuccess = StructuredAccessControl(Authenticators.constant("right"), Authorizers.allowed)
+
+  val leftDeny = StructuredAccessControl(Authenticators.constant("left"), Authorizers.deny())
+  val rightDeny = StructuredAccessControl(Authenticators.constant("right"), Authorizers.deny())
+
+  val leftFail = StructuredAccessControl(Authenticators.constant("left"), Authorizers.fail())
+  val rightFail = StructuredAccessControl(Authenticators.constant("right"), Authorizers.fail())
 
   object Authenticators {
     def constant[T](constant: T): Authenticator[T] = {
