@@ -9,6 +9,7 @@ import play.api.libs.json.JsValue
 import play.api.mvc.RequestHeader
 
 import scala.concurrent.Future
+import scala.collection.immutable
 
 /**
  * The engine layer presents this EngineAPI to the presentation layer. The engine layer handles query validation,
