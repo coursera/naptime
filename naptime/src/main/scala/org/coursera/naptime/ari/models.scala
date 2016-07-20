@@ -9,7 +9,6 @@ import play.api.libs.json.JsValue
 import play.api.mvc.RequestHeader
 
 import scala.concurrent.Future
-import scala.collection.immutable
 
 /**
  * The engine layer presents this EngineAPI to the presentation layer. The engine layer handles query validation,
@@ -62,8 +61,6 @@ case class Request(
 
 /**
  * Encapsulates the starting root of a query into the naptime resource tree.
- *
- * TODO: change ResourceName to a path parameter aware data structure.
  *
  * @param resource The name of the resource that forms the root of the request.
  * @param selection The field selection on the first resource.
