@@ -64,7 +64,7 @@ class SangriaGraphQlSchemaBuilderTest extends AssertionsForJUnit {
     val courseResourceObjectType =
       courseResourceType.asInstanceOf[ObjectType[Unit, ScalaRecordTemplate]]
     val fieldNames = courseResourceObjectType.fieldsByName.keySet
-    val expectedFieldNames = Set("name", "description", "instructors", "id", "originalId")
+    val expectedFieldNames = Set("name", "description", "slug", "instructors", "id", "originalId")
     assert(fieldNames === expectedFieldNames)
   }
 
