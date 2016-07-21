@@ -69,6 +69,28 @@ object NaptimeActionSerializer {
     override def schema(t: Unit): Option[DataSchema] = Some(new NullDataSchema)
   }
 
+  implicit def optionWriter[T](implicit objSerializer: NaptimeActionSerializer[T]): NaptimeActionSerializer[Option[T]] = {
+    new NaptimeActionSerializer[Option[T]] {
+      override def serialize(t: Option[T]): Array[Byte] = {
+        t.map { elem =>
+          objSerializer.serialize(elem)
+        }.getOrElse(Array.emptyByteArray)
+      }
+
+      override def contentType(t: Option[T]): String = {
+        t.map { elem =>
+          objSerializer.contentType(elem)
+        }.getOrElse(ContentTypes.TEXT)
+      }
+
+      override def schema(t: Option[T]): Option[DataSchema] = {
+        t.flatMap { elem =>
+          objSerializer.schema(elem)
+        }
+      }
+    }
+  }
+
   object AnyWrites {
     implicit object AnyWrites extends NaptimeActionSerializer[Any] {
       override def serialize(t: Any): Array[Byte] = t.toString.getBytes(StandardCharsets.UTF_8)

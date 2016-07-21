@@ -505,7 +505,11 @@ trait RestActionCategoryEngine2 {
           response: RestResponse[Response]): Result = {
         mkOkResponse(response) { ok =>
           val responseBody = responseWrites.serialize(ok.content)
-          Results.Ok(responseBody).as(responseWrites.contentType(ok.content))
+          if (responseBody.isEmpty) {
+            Results.NoContent
+          } else {
+            Results.Ok(responseBody).as(responseWrites.contentType(ok.content))
+          }
         }
       }
     }
