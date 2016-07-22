@@ -30,6 +30,11 @@ import scala.collection.JavaConverters._
 
 object Types extends StrictLogging {
 
+  object Relations {
+    val PROPERTY_NAME = "related"
+  }
+
+
   /**
    * Computes an asymmetric type from the schemas for the input types.
    *
@@ -44,11 +49,12 @@ object Types extends StrictLogging {
   def computeAsymType(
       typeName: String,
       keyType: DataSchema,
-      valueType: RecordDataSchema): RecordDataSchema = {
+      valueType: RecordDataSchema,
+      fields: Fields[_]): RecordDataSchema = {
     if (keyType.hasError || valueType.hasError) {
       throw new RuntimeException(s"Input schemas have error: $keyType $valueType")
     }
-    keyType match {
+    val mergedSchema = keyType match {
       case primitive: PrimitiveDataSchema =>
         computeAsymTypeWithPrimitiveKey(typeName, primitive, valueType)
       case record: RecordDataSchema =>
@@ -58,6 +64,19 @@ object Types extends StrictLogging {
       case unknown: DataSchema =>
         throw new RuntimeException(s"Cannot compute asymmetric type for key type: $unknown")
     }
+    for ((name, relation) <- fields.relations) {
+      Option(mergedSchema.getField(name)) match {
+        case None =>
+          logger.warn(s"Fields for resource $typeName mentions field name '$name' but this field " +
+            "is not found in the merged type schema.")
+        case Some(field) =>
+          val properties = field.getProperties.asScala
+          val relatedMap = Map[String, AnyRef](
+            Relations.PROPERTY_NAME -> relation.identifier)
+          field.setProperties((properties ++ relatedMap).asJava)
+      }
+    }
+    mergedSchema
   }
 
   /**

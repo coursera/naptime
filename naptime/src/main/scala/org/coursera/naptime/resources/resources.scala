@@ -16,11 +16,13 @@
 
 package org.coursera.naptime.resources
 
+import org.coursera.courier.templates.ScalaRecordTemplate
 import org.coursera.naptime.model.KeyFormat
 import org.coursera.naptime.model.Keyed
 import org.coursera.naptime._
 import org.coursera.naptime.access.HeaderAccessControl
 import org.coursera.naptime.actions.RestActionBuilder
+import org.coursera.naptime.courier.CourierFormats
 import org.coursera.naptime.path.CollectionResourcePathParser
 import org.coursera.naptime.path.NestedPathKeyParser
 import org.coursera.naptime.path.ParsedPathKey
@@ -32,6 +34,8 @@ import org.coursera.naptime.path.UrlParseResult
 import play.api.libs.json.OFormat
 import play.api.mvc.AnyContent
 import play.api.mvc.BodyParsers
+
+import scala.reflect.ClassTag
 
 /**
  * Base Resource trait: mostly a marker trait wrapper methods for model serialization
@@ -164,4 +168,59 @@ trait CollectionResource[ParentResource <: Resource[_], K, M] extends Resource[M
  */
 trait TopLevelCollectionResource[K, M] extends CollectionResource[RootResource, K, M] {
   override val parentResource: RootResource = RootResource
+}
+
+/**
+ * If the resource is a courier model, extending from [[NestedCourierCollectionResource]] removes some boilerplate.
+ *
+ * Aside from automating some of the boilerplate away, it functions the same as a standard
+ * [[CollectionResource]]. If the resource is a top level resource, check out the
+ * [[CourierCollectionResource]] abstract class.
+ *
+ * To configure customized fields, use the following snippet:
+ *
+ * {{{
+ *   override implicit lazy val Fields = super.FIelds.withRelated(...)
+ * }}}
+ *
+ * @param kf The [[KeyFormat]] for the key type in the resource.
+ * @param classTag The concrete class tag for the value type in the resource.
+ * @tparam ParentResource The parent resource (for nesting purposes). If it is a top level, check out:
+ *                        [[CourierCollectionResource]]
+ * @tparam K The key type of the resource.
+ * @tparam M The "value" type of the resource.
+ */
+abstract class NestedCourierCollectionResource[ParentResource <: Resource[_], K, M <: ScalaRecordTemplate]()(
+    implicit kf: KeyFormat[K], classTag: ClassTag[M])
+  extends CollectionResource[ParentResource, K, M] {
+
+  final override implicit val keyFormat = kf
+
+  // When we use the serializer constructor, the classTag parameter is never initialized, and
+  // thus, we get NPEs when working with schemas. Because the OFormat isn't actually needed
+  final override implicit lazy val resourceFormat: OFormat[M] = Option(classTag).map { ct =>
+    CourierFormats.recordTemplateFormats[M](ct)
+  }.orNull // TODO: consider making a fake formatter.
+
+  protected[this] final lazy val BaseFields: Fields[M] = org.coursera.naptime.Fields(resourceFormat)
+
+  implicit override def Fields: Fields[M] = BaseFields
+}
+
+/**
+ * If the resource is a courier model, extending from [[CourierCollectionResource]] removes
+ * some boilerplate.
+ *
+ * If you have a nested resource, check out [[NestedCourierCollectionResource]].
+ *
+ * @param kf The [[KeyFormat]] for the key type in the resource.
+ * @param classTag The concrete class tag for the value type in the resource.
+ * @tparam K The key type of the resource.
+ * @tparam M The "value" type of the resource.
+ */
+abstract class CourierCollectionResource[K, M <: ScalaRecordTemplate](
+    implicit kf: KeyFormat[K], classTag: ClassTag[M])
+  extends NestedCourierCollectionResource[RootResource, K, M]()(kf, classTag) {
+
+  final override val parentResource: RootResource = RootResource
 }

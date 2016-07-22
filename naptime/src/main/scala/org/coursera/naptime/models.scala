@@ -347,6 +347,8 @@ object Fields {
   }
 
   val FIELDS_HEADER = "X-Coursera-Naptime-Fields"
+
+  private[naptime] val FAKE_FIELDS: Fields[_] = Fields(Set.empty, FieldsFunction.default, Map.empty)(null)
 }
 
 // TODO(saeta): FieldFn should also take advantage of the authentication applied. This will require

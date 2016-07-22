@@ -1,0 +1,7 @@
+namespace org.coursera.naptime
+
+record Instructor {
+  name: string
+  title: string
+  bio: string
+}

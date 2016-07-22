@@ -55,7 +55,7 @@ trait ResourceRouterBuilder {
     *
     * @return An instance of [[ResourceClass]] that has _NOT_ had its constructor called.
     */
-  protected[this] def stubInstance: ResourceClass = {
+  protected[this] lazy val stubInstance: ResourceClass = {
     import sun.reflect.ReflectionFactory
 
     val rf = ReflectionFactory.getReflectionFactory
