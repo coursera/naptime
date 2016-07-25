@@ -8,6 +8,7 @@ libraryDependencies ++= Seq(
   jodaTime,
   jodaConvert,
   playJson,
+  sangria,
   scalaGuice,
   scalaLogging,
   "org.scala-lang" % "scala-reflect" % scalaVersion.value,
