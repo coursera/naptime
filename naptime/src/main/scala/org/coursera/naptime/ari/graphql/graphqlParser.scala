@@ -16,18 +16,16 @@
 
 package org.coursera.naptime.ari.graphql
 
-import javax.inject.Inject
-
-import org.coursera.naptime.ari.EngineApi
-import play.api.mvc.Action
+import org.coursera.naptime.ari.Request
+import play.api.mvc.RequestHeader
 
 /**
- * An (stub) implementation of a GraphQL Play endpoint based on the Naptime automatic resource inclusion engine.
- * @param engine The automatic resource inclusion engine that fetches data.
- */
-class GraphQL @Inject() (engine: EngineApi) {
+  * The GraphQlParser represents the GraphQL segment of the Naptime ARI presentation layer.
+  * This segment is responsible for converting a GraphQL query (represented as a string) into a
+  * common [[Request]] class that can be parsed and evaluated by the ARI engine.
+  */
+trait GraphQlParser {
 
-  def handleRequest = Action.async { request =>
-    ???
-  }
+  def parse(request: String, requestHeader: RequestHeader): Option[Request]
+
 }
