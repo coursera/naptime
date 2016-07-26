@@ -8,9 +8,9 @@ import com.linkedin.data.schema.NullDataSchema
 import com.linkedin.data.schema.StringDataSchema
 import com.linkedin.data.template.RecordTemplate
 import play.api.http.ContentTypes
-import play.api.libs.json.Format
 import play.api.libs.json.JsValue
 import play.api.libs.json.Json
+import play.api.libs.json.Writes
 
 /**
  * Actions have far fewer restrictions on the response type than other actions. We thus define a looser
@@ -43,7 +43,7 @@ object NaptimeActionSerializer {
     override def contentType(t: JsValue): String = ContentTypes.JSON
   }
 
-  implicit def playJsonFormats[T](implicit playJsonFormat: Format[T]): NaptimeActionSerializer[T] = {
+  implicit def playJson[T](implicit playJsonWrites: Writes[T]): NaptimeActionSerializer[T] = {
     new NaptimeActionSerializer[T] {
       override def serialize(t: T): Array[Byte] = PlayJson.serialize(Json.toJson(t))
 
@@ -69,7 +69,8 @@ object NaptimeActionSerializer {
     override def schema(t: Unit): Option[DataSchema] = Some(new NullDataSchema)
   }
 
-  implicit def optionWriter[T](implicit objSerializer: NaptimeActionSerializer[T]): NaptimeActionSerializer[Option[T]] = {
+  implicit def optionWriter[T](
+      implicit objSerializer: NaptimeActionSerializer[T]): NaptimeActionSerializer[Option[T]] = {
     new NaptimeActionSerializer[Option[T]] {
       override def serialize(t: Option[T]): Array[Byte] = {
         t.map { elem =>
