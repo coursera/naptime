@@ -99,9 +99,9 @@ class MacroImpls(val c: blackbox.Context) {
     /**
      * Code-generates a subclass of [[ResourceRouterBuilder]] specialized for the [[Resource]] type.
      *
-     * Be sure to look over [[CollectionResourceRouter]] first, as that is crucial to understanding
+     * Be sure to look over [[NestingCollectionResourceRouter]] first, as that is crucial to understanding
      * the implementation of this macro. The bulk of the router is actually implemented in normal
-     * code within the [[CollectionResourceRouter]] class. This macro simply generates a subclass
+     * code within the [[NestingCollectionResourceRouter]] class. This macro simply generates a subclass
      * specialized to provide the glue code to bind to an instance of [[Resource]].
      *
      * @param wtt The weak type tag for the resource we are specializing.
@@ -171,13 +171,13 @@ class MacroImpls(val c: blackbox.Context) {
       val finalResource = q"""
       new $resourceRouterBuilderType {
         type ResourceClass = $resourceType
-        override def resourceClass = classOf[$resourceType]
+        override lazy val resourceClass = classOf[$resourceType]
         override def build(resourceInstance: ResourceClass) =
           new org.coursera.naptime.router2.NestingCollectionResourceRouter[
             $resourceType](resourceInstance) {
             ..${trees.map(_._1)}
           }
-        override def schema = {
+        override lazy val schema = {
           org.coursera.naptime.schema.Resource(
             kind = org.coursera.naptime.schema.ResourceKind.COLLECTION,
             name = Option(stubInstance.resourceName).getOrElse(
@@ -192,7 +192,7 @@ class MacroImpls(val c: blackbox.Context) {
             attributes = org.coursera.naptime.router2.AttributesProvider
                 .getResourceAttributes(resourceClass.getName))
         }
-        override def types = ${computeTypes(resourceType)}
+        override lazy val types = ${computeTypes(resourceType)}
       }
       """
       debug(s"NaptimeRouterBuilder macro code for $resourceType : ${showCode(finalResource)}")
@@ -274,8 +274,11 @@ class MacroImpls(val c: blackbox.Context) {
             org.coursera.naptime.Types.computeAsymType(
               mergedType,
               keySchema,
-              bodySchema))
-        }).toList
+              bodySchema,
+              stubInstance.Fields))
+        }).toList ++ List(
+          keySchemaOption.map(Keyed(${keyType.typeSymbol.fullName}, _)),
+          bodySchemaOption.map(Keyed(${bodyType.typeSymbol.fullName}, _))).flatten
       }"""
     }
 

@@ -1,0 +1,14 @@
+namespace org.coursera.naptime.couriertests
+
+import org.coursera.naptime.InstructorId
+
+record ExpectedMergedCourse {
+  id: string
+
+  name: string
+
+  description: string
+
+  @related = "instructors.v1"
+  instructors: array[InstructorId]
+}

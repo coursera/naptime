@@ -1,0 +1,7 @@
+namespace org.coursera.naptime
+
+record Course {
+  name: string
+  description: string
+  instructors: array[InstructorId]
+}

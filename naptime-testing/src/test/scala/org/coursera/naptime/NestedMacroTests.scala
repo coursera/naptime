@@ -634,14 +634,17 @@ class NestedMacroTests extends AssertionsForJUnit with MockitoSugar {
   @Test
   def typesTest(): Unit = {
     val types = PersonResource.routerBuilder.types
-    assert(types.size === 1)
-    assert(types.head.key === "org.coursera.naptime.PersonResource.Model")
-    assert(!types.head.value.hasError)
-    assert(types.head.value.isComplex)
-    assert(types.head.value.getType === DataSchema.Type.RECORD)
-    assert(types.head.value.isInstanceOf[RecordDataSchema])
-    assert(types.head.value.asInstanceOf[RecordDataSchema].getFields.size() === 3)
-    assert(types.head.value.asInstanceOf[RecordDataSchema].getFields.toList.map(_.getName).toSet ===
+    assert(types.size === 3)
+    val resourceType = types.find(_.key === "org.coursera.naptime.PersonResource.Model").getOrElse {
+      assert(false, "Could not find merged type in types list.")
+      ???
+    }
+    assert(!resourceType.value.hasError)
+    assert(resourceType.value.isComplex)
+    assert(resourceType.value.getType === DataSchema.Type.RECORD)
+    assert(resourceType.value.isInstanceOf[RecordDataSchema])
+    assert(resourceType.value.asInstanceOf[RecordDataSchema].getFields.size() === 3)
+    assert(resourceType.value.asInstanceOf[RecordDataSchema].getFields.toList.map(_.getName).toSet ===
       Set("id", "name", "email"))
   }
 
@@ -673,14 +676,18 @@ class NestedMacroTests extends AssertionsForJUnit with MockitoSugar {
   @Test
   def nestedTypes(): Unit = {
     val types = FriendsResource.routerBuilder.types
-    assert(types.size === 1)
-    assert(types.head.key === "org.coursera.naptime.FriendsResource.Model")
-    assert(!types.head.value.hasError)
-    assert(types.head.value.isComplex)
-    assert(types.head.value.getType === DataSchema.Type.RECORD)
-    assert(types.head.value.isInstanceOf[RecordDataSchema])
-    assert(types.head.value.asInstanceOf[RecordDataSchema].getFields.size() === 3)
-    assert(types.head.value.asInstanceOf[RecordDataSchema].getFields.toList.map(_.getName).toSet ===
+    assert(types.size === 3)
+    val resourceModel = types.find(_.key === "org.coursera.naptime.FriendsResource.Model").getOrElse {
+      assert(false, "Could not find constructed merged type.")
+      ???
+    }
+    assert(resourceModel.key === "org.coursera.naptime.FriendsResource.Model")
+    assert(!resourceModel.value.hasError)
+    assert(resourceModel.value.isComplex)
+    assert(resourceModel.value.getType === DataSchema.Type.RECORD)
+    assert(resourceModel.value.isInstanceOf[RecordDataSchema])
+    assert(resourceModel.value.asInstanceOf[RecordDataSchema].getFields.size() === 3)
+    assert(resourceModel.value.asInstanceOf[RecordDataSchema].getFields.toList.map(_.getName).toSet ===
       Set("id", "friendshipQuality", "friendsSince"))
   }
 

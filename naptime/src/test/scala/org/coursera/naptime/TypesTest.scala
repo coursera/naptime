@@ -31,7 +31,8 @@ class TypesTest extends AssertionsForJUnit {
     val resultingType = Types.computeAsymType(
       "org.coursera.naptime.TestResource.Model",
       new IntegerDataSchema,
-      Course.SCHEMA)
+      Course.SCHEMA,
+      Fields.FAKE_FIELDS)
 
     assert(!resultingType.isErrorRecord)
     assert(resultingType.getFields().size() == 3)
@@ -49,7 +50,8 @@ class TypesTest extends AssertionsForJUnit {
     val resultingType = Types.computeAsymType(
       "org.coursera.naptime.ComplexTestResource.Model",
       EnrollmentId.SCHEMA,
-      Course.SCHEMA)
+      Course.SCHEMA,
+      Fields.FAKE_FIELDS)
 
     assert(!resultingType.isErrorRecord)
     assert(resultingType.getFields().size() == 5)
