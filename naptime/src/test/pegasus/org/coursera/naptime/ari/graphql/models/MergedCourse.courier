@@ -7,8 +7,11 @@ record MergedCourse {
 
   name: string
 
+<<<<<<< HEAD
   slug: string
 
+=======
+>>>>>>> Initial work on generating GraphQL schemas from a Courier model
   description: string?
 
   @related = "instructors.v1"
