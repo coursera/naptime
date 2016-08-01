@@ -1,0 +1,16 @@
+namespace org.coursera.naptime.ari.graphql.models
+
+import org.coursera.naptime.ari.graphql.models.InstructorId
+
+record MergedCourse {
+  id: string
+
+  name: string
+
+  description: string?
+
+  @related = "instructors.v1"
+  instructors: array[InstructorId]
+
+  originalId: union[int, string]
+}
