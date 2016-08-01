@@ -1,6 +1,7 @@
 package org.coursera.naptime.ari
 
 import com.linkedin.data.DataMap
+import com.linkedin.data.schema.DataSchema
 import org.coursera.naptime.ResourceName
 import org.coursera.naptime.ResponsePagination
 import org.coursera.naptime.schema.Resource
@@ -30,10 +31,13 @@ trait EngineApi {
 
   /**
    * Gets the Naptime schema currently in use by the presentation layer.
-   *
-   * TODO: include the Courier model schemas
    */
-  def schema: Seq[Resource]
+  def schemas: Seq[Resource]
+
+  /**
+   * The set of all the types that make up this collection of resources.
+   */
+  def models: Map[String, DataSchema]
 }
 
 /**
