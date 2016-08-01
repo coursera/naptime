@@ -23,7 +23,6 @@ import org.coursera.naptime.schema.Resource
 import org.coursera.naptime.schema.ResourceKind
 import org.junit.Test
 import org.scalatest.junit.AssertionsForJUnit
-import sangria.renderer.SchemaRenderer
 import sangria.schema.ObjectType
 import sangria.schema.Schema
 import sangria.schema.UnionType
@@ -60,9 +59,10 @@ class SangriaGraphQlSchemaBuilderTest extends AssertionsForJUnit {
 
   @Test
   def parseTopLevelFields(): Unit = {
-    val schema = Schema(builder.generateSchemaForResource(courseResource.name))
+    val schema = Schema(builder.generateObjectTypeForResource(courseResource.name))
     val (_, courseResourceType) = schema.types.get("CoursesV1").get
-    val courseResourceObjectType = courseResourceType.asInstanceOf[ObjectType[Unit, ScalaRecordTemplate]]
+    val courseResourceObjectType =
+      courseResourceType.asInstanceOf[ObjectType[Unit, ScalaRecordTemplate]]
     val fieldNames = courseResourceObjectType.fieldsByName.keySet
     val expectedFieldNames = Set("name", "description", "instructors", "id", "originalId")
     assert(fieldNames === expectedFieldNames)
@@ -70,8 +70,9 @@ class SangriaGraphQlSchemaBuilderTest extends AssertionsForJUnit {
 
   @Test
   def parseUnionFields(): Unit = {
-    val schema = Schema(builder.generateSchemaForResource(courseResource.name))
-    val courseUnionType = schema.unionTypes.get("org_coursera_naptime_ari_graphql_models_originalId").get
+    val schema = Schema(builder.generateObjectTypeForResource(courseResource.name))
+    val courseUnionType =
+      schema.unionTypes.get("org_coursera_naptime_ari_graphql_models_originalId").get
     val courseUnionUnionType = courseUnionType.asInstanceOf[UnionType[Unit]]
     val unionObjects = courseUnionUnionType.types
     assert(unionObjects.find(_.name == "intMember").get.fieldsByName.keySet.head === "int")
@@ -80,9 +81,10 @@ class SangriaGraphQlSchemaBuilderTest extends AssertionsForJUnit {
 
   @Test
   def parseUnionMemberFields(): Unit = {
-    val schema = Schema(builder.generateSchemaForResource(courseResource.name))
+    val schema = Schema(builder.generateObjectTypeForResource(courseResource.name))
     val (_, coursePlatformMemberType) = schema.types.get("intMember").get
-    val coursePlatformMemberObjectType = coursePlatformMemberType.asInstanceOf[ObjectType[Unit, ScalaRecordTemplate]]
+    val coursePlatformMemberObjectType =
+      coursePlatformMemberType.asInstanceOf[ObjectType[Unit, ScalaRecordTemplate]]
     val fieldNames = coursePlatformMemberObjectType.fieldsByName.keySet
     val expectedFieldNames = Set("int")
     assert(fieldNames === expectedFieldNames)
