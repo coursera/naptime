@@ -23,9 +23,11 @@ import org.coursera.naptime.Fields
 import org.coursera.naptime.PaginationConfiguration
 import org.coursera.naptime.QueryStringParser.NaptimeParseError
 import org.coursera.naptime.RequestPagination
+import org.coursera.naptime.ResourceName
 import org.coursera.naptime.RestContext
 import org.coursera.naptime.RestResponse
 import org.coursera.naptime.access.HeaderAccessControl
+import org.coursera.naptime.ari.Response
 import play.api.Play
 import play.api.libs.iteratee.Iteratee
 import play.api.libs.json.OFormat
@@ -63,8 +65,8 @@ trait RestAction[RACType, AuthType, BodyType, KeyType, ResourceType, ResponseTyp
 
   protected[actions] def restAuth: HeaderAccessControl[AuthType]
   protected def restBodyParser: BodyParser[BodyType]
-  protected def restEngine: RestActionCategoryEngine[RACType, KeyType, ResourceType, ResponseType]
-  protected def fieldsEngine: Fields[ResourceType]
+  protected[naptime] def restEngine: RestActionCategoryEngine[RACType, KeyType, ResourceType, ResponseType]
+  protected[naptime] def fieldsEngine: Fields[ResourceType]
   protected def paginationConfiguration: PaginationConfiguration
   protected def errorHandler: PartialFunction[Throwable, RestError]
   protected implicit val keyFormat: KeyFormat[KeyType]
@@ -82,6 +84,63 @@ trait RestAction[RACType, AuthType, BodyType, KeyType, ResourceType, ResponseTyp
       case NonFatal(e) if errorHandler.isDefinedAt(e) =>
         errorHandler.andThen(Future.successful)(e)
     }
+  }
+
+  private[naptime] def localRun(rh: RequestHeader, resourceName: ResourceName): Future[Response] = {
+    val authResult = restAuth.run(rh) // Kick off the authentication check in parallel
+    restBodyParser(rh).mapM[Response] {
+      case Left(bodyError) =>
+        // If it was an auth error, override with that. Otherwise serve the body error.
+        authResult.flatMap { authResult =>
+          authResult.fold(
+            error => Future.failed(error),
+            // TODO: keep as an exception.
+            successAuth => Future.failed(new IllegalArgumentException("Encountered body error: $bodyError")))
+        }
+      case Right(a) =>
+        authResult.flatMap[Response] { authResult =>
+          authResult.fold[Future[Response]](
+            error => Future.failed(error), // TODO: log?
+            auth => {
+              val responseTry = for {
+                fields <- fieldsEngine.computeFields(rh)
+                includes <- fieldsEngine.computeIncludes(rh)
+              } yield {
+                val pagination = RequestPagination(rh, paginationConfiguration)
+                val playRequest = Request(rh, a)
+                val ctx = new RestContext(a, auth, playRequest, pagination, includes, fields)
+                def run(): Future[Response] = {
+                  val highLevelResponse = safeApply(ctx)
+                  highLevelResponse.flatMap { resp =>
+                    restEngine match {
+                      case engine2: RestActionCategoryEngine2[RACType, KeyType, ResourceType, ResponseType] =>
+                        engine2.mkResponse(rh, fieldsEngine, fields, includes, pagination, resp, resourceName)
+                      case _ =>
+                        Future.failed(new IllegalArgumentException("Was not an engine2 resource.")) // TODO: better msg
+                    }
+                  } recoverWith {
+                    case e: NaptimeActionException => Future.failed(e)
+                  }
+                }
+
+                // Implementation below borrowed from Play's Action.scala
+                Play.maybeApplication.map { app =>
+                  play.utils.Threads.withContextClassLoader(app.classloader) {
+                    run()
+                  }
+                }.getOrElse {
+                  // Run without the app class loader. This is important if we're running low-level
+                  // tests (e.g. router tests)
+                  run()
+                }
+              }
+              responseTry.recover {
+                case e: NaptimeParseError => Future.failed(e)
+                case e: NaptimeActionException => Future.failed(e)
+              }.get
+            })
+        }
+    }.run
   }
 
   /**
@@ -112,7 +171,7 @@ trait RestAction[RACType, AuthType, BodyType, KeyType, ResourceType, ResponseTyp
                 def run(): Future[Result] = {
                   val highLevelResponse = safeApply(ctx)
                   highLevelResponse.map { resp =>
-                    restEngine.mkResponse(rh, fieldsEngine, fields, includes, pagination, resp)
+                    restEngine.mkResult(rh, fieldsEngine, fields, includes, pagination, resp)
                   } recover {
                     case e: NaptimeActionException => e.result
                   }

@@ -244,7 +244,7 @@ class ETagRestActionCategoryEngineTest extends AssertionsForJUnit with ScalaFutu
     val engine = PlayJsonRestActionCategoryEngine.getActionCategoryEngine[Int, TestResponse](
       TestResponse.writes, intKeyFormat)
 
-    val response = engine.mkResponse(req, fields, QueryFields.empty, QueryIncludes.empty,
+    val response = engine.mkResult(req, fields, QueryFields.empty, QueryIncludes.empty,
       pagination, naptimeResponse)
     assert(response.header.status === Status.NOT_MODIFIED)
     val bodyContent = contentAsBytes(Future.successful(response))

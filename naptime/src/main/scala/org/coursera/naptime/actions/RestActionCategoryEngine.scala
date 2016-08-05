@@ -50,7 +50,7 @@ import scala.annotation.implicitNotFound
     returning the right type for this action.""")
 // sealed // TODO(saeta): Re-add back in sealing by moving 2nd gen engines to this file.
 trait RestActionCategoryEngine[Category, Key, Resource, Response] {
-  private[naptime] def mkResponse(
+  private[naptime] def mkResult(
       request: RequestHeader,
       resourceFields: Fields[Resource],
       requestFields: RequestFields,
@@ -59,7 +59,7 @@ trait RestActionCategoryEngine[Category, Key, Resource, Response] {
       response: RestResponse[Response]): Result
 }
 
-object RestActionCategoryEngine extends RestActionCategoryEngine2 // Courier-centric engines
+object RestActionCategoryEngine extends RestActionCategoryEngine2Impls // Courier-centric engines
 
 /**
  * Define the mappings between category engines.
@@ -121,7 +121,7 @@ trait PlayJsonRestActionCategoryEngine {
       implicit writes: OWrites[Resource], keyWrites: KeyFormat[Key]):
     RestActionCategoryEngine[GetRestActionCategory, Key, Resource, Keyed[Key, Resource]] = {
     new RestActionCategoryEngine[GetRestActionCategory, Key, Resource, Keyed[Key, Resource]] {
-      override def mkResponse(
+      override def mkResult(
           request: RequestHeader,
           resourceFields: Fields[Resource],
           requestFields: RequestFields,
@@ -150,7 +150,7 @@ trait PlayJsonRestActionCategoryEngine {
 
     new RestActionCategoryEngine[CreateRestActionCategory, Key, Resource,
         Keyed[Key, Option[Resource]]] {
-      override def mkResponse(
+      override def mkResult(
           request: RequestHeader,
           resourceFields: Fields[Resource],
           requestFields: RequestFields,
@@ -190,7 +190,7 @@ trait PlayJsonRestActionCategoryEngine {
 
     new RestActionCategoryEngine[UpdateRestActionCategory, Key, Resource,
         Option[Keyed[Key, Resource]]] {
-      override def mkResponse(
+      override def mkResult(
           request: RequestHeader,
           resourceFields: Fields[Resource],
           requestFields: RequestFields,
@@ -216,7 +216,7 @@ trait PlayJsonRestActionCategoryEngine {
     RestActionCategoryEngine[PatchRestActionCategory, Key, Resource, Keyed[Key, Resource]] = {
 
     new RestActionCategoryEngine[PatchRestActionCategory, Key, Resource, Keyed[Key, Resource]] {
-      override def mkResponse(
+      override def mkResult(
           request: RequestHeader,
           resourceFields: Fields[Resource],
           requestFields: RequestFields,
@@ -238,7 +238,7 @@ trait PlayJsonRestActionCategoryEngine {
     RestActionCategoryEngine[DeleteRestActionCategory, Key, Resource, Unit] = {
 
     new RestActionCategoryEngine[DeleteRestActionCategory, Key, Resource, Unit] {
-      override def mkResponse(
+      override def mkResult(
           request: RequestHeader,
           resourceFields: Fields[Resource],
           requestFields: RequestFields,
@@ -257,7 +257,7 @@ trait PlayJsonRestActionCategoryEngine {
     RestActionCategoryEngine[MultiGetRestActionCategory, Key, Resource, Seq[Keyed[Key, Resource]]] = {
 
     new RestActionCategoryEngine[MultiGetRestActionCategory, Key, Resource, Seq[Keyed[Key, Resource]]] {
-      override def mkResponse(
+      override def mkResult(
           request: RequestHeader,
           resourceFields: Fields[Resource],
           requestFields: RequestFields,
@@ -286,7 +286,7 @@ trait PlayJsonRestActionCategoryEngine {
 
     new RestActionCategoryEngine[GetAllRestActionCategory, Key, Resource,
       Seq[Keyed[Key, Resource]]] {
-      override def mkResponse(
+      override def mkResult(
           request: RequestHeader,
           resourceFields: Fields[Resource],
           requestFields: RequestFields,
@@ -313,7 +313,7 @@ trait PlayJsonRestActionCategoryEngine {
     RestActionCategoryEngine[FinderRestActionCategory, Key, Resource, Seq[Keyed[Key, Resource]]] = {
 
     new RestActionCategoryEngine[FinderRestActionCategory, Key, Resource, Seq[Keyed[Key, Resource]]] {
-      override def mkResponse(
+      override def mkResult(
           request: RequestHeader,
           resourceFields: Fields[Resource],
           requestFields: RequestFields,
@@ -341,7 +341,7 @@ trait PlayJsonRestActionCategoryEngine {
     RestActionCategoryEngine[ActionRestActionCategory, Key, Resource, Response] = {
 
     new RestActionCategoryEngine[ActionRestActionCategory, Key, Resource, Response] {
-      override def mkResponse(
+      override def mkResult(
           request: RequestHeader,
           resourceFields: Fields[Resource],
           requestFields: RequestFields,
