@@ -23,9 +23,19 @@ import org.coursera.naptime.schema.Resource
 import org.coursera.naptime.schema.ResourceKind
 import org.junit.Test
 import org.scalatest.junit.AssertionsForJUnit
+import play.api.libs.json.Json
+import sangria.execution.Executor
+import sangria.parser.QueryParser
 import sangria.schema.ObjectType
 import sangria.schema.Schema
 import sangria.schema.UnionType
+//import sangria.marshalling.queryAst._
+import sangria.marshalling.playJson._
+import sangria.renderer.SchemaRenderer
+
+import scala.concurrent.Await
+import scala.concurrent.duration.Duration
+import scala.concurrent.ExecutionContext.Implicits.global
 
 class SangriaGraphQlSchemaBuilderTest extends AssertionsForJUnit {
 
@@ -88,6 +98,62 @@ class SangriaGraphQlSchemaBuilderTest extends AssertionsForJUnit {
     val fieldNames = coursePlatformMemberObjectType.fieldsByName.keySet
     val expectedFieldNames = Set("int")
     assert(fieldNames === expectedFieldNames)
+  }
+
+  @Test
+  def execute(): Unit = {
+    val schema = builder.generateSchema().asInstanceOf[Schema[SangriaGraphQlContext, Any]]
+//    println(SchemaRenderer.renderSchema(schema))
+//    println(schema.unionTypes)
+    val query =
+      """
+        query EmptyQuery {
+          course1: CoursesV1(id: "v1-123") {
+            ...courseFields
+          }
+          course2: CoursesV1(id: "v1-456") {
+            ...courseFields
+          }
+        }
+        fragment courseFields on CoursesV1 {
+          id
+          name
+          originalId {
+            ... on intMember {
+              int
+            }
+            ... on stringMember {
+              string
+            }
+          }
+        }
+      """
+    val parsedDocumentOption = QueryParser.parse(query).map(doc => Some(doc)).recover {
+      case e: Throwable =>
+        println(e.getMessage)
+        None
+    }.get
+
+    val courses: Set[ScalaRecordTemplate] = Set(
+      MergedCourse(
+        id = "v1-123",
+        name = "Machine Learning",
+        instructors = List.empty,
+        originalId = MergedCourse.OriginalId.IntMember(1)),
+      MergedCourse(
+        id = "v1-456",
+        name = "Social Psychology",
+        instructors = List.empty,
+        originalId = MergedCourse.OriginalId.StringMember("abc123"))
+    )
+
+    val fakeContext = SangriaGraphQlContext(myField = "testField", data = Map("courses.v1" -> courses))
+
+    val responseFuture = Executor.execute(schema, parsedDocumentOption.get, fakeContext)
+    val response = Await.result(responseFuture, Duration.Inf)
+    println(query)
+    println(Json.prettyPrint(Json.toJson(response)))
+    assert(false)
   }
 
 }
