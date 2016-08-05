@@ -41,7 +41,8 @@ class NaptimePlayRouterTest extends AssertionsForJUnit with MockitoSugar {
   when(resourceRouterBuilder.build(any())).thenReturn(resourceRouter)
 
   val injector = mock[Injector]
-  val router = new NaptimePlayRouter(injector, Set(resourceRouterBuilder))
+  val naptimeRoutes = NaptimeRoutes(injector, Set(resourceRouterBuilder))
+  val router = new NaptimePlayRouter(naptimeRoutes)
 
   @Test
   def simpleRouting(): Unit = {

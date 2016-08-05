@@ -44,7 +44,6 @@ trait EngineApi {
  * The fetcher calls the Naptime APIs (either local or remote) to acquire all of the data necessary.
  */
 trait FetcherApi {
-  // TODO: use better types here
   def data(request: Request): Future[Response]
 }
 
@@ -63,6 +62,9 @@ case class Request(
 
 /**
  * Encapsulates the starting root of a query into the naptime resource tree.
+ *
+ * TODO: change ResourceName to a path parameter aware data structure.
+ *
  * @param resource The name of the resource that forms the root of the request.
  * @param selection The field selection on the first resource.
  */
