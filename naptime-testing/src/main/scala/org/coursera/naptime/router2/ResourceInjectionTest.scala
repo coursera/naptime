@@ -47,7 +47,7 @@ trait ResourceInjectionTest extends StrictLogging {
 
     for {
       router <- naptimePlayRouter
-      resource <- router.routerBuilders
+      resource <- router.naptimeRoutes.routerBuilders
     } {
       injector.getProvider(resource.resourceClass())
       logger.debug(s"Resource ${resource.resourceClass().getName} is injectable.")
