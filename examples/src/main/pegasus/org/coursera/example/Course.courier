@@ -1,9 +1,7 @@
 namespace org.coursera.example
 
 record Course {
-  @related = "instructors.v1"
   instructors: array[InstructorId]
-  @related = "partners.v1"
   partners: array[PartnerId]
   slug: string
   name: string

@@ -43,7 +43,7 @@ class GraphQlController @Inject() (
   val builder = new SangriaGraphQlSchemaBuilder(resources, types)
   val schema = builder.generateSchema().asInstanceOf[Schema[org.coursera.naptime.ari.graphql.SangriaGraphQlContext,Any]]
 
-  def index = Action { implicit request =>
+  def index = Action {
     Ok("Your new application is ready.")
   }
 

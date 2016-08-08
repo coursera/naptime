@@ -5,6 +5,7 @@ import javax.inject.Singleton
 
 import org.coursera.example.Partner
 import org.coursera.naptime.Ok
+import org.coursera.naptime.ResourceName
 import org.coursera.naptime.model.Keyed
 import org.coursera.naptime.resources.CourierCollectionResource
 import stores.PartnerStore
@@ -16,7 +17,9 @@ class PartnersResource @Inject() (
 
   override def resourceName = "partners"
   override def resourceVersion = 1
-  implicit val fields = Fields
+  override implicit lazy val Fields = BaseFields.withRelated(
+    "courses" -> ResourceName("courses", 1),
+    "instructors" -> ResourceName("instructors", 1))
 
   def get(id: String) = Nap.get { context =>
     OkIfPresent(id, partnerStore.get(id))
