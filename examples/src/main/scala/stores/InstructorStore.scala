@@ -13,15 +13,15 @@ class InstructorStore {
   val nextId = new AtomicInteger(0)
 
   instructorStore = instructorStore + (
-    "ang" -> Instructor(
+    "andrew-ng" -> Instructor(
       courses = List("ml"),
       partner = "stanford",
       name = "Andrew Ng",
       photoUrl = ""),
-    "dkoller" -> Instructor(
-      courses = List("pgm"),
-      partner = "coursera",
-      name = "Daphne Koller",
+    "barb-oakley" -> Instructor(
+      courses = List("learning-how-to-learn"),
+      partner = "ucsd",
+      name = "Barb Oakley",
       photoUrl = ""))
 
 

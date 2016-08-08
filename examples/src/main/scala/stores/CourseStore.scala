@@ -14,16 +14,16 @@ class CourseStore {
 
   courseStore = courseStore + (
     "ml" -> Course(
-      instructors = List("ang"),
+      instructors = List("andrew-ng"),
       partners = List("stanford"),
       slug = "machine-learning",
       name = "Machine Learning",
       description = ""),
     "pgm" -> Course(
-      instructors = List("dkoller"),
-      partners = List("coursera"),
-      slug = "probabalistic-graphical-models",
-      name = "Probabalistic Graphical Models",
+      instructors = List("barb-oakley"),
+      partners = List("ucsd"),
+      slug = "learning-how-to-learn",
+      name = "Learning How to Learn",
       description = ""))
 
   def get(id: String) = courseStore.get(id)

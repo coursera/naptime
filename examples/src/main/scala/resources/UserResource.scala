@@ -104,12 +104,6 @@ class UserStoreImpl extends UserStore {
   var userStore = Map.empty[Int, User]
   val nextId = new AtomicInteger(0)
 
-  userStore = userStore + (1 -> User("Bryan Kane", "bryan@coursera.org"))
-  userStore = userStore + (2 -> User("Brennan Saeta", "saeta@coursera.org"))
-  userStore = userStore + (3 -> User("Lewis Chung", "lchung@coursera.org"))
-  userStore = userStore + (4 -> User("Jon Wong", "jon@coursera.org"))
-
-
   def get(id: Int) = userStore.get(id)
 
   def create(user: User): Int = {

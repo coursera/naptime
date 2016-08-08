@@ -33,10 +33,3 @@ class InstructorsResource @Inject() (
   }
 
 }
-
-
-
-
-
-
-
