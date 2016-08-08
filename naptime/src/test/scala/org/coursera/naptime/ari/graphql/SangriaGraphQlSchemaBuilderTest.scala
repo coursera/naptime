@@ -23,24 +23,16 @@ import org.coursera.naptime.schema.Resource
 import org.coursera.naptime.schema.ResourceKind
 import org.junit.Test
 import org.scalatest.junit.AssertionsForJUnit
-import play.api.libs.json.Json
-import sangria.execution.Executor
-import sangria.parser.QueryParser
 import sangria.schema.ObjectType
 import sangria.schema.Schema
 import sangria.schema.UnionType
-import sangria.marshalling.playJson._
-import sangria.renderer.SchemaRenderer
-
-import scala.concurrent.Await
-import scala.concurrent.duration.Duration
-import scala.concurrent.ExecutionContext.Implicits.global
 
 class SangriaGraphQlSchemaBuilderTest extends AssertionsForJUnit {
 
   val courseResource = Resource(
     kind = ResourceKind.COLLECTION,
-    name = "courses.v1",
+    name = "courses",
+    version = Some(1),
     keyType = "",
     valueType = "",
     mergedType = "org.coursera.naptime.ari.graphql.models.MergedCourse",
@@ -50,7 +42,8 @@ class SangriaGraphQlSchemaBuilderTest extends AssertionsForJUnit {
 
   val instructorResource = Resource(
     kind = ResourceKind.COLLECTION,
-    name = "instructors.v1",
+    name = "instructors",
+    version = Some(1),
     keyType = "",
     valueType = "",
     mergedType = "org.coursera.naptime.ari.graphql.models.MergedInstructor",
@@ -68,7 +61,7 @@ class SangriaGraphQlSchemaBuilderTest extends AssertionsForJUnit {
 
   @Test
   def parseTopLevelFields(): Unit = {
-    val schema = Schema(builder.generateObjectTypeForResource(courseResource.name))
+    val schema = Schema(builder.generateObjectTypeForResource("courses.v1"))
     val (_, courseResourceType) = schema.types.get("CoursesV1").get
     val courseResourceObjectType =
       courseResourceType.asInstanceOf[ObjectType[Unit, ScalaRecordTemplate]]
@@ -79,7 +72,7 @@ class SangriaGraphQlSchemaBuilderTest extends AssertionsForJUnit {
 
   @Test
   def parseUnionFields(): Unit = {
-    val schema = Schema(builder.generateObjectTypeForResource(courseResource.name))
+    val schema = Schema(builder.generateObjectTypeForResource("courses.v1"))
     val courseUnionType =
       schema.unionTypes.get("org_coursera_naptime_ari_graphql_models_originalId").get
     val courseUnionUnionType = courseUnionType.asInstanceOf[UnionType[Unit]]
@@ -90,7 +83,7 @@ class SangriaGraphQlSchemaBuilderTest extends AssertionsForJUnit {
 
   @Test
   def parseUnionMemberFields(): Unit = {
-    val schema = Schema(builder.generateObjectTypeForResource(courseResource.name))
+    val schema = Schema(builder.generateObjectTypeForResource("courses.v1"))
     val (_, coursePlatformMemberType) = schema.types.get("intMember").get
     val coursePlatformMemberObjectType =
       coursePlatformMemberType.asInstanceOf[ObjectType[Unit, ScalaRecordTemplate]]

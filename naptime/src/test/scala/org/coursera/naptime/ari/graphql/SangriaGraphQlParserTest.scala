@@ -48,15 +48,15 @@ class SangriaGraphQlParserTest extends AssertionsForJUnit {
     val query =
       """
         query EmptyQuery {
-          CoursesV1
+          CoursesV1Resource
         }
       """
     val response = SangriaGraphQlParser.parse(query, requestHeader)
     val expectedRequest = Request(requestHeader, immutable.Seq(
       TopLevelRequest(
-        ResourceName("Courses", 1),
+        ResourceName("courses", 1),
         RequestField(
-          name = "CoursesV1",
+          name = "CoursesV1Resource",
           alias = None,
           args = Set.empty,
           selections = List.empty))))
@@ -68,7 +68,7 @@ class SangriaGraphQlParserTest extends AssertionsForJUnit {
     val query =
       """
         query EmptyQuery {
-          CoursesV1 {
+          CoursesV1Resource {
             id
           }
         }
@@ -76,9 +76,9 @@ class SangriaGraphQlParserTest extends AssertionsForJUnit {
     val response = SangriaGraphQlParser.parse(query, requestHeader)
     val expectedRequest = Request(requestHeader, immutable.Seq(
       TopLevelRequest(
-        ResourceName("Courses", 1),
+        ResourceName("courses", 1),
         RequestField(
-          name = "CoursesV1",
+          name = "CoursesV1Resource",
           alias = None,
           args = Set.empty,
           selections = List(
@@ -95,7 +95,7 @@ class SangriaGraphQlParserTest extends AssertionsForJUnit {
     val query =
       """
         query EmptyQuery {
-          course: CoursesV1 {
+          course: CoursesV1Resource {
             myId: id
           }
         }
@@ -103,9 +103,9 @@ class SangriaGraphQlParserTest extends AssertionsForJUnit {
     val response = SangriaGraphQlParser.parse(query, requestHeader)
     val expectedRequest = Request(requestHeader, immutable.Seq(
       TopLevelRequest(
-        ResourceName("Courses", 1),
+        ResourceName("courses", 1),
         RequestField(
-          name = "CoursesV1",
+          name = "CoursesV1Resource",
           alias = Some("course"),
           args = Set.empty,
           selections = List(
@@ -122,7 +122,7 @@ class SangriaGraphQlParserTest extends AssertionsForJUnit {
     val query =
       """
         query EmptyQuery {
-          course: CoursesV1 {
+          course: CoursesV1Resource {
             id {
               slug
             }
@@ -132,9 +132,9 @@ class SangriaGraphQlParserTest extends AssertionsForJUnit {
     val response = SangriaGraphQlParser.parse(query, requestHeader)
     val expectedRequest = Request(requestHeader, immutable.Seq(
       TopLevelRequest(
-        ResourceName("Courses", 1),
+        ResourceName("courses", 1),
         RequestField(
-          name = "CoursesV1",
+          name = "CoursesV1Resource",
           alias = Some("course"),
           args = Set.empty,
           selections = List(
@@ -156,10 +156,10 @@ class SangriaGraphQlParserTest extends AssertionsForJUnit {
     val query =
       """
         query EmptyQuery {
-          CoursesV1 {
+          CoursesV1Resource {
             id
           }
-          InstructorsV1 {
+          InstructorsV1Resource {
             id
             firstName
           }
@@ -168,9 +168,9 @@ class SangriaGraphQlParserTest extends AssertionsForJUnit {
     val response = SangriaGraphQlParser.parse(query, requestHeader)
     val expectedRequest = Request(requestHeader, immutable.Seq(
       TopLevelRequest(
-        ResourceName("Courses", 1),
+        ResourceName("courses", 1),
         RequestField(
-          name = "CoursesV1",
+          name = "CoursesV1Resource",
           alias = None,
           args = Set.empty,
           selections = List(
@@ -180,9 +180,9 @@ class SangriaGraphQlParserTest extends AssertionsForJUnit {
               args = Set.empty,
               selections = List.empty)))),
       TopLevelRequest(
-        ResourceName("Instructors", 1),
+        ResourceName("instructors", 1),
         RequestField(
-          name = "InstructorsV1",
+          name = "InstructorsV1Resource",
           alias = None,
           args = Set.empty,
           selections = List(
@@ -204,7 +204,7 @@ class SangriaGraphQlParserTest extends AssertionsForJUnit {
     val query =
       """
         query EmptyQuery {
-          CoursesV1(limit: 10) {
+          CoursesV1Resource(limit: 10) {
             id
           }
         }
@@ -212,9 +212,9 @@ class SangriaGraphQlParserTest extends AssertionsForJUnit {
     val response = SangriaGraphQlParser.parse(query, requestHeader)
     val expectedRequest = Request(requestHeader, immutable.Seq(
       TopLevelRequest(
-        ResourceName("Courses", 1),
+        ResourceName("courses", 1),
         RequestField(
-          name = "CoursesV1",
+          name = "CoursesV1Resource",
           alias = None,
           args = Set(("limit", JsNumber(10))),
           selections = List(
@@ -228,14 +228,14 @@ class SangriaGraphQlParserTest extends AssertionsForJUnit {
 
   @Test
   def resourceNameParse(): Unit = {
-    assert(SangriaGraphQlParser.fieldNameToNaptimeResource("CoursesV0") ===
-      Some(ResourceName("Courses", 0)))
-    assert(SangriaGraphQlParser.fieldNameToNaptimeResource("V1DetailsV1") ===
-      Some(ResourceName("V1Details", 1)))
+    assert(SangriaGraphQlParser.fieldNameToNaptimeResource("CoursesV0Resource") ===
+      Some(ResourceName("courses", 0)))
+    assert(SangriaGraphQlParser.fieldNameToNaptimeResource("V1DetailsV1Resource") ===
+      Some(ResourceName("v1Details", 1)))
     assert(SangriaGraphQlParser.fieldNameToNaptimeResource("Courses.V0") === None)
     assert(SangriaGraphQlParser.fieldNameToNaptimeResource("Courses") === None)
     assert(SangriaGraphQlParser.fieldNameToNaptimeResource("CoursesV") === None)
-    assert(SangriaGraphQlParser.fieldNameToNaptimeResource("V0") === None)
+    assert(SangriaGraphQlParser.fieldNameToNaptimeResource("V0Resource") === None)
     assert(SangriaGraphQlParser.fieldNameToNaptimeResource("?V0") === None)
   }
 
