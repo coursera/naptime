@@ -1,5 +1,6 @@
 package org.coursera.naptime.ari.engine
 
+import com.google.inject.Injector
 import org.coursera.naptime.ResourceName
 import org.coursera.naptime.ResponsePagination
 import org.coursera.naptime.ari.FetcherApi
@@ -10,9 +11,11 @@ import org.coursera.naptime.ari.Response
 import org.coursera.naptime.ari.TopLevelRequest
 import org.coursera.naptime.ari.graphql.models.MergedCourse
 import org.coursera.naptime.ari.graphql.models.MergedInstructor
+import org.coursera.naptime.model.Keyed
+import org.coursera.naptime.router2.NaptimeRoutes
+import org.coursera.naptime.router2.ResourceRouterBuilder
 import org.coursera.naptime.schema.Resource
 import org.coursera.naptime.schema.ResourceKind
-import org.junit.Ignore
 import org.junit.Test
 import org.mockito.Mockito.when
 import org.scalatest.concurrent.ScalaFutures
@@ -29,7 +32,20 @@ class EngineImplTest extends AssertionsForJUnit with ScalaFutures with MockitoSu
 
   val fetcherApi = mock[FetcherApi]
 
-  val engine = new EngineImpl(RESOURCE_SCHEMAS, TYPE_SCHEMAS, fetcherApi)
+  val extraTypes = TYPE_SCHEMAS.map { case (key, value) => Keyed(key, value)}.toList
+
+  val courseRouterBuilder = mock[ResourceRouterBuilder]
+  when(courseRouterBuilder.schema).thenReturn(COURSES_RESOURCE)
+  when(courseRouterBuilder.types).thenReturn(extraTypes)
+
+
+  val instructorRouterBuilder = mock[ResourceRouterBuilder]
+  when(instructorRouterBuilder.schema).thenReturn(INSTRUCTORS_RESOURCE)
+  when(instructorRouterBuilder.types).thenReturn(extraTypes)
+
+  val injector = mock[Injector]
+  val naptimeRoutes = NaptimeRoutes(injector, Set(courseRouterBuilder, instructorRouterBuilder))
+  val engine = new EngineImpl(naptimeRoutes, fetcherApi)
 
   @Test
   def singleResourceFetch_Courses(): Unit = {

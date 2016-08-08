@@ -63,8 +63,6 @@ case class Request(
 /**
  * Encapsulates the starting root of a query into the naptime resource tree.
  *
- * TODO: change ResourceName to a path parameter aware data structure.
- *
  * @param resource The name of the resource that forms the root of the request.
  * @param selection The field selection on the first resource.
  */
