@@ -92,7 +92,8 @@ class SangriaGraphQlSchemaBuilder(
     * @param resourceName String name of the resource (i.e. 'courses.v1')
     * @return ObjectType for the resource
     */
-  def generateObjectTypeForResource(resourceName: String): ObjectType[SangriaGraphQlContext, DataMap] = {
+  def generateObjectTypeForResource(
+      resourceName: String): ObjectType[SangriaGraphQlContext, DataMap] = {
     val resource = resources.find(resource => {
       s"${resource.name}.v${resource.version.getOrElse(1)}" == resourceName ||
       formatResourceName(resource.name, resource.version) == resourceName
@@ -134,6 +135,7 @@ class SangriaGraphQlSchemaBuilder(
     import sangria.marshalling.FromInput.coercedScalaInput
 
     val listPattern = "(Set|List|Seq|immutable.Seq)\\[(.*)\\]".r
+    // TODO(bryan): Fix all of this :)
     typeName match {
       case listPattern(outerType, innerType) => sangria.marshalling.FromInput.seqInput.asInstanceOf[FromInput[Any]]
       case "string" | "String" => sangria.marshalling.FromInput.coercedScalaInput.asInstanceOf[FromInput[Any]]
@@ -150,7 +152,8 @@ class SangriaGraphQlSchemaBuilder(
     * @param resourceName String name of the resource (i.e. 'courses.v1')
     * @return ObjectType for the resource
     */
-  def generateLookupTypeForResource(resourceName: String): ObjectType[SangriaGraphQlContext, DataMap] = {
+  def generateLookupTypeForResource(
+      resourceName: String): ObjectType[SangriaGraphQlContext, DataMap] = {
     val resource = resources.find(resource => {
       s"${resource.name}.v${resource.version.getOrElse(1)}" == resourceName ||
         formatResourceName(resource.name, resource.version) == resourceName
@@ -168,9 +171,10 @@ class SangriaGraphQlSchemaBuilder(
       fieldsFn = () => {
         resource.handlers.flatMap { handler =>
           val arguments = handler.parameters.map { parameter =>
+            val tpe = parameter.`type`
             Argument(
               name = parameter.name,
-              argumentType = scalaTypeToSangria(parameter.`type`))(scalaTypeToFromInput(parameter.`type`), implicitly)
+              argumentType = scalaTypeToSangria(tpe))(scalaTypeToFromInput(tpe), implicitly)
           }.toList
           handler.kind match {
             case HandlerKind.GET =>
@@ -178,7 +182,9 @@ class SangriaGraphQlSchemaBuilder(
                 "get",
                 generateObjectTypeForResource(resourceName),
                 resolve = (context: Context[SangriaGraphQlContext, DataMap]) => {
-                  val resourceObject = context.ctx.data.get(s"${resource.name}.v${resource.version.getOrElse(1)}").flatMap { resourceSet =>
+                  // TODO(bryan): Clean up this string building
+                  val resourceObject = context.ctx.data.get(
+                    s"${resource.name}.v${resource.version.getOrElse(1)}").flatMap { resourceSet =>
                     val idArgument = arguments.find(_.name == "id").getOrElse {
                       throw new RuntimeException("No id argument for a get")
                     }
@@ -196,11 +202,14 @@ class SangriaGraphQlSchemaBuilder(
                 "multiGet",
                 ListType(generateObjectTypeForResource(resourceName)),
                 resolve = (context: Context[SangriaGraphQlContext, DataMap]) => {
-                  val resourceObjects = context.ctx.data.get(s"${resource.name}.v${resource.version.getOrElse(1)}").map { resourceSet =>
+                  // TODO(bryan): Clean up this string building
+                  val resourceObjects = context.ctx.data.get(
+                    s"${resource.name}.v${resource.version.getOrElse(1)}").map { resourceSet =>
                     val idsArgument = arguments.find(_.name == "ids").getOrElse {
                       throw new RuntimeException("No id argument for a get")
                     }
                     resourceSet.filter { resource =>
+                      // TODO(bryan): Stop casting types here if possible
                       context.arg(idsArgument).asInstanceOf[Iterable[_]].exists(_ == resource.get("id"))
                     }
                   }.getOrElse {
@@ -214,7 +223,9 @@ class SangriaGraphQlSchemaBuilder(
                 "getAll",
                 ListType(generateObjectTypeForResource(resourceName)),
                 resolve = (context: Context[SangriaGraphQlContext, DataMap]) => {
-                  val resourceObjects = context.ctx.data.getOrElse(s"${resource.name}.v${resource.version.getOrElse(1)}",
+                  // TODO(bryan): Clean up this string building
+                  val resourceObjects = context.ctx.data.getOrElse(
+                    s"${resource.name}.v${resource.version.getOrElse(1)}",
                     throw new RuntimeException("Cannot find object"))
                   Value[SangriaGraphQlContext, List[DataMap]](resourceObjects)
                 }))
@@ -223,7 +234,9 @@ class SangriaGraphQlSchemaBuilder(
                 handler.name,
                 ListType(generateObjectTypeForResource(resourceName)),
                 resolve = (context: Context[SangriaGraphQlContext, DataMap]) => {
-                  val resourceObjects = context.ctx.data.getOrElse(s"${resource.name}.v${resource.version.getOrElse(1)}",
+                  // TODO(bryan): Clean up this string building
+                  val resourceObjects = context.ctx.data.getOrElse(
+                    s"${resource.name}.v${resource.version.getOrElse(1)}",
                     throw new RuntimeException("Cannot find object"))
                   Value[SangriaGraphQlContext, List[DataMap]](resourceObjects)
                 },
@@ -247,13 +260,16 @@ class SangriaGraphQlSchemaBuilder(
       field: RecordDataSchema.Field,
       namespace: String): Field[SangriaGraphQlContext, DataMap] = {
 
-    val (fieldScalarType, resolver): (OutputType[Any], Context[SangriaGraphQlContext, DataMap] => Value[SangriaGraphQlContext, Any]) = (field.getProperties.asScala.get("related"), field.getType) match {
+    type ResolverType = Context[SangriaGraphQlContext, DataMap] => Value[SangriaGraphQlContext, Any]
+    val (fieldScalarType, resolver): (OutputType[Any], ResolverType) =
+      (field.getProperties.asScala.get("related"), field.getType) match {
       case (Some(relatedResourceName), _: ArrayDataSchema) =>
         (ListType(generateObjectTypeForResource(relatedResourceName.toString)),
           context => {
             val resourceObjects = context.ctx.data.getOrElse(relatedResourceName.toString,
               throw new RuntimeException("Cannot find object"))
-            val filteredObjects = resourceObjects.filter(obj => context.value.getDataList(field.getName).asScala.contains(obj.get("id")))
+            val filteredObjects = resourceObjects.filter(obj =>
+              context.value.getDataList(field.getName).asScala.contains(obj.get("id")))
             Value[SangriaGraphQlContext, Any](filteredObjects)
           })
       case (Some(relatedResourceName), _) =>
@@ -261,10 +277,11 @@ class SangriaGraphQlSchemaBuilder(
           val resourceObjects = context.ctx.data.getOrElse(relatedResourceName.toString,
             throw new RuntimeException("Cannot find object"))
 
-
-          val filteredObjects = resourceObjects.find(_.get("id") == context.value.get(field.getName)).getOrElse {
-            throw new RuntimeException(s"Cannot find ${relatedResourceName.toString} with id ${context.value.get(field.getName)}")
-          }
+          val filteredObjects = resourceObjects
+            .find(_.get("id") == context.value.get(field.getName)).getOrElse {
+              throw new RuntimeException(
+                s"Cannot find ${relatedResourceName.toString} with id ${context.value.get(field.getName)}")
+            }
           Value[SangriaGraphQlContext, Any](filteredObjects)
         })
       case (None, _) =>
@@ -296,7 +313,8 @@ class SangriaGraphQlSchemaBuilder(
       case doubleField: DoubleDataSchema => context => context.value.getDouble(fieldName)
       case floatField: FloatDataSchema => context => context.value.getFloat(fieldName)
       case enumField: EnumDataSchema => context => context.value.getString(fieldName)
-      case typerefField: TyperefDataSchema => context => getSangriaResolverForSchema(typerefField.getDereferencedDataSchema, fieldName)
+      case typerefField: TyperefDataSchema =>
+        context => getSangriaResolverForSchema(typerefField.getDereferencedDataSchema, fieldName)
       case unionField: UnionDataSchema => context => context.value.getDataMap(fieldName)
       case arrayField: ArrayDataSchema => context => context.value.getDataList(fieldName)
     }
