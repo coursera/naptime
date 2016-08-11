@@ -10,11 +10,13 @@ import org.coursera.naptime.ari.Response
 import org.coursera.naptime.router2.NaptimeRoutes
 import org.coursera.naptime.schema.Resource
 
+import scala.concurrent.ExecutionContext
 import scala.concurrent.Future
 
 class EngineImpl @Inject() (
     naptimeRoutes: NaptimeRoutes,
-    fetcher: FetcherApi) extends EngineApi {
+    fetcher: FetcherApi)
+    (implicit executionContext: ExecutionContext) extends EngineApi {
 
   override val schemas: Seq[Resource] = naptimeRoutes.routerBuilders.map(_.schema).toList
 
@@ -29,6 +31,13 @@ class EngineImpl @Inject() (
     }
 
   override def execute(request: Request): Future[Response] = {
-    fetcher.data(request)
+    val responseFutures = request.topLevelRequests.map { topLevelRequest =>
+      val singleRequest = Request(request.requestHeader, List(topLevelRequest))
+      fetcher.data(singleRequest)
+    }
+    val futureResponses = Future.sequence(responseFutures)
+    futureResponses.map { responses =>
+      responses.foldLeft(Response.empty)(_ ++ _)
+    }
   }
 }
