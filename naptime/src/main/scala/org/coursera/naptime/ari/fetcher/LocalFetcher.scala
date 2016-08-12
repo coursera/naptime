@@ -62,7 +62,8 @@ class LocalFetcher @Inject() (
         handler match {
           case naptimeAction: RestAction[_, _, _, _, _, _] =>
             naptimeAction.localRun(fakePlayRequest,
-              ResourceName(resourceSchema.name, resourceSchema.version.map(_.toInt).getOrElse(0)))
+              ResourceName(resourceSchema.name, resourceSchema.version.map(_.toInt).getOrElse(0)),
+              topLevelRequest)
           case _ =>
             val msg = "Handler was not a RestAction"
             logger.error(msg)

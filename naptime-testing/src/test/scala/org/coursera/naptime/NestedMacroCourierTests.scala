@@ -141,14 +141,15 @@ class NestedMacroCourierTests extends AssertionsForJUnit with ScalaFutures {
 
     val response = fetcher.data(request).futureValue
 
-    assert(1 === response.output.size)
-    assert(response.output.contains(CoursesResource.ID))
-    val coursesResponse = response.output(CoursesResource.ID)
-    assert(1 === coursesResponse.models.size)
-    assert("course-abc" === coursesResponse.models.head.get("name"),
-      s"Data map: ${coursesResponse.models.head}")
-    assert(None === coursesResponse.pagination.next)
-    assert(CoursesResource.ID.identifier === coursesResponse.key)
+    assert(1 === response.topLevelIds.size)
+    assert(1 === response.data.size)
+    assert(response.data.contains(CoursesResource.ID))
+    val coursesResponse = response.data(CoursesResource.ID)
+    assert(1 === coursesResponse.size)
+    assert(coursesResponse.contains("abc"))
+    assert("course-abc" === coursesResponse("abc").get("name"),
+      s"Data map: ${coursesResponse("abc")}")
+    // TODO: Check pagination
   }
 
   @Test
@@ -173,14 +174,16 @@ class NestedMacroCourierTests extends AssertionsForJUnit with ScalaFutures {
 
     val response = fetcher.data(request).futureValue
 
-    assert(1 === response.output.size)
-    assert(response.output.contains(CoursesResource.ID))
-    val coursesResponse = response.output(CoursesResource.ID)
-    assert(2 === coursesResponse.models.size)
-    assert("course-abc" === coursesResponse.models.head.get("name"),
-      s"Data map: ${coursesResponse.models.head}")
-    assert(None === coursesResponse.pagination.next)
-    assert(CoursesResource.ID.identifier === coursesResponse.key)
+
+    assert(1 === response.topLevelIds.size)
+    assert(1 === response.data.size)
+    assert(response.data.contains(CoursesResource.ID))
+    val coursesResponse = response.data(CoursesResource.ID)
+    assert(2 === coursesResponse.size)
+    assert(coursesResponse.contains("abc"))
+    assert("course-abc" === coursesResponse("abc").get("name"),
+      s"Data map: ${coursesResponse("abc")}")
+    // TODO: Check pagination
   }
 
   @Test
@@ -205,13 +208,14 @@ class NestedMacroCourierTests extends AssertionsForJUnit with ScalaFutures {
 
     val response = fetcher.data(request).futureValue
 
-    assert(1 === response.output.size)
-    assert(response.output.contains(CoursesResource.ID))
-    val coursesResponse = response.output(CoursesResource.ID)
-    assert(1 === coursesResponse.models.size)
-    assert("course-xyz" === coursesResponse.models.head.get("name"),
-      s"Data map: ${coursesResponse.models.head}")
-    assert(None === coursesResponse.pagination.next)
-    assert(CoursesResource.ID.identifier === coursesResponse.key)
+    assert(1 === response.topLevelIds.size)
+    assert(1 === response.data.size)
+    assert(response.data.contains(CoursesResource.ID))
+    val coursesResponse = response.data(CoursesResource.ID)
+    assert(1 === coursesResponse.size)
+    assert(coursesResponse.contains("xyz"))
+    assert("course-xyz" === coursesResponse("xyz").get("name"),
+      s"Data map: ${coursesResponse("xyz")}")
+    // TODO: Check pagination
   }
 }
