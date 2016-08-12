@@ -15,8 +15,10 @@ import org.coursera.naptime.router2.NaptimeRoutes
 import org.coursera.naptime.router2.ResourceRouterBuilder
 import org.coursera.naptime.schema.Resource
 import org.coursera.naptime.schema.ResourceKind
+import org.hamcrest.Matcher
 import org.junit.Test
-import org.mockito.Matchers.any
+import org.mockito.ArgumentMatcher
+import org.mockito.Matchers.argThat
 import org.mockito.Mockito.when
 import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.junit.AssertionsForJUnit
@@ -28,9 +30,25 @@ import scala.collection.JavaConverters._
 import scala.concurrent.Future
 import scala.concurrent.ExecutionContext.Implicits.global
 
-class EngineImplTest extends AssertionsForJUnit with ScalaFutures with MockitoSugar {
+class CoursesResource
+class InstructorsResource
 
+class EngineImplTest extends AssertionsForJUnit with ScalaFutures with MockitoSugar {
   import EngineImplTest._
+
+  private[this] def MatchesResourceType(resourceName: ResourceName): Matcher[Request] = {
+    new ArgumentMatcher[Request] {
+      override def matches(argument: scala.Any): Boolean = {
+        argument match {
+          case Request(_, topLevelRequests)
+            if topLevelRequests.length == 1
+              && topLevelRequests.head.resource == resourceName =>
+            true
+          case _ => false
+        }
+      }
+    }
+  }
 
   val fetcherApi = mock[FetcherApi]
 
@@ -39,11 +57,15 @@ class EngineImplTest extends AssertionsForJUnit with ScalaFutures with MockitoSu
   val courseRouterBuilder = mock[ResourceRouterBuilder]
   when(courseRouterBuilder.schema).thenReturn(COURSES_RESOURCE)
   when(courseRouterBuilder.types).thenReturn(extraTypes)
+  when(courseRouterBuilder.resourceClass()).thenReturn(
+    classOf[CoursesResource].asInstanceOf[Class[courseRouterBuilder.ResourceClass]])
 
 
   val instructorRouterBuilder = mock[ResourceRouterBuilder]
   when(instructorRouterBuilder.schema).thenReturn(INSTRUCTORS_RESOURCE)
   when(instructorRouterBuilder.types).thenReturn(extraTypes)
+  when(instructorRouterBuilder.resourceClass()).thenReturn(
+    classOf[InstructorsResource].asInstanceOf[Class[instructorRouterBuilder.ResourceClass]])
 
   val injector = mock[Injector]
   val naptimeRoutes = NaptimeRoutes(injector, Set(courseRouterBuilder, instructorRouterBuilder))
@@ -174,8 +196,10 @@ class EngineImplTest extends AssertionsForJUnit with ScalaFutures with MockitoSu
       data = Map(INSTRUCTORS_RESOURCE_ID -> Map(
         INSTRUCTOR_1.id -> INSTRUCTOR_1.data())))
 
-    when(fetcherApi.data(any())).thenReturn(
-      Future.successful(fetcherResponseCourse), Future.successful(fetcherResponseInstructors))
+    when(fetcherApi.data(argThat(MatchesResourceType(COURSES_RESOURCE_ID)))).thenReturn(
+      Future.successful(fetcherResponseCourse))
+    when(fetcherApi.data(argThat(MatchesResourceType(INSTRUCTORS_RESOURCE_ID)))).thenReturn(
+      Future.successful(fetcherResponseInstructors))
 
     val result = engine.execute(request).futureValue
 
@@ -194,6 +218,76 @@ class EngineImplTest extends AssertionsForJUnit with ScalaFutures with MockitoSu
     assert(result.topLevelIds.contains(request.topLevelRequests.head))
     assert(1 === result.topLevelIds(request.topLevelRequests.head).size())
     assert(INSTRUCTOR_1.id === result.topLevelIds(request.topLevelRequests.tail.head).get(0))
+    assert(result.data.contains(INSTRUCTORS_RESOURCE_ID))
+    val instructorsData = result.data(INSTRUCTORS_RESOURCE_ID)
+    assert(1 === instructorsData.size)
+    assert(instructorsData.contains(INSTRUCTOR_1.id))
+    val instructor1Response = instructorsData(INSTRUCTOR_1.id)
+    assert(INSTRUCTOR_1.id === instructor1Response.getString("id"))
+    assert(INSTRUCTOR_1.name === instructor1Response.getString("name"))
+    assert(INSTRUCTOR_1.title === instructor1Response.getString("title"))
+  }
+
+  /**
+   * Gets a course, and then the related instructors for that course.
+   */
+  @Test
+  def simpleNestedJoin(): Unit = {
+    val request = Request(
+      requestHeader = FakeRequest(),
+      topLevelRequests = List(
+        TopLevelRequest(
+          resource = COURSES_RESOURCE_ID,
+          selection = RequestField(
+            name = "get",
+            alias = None,
+            args = Set("id" -> JsString(COURSE_A.id)),
+            selections = List(
+              RequestField("id", None, Set.empty, List.empty),
+              RequestField("slug", None, Set.empty, List.empty),
+              RequestField("name", None, Set.empty, List.empty),
+              RequestField("instructors", None, Set.empty, List(
+                RequestField("id", None, Set.empty, List.empty),
+                RequestField("name", None, Set.empty, List.empty),
+                RequestField("title", None, Set.empty, List.empty))))))))
+
+    val fetcherResponseCourse = Response(
+      topLevelIds = Map(request.topLevelRequests.head -> new DataList(List(COURSE_A.id).asJava)),
+      data = Map(COURSES_RESOURCE_ID -> Map(COURSE_A.id -> COURSE_A.data())))
+
+
+    val expectedInstructorRequest = TopLevelRequest(
+      resource = INSTRUCTORS_RESOURCE_ID,
+      selection = RequestField(
+        name = "multiGet",
+        alias = None,
+        args = Set("ids" -> JsString("instructor1Id")),
+        selections = request.topLevelRequests.head.selection.selections.drop(3).head.selections))
+    val fetcherResponseInstructors = Response(
+      topLevelIds = Map(expectedInstructorRequest -> new DataList(List("instructor1Id").asJava)),
+      data = Map(INSTRUCTORS_RESOURCE_ID -> Map(INSTRUCTOR_1.id -> INSTRUCTOR_1.data())))
+
+    when(fetcherApi.data(argThat(MatchesResourceType(COURSES_RESOURCE_ID)))).thenReturn(
+      Future.successful(fetcherResponseCourse))
+    when(fetcherApi.data(argThat(MatchesResourceType(INSTRUCTORS_RESOURCE_ID)))).thenReturn(
+      Future.successful(fetcherResponseInstructors))
+
+    val result = engine.execute(request).futureValue
+
+    assert(1 === result.topLevelIds.size, s"Result: $result")
+    assert(result.topLevelIds.contains(request.topLevelRequests.head))
+    assert(1 === result.topLevelIds(request.topLevelRequests.head).size())
+    assert(COURSE_A.id === result.topLevelIds(request.topLevelRequests.head).get(0))
+
+    assert(result.data.contains(COURSES_RESOURCE_ID))
+    val coursesData = result.data(COURSES_RESOURCE_ID)
+    assert(1 === coursesData.size)
+    assert(coursesData.contains(COURSE_A.id))
+    val courseAResponse = coursesData(COURSE_A.id)
+    assert(COURSE_A.id === courseAResponse.getString("id"))
+    assert(COURSE_A.name === courseAResponse.getString("name"))
+    assert(COURSE_A.slug === courseAResponse.getString("slug"))
+
     assert(result.data.contains(INSTRUCTORS_RESOURCE_ID))
     val instructorsData = result.data(INSTRUCTORS_RESOURCE_ID)
     assert(1 === instructorsData.size)
