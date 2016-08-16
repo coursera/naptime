@@ -19,6 +19,7 @@ package org.coursera.naptime.ari.graphql
 import org.coursera.courier.templates.ScalaRecordTemplate
 import org.coursera.naptime.ari.graphql.models.MergedCourse
 import org.coursera.naptime.ari.graphql.models.MergedInstructor
+import org.coursera.naptime.ari.graphql.models.MergedPartner
 import org.coursera.naptime.schema.Resource
 import org.coursera.naptime.schema.ResourceKind
 import org.junit.Test
@@ -51,11 +52,23 @@ class SangriaGraphQlSchemaBuilderTest extends AssertionsForJUnit {
     className = "",
     attributes = List.empty)
 
-  val allResources = Set(courseResource, instructorResource)
+  val partnersResource = Resource(
+    kind = ResourceKind.COLLECTION,
+    name = "partners",
+    version = Some(1),
+    keyType = "",
+    valueType = "",
+    mergedType = "org.coursera.naptime.ari.graphql.models.MergedPartner",
+    handlers = List.empty,
+    className = "",
+    attributes = List.empty)
+
+  val allResources = Set(courseResource, instructorResource, partnersResource)
 
   val schemaTypes = Map(
     "org.coursera.naptime.ari.graphql.models.MergedCourse" -> MergedCourse.SCHEMA,
-    "org.coursera.naptime.ari.graphql.models.MergedInstructor" -> MergedInstructor.SCHEMA)
+    "org.coursera.naptime.ari.graphql.models.MergedInstructor" -> MergedInstructor.SCHEMA,
+    "org.coursera.naptime.ari.graphql.models.MergedPartner" -> MergedPartner.SCHEMA)
 
   val builder = new SangriaGraphQlSchemaBuilder(allResources, schemaTypes)
 
@@ -66,7 +79,7 @@ class SangriaGraphQlSchemaBuilderTest extends AssertionsForJUnit {
     val courseResourceObjectType =
       courseResourceType.asInstanceOf[ObjectType[Unit, ScalaRecordTemplate]]
     val fieldNames = courseResourceObjectType.fieldsByName.keySet
-    val expectedFieldNames = Set("name", "description", "slug", "instructors", "id", "originalId")
+    val expectedFieldNames = Set("name", "description", "slug", "instructors", "id", "originalId", "partner")
     assert(fieldNames === expectedFieldNames)
   }
 
