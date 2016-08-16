@@ -317,6 +317,7 @@ class SangriaGraphQlSchemaBuilder(
         context => getSangriaResolverForSchema(typerefField.getDereferencedDataSchema, fieldName)
       case unionField: UnionDataSchema => context => context.value.getDataMap(fieldName)
       case arrayField: ArrayDataSchema => context => context.value.getDataList(fieldName)
+      case recordField: RecordDataSchema => context => context.value.getDataMap(fieldName)
     }
 
     baseResolver.andThen(res => Value(res))

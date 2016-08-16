@@ -1,0 +1,16 @@
+namespace org.coursera.naptime.ari.graphql.models
+
+/**
+ * Geographical coordinates for a university for display on a map.
+ */
+record Coordinates {
+  /**
+   * The latitude of a location on the globe.
+   */
+  latitude: double
+
+  /**
+   * The longitude of a location on the globe.
+   */
+  longitude: double
+}
