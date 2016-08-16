@@ -2,9 +2,7 @@ package org.coursera.naptime.ari
 
 import com.linkedin.data.DataList
 import com.linkedin.data.DataMap
-import com.linkedin.data.schema.DataSchema
 import org.coursera.naptime.ResourceName
-import org.coursera.naptime.schema.Resource
 import play.api.libs.json.JsValue
 import play.api.mvc.RequestHeader
 
@@ -27,16 +25,6 @@ trait EngineApi {
    *         layer to turn that into the response format as required.
    */
   def execute(request: Request): Future[Response]
-
-  /**
-   * Gets the Naptime schema currently in use by the presentation layer.
-   */
-  def schemas: Seq[Resource]
-
-  /**
-   * The set of all the types that make up this collection of resources.
-   */
-  def models: Map[String, DataSchema]
 }
 
 /**
