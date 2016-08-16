@@ -4,7 +4,6 @@ import javax.inject.Inject
 
 import com.linkedin.data.schema.ArrayDataSchema
 import com.linkedin.data.schema.RecordDataSchema
-import com.linkedin.data.schema.TyperefDataSchema
 import com.typesafe.scalalogging.StrictLogging
 import org.coursera.naptime.ResourceName
 import org.coursera.naptime.Types.Relations
