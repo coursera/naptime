@@ -2,7 +2,9 @@ package org.coursera.naptime.ari.engine
 
 import javax.inject.Inject
 
+import com.linkedin.data.schema.ArrayDataSchema
 import com.linkedin.data.schema.RecordDataSchema
+import com.linkedin.data.schema.TyperefDataSchema
 import com.typesafe.scalalogging.StrictLogging
 import org.coursera.naptime.ResourceName
 import org.coursera.naptime.Types.Relations
@@ -63,28 +65,39 @@ class EngineImpl @Inject() (
         }
         val nestedLookups = topLevelRequest.selection.selections.filter(_.selections.nonEmpty)
         val additionalResponses = nestedLookups.map { nestedField =>
-          val relatedResource = Option(mergedType.getField(nestedField.name)).flatMap { field =>
-            Option(field.getProperties.get(Relations.PROPERTY_NAME)).map {
-              case idString: String =>
-                ResourceName.parse(idString).getOrElse {
-                  throw new IllegalStateException(s"Could not parse identifier '$idString' for field '$field' in " +
-                    s"merged type $mergedType")
-                }
-              case identifier =>
-                throw new IllegalStateException(s"Unexpected type for identifier '$identifier' for field '$field' " +
-                  s"in merged type $mergedType")
-            }
+          val field = Option(mergedType.getField(nestedField.name)).getOrElse {
+            logger.warn(s"Could not find field $nestedField on model $mergedType")
+            throw new IllegalStateException("Could not find field on model")
+          }
+          val relatedResource = Option(field.getProperties.get(Relations.PROPERTY_NAME)).map {
+            case idString: String =>
+              ResourceName.parse(idString).getOrElse {
+                throw new IllegalStateException(s"Could not parse identifier '$idString' for field '$field' in " +
+                  s"merged type $mergedType")
+              }
+            case identifier =>
+              throw new IllegalStateException(s"Unexpected type for identifier '$identifier' for field '$field' " +
+                s"in merged type $mergedType")
           }.getOrElse {
-            throw new IllegalStateException(s"Could not find nested field $nestedField on merged type $mergedType")
+            logger.warn(s"Could not find relation property information on field $field")
+            throw new IllegalStateException(
+              s"Could not find related field information on field '${field.getName}'")
           }
 
           val multiGetIds = topLevelData.flatMap { elem =>
-            // TODO: support single foreign key relations (currently this supports only nested lists)
-            val field = Option(elem.getDataList(nestedField.name)).map(_.asScala).getOrElse {
-              logger.debug(s"Field $nestedField was not found / was not a data list in $elem for query $request")
-              List.empty
+            if (field.getType.getDereferencedDataSchema.isPrimitive) {
+              Option(elem.get(nestedField.name))
+            } else if (field.getType.getDereferencedDataSchema.isInstanceOf[ArrayDataSchema]) {
+              val field = Option(elem.getDataList(nestedField.name)).map(_.asScala).getOrElse {
+                logger.debug(s"Field $nestedField was not found / was not a data list in $elem for query $request")
+                List.empty
+              }
+              field
+            } else {
+              throw new IllegalStateException(
+                s"Cannot join on an unknown field type '${field.getType.getDereferencedType}' " +
+                  s"for field '${field.getName}'")
             }
-            field
           }.toSet.map[String, Set[String]](_.toString).mkString(",") // TODO: escape appropriately.
 
           val relatedTopLevelRequest = TopLevelRequest(

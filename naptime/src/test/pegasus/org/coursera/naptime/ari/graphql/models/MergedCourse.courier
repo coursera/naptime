@@ -1,7 +1,5 @@
 namespace org.coursera.naptime.ari.graphql.models
 
-import org.coursera.naptime.ari.graphql.models.InstructorId
-
 record MergedCourse {
   id: string
 
@@ -13,6 +11,9 @@ record MergedCourse {
 
   @related = "instructors.v1"
   instructors: array[InstructorId]
+
+  @related = "partners.v1"
+  partner: PartnerId
 
   originalId: union[int, string]
 }
