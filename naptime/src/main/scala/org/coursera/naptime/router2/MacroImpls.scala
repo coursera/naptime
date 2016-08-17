@@ -277,8 +277,8 @@ class MacroImpls(val c: blackbox.Context) {
               bodySchema,
               stubInstance.Fields))
         }).toList ++ List(
-          keySchemaOption.map(Keyed(${keyType.typeSymbol.fullName}, _)),
-          bodySchemaOption.map(Keyed(${bodyType.typeSymbol.fullName}, _))).flatten
+          keySchemaOption.map(org.coursera.naptime.model.Keyed(${keyType.typeSymbol.fullName}, _)),
+          bodySchemaOption.map(org.coursera.naptime.model.Keyed(${bodyType.typeSymbol.fullName}, _))).flatten
       }"""
     }
 
