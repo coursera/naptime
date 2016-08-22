@@ -19,5 +19,5 @@ record Parameter {
    * Note: this is computed on a best-effort basis and should be used only for documentation
    * purposes.
    */
-  default: JsValue?
+  default: ArbitraryValue?
 }
