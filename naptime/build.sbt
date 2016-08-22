@@ -9,6 +9,7 @@ libraryDependencies ++= Seq(
   jodaConvert,
   playJson,
   sangria,
+  sangriaPlayJson,
   scalaGuice,
   scalaLogging,
   "org.scala-lang" % "scala-reflect" % scalaVersion.value,
@@ -17,5 +18,7 @@ libraryDependencies ++= Seq(
   scalatest,
   mockito
 )
+
+dependencyOverrides += playJson
 
 org.coursera.courier.sbt.CourierPlugin.courierSettings

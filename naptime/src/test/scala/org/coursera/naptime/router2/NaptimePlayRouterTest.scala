@@ -17,6 +17,12 @@
 package org.coursera.naptime.router2
 
 import com.google.inject.Injector
+import org.coursera.naptime.resources.RootResource
+import org.coursera.naptime.schema.Handler
+import org.coursera.naptime.schema.HandlerKind
+import org.coursera.naptime.schema.Parameter
+import org.coursera.naptime.schema.Resource
+import org.coursera.naptime.schema.ResourceKind
 import org.junit.Test
 import org.mockito.Mockito.when
 import org.mockito.Matchers.any
@@ -36,9 +42,34 @@ class NaptimePlayRouterTest extends AssertionsForJUnit with MockitoSugar {
     override def apply(v1: RequestHeader): Iteratee[Array[Byte], Result] = ???
   }
 
+  val resourceSchema = Resource(
+    kind = ResourceKind.COLLECTION,
+    name = "fakeResource",
+    version = Some(1L),
+    parentClass = Some(classOf[RootResource].getName),
+    keyType = "java.lang.String",
+    valueType = "FakeModel",
+    mergedType = "FakeResourceModel",
+    handlers = List(
+      Handler(
+        kind = HandlerKind.GET,
+        name = "get",
+        parameters = List(
+          Parameter(
+            name = "id",
+            `type` = "String",
+            attributes = List.empty,
+            default = None)),
+        inputBody = None,
+        customOutputBody = None,
+        attributes = List.empty)),
+    className = "org.coursera.naptime.FakeResource",
+    attributes = List.empty)
+
   val resourceRouter = mock[ResourceRouter]
   val resourceRouterBuilder = mock[ResourceRouterBuilder]
   when(resourceRouterBuilder.build(any())).thenReturn(resourceRouter)
+  when(resourceRouterBuilder.schema).thenReturn(resourceSchema)
 
   val injector = mock[Injector]
   val naptimeRoutes = NaptimeRoutes(injector, Set(resourceRouterBuilder))
@@ -56,5 +87,13 @@ class NaptimePlayRouterTest extends AssertionsForJUnit with MockitoSugar {
     when(resourceRouter.routeRequest(any(), any())).thenReturn(None)
     val handler = router.handlerFor(FakeRequest())
     assert(handler.isEmpty)
+  }
+
+  @Test
+  def generateDocumentation(): Unit = {
+    val documentation = router.documentation
+    assert(1 === documentation.length)
+    assert(("GET --- GET", "/fakeResource/$id", "[NAPTIME] org.coursera.naptime.FakeResource.get(id: String)") ===
+      documentation.head)
   }
 }

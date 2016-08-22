@@ -1,10 +1,8 @@
 package org.coursera.naptime.ari
 
+import com.linkedin.data.DataList
 import com.linkedin.data.DataMap
-import com.linkedin.data.schema.DataSchema
 import org.coursera.naptime.ResourceName
-import org.coursera.naptime.ResponsePagination
-import org.coursera.naptime.schema.Resource
 import play.api.libs.json.JsValue
 import play.api.mvc.RequestHeader
 
@@ -27,16 +25,6 @@ trait EngineApi {
    *         layer to turn that into the response format as required.
    */
   def execute(request: Request): Future[Response]
-
-  /**
-   * Gets the Naptime schema currently in use by the presentation layer.
-   */
-  def schemas: Seq[Resource]
-
-  /**
-   * The set of all the types that make up this collection of resources.
-   */
-  def models: Map[String, DataSchema]
 }
 
 /**
@@ -70,6 +58,8 @@ case class TopLevelRequest(resource: ResourceName, selection: RequestField)
 /**
  * Represents a requested field within a requested resource.
  *
+ * TODO: figure out directives
+ *
  * @param name The name of the requested field.
  * @param alias The name the field should be renamed to in the response.
  * @param args If the field takes parameters, they are encapsulated here.
@@ -78,21 +68,49 @@ case class TopLevelRequest(resource: ResourceName, selection: RequestField)
 case class RequestField(
   name: String,
   alias: Option[String],
-  args: Set[(String, JsValue)],
+  args: Set[(String, JsValue)], // TODO: Should JsValue be a specific ARI type?
   selections: List[RequestField])
-
-// TODO: Should JsValue be a specific ARI type?
 
 /**
  * All of the data required to assemble a response to an automatic includes query.
  *
- * @param output A map from resource name to a response
+ * TODO: performance test, and determine if mutable collections yield non-trivial performance improvements.
+ *
+ * @param topLevelIds A map from the top level requests to a DataList containing the ordered list of IDs for the
+ *                    top of the response
+ * @param data A map from the resource name to a Map of IDs to DataMaps.
  */
 case class Response(
-  output: Map[ResourceName, ResourceResponse]
-)
+  topLevelIds: Map[TopLevelRequest, DataList],
+  data: Map[ResourceName, Map[AnyRef, DataMap]]) {
 
-// TODO: figure out directives
+  // TODO: performance test this implementation, and consider optimizing it.
+  // Note: this operation potentially mutates the current response due to interior mutability.
+  def ++(other: Response): Response = {
+    val mergedTopLevel = topLevelIds ++ other.topLevelIds
+    val mergedData = (data.keySet ++ other.data.keySet).map { resourceName =>
+      val lhs = data.getOrElse(resourceName, Map.empty)
+      val rhs = other.data.getOrElse(resourceName, Map.empty)
+      val mergedMap = (lhs.keySet ++ rhs.keySet).map { key =>
+        val lh = lhs.get(key)
+        val rh = rhs.get(key)
+        val merged = (lh, rh) match {
+          case (None, None) =>
+            throw new IllegalStateException(s"Neither map had an entry for key $key.")
+          case (Some(dm), None) => dm
+          case (None, Some(dm)) => dm
+          case (Some(l), Some(r)) =>
+            l.putAll(r)
+            l
+        }
+        key -> merged
+      }.toMap
+      resourceName -> mergedMap
+    }.toMap
+    Response(mergedTopLevel, mergedData)
+  }
+}
 
-// TODO: key may change to a more sophisticated type. It should be a ResourceName, but with hydrated path parameters.
-case class ResourceResponse(key: String, models: Seq[DataMap], pagination: ResponsePagination)
+object Response {
+  val empty = Response(Map.empty, Map.empty)
+}

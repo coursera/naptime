@@ -53,7 +53,8 @@ class LocalFetcher @Inject() (
         fakePlayRequest = request.requestHeader.copy(
           method = "GET", // TODO: handle non-read-only request types.
           uri = topLevelRequest.resource.identifier, // Warning: uri is not consistent with queryString
-          queryString = queryString)
+          queryString = queryString,
+          headers = request.requestHeader.headers.remove("content-type")) // TODO: handle header filtering more properly
         path = constructPath(resourceSchema, argMap)
         handler <- router.routeRequest(path, fakePlayRequest)
       } yield {
@@ -61,7 +62,8 @@ class LocalFetcher @Inject() (
         handler match {
           case naptimeAction: RestAction[_, _, _, _, _, _] =>
             naptimeAction.localRun(fakePlayRequest,
-              ResourceName(resourceSchema.name, resourceSchema.version.map(_.toInt).getOrElse(0)))
+              ResourceName(resourceSchema.name, resourceSchema.version.map(_.toInt).getOrElse(0)),
+              topLevelRequest)
           case _ =>
             val msg = "Handler was not a RestAction"
             logger.error(msg)

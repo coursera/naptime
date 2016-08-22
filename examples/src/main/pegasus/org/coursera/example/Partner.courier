@@ -1,0 +1,8 @@
+namespace org.coursera.example
+
+record Partner {
+  courses: array[CourseId]
+  instructors: array[InstructorId]
+  name: string
+  homepage: string
+}

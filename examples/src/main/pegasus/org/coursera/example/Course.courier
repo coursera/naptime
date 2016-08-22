@@ -1,0 +1,9 @@
+namespace org.coursera.example
+
+record Course {
+  instructors: array[InstructorId]
+  partners: array[PartnerId]
+  slug: string
+  name: string
+  description: string
+}

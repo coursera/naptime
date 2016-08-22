@@ -66,7 +66,7 @@ object SangriaGraphQlParser extends GraphQlParser {
     val topLevelRequests = for {
       parsedDocument <- parsedDocumentOption.toList
       operation <- parsedDocument.operations
-      operationName <- operation._1.toList
+      operationName = operation._1.getOrElse("")
       operationData = operation._2
       selection <- operationData.selections
       field <- {
@@ -113,7 +113,7 @@ object SangriaGraphQlParser extends GraphQlParser {
     }
   }
 
-  val TOP_LEVEL_RESOURCE_REGEX = "([\\w\\d]+)V(\\d)".r
+  val TOP_LEVEL_RESOURCE_REGEX = "([\\w\\d]+)V(\\d)Resource".r
 
   /**
     * Converts a GraphQL top-level field name to a standard Naptime [[ResourceName]].
@@ -127,7 +127,8 @@ object SangriaGraphQlParser extends GraphQlParser {
     fieldName match {
       case TOP_LEVEL_RESOURCE_REGEX(resourceName, version) =>
         try {
-          Some(ResourceName(resourceName, version.toInt))
+          val lowercaseResourceName = Character.toLowerCase(resourceName.charAt(0)) + resourceName.substring(1)
+          Some(ResourceName(lowercaseResourceName, version.toInt))
         } catch {
           case e: NumberFormatException => None
         }

@@ -1,0 +1,14 @@
+namespace org.coursera.naptime.ari.graphql.models
+
+record MergedPartner {
+  id: PartnerId
+
+  name: string
+
+  slug: string
+
+  geolocation: Coordinates
+
+  // TODO: add reverse relations.
+
+}
