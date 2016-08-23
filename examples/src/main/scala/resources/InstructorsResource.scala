@@ -4,6 +4,7 @@ import javax.inject.Inject
 import javax.inject.Singleton
 
 import org.coursera.example.Instructor
+import org.coursera.naptime.Fields
 import org.coursera.naptime.Ok
 import org.coursera.naptime.ResourceName
 import org.coursera.naptime.model.Keyed
@@ -17,7 +18,7 @@ class InstructorsResource @Inject() (
 
   override def resourceName = "instructors"
   override def resourceVersion = 1
-  override implicit lazy val Fields = BaseFields.withRelated(
+  override implicit lazy val Fields: Fields[Instructor] = BaseFields.withRelated(
     "courses" -> ResourceName("courses", 1),
     "partners" -> ResourceName("partners", 1))
 

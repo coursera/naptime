@@ -1,0 +1,11 @@
+namespace org.coursera.naptime.schema
+
+/**
+ * An empty record that allows us to package arbitrary Javascript data in a structured manner.
+ *
+ * Note: this is entirely an escape hatch from the Schema type system. Use judiciously!
+ */
+@passthroughExempt
+record ArbitraryRecord {
+  // Intentionally empty!
+}

@@ -277,8 +277,8 @@ class MacroImpls(val c: blackbox.Context) {
               bodySchema,
               stubInstance.Fields))
         }).toList ++ List(
-          keySchemaOption.map(Keyed(${keyType.typeSymbol.fullName}, _)),
-          bodySchemaOption.map(Keyed(${bodyType.typeSymbol.fullName}, _))).flatten
+          keySchemaOption.map(org.coursera.naptime.model.Keyed(${keyType.typeSymbol.fullName}, _)),
+          bodySchemaOption.map(org.coursera.naptime.model.Keyed(${bodyType.typeSymbol.fullName}, _))).flatten
       }"""
     }
 
@@ -318,37 +318,57 @@ class MacroImpls(val c: blackbox.Context) {
         // TODO(saeta): handle path keys appropriately!
         val parameterModelName = TermName(c.freshName())
         // TODO(saeta): Handle attributes!
-        val baseTree = q"""
-          val $parameterModelName = org.coursera.naptime.schema.Parameter(
-            name = ${param.name.toString},
-            `type` = ${param.typeSignature.toString},
-            attributes = List.empty,
-            default = None
-          )
-        """
         if (param.asTerm.isParamWithDefault) {
           val defaultFnName = TermName(s"${method.name}$$default$$" + (i + 1))
           val defaultValue = if (param.typeSignature <:< DATA_TEMPLATE) {
-            q"stubInstance.$defaultFnName.data()"
+            q"""org.coursera.naptime.schema.ArbitraryValue.ArbitraryRecordMember(
+                  org.coursera.naptime.schema.ArbitraryRecord(
+                    stubInstance.$defaultFnName.data(),
+                    org.coursera.courier.templates.DataTemplates.DataConversion.SetReadOnly))"""
           } else if (param.typeSignature <:< ANY_VAL || param.typeSignature =:= STRING) {
             // TODO(saeta): Note: this does not handle case class Foo(val: Int) extends AnyVal!
-            q"stubInstance.$defaultFnName.asInstanceOf[AnyRef]"
+            q"""stubInstance.$defaultFnName.asInstanceOf[Any] match {
+                  case i: Int =>
+                    org.coursera.naptime.schema.ArbitraryValue.IntMember(i.asInstanceOf[Int])
+                  case s: String =>
+                    org.coursera.naptime.schema.ArbitraryValue.StringMember(s.asInstanceOf[String])
+                  case l: Long =>
+                    org.coursera.naptime.schema.ArbitraryValue.LongMember(l.asInstanceOf[Long])
+                  case f: Float =>
+                    org.coursera.naptime.schema.ArbitraryValue.FloatMember(f.asInstanceOf[Float])
+                  case d: Double =>
+                    org.coursera.naptime.schema.ArbitraryValue.DoubleMember(d.asInstanceOf[Double])
+                  case b: com.linkedin.data.ByteString =>
+                    org.coursera.naptime.schema.ArbitraryValue.ByteStringMember(b.asInstanceOf[com.linkedin.data.ByteString])
+                  case b: Boolean =>
+                    org.coursera.naptime.schema.ArbitraryValue.BooleanMember(b.asInstanceOf[Boolean])
+                  case _ =>
+                    org.coursera.naptime.schema.ArbitraryValue.StringMember("unknown default")
+               }"""
           } else {
             // TODO: handle extends scala.Map and scala.Traversable: Construct a data list / map
             // TODO: Try and infer an implicit json.OFormat, and convert to JsValue and then into
             //       a DataMap.
-            q""""unknown default""""
+            q"""org.coursera.naptime.schema.ArbitraryValue.StringMember("unknown default")"""
           }
-          val copiedMapName = TermName(c.freshName())
           q"""
-            $baseTree
-            val $copiedMapName = $parameterModelName.data().clone()
-            $copiedMapName.put("default", $defaultValue)
-            org.coursera.naptime.schema.Parameter($copiedMapName,
-              org.coursera.courier.templates.DataTemplates.DataConversion.SetReadOnly)
+            val defaultValue: org.coursera.naptime.schema.ArbitraryValue = $defaultValue
+            org.coursera.naptime.schema.Parameter(
+              name = ${param.name.toString},
+              `type` = ${param.typeSignature.toString},
+              attributes = List.empty,
+              default = Some(defaultValue)
+            )
           """
         } else {
-          q"$baseTree; $parameterModelName"
+          q"""
+            org.coursera.naptime.schema.Parameter(
+              name = ${param.name.toString},
+              `type` = ${param.typeSignature.toString},
+              attributes = List.empty,
+              default = None
+            )
+          """
         }
       }
       // TODO: handle input, custom output bodies, and attributes

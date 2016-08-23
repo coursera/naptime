@@ -30,6 +30,7 @@ import com.linkedin.data.schema.RecordDataSchema
 import com.linkedin.data.schema.StringDataSchema
 import com.linkedin.data.schema.TyperefDataSchema
 import com.linkedin.data.schema.UnionDataSchema
+import com.typesafe.scalalogging.StrictLogging
 import org.coursera.naptime.schema.HandlerKind
 import org.coursera.naptime.schema.Resource
 import sangria.marshalling.FromInput
@@ -53,12 +54,14 @@ import sangria.schema.StringType
 import sangria.schema.UnionType
 import sangria.schema.Value
 import sangria.marshalling.FromInput._
+import sangria.schema.ObjectType
 
 import scala.collection.JavaConverters._
 
 class SangriaGraphQlSchemaBuilder(
     resources: Set[Resource],
-    schemas: Map[String, RecordDataSchema]) {
+    schemas: Map[String, RecordDataSchema])
+  extends StrictLogging {
 
   /**
     * Generates a GraphQL schema for the provided set of resources to this class
@@ -78,10 +81,11 @@ class SangriaGraphQlSchemaBuilder(
         })
     }
 
+    val dedupedResources = topLevelResourceObjects.groupBy(_.name).map(_._2.head).toList
     val rootObject = ObjectType[SangriaGraphQlContext, DataMap](
       name = "Root",
       description = "Top-level accessor for Naptime resources",
-      fields = topLevelResourceObjects.toList)
+      fields = dedupedResources)
     Schema(rootObject)
   }
 
@@ -94,25 +98,36 @@ class SangriaGraphQlSchemaBuilder(
     */
   def generateObjectTypeForResource(
       resourceName: String): ObjectType[SangriaGraphQlContext, DataMap] = {
-    val resource = resources.find(resource => {
-      s"${resource.name}.v${resource.version.getOrElse(1)}" == resourceName ||
-      formatResourceName(resource.name, resource.version) == resourceName
-    }).getOrElse {
-      throw new RuntimeException(s"Cannot find resource with name $resourceName")
-    }
+    try {
+      val resource = resources.find(resource => {
+        s"${resource.name}.v${resource.version.getOrElse(1)}" == resourceName ||
+          formatResourceName(resource.name, resource.version) == resourceName
+      }).getOrElse {
+        throw new RuntimeException(s"Cannot find resource with name $resourceName")
+      }
 
-    val schema = schemas.getOrElse(resource.mergedType, {
-      throw new RuntimeException(s"Cannot find schema for ${resource.mergedType}")
-    })
-
-    ObjectType[SangriaGraphQlContext, DataMap](
-      name = formatResourceName(resource.name, resource.version),
-      description = "",
-      fieldsFn = () => {
-        schema.getFields.asScala.map { field =>
-          generateField(field, schema.getNamespace)
-        }.toList
+      val schema = schemas.getOrElse(resource.mergedType, {
+        throw new RuntimeException(s"Cannot find schema for ${resource.mergedType}")
       })
+
+      ObjectType[SangriaGraphQlContext, DataMap](
+        name = formatResourceName(resource.name, resource.version),
+        description = "",
+        fieldsFn = () => {
+          schema.getFields.asScala.map { field =>
+            generateField(field, schema.getNamespace)
+          }.toList
+        })
+    } catch {
+      case e: Throwable =>
+        logger.error(s"Could not generate object type for resource $resourceName", e)
+        ObjectType[SangriaGraphQlContext, DataMap](
+          name = resourceName,
+          description = "",
+          fieldsFn = () => {
+            List.empty
+          })
+    }
   }
 
   def scalaTypeToSangria(typeName: String): InputType[Any] = {
@@ -154,97 +169,116 @@ class SangriaGraphQlSchemaBuilder(
     */
   def generateLookupTypeForResource(
       resourceName: String): ObjectType[SangriaGraphQlContext, DataMap] = {
-    val resource = resources.find(resource => {
-      s"${resource.name}.v${resource.version.getOrElse(1)}" == resourceName ||
-        formatResourceName(resource.name, resource.version) == resourceName
-    }).getOrElse {
-      throw new RuntimeException(s"Cannot find resource with name $resourceName")
-    }
 
-    val schema = schemas.getOrElse(resource.mergedType, {
-      throw new RuntimeException(s"Cannot find schema for ${resource.mergedType}")
-    })
+    try {
+      val resource = resources.find(
+        resource => {
+          s"${resource.name}.v${resource.version.getOrElse(1)}" == resourceName ||
+            formatResourceName(resource.name, resource.version) == resourceName
+        }).getOrElse {
+        throw new RuntimeException(s"Cannot find resource with name $resourceName")
+      }
 
-    ObjectType[SangriaGraphQlContext, DataMap](
-      name = formatResourceName(resource.name, resource.version) + "Resource",
-      description = "",
-      fieldsFn = () => {
-        resource.handlers.flatMap { handler =>
-          val arguments = handler.parameters.map { parameter =>
-            val tpe = parameter.`type`
-            Argument(
-              name = parameter.name,
-              argumentType = scalaTypeToSangria(tpe))(scalaTypeToFromInput(tpe), implicitly)
+      val schema = schemas.getOrElse(
+        resource.mergedType, {
+          throw new RuntimeException(s"Cannot find schema for ${resource.mergedType}")
+        })
+
+      ObjectType[SangriaGraphQlContext, DataMap](
+        name = formatResourceName(resource.name, resource.version) + "Resource",
+        description = "",
+        fieldsFn = () => {
+          resource.handlers.flatMap { handler =>
+            val arguments = handler.parameters.map { parameter =>
+              val tpe = parameter.`type`
+              Argument(
+                name = parameter.name,
+                argumentType = scalaTypeToSangria(tpe))(scalaTypeToFromInput(tpe), implicitly)
+            }.toList
+            handler.kind match {
+              case HandlerKind.GET =>
+                Some(
+                  Field.apply[SangriaGraphQlContext, DataMap, DataMap, Any](
+                    "get",
+                    generateObjectTypeForResource(resourceName),
+                    resolve = (context: Context[SangriaGraphQlContext, DataMap]) => {
+                      // TODO(bryan): Clean up this string building
+                      val resourceObject = context.ctx.data.get(
+                        s"${resource.name}.v${resource.version.getOrElse(1)}")
+                        .flatMap { resourceSet =>
+                          val idArgument = arguments.find(_.name == "id").getOrElse {
+                            throw new RuntimeException("No id argument for a get")
+                          }
+                          resourceSet.find { resource =>
+                            context.arg(idArgument) == resource.get("id")
+                          }
+                        }.getOrElse {
+                        throw new RuntimeException("Cannot find object")
+                      }
+                      Value[SangriaGraphQlContext, DataMap](resourceObject)
+                    },
+                    arguments = arguments))
+              case HandlerKind.MULTI_GET =>
+                Some(
+                  Field.apply[SangriaGraphQlContext, DataMap, List[DataMap], Any](
+                    "multiGet",
+                    ListType(generateObjectTypeForResource(resourceName)),
+                    resolve = (context: Context[SangriaGraphQlContext, DataMap]) => {
+                      // TODO(bryan): Clean up this string building
+                      val resourceObjects = context.ctx.data.get(
+                        s"${resource.name}.v${resource.version.getOrElse(1)}").map { resourceSet =>
+                        val idsArgument = arguments.find(_.name == "ids").getOrElse {
+                          throw new RuntimeException("No id argument for a get")
+                        }
+                        resourceSet.filter { resource =>
+                          // TODO(bryan): Stop casting types here if possible
+                          context.arg(idsArgument).asInstanceOf[Iterable[_]]
+                            .exists(_ == resource.get("id"))
+                        }
+                      }.getOrElse {
+                        throw new RuntimeException("Cannot find object")
+                      }
+                      Value[SangriaGraphQlContext, List[DataMap]](resourceObjects)
+                    },
+                    arguments = arguments))
+              case HandlerKind.GET_ALL =>
+                Some(
+                  Field.apply[SangriaGraphQlContext, DataMap, List[DataMap], Any](
+                    "getAll",
+                    ListType(generateObjectTypeForResource(resourceName)),
+                    resolve = (context: Context[SangriaGraphQlContext, DataMap]) => {
+                      // TODO(bryan): Clean up this string building
+                      val resourceObjects = context.ctx.data.getOrElse(
+                        s"${resource.name}.v${resource.version.getOrElse(1)}",
+                        throw new RuntimeException("Cannot find object"))
+                      Value[SangriaGraphQlContext, List[DataMap]](resourceObjects)
+                    }))
+              case HandlerKind.FINDER =>
+                Some(
+                  Field.apply[SangriaGraphQlContext, DataMap, List[DataMap], Any](
+                    handler.name,
+                    ListType(generateObjectTypeForResource(resourceName)),
+                    resolve = (context: Context[SangriaGraphQlContext, DataMap]) => {
+                      // TODO(bryan): Clean up this string building
+                      val resourceObjects = context.ctx.data.getOrElse(
+                        s"${resource.name}.v${resource.version.getOrElse(1)}",
+                        throw new RuntimeException("Cannot find object"))
+                      Value[SangriaGraphQlContext, List[DataMap]](resourceObjects)
+                    },
+                    arguments = arguments))
+              case _ => None
+            }
           }.toList
-          handler.kind match {
-            case HandlerKind.GET =>
-              Some(Field.apply[SangriaGraphQlContext, DataMap, DataMap, Any](
-                "get",
-                generateObjectTypeForResource(resourceName),
-                resolve = (context: Context[SangriaGraphQlContext, DataMap]) => {
-                  // TODO(bryan): Clean up this string building
-                  val resourceObject = context.ctx.data.get(
-                    s"${resource.name}.v${resource.version.getOrElse(1)}").flatMap { resourceSet =>
-                    val idArgument = arguments.find(_.name == "id").getOrElse {
-                      throw new RuntimeException("No id argument for a get")
-                    }
-                    resourceSet.find { resource =>
-                      context.arg(idArgument) == resource.get("id")
-                    }
-                  }.getOrElse {
-                    throw new RuntimeException("Cannot find object")
-                  }
-                  Value[SangriaGraphQlContext, DataMap](resourceObject)
-                },
-                arguments = arguments))
-            case HandlerKind.MULTI_GET =>
-              Some(Field.apply[SangriaGraphQlContext, DataMap, List[DataMap], Any](
-                "multiGet",
-                ListType(generateObjectTypeForResource(resourceName)),
-                resolve = (context: Context[SangriaGraphQlContext, DataMap]) => {
-                  // TODO(bryan): Clean up this string building
-                  val resourceObjects = context.ctx.data.get(
-                    s"${resource.name}.v${resource.version.getOrElse(1)}").map { resourceSet =>
-                    val idsArgument = arguments.find(_.name == "ids").getOrElse {
-                      throw new RuntimeException("No id argument for a get")
-                    }
-                    resourceSet.filter { resource =>
-                      // TODO(bryan): Stop casting types here if possible
-                      context.arg(idsArgument).asInstanceOf[Iterable[_]].exists(_ == resource.get("id"))
-                    }
-                  }.getOrElse {
-                    throw new RuntimeException("Cannot find object")
-                  }
-                  Value[SangriaGraphQlContext, List[DataMap]](resourceObjects)
-                },
-                arguments = arguments))
-            case HandlerKind.GET_ALL =>
-              Some(Field.apply[SangriaGraphQlContext, DataMap, List[DataMap], Any](
-                "getAll",
-                ListType(generateObjectTypeForResource(resourceName)),
-                resolve = (context: Context[SangriaGraphQlContext, DataMap]) => {
-                  // TODO(bryan): Clean up this string building
-                  val resourceObjects = context.ctx.data.getOrElse(
-                    s"${resource.name}.v${resource.version.getOrElse(1)}",
-                    throw new RuntimeException("Cannot find object"))
-                  Value[SangriaGraphQlContext, List[DataMap]](resourceObjects)
-                }))
-            case HandlerKind.FINDER =>
-              Some(Field.apply[SangriaGraphQlContext, DataMap, List[DataMap], Any](
-                handler.name,
-                ListType(generateObjectTypeForResource(resourceName)),
-                resolve = (context: Context[SangriaGraphQlContext, DataMap]) => {
-                  // TODO(bryan): Clean up this string building
-                  val resourceObjects = context.ctx.data.getOrElse(
-                    s"${resource.name}.v${resource.version.getOrElse(1)}",
-                    throw new RuntimeException("Cannot find object"))
-                  Value[SangriaGraphQlContext, List[DataMap]](resourceObjects)
-                },
-                arguments = arguments))
-            case _ => None
-          }
-        }.toList
-      })
+        })
+    } catch {
+      case e: Throwable =>
+        ObjectType[SangriaGraphQlContext, DataMap](
+          name = formatName(resourceName),
+          description = "",
+          fieldsFn = () => {
+            List.empty
+          })
+    }
   }
 
   /**
