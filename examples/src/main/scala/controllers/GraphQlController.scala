@@ -92,7 +92,7 @@ class GraphQlController @Inject() (
         val allData = responseOpt.map(_.output.map { case (resourceName, response) =>
           s"${resourceName.topLevelName}.v${resourceName.version}" -> response.models.toList
         }).getOrElse(Map.empty)
-        val fakeContext = SangriaGraphQlContext(myField = "testField", data = allData)
+        val fakeContext = SangriaGraphQlContext(data = allData)
         Executor.execute(schema, document, fakeContext).map(Ok(_))
       }
     }).getOrElse {
