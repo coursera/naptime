@@ -26,6 +26,7 @@ import com.linkedin.data.schema.EnumDataSchema
 import com.linkedin.data.schema.FloatDataSchema
 import com.linkedin.data.schema.IntegerDataSchema
 import com.linkedin.data.schema.LongDataSchema
+import com.linkedin.data.schema.MapDataSchema
 import com.linkedin.data.schema.RecordDataSchema
 import com.linkedin.data.schema.StringDataSchema
 import com.linkedin.data.schema.TyperefDataSchema
@@ -101,23 +102,21 @@ class SangriaGraphQlSchemaBuilder(
     try {
       val resource = getResource(resourceName)
 
-      val schema = schemas.getOrElse(resource.mergedType, {
+      val schema = schemas.get(resource.mergedType).flatMap(Option(_)).getOrElse {
         throw new RuntimeException(s"Cannot find schema for ${resource.mergedType}")
-      })
+      }
 
       ObjectType[SangriaGraphQlContext, DataMap](
         name = formatResourceName(resource),
         fieldsFn = () => {
-          schema.getFields.asScala.map { field =>
-            generateField(field, schema.getNamespace)
-          }.toList
+          Option(schema.getFields).map(_.asScala.map { field =>
+            generateField(field, Option(schema.getNamespace).getOrElse(""))
+          }.toList).getOrElse(List.empty)
         })
     } catch {
       case e: Throwable =>
         logger.error(s"Could not generate object type for resource $resourceName", e)
-        ObjectType[SangriaGraphQlContext, DataMap](
-          name = resourceName,
-          fields = List.empty)
+        ObjectType(name = "UnknownResource", fieldsFn = () => { List.empty })
     }
   }
 
@@ -337,6 +336,9 @@ class SangriaGraphQlSchemaBuilder(
       case unionField: UnionDataSchema => context => context.value.getDataMap(fieldName)
       case arrayField: ArrayDataSchema => context => context.value.getDataList(fieldName)
       case recordField: RecordDataSchema => context => context.value.getDataMap(fieldName)
+      case _ =>
+        logger.error(s"Could not match schema type $schemaType")
+        context => null
     }
 
     baseResolver.andThen(res => Value(res))
@@ -368,6 +370,9 @@ class SangriaGraphQlSchemaBuilder(
       case floatField: FloatDataSchema => FloatType
       case arrayField: ArrayDataSchema =>
         ListType(getSangriaTypeForSchema(arrayField.getItems, fieldName, namespace))
+      case mapField: MapDataSchema =>
+        // TODO(bryan): Figure out maps
+        StringType
       case typeRefField: TyperefDataSchema =>
         getSangriaTypeForSchema(typeRefField.getRef, typeRefField.getName, namespace)
       case enumDataSchema: EnumDataSchema =>
