@@ -34,6 +34,25 @@ object Types extends StrictLogging {
     val PROPERTY_NAME = "related"
   }
 
+  @deprecated("Please use the one with fields included", "0.2.4")
+  def computeAsymType(
+    typeName: String,
+    keyType: DataSchema,
+    valueType: RecordDataSchema): RecordDataSchema = {
+    if (keyType.hasError || valueType.hasError) {
+      throw new RuntimeException(s"Input schemas have error: $keyType $valueType")
+    }
+    keyType match {
+      case primitive: PrimitiveDataSchema =>
+        computeAsymTypeWithPrimitiveKey(typeName, primitive, valueType)
+      case record: RecordDataSchema =>
+        computeAsymTypeWithRecordKey(typeName, record, valueType)
+      case typeref: TyperefDataSchema =>
+        ??? // TODO(saeta): handle typeref schemas
+      case unknown: DataSchema =>
+        throw new RuntimeException(s"Cannot compute asymmetric type for key type: $unknown")
+    }
+  }
 
   /**
    * Computes an asymmetric type from the schemas for the input types.
