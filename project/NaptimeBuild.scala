@@ -29,11 +29,15 @@ object NaptimeBuild extends Build with NamedDependencies with PluginVersionProvi
   lazy val root = project
     .in(file("."))
     .settings(org.coursera.naptime.sbt.Sonatype.settings)
-    .aggregate(naptime, models, testing, pegasus)
+    .aggregate(naptime, graphql, models, testing, pegasus)
 
   lazy val naptime = configure(project)
     .in(file("naptime"))
     .dependsOn(models)
+
+  lazy val graphql = configure(project)
+    .in(file("naptime-graphql"))
+    .dependsOn(naptime % "test->test;compile->compile")
 
   lazy val models = configure(project)
     .in(file("naptime-models"))
