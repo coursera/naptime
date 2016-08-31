@@ -1,16 +1,11 @@
-name := "naptime"
+name := "naptime-graphql"
 
 libraryDependencies ++= Seq(
   courierRuntime,
-  governator,
-  guice,
-  guiceMultibindings,
-  jodaTime,
-  jodaConvert,
   playJson,
-  scalaGuice,
+  sangria,
+  sangriaPlayJson,
   scalaLogging,
-  "org.scala-lang" % "scala-reflect" % scalaVersion.value,
   junit,
   junitInterface,
   scalatest,
