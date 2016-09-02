@@ -7,6 +7,7 @@ import org.coursera.naptime.model.Keyed
 import org.coursera.naptime.resources.CourierCollectionResource
 import org.coursera.naptime.router2.Router
 import org.junit.Test
+import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.junit.AssertionsForJUnit
 
 /**
@@ -14,8 +15,11 @@ import org.scalatest.junit.AssertionsForJUnit
  */
 object NestedMacroCourierTests {
 
+  object CoursesResource {
+    val ID = ResourceName("courses", 1)
+  }
   class CoursesResource extends CourierCollectionResource[String, Course] {
-    override def resourceName: String = "courses"
+    override def resourceName: String = CoursesResource.ID.topLevelName
 
     override implicit lazy val Fields: Fields[Course] = BaseFields.withRelated("instructors" -> ResourceName("instructors", 1))
 
@@ -76,7 +80,7 @@ object NestedMacroCourierTests {
   val instructorRouter = Router.build[InstructorsResource]
 }
 
-class NestedMacroCourierTests extends AssertionsForJUnit {
+class NestedMacroCourierTests extends AssertionsForJUnit with ScalaFutures {
 
   @Test
   def checkCoursesMergedType(): Unit = {

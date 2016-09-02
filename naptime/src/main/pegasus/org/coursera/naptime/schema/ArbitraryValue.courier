@@ -1,0 +1,12 @@
+namespace org.coursera.naptime.schema
+
+typeref ArbitraryValue = union[
+  ArbitraryRecord
+  int
+  string
+  long
+  float
+  double
+  bytes
+  boolean
+]

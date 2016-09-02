@@ -16,6 +16,7 @@
 
 package org.coursera.naptime
 
+import com.linkedin.data.DataMap
 import com.linkedin.data.schema.DataSchema
 import com.linkedin.data.schema.RecordDataSchema
 import org.coursera.naptime.actions.NaptimeSerializer.AnyWrites._
@@ -33,6 +34,7 @@ import org.coursera.naptime.path.RootParsedPathKey
 import org.coursera.naptime.resources.CollectionResource
 import org.coursera.naptime.resources.TopLevelCollectionResource
 import org.coursera.naptime.router2.Router
+import org.coursera.naptime.schema.ArbitraryValue.StringMember
 import org.joda.time.DateTime
 import org.junit.Test
 import org.mockito.Mockito._
@@ -47,6 +49,7 @@ import play.api.mvc.AnyContentAsEmpty
 import play.api.mvc.BodyParsers
 import play.api.mvc.RequestHeader
 import play.api.test.FakeRequest
+
 import scala.collection.JavaConversions._
 
 /**
@@ -666,7 +669,7 @@ class NestedMacroTests extends AssertionsForJUnit with MockitoSugar {
     assert(withDefaultsSchema.parameters.map(_.name).toSet ===
       Set("ancestorKeys", "userName", "domain"))
     val domainSchema = withDefaultsSchema.parameters.find(_.name == "domain").get
-    assert(domainSchema.data.get("default") === "defaultDomain")
+    assert(StringMember(domainSchema.data.get("default").asInstanceOf[DataMap]).value === "defaultDomain")
 
     assert(schema.parentClass === Some(peopleInstanceImpl.getClass.getName))
 
