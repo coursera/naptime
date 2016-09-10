@@ -27,6 +27,7 @@ import com.linkedin.data.schema.FloatDataSchema
 import com.linkedin.data.schema.IntegerDataSchema
 import com.linkedin.data.schema.LongDataSchema
 import com.linkedin.data.schema.MapDataSchema
+import com.linkedin.data.schema.NullDataSchema
 import com.linkedin.data.schema.RecordDataSchema
 import com.linkedin.data.schema.StringDataSchema
 import com.linkedin.data.schema.TyperefDataSchema
@@ -330,6 +331,7 @@ class SangriaGraphQlSchemaBuilder(
       case bytesField: BytesDataSchema => context => context.value.getByteString(fieldName)
       case doubleField: DoubleDataSchema => context => context.value.getDouble(fieldName)
       case floatField: FloatDataSchema => context => context.value.getFloat(fieldName)
+      case nullField: NullDataSchema => context => null
       case enumField: EnumDataSchema => context => context.value.getString(fieldName)
       case typerefField: TyperefDataSchema =>
         context => getSangriaResolverForSchema(typerefField.getDereferencedDataSchema, fieldName)
@@ -377,6 +379,9 @@ class SangriaGraphQlSchemaBuilder(
         getSangriaTypeForSchema(typeRefField.getRef, typeRefField.getName, namespace)
       case enumDataSchema: EnumDataSchema =>
         buildEnumType(enumDataSchema)
+      case nullDataSchema: NullDataSchema =>
+        // TODO(bryan): Figure out nulls
+        StringType
       case recordDataSchema: RecordDataSchema =>
         buildRecordType(recordDataSchema, namespace)
       case unionDataSchema: UnionDataSchema =>
@@ -414,7 +419,7 @@ class SangriaGraphQlSchemaBuilder(
     ObjectType[SangriaGraphQlContext, DataMap](
       formatName(pegasusRecordSchema.getFullName),
       pegasusRecordSchema.getDoc,
-      pegasusRecordSchema.getFields.asScala.map(generateField(_, namespace)).toList)
+      fieldsFn = () => pegasusRecordSchema.getFields.asScala.map(generateField(_, namespace)).toList)
   }
 
   /**
