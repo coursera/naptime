@@ -79,7 +79,14 @@ object Types extends StrictLogging {
       case record: RecordDataSchema =>
         computeAsymTypeWithRecordKey(typeName, record, valueType)
       case typeref: TyperefDataSchema =>
-        ??? // TODO(saeta): handle typeref schemas
+        typeref.getDereferencedDataSchema match {
+          case primitive: PrimitiveDataSchema =>
+            computeAsymTypeWithPrimitiveKey(typeName, primitive, valueType)
+          case record: RecordDataSchema =>
+            computeAsymTypeWithRecordKey(typeName, record, valueType)
+          case unknown: DataSchema =>
+            throw new RuntimeException(s"Cannot compute asymmetric type for key type: $unknown")
+        }
       case unknown: DataSchema =>
         throw new RuntimeException(s"Cannot compute asymmetric type for key type: $unknown")
     }
