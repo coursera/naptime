@@ -43,6 +43,7 @@ trait NaptimeSerializer[T] {
 object NaptimeSerializer {
   /**
    * Retrieves the underlying DataMap from a RecordTemplate from a [Courier generated] object.
+   *
    * @tparam T The type of the model.
    */
   implicit def courierModels[T <: RecordTemplate]: NaptimeSerializer[T] = {
@@ -65,23 +66,29 @@ object NaptimeSerializer {
         for {
           (name, value) <- obj.value
         } {
-          value match {
-            case s: JsString =>
-              map.put(name, s.value)
-            case i: JsNumber =>
-              map.put(name, CourierFormats.bigDecimalToNumber(i.value))
-            case b: JsBoolean =>
-              map.put(name, Boolean.box(b.value))
-            case JsNull =>
-              map.put(name, Null.getInstance())
-            case a: JsArray =>
-              val list = new DataList() // Don't include initial size because Scala Lists are slow!
-              map.put(name, list)
-              serializeList(a, list)
-            case o: JsObject =>
-              val childMap = new DataMap(o.value.size) // TODO: verify Map.size is fast.
-              map.put(name, childMap)
-              serializeMap(o, childMap)
+          try {
+            value match {
+              case s: JsString =>
+                map.put(name, s.value)
+              case i: JsNumber =>
+                map.put(name, CourierFormats.bigDecimalToNumber(i.value))
+              case b: JsBoolean =>
+                map.put(name, Boolean.box(b.value))
+              case JsNull =>
+                map.put(name, Null.getInstance())
+              case a: JsArray =>
+                val list = new DataList() // Don't include initial size because Scala Lists are slow!
+                map.put(name, list)
+                serializeList(a, list)
+              case o: JsObject =>
+                val childMap = new DataMap(o.value.size) // TODO: verify Map.size is fast.
+                map.put(name, childMap)
+                serializeMap(o, childMap)
+            }
+          } catch {
+            case e: NullPointerException =>
+              throw new RuntimeException(
+                s"Null encountered when serializing field $name -> $value in object $obj", e)
           }
         }
       }
@@ -116,6 +123,7 @@ object NaptimeSerializer {
 
     /**
      * Convenience function to invert serialization.
+     *
      * @param dataMap The input dataMap to convert back.
      * @return The DataMap converted to a JsObject
      */
@@ -128,6 +136,7 @@ object NaptimeSerializer {
 
   /**
    * Serializes a [case] class that has an implicit [[OFormat]] in scope.
+   *
    * @param playJsonFormat Serializes the [case] class to Play-JSON.
    */
   implicit def playJsonFormats[T](implicit playJsonFormat: OFormat[T]): NaptimeSerializer[T] = {
