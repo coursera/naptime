@@ -114,12 +114,16 @@ object Types extends StrictLogging {
       valueType: RecordDataSchema): RecordDataSchema = {
     val errorMessageBuilder = new StringBuilder
     val recordDataSchema = new RecordDataSchema(new Name(typeName), RecordType.RECORD)
-    val fieldsMinusId = keyType.getFields().asScala.toList ++ valueType.getFields().asScala
-    val idField = new RecordDataSchema.Field(new StringDataSchema)
-    idField.setOptional(false)
-    idField.setName("id", errorMessageBuilder)
-    idField.setRecord(recordDataSchema)
-    val fields = idField :: fieldsMinusId
+    val combinedFields = keyType.getFields().asScala.toList ++ valueType.getFields().asScala
+    val fields = if (combinedFields.exists(_.getName == "id")) {
+      combinedFields // The key type had an `id` field defined as part of it.
+    } else {
+      val idField = new RecordDataSchema.Field(new StringDataSchema)
+      idField.setOptional(false)
+      idField.setName("id", errorMessageBuilder)
+      idField.setRecord(recordDataSchema)
+      idField :: combinedFields
+    }
     recordDataSchema.setFields(fields.asJava, errorMessageBuilder)
     if (errorMessageBuilder.length() > 0) {
       logger.warn(s"Error while computing asymmetric type $typeName: $errorMessageBuilder")
