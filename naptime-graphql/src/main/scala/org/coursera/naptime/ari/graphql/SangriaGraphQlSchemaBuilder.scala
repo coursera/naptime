@@ -66,6 +66,8 @@ class SangriaGraphQlSchemaBuilder(
     schemas: Map[String, RecordDataSchema])
   extends StrictLogging {
 
+  import SangriaGraphQlSchemaBuilder._
+
   /**
     * Generates a GraphQL schema for the provided set of resources to this class
     * Returns a "root" object that has one field available for each Naptime Resource provided.*
@@ -112,12 +114,12 @@ class SangriaGraphQlSchemaBuilder(
         fieldsFn = () => {
           Option(schema.getFields).map(_.asScala.map { field =>
             generateField(field, Option(schema.getNamespace).getOrElse(""))
-          }.toList).getOrElse(List.empty)
+          }.toList).getOrElse(EMPTY_FIELDS_FALLBACK)
         })
     } catch {
       case e: Throwable =>
-        logger.error(s"Could not generate object type for resource $resourceName", e)
-        ObjectType(name = "UnknownResource", fieldsFn = () => { List.empty })
+        logger.error(s"Could not generate object type for resource $resourceName")
+        ObjectType(name = "UnknownResource", fieldsFn = () => EMPTY_FIELDS_FALLBACK)
     }
   }
 
@@ -172,7 +174,7 @@ class SangriaGraphQlSchemaBuilder(
       ObjectType[SangriaGraphQlContext, DataMap](
         name = formatResourceTopLevelName(resource),
         fieldsFn = () => {
-          resource.handlers.flatMap { handler =>
+          val fields = resource.handlers.flatMap { handler =>
             val arguments = handler.parameters.map { parameter =>
               val tpe = parameter.`type`
               Argument(
@@ -248,12 +250,17 @@ class SangriaGraphQlSchemaBuilder(
               case _ => None
             }
           }.toList
+          if (fields.isEmpty) {
+            EMPTY_FIELDS_FALLBACK
+          } else {
+            fields
+          }
         })
     } catch {
       case e: Throwable =>
         ObjectType[SangriaGraphQlContext, DataMap](
           name = formatName(resourceName),
-          fields = List.empty)
+          fields = EMPTY_FIELDS_FALLBACK)
     }
   }
 
@@ -323,27 +330,34 @@ class SangriaGraphQlSchemaBuilder(
       fieldName: String):
     Context[SangriaGraphQlContext, DataMap] => Value[SangriaGraphQlContext, Any] = {
 
-    val baseResolver: (Context[SangriaGraphQlContext, DataMap]) => Any = schemaType match {
-      case stringField: StringDataSchema => context => context.value.getString(fieldName)
-      case intField: IntegerDataSchema => context => context.value.getInteger(fieldName)
-      case longField: LongDataSchema => context => context.value.getLong(fieldName)
-      case booleanField: BooleanDataSchema => context => context.value.getBoolean(fieldName)
-      case bytesField: BytesDataSchema => context => context.value.getByteString(fieldName)
-      case doubleField: DoubleDataSchema => context => context.value.getDouble(fieldName)
-      case floatField: FloatDataSchema => context => context.value.getFloat(fieldName)
-      case nullField: NullDataSchema => context => null
-      case enumField: EnumDataSchema => context => context.value.getString(fieldName)
+    schemaType match {
+      // We don't want to wrap TypeRef fields in a Value class here or it'll be double wrapped
       case typerefField: TyperefDataSchema =>
-        context => getSangriaResolverForSchema(typerefField.getDereferencedDataSchema, fieldName)
-      case unionField: UnionDataSchema => context => context.value.getDataMap(fieldName)
-      case arrayField: ArrayDataSchema => context => context.value.getDataList(fieldName)
-      case recordField: RecordDataSchema => context => context.value.getDataMap(fieldName)
+        getSangriaResolverForSchema(typerefField.getDereferencedDataSchema, fieldName)
       case _ =>
-        logger.error(s"Could not match schema type $schemaType")
-        context => null
+        val baseResolver: (Context[SangriaGraphQlContext, DataMap]) => Any = {
+          schemaType match {
+            case stringField: StringDataSchema => context => context.value.getString(fieldName)
+            case _ if fieldName == "id" => context => context.value.getString(fieldName)
+            case intField: IntegerDataSchema => context => context.value.getInteger(fieldName)
+            case longField: LongDataSchema => context => context.value.getLong(fieldName)
+            case booleanField: BooleanDataSchema => context => context.value.getBoolean(fieldName)
+            case bytesField: BytesDataSchema => context => context.value.getByteString(fieldName)
+            case doubleField: DoubleDataSchema => context => context.value.getDouble(fieldName)
+            case floatField: FloatDataSchema => context => context.value.getFloat(fieldName)
+            case nullField: NullDataSchema => context => null
+            case enumField: EnumDataSchema => context => context.value.getString(fieldName)
+            case unionField: UnionDataSchema => context => context.value.getDataMap(fieldName)
+            case arrayField: ArrayDataSchema => context => context.value.getDataList(fieldName)
+            case recordField: RecordDataSchema => context => context.value.getDataMap(fieldName)
+            case _ =>
+              logger.error(s"Could not match schema type $schemaType")
+              context => null
+          }
+        }
+        baseResolver
+          .andThen(res => Value[SangriaGraphQlContext, Any](res))
     }
-
-    baseResolver.andThen(res => Value(res))
   }
 
   /**
@@ -364,6 +378,7 @@ class SangriaGraphQlSchemaBuilder(
 
     schemaType match {
       case stringField: StringDataSchema => StringType
+      case _ if fieldName == "id" => StringType
       case intField: IntegerDataSchema => IntType
       case longField: LongDataSchema => LongType
       case booleanField: BooleanDataSchema => BooleanType
@@ -419,7 +434,14 @@ class SangriaGraphQlSchemaBuilder(
     ObjectType[SangriaGraphQlContext, DataMap](
       formatName(pegasusRecordSchema.getFullName),
       pegasusRecordSchema.getDoc,
-      fieldsFn = () => pegasusRecordSchema.getFields.asScala.map(generateField(_, namespace)).toList)
+      fieldsFn = () => {
+        val fields = pegasusRecordSchema.getFields.asScala.map(generateField(_, namespace)).toList
+        if (fields.isEmpty) {
+          EMPTY_FIELDS_FALLBACK
+        } else {
+          fields
+        }
+      })
   }
 
   /**
@@ -506,4 +528,12 @@ class SangriaGraphQlSchemaBuilder(
   def formatResourceTopLevelName(resource: Resource): String = {
     s"${formatResourceName(resource)}Resource"
   }
+}
+
+object SangriaGraphQlSchemaBuilder {
+  val EMPTY_FIELDS_FALLBACK = List(
+    Field.apply[SangriaGraphQlContext, DataMap, Any, Any](
+      "ArbitraryField",
+      StringType,
+      resolve = context => null))
 }
