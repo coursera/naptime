@@ -4,6 +4,7 @@ import com.google.inject.Injector
 import com.linkedin.data.DataList
 import org.coursera.naptime.ResourceName
 import org.coursera.naptime.ari.FetcherApi
+import org.coursera.naptime.ari.LocalSchemaProvider
 import org.coursera.naptime.ari.Request
 import org.coursera.naptime.ari.RequestField
 import org.coursera.naptime.ari.Response
@@ -91,8 +92,9 @@ class EngineImplTest extends AssertionsForJUnit with ScalaFutures with MockitoSu
     classOf[InstructorsResource].asInstanceOf[Class[instructorRouterBuilder.ResourceClass]])
 
   val injector = mock[Injector]
-  val naptimeRoutes = NaptimeRoutes(injector, Set(courseRouterBuilder, instructorRouterBuilder))
-  val engine = new EngineImpl(naptimeRoutes, fetcherApi)
+  val schemaProvider =
+    new LocalSchemaProvider(NaptimeRoutes(injector, Set(courseRouterBuilder, instructorRouterBuilder)))
+  val engine = new EngineImpl(schemaProvider, fetcherApi)
 
   @Test
   def singleResourceFetch_Courses(): Unit = {
