@@ -50,10 +50,10 @@ trait SchemaProvider {
   def resourceSchema(resourceName: ResourceName): Option[Resource]
 
   /**
-   * A mapping from type name to a record data schema.
+   * A mapping from resource name to a record data schema.
    * @return The merged type schema corresponding to the merged type name.
    */
-  def mergedType(typeName: String): Option[RecordDataSchema]
+  def mergedType(resourceName: ResourceName): Option[RecordDataSchema]
 }
 
 /**
