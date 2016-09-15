@@ -243,8 +243,13 @@ class MacroImpls(val c: blackbox.Context) {
       }
     }
 
-    private[this] def computeKeyType(keyType: c.Type): c.Tree = {
-      keyType match {
+    private[this] def computeTypes(resourceType: c.Type): c.Tree = {
+      val collectionTypeView = resourceType.baseType(COLLECTION_RESOURCE_TYPE.typeSymbol)
+      val keyType = collectionTypeView.typeArgs(1)
+      val bodyType = collectionTypeView.typeArgs(2)
+
+      // Add additional types here
+      val keySchemaOption = keyType match {
         case _ if keyType =:= typeOf[Int] =>
           q"Some(new com.linkedin.data.schema.IntegerDataSchema)"
         case _ if keyType =:= typeOf[String] =>
@@ -252,61 +257,8 @@ class MacroImpls(val c: blackbox.Context) {
         case _ if keyType =:= typeOf[Long] =>
           q"Some(new com.linkedin.data.schema.LongDataSchema)"
         case _ =>
-          // Search for an apply method, and attempt to do something with that.
-          val companion = keyType.companion
-          // Note: if the apply method is overloaded, isMethod will be false (will be OverloadedTerm instead)
-          val applyMethod = companion.member(TermName("apply"))
-          if (!(keyType <:< SCALA_RECORD_TEMPLATE)
-              && applyMethod.isMethod
-              && applyMethod.asMethod.returnType =:= keyType
-              && applyMethod.asMethod.paramLists.size == 1) {
-
-            // If there is a single-argument apply method, infer the id type from the parameter type.
-            if (applyMethod.asMethod.paramLists.head.size == 1) {
-              val idTerm = applyMethod.asMethod.paramLists.head.head.asTerm
-              assert(idTerm.isParameter, s"Id type $idTerm was not a parameter?!?!?")
-              val idType = idTerm.infoIn(keyType)
-              // TODO: preserve & serialize the "typeref" nature of the schema.
-              // Note: doing so may break other parts of the system that assume the only schemas are
-              // record data schemas.
-              computeKeyType(idType)
-            } else {
-              val params = applyMethod.asMethod.paramLists.head
-              val fields = params.map { param =>
-                q"""
-                  ${computeKeyType(param.infoIn(keyType))}.map { paramType =>
-                    val paramField = new com.linkedin.data.schema.RecordDataSchema.Field(paramType)
-                    paramField.setName(${param.name.encodedName.toString}, null)
-                    paramField.setRecord(keyRecord)
-                    paramField
-                  }
-                 """
-              }
-              val recordSchema =
-                q"""
-                  val keyRecord = new com.linkedin.data.schema.RecordDataSchema(
-                    new com.linkedin.data.schema.Name(${keyType.toString}),
-                    com.linkedin.data.schema.RecordDataSchema.RecordType.RECORD)
-                  val fields = $fields.flatten
-                  val fieldsJava = scala.collection.convert.WrapAsJava.seqAsJavaList(fields)
-                  keyRecord.setFields(fieldsJava, null)
-                  Some(keyRecord)
-                 """
-              recordSchema
-            }
-          } else {
-            getRecordSchemaForType(keyType)
-          }
+          getRecordSchemaForType(keyType)
       }
-    }
-
-    private[this] def computeTypes(resourceType: c.Type): c.Tree = {
-      val collectionTypeView = resourceType.baseType(COLLECTION_RESOURCE_TYPE.typeSymbol)
-      val keyType = collectionTypeView.typeArgs(1)
-      val bodyType = collectionTypeView.typeArgs(2)
-
-      // Add additional types here
-      val keySchemaOption = computeKeyType(keyType)
       val bodySchemaOption = getRecordSchemaForType(bodyType)
 
       q"""{

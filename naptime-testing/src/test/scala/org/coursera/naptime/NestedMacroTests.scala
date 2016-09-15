@@ -638,7 +638,7 @@ class NestedMacroTests extends AssertionsForJUnit with MockitoSugar {
   def typesTest(): Unit = {
     val types = PersonResource.routerBuilder.types
     assert(types.size === 3)
-    val resourceType = types.find(_.key == "org.coursera.naptime.PersonResource.Model").getOrElse {
+    val resourceType = types.find(_.key === "org.coursera.naptime.PersonResource.Model").getOrElse {
       assert(false, "Could not find merged type in types list.")
       ???
     }
