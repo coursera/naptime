@@ -2,7 +2,9 @@ package org.coursera.naptime.ari
 
 import com.linkedin.data.DataList
 import com.linkedin.data.DataMap
+import com.linkedin.data.schema.RecordDataSchema
 import org.coursera.naptime.ResourceName
+import org.coursera.naptime.schema.Resource
 import play.api.libs.json.JsValue
 import play.api.mvc.RequestHeader
 
@@ -32,6 +34,26 @@ trait EngineApi {
  */
 trait FetcherApi {
   def data(request: Request): Future[Response]
+}
+
+/**
+ * Provides the metadata required to power the engine.
+ *
+ * For local-only operation, a LocalSchemaProvider implements this interface. For distributed
+ * operations, a more sophisticated SchemaProvider must be implemented.
+ */
+trait SchemaProvider {
+  /**
+   * A mapping from a given resource name to the resource's schema.
+   * @return The resource's schema.
+   */
+  def resourceSchema(resourceName: ResourceName): Option[Resource]
+
+  /**
+   * A mapping from type name to a record data schema.
+   * @return The merged type schema corresponding to the merged type name.
+   */
+  def mergedType(typeName: String): Option[RecordDataSchema]
 }
 
 /**
