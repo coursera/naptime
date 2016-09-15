@@ -13,9 +13,8 @@ import org.coursera.naptime.ari.FetcherApi
 import org.coursera.naptime.ari.Request
 import org.coursera.naptime.ari.RequestField
 import org.coursera.naptime.ari.Response
+import org.coursera.naptime.ari.SchemaProvider
 import org.coursera.naptime.ari.TopLevelRequest
-import org.coursera.naptime.router2.NaptimeRoutes
-import org.coursera.naptime.schema.Resource
 import play.api.libs.json.JsString
 import play.api.mvc.RequestHeader
 
@@ -24,25 +23,14 @@ import scala.concurrent.ExecutionContext
 import scala.concurrent.Future
 
 class EngineImpl @Inject() (
-    naptimeRoutes: NaptimeRoutes,
+    schemaProvider: SchemaProvider,
     fetcher: FetcherApi)
     (implicit executionContext: ExecutionContext) extends EngineApi with StrictLogging {
 
-  private[this] val resourceSchemas: Map[ResourceName, Resource] = naptimeRoutes.schemaMap.flatMap {
-    case (_, schema) if schema.parentClass.isEmpty => // TODO: handle sub resources
-      val resourceName = ResourceName(schema.name, version = schema.version.getOrElse(0L).toInt)
-      Some(resourceName -> schema)
-    case (_, schema) =>
-      logger.warn(s"Cannot handle nested resource $schema")
-      None
-  }
-
-  private[this] val mergedTypes = naptimeRoutes.routerBuilders.flatMap(_.types.map(_.tuple))
-    .filter(_._2.isInstanceOf[RecordDataSchema])
-    .map(tuple => tuple._1 -> tuple._2.asInstanceOf[RecordDataSchema]).toMap
-
   private[this] def mergedTypeForResource(resourceName: ResourceName): Option[RecordDataSchema] = {
-    resourceSchemas.get(resourceName).flatMap(schema => mergedTypes.get(schema.mergedType))
+    schemaProvider.resourceSchema(resourceName).flatMap { resourceSchema =>
+      schemaProvider.mergedType(resourceSchema.mergedType)
+    }
   }
 
   override def execute(request: Request): Future[Response] = {
