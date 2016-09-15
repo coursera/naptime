@@ -69,27 +69,4 @@ class TypesTest extends AssertionsForJUnit {
     assert(resultingType.getField("description") != null)
     assert(resultingType.getField("description").getRecord == Course.SCHEMA)
   }
-
-  @Test
-  def idWithIdField(): Unit = {
-    val resultingType = Types.computeAsymType(
-      "org.coursera.naptime.IdWithIdTestResource.Model",
-      IdWithIdField.SCHEMA,
-      Course.SCHEMA,
-      Fields.FAKE_FIELDS)
-
-    assert(!resultingType.isErrorRecord)
-    assert(resultingType.getFields().size() == 4)
-    assert(resultingType.getField("id") != null)
-    assert(resultingType.getField("id").getRecord == IdWithIdField.SCHEMA)
-    assert(resultingType.getField("id").getType == new IntegerDataSchema)
-    assert(resultingType.getField("alias") != null)
-    assert(resultingType.getField("alias").getRecord == IdWithIdField.SCHEMA)
-    assert(resultingType.getField("alias").getType == new StringDataSchema)
-    assert(resultingType.getField("name") != null)
-    assert(resultingType.getField("name").getRecord == Course.SCHEMA)
-    assert(resultingType.getField("description") != null)
-    assert(resultingType.getField("description").getRecord == Course.SCHEMA)
-
-  }
 }
