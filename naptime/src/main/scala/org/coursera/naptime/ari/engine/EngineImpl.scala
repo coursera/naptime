@@ -33,9 +33,7 @@ class EngineImpl @Inject() (
 
   override def execute(request: Request): Future[Response] = {
     val responseFutures = request.topLevelRequests.map { topLevelRequest =>
-      val topLevelRequestWithoutResource = topLevelRequest.copy(
-        selection = topLevelRequest.selection.selections.head)
-      executeTopLevelRequest(request.requestHeader, topLevelRequestWithoutResource)
+      executeTopLevelRequest(request.requestHeader, topLevelRequest)
     }
     val futureResponses = Future.sequence(responseFutures)
     futureResponses.map { responses =>
