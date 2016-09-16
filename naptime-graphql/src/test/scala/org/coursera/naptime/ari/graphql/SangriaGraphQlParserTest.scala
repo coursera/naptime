@@ -52,24 +52,18 @@ class SangriaGraphQlParserTest extends AssertionsForJUnit {
         }
       """
     val response = SangriaGraphQlParser.parse(query, requestHeader)
-    val expectedRequest = Request(requestHeader, immutable.Seq(
-      TopLevelRequest(
-        ResourceName("courses", 1),
-        RequestField(
-          name = "CoursesV1Resource",
-          alias = None,
-          args = Set.empty,
-          selections = List.empty))))
-    assert(response.get === expectedRequest)
+    assert(response.get === Request(requestHeader, immutable.Seq.empty))
   }
 
   @Test
   def parseFields(): Unit = {
     val query =
       """
-        query EmptyQuery {
+        query MyQuery {
           CoursesV1Resource {
-            id
+            getAll {
+              id
+            }
           }
         }
       """
@@ -78,7 +72,7 @@ class SangriaGraphQlParserTest extends AssertionsForJUnit {
       TopLevelRequest(
         ResourceName("courses", 1),
         RequestField(
-          name = "CoursesV1Resource",
+          name = "getAll",
           alias = None,
           args = Set.empty,
           selections = List(
@@ -94,37 +88,10 @@ class SangriaGraphQlParserTest extends AssertionsForJUnit {
   def parseAliases(): Unit = {
     val query =
       """
-        query EmptyQuery {
+        query MyRenamedQuery {
           course: CoursesV1Resource {
-            myId: id
-          }
-        }
-      """
-    val response = SangriaGraphQlParser.parse(query, requestHeader)
-    val expectedRequest = Request(requestHeader, immutable.Seq(
-      TopLevelRequest(
-        ResourceName("courses", 1),
-        RequestField(
-          name = "CoursesV1Resource",
-          alias = Some("course"),
-          args = Set.empty,
-          selections = List(
-            RequestField(
-              name = "id",
-              alias = Some("myId"),
-              args = Set.empty,
-              selections = List.empty))))))
-    assert(response.get === expectedRequest)
-  }
-
-  @Test
-  def parseDeeplyNested(): Unit = {
-    val query =
-      """
-        query EmptyQuery {
-          course: CoursesV1Resource {
-            id {
-              slug
+            allCourses: getAll {
+              myId: id
             }
           }
         }
@@ -134,20 +101,55 @@ class SangriaGraphQlParserTest extends AssertionsForJUnit {
       TopLevelRequest(
         ResourceName("courses", 1),
         RequestField(
-          name = "CoursesV1Resource",
-          alias = Some("course"),
+          name = "getAll",
+          alias = Some("allCourses"),
           args = Set.empty,
           selections = List(
             RequestField(
               name = "id",
+              alias = Some("myId"),
+              args = Set.empty,
+              selections = List.empty))),
+        alias = Some("course"))))
+    assert(response.get === expectedRequest)
+  }
+
+  @Test
+  def parseDeeplyNested(): Unit = {
+    val query =
+      """
+        query DeeplyNestedQuery {
+          courses: CoursesV1Resource {
+            myCourses {
+              id
+              partner {
+                shortUrl: slug
+              }
+            }
+          }
+        }
+      """
+    val response = SangriaGraphQlParser.parse(query, requestHeader)
+    val expectedRequest = Request(requestHeader, immutable.Seq(
+      TopLevelRequest(
+        ResourceName("courses", 1),
+        RequestField(
+          name = "myCourses",
+          alias = None,
+          args = Set.empty,
+          selections = List(
+            RequestField(name = "id", alias = None, args = Set.empty, selections = List.empty),
+            RequestField(
+              name = "partner",
               alias = None,
               args = Set.empty,
               selections = List(
                 RequestField(
                   name = "slug",
-                  alias = None,
+                  alias = Some("shortUrl"),
                   args = Set.empty,
-                  selections = List.empty))))))))
+                  selections = List.empty))))),
+        alias = Some("courses"))))
     assert(response.get === expectedRequest)
   }
 
@@ -157,11 +159,15 @@ class SangriaGraphQlParserTest extends AssertionsForJUnit {
       """
         query EmptyQuery {
           CoursesV1Resource {
-            id
+            myCourses {
+              id
+            }
           }
           InstructorsV1Resource {
-            id
-            firstName
+            favorites {
+              id
+              firstName
+            }
           }
         }
       """
@@ -170,7 +176,7 @@ class SangriaGraphQlParserTest extends AssertionsForJUnit {
       TopLevelRequest(
         ResourceName("courses", 1),
         RequestField(
-          name = "CoursesV1Resource",
+          name = "myCourses",
           alias = None,
           args = Set.empty,
           selections = List(
@@ -182,7 +188,7 @@ class SangriaGraphQlParserTest extends AssertionsForJUnit {
       TopLevelRequest(
         ResourceName("instructors", 1),
         RequestField(
-          name = "InstructorsV1Resource",
+          name = "favorites",
           alias = None,
           args = Set.empty,
           selections = List(
@@ -204,8 +210,10 @@ class SangriaGraphQlParserTest extends AssertionsForJUnit {
     val query =
       """
         query EmptyQuery {
-          CoursesV1Resource(limit: 10) {
-            id
+          CoursesV1Resource {
+            getAll(limit: 10) {
+              id
+            }
           }
         }
       """
@@ -214,7 +222,7 @@ class SangriaGraphQlParserTest extends AssertionsForJUnit {
       TopLevelRequest(
         ResourceName("courses", 1),
         RequestField(
-          name = "CoursesV1Resource",
+          name = "getAll",
           alias = None,
           args = Set(("limit", JsNumber(10))),
           selections = List(

@@ -75,7 +75,7 @@ case class Request(
  * @param resource The name of the resource that forms the root of the request.
  * @param selection The field selection on the first resource.
  */
-case class TopLevelRequest(resource: ResourceName, selection: RequestField)
+case class TopLevelRequest(resource: ResourceName, selection: RequestField, alias: Option[String] = None)
 
 /**
  * Represents a requested field within a requested resource.
