@@ -50,10 +50,10 @@ trait SchemaProvider {
   def resourceSchema(resourceName: ResourceName): Option[Resource]
 
   /**
-   * A mapping from type name to a record data schema.
+   * A mapping from resource name to a record data schema.
    * @return The merged type schema corresponding to the merged type name.
    */
-  def mergedType(typeName: String): Option[RecordDataSchema]
+  def mergedType(resourceName: ResourceName): Option[RecordDataSchema]
 }
 
 /**
@@ -75,7 +75,7 @@ case class Request(
  * @param resource The name of the resource that forms the root of the request.
  * @param selection The field selection on the first resource.
  */
-case class TopLevelRequest(resource: ResourceName, selection: RequestField)
+case class TopLevelRequest(resource: ResourceName, selection: RequestField, alias: Option[String] = None)
 
 /**
  * Represents a requested field within a requested resource.

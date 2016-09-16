@@ -76,8 +76,10 @@ object SangriaGraphQlParser extends GraphQlParser {
         }).toList
       }
       resource <- fieldNameToNaptimeResource(field.name).toList
+      fields = parseField(field)
+      fieldWithoutResourceName <- fields.selections.headOption
     } yield {
-      TopLevelRequest(resource, parseField(field))
+      TopLevelRequest(resource, fieldWithoutResourceName, fields.alias)
     }
     Some(Request(requestHeader, topLevelRequests))
   }
