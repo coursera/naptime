@@ -28,9 +28,7 @@ class EngineImpl @Inject() (
     (implicit executionContext: ExecutionContext) extends EngineApi with StrictLogging {
 
   private[this] def mergedTypeForResource(resourceName: ResourceName): Option[RecordDataSchema] = {
-    schemaProvider.resourceSchema(resourceName).flatMap { resourceSchema =>
-      schemaProvider.mergedType(resourceSchema.mergedType)
-    }
+    schemaProvider.mergedType(resourceName)
   }
 
   override def execute(request: Request): Future[Response] = {
@@ -58,26 +56,31 @@ class EngineImpl @Inject() (
             logger.warn(s"Could not find field $nestedField on model $mergedType")
             throw new IllegalStateException("Could not find field on model")
           }
-          val relatedResource = relatedResourceForField(field, mergedType)
-          val multiGetIds = computeMultiGetIds(topLevelData, nestedField, field)
+          relatedResourceForField(field, mergedType).map { relatedResource =>
+            val multiGetIds = computeMultiGetIds(topLevelData, nestedField, field)
 
-          val relatedTopLevelRequest = TopLevelRequest(
-            resource = relatedResource,
-            selection = RequestField(
-              name = "multiGet",
-              alias = None,
-              args = Set("ids" -> JsString(multiGetIds)), // TODO: pass through original request fields for pagination
-              selections = nestedField.selections))
-          executeTopLevelRequest(requestHeader, relatedTopLevelRequest).map { response =>
-            // Exclude the top level ids in the response.
-            Response(topLevelIds = Map.empty, data = response.data)
+            val relatedTopLevelRequest = TopLevelRequest(
+              resource = relatedResource,
+              selection = RequestField(
+                name = "multiGet",
+                alias = None,
+                args = Set(
+                  "ids" ->
+                    JsString(multiGetIds)), // TODO: pass through original request fields for pagination
+                selections = nestedField.selections))
+            Some(executeTopLevelRequest(requestHeader, relatedTopLevelRequest).map { response =>
+              // Exclude the top level ids in the response.
+              Response(topLevelIds = Map.empty, data = response.data)
+            })
+          }.getOrElse {
+            None
           }
         }
-        Future.sequence(additionalResponses).map { additionalResponses =>
+        Future.sequence(additionalResponses.flatten).map { additionalResponses =>
           additionalResponses.foldLeft(topLevelResponse)(_ ++ _)
         }
       }.getOrElse {
-        logger.trace(s"No merged type found for resource ${topLevelRequest.resource}. Skipping automatic inclusions.")
+        logger.error(s"No merged type found for resource ${topLevelRequest.resource}. Skipping automatic inclusions.")
         Future.successful(topLevelResponse)
       }
     }
@@ -89,7 +92,7 @@ class EngineImpl @Inject() (
     }
   }
 
-  private[this] def relatedResourceForField(field: RecordDataSchema.Field, mergedType: RecordDataSchema): ResourceName = {
+  private[this] def relatedResourceForField(field: RecordDataSchema.Field, mergedType: RecordDataSchema): Option[ResourceName] = {
     Option(field.getProperties.get(Relations.PROPERTY_NAME)).map {
       case idString: String =>
         ResourceName.parse(idString).getOrElse {
@@ -99,10 +102,6 @@ class EngineImpl @Inject() (
       case identifier =>
         throw new IllegalStateException(s"Unexpected type for identifier '$identifier' for field '$field' " +
           s"in merged type $mergedType")
-    }.getOrElse {
-      logger.warn(s"Could not find relation property information on field $field")
-      throw new IllegalStateException(
-        s"Could not find related field information on field '${field.getName}'")
     }
   }
 

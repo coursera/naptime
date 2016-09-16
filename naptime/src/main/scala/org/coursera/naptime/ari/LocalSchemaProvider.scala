@@ -29,5 +29,9 @@ class LocalSchemaProvider @Inject() (naptimeRoutes: NaptimeRoutes) extends Schem
 
   override def resourceSchema(resourceName: ResourceName): Option[Resource] = resourceSchemas.get(resourceName)
 
-  override def mergedType(typeName: String): Option[RecordDataSchema] = mergedTypes.get(typeName)
+  override def mergedType(resourceName: ResourceName): Option[RecordDataSchema] = {
+    resourceSchema(resourceName).flatMap { schema =>
+      mergedTypes.get(schema.mergedType)
+    }
+  }
 }
