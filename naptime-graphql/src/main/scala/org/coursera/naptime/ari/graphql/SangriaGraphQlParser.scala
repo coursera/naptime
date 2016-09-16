@@ -77,7 +77,11 @@ object SangriaGraphQlParser extends GraphQlParser {
       }
       resource <- fieldNameToNaptimeResource(field.name).toList
     } yield {
-      TopLevelRequest(resource, parseField(field))
+      val fields = parseField(field)
+      val fieldWithoutResourceName = fields.selections.headOption.getOrElse {
+        throw new RuntimeException("Cannot parse subfield from top level Resource field")
+      }
+      TopLevelRequest(resource, fieldWithoutResourceName)
     }
     Some(Request(requestHeader, topLevelRequests))
   }
