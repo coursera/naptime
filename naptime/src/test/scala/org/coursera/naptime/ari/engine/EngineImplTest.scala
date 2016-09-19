@@ -10,6 +10,7 @@ import org.coursera.naptime.ari.RequestField
 import org.coursera.naptime.ari.Response
 import org.coursera.naptime.ari.TopLevelRequest
 import org.coursera.naptime.ari.graphql.models.Coordinates
+import org.coursera.naptime.ari.graphql.models.CoursePlatform
 import org.coursera.naptime.ari.graphql.models.MergedCourse
 import org.coursera.naptime.ari.graphql.models.MergedInstructor
 import org.coursera.naptime.ari.graphql.models.MergedPartner
@@ -674,7 +675,8 @@ object EngineImplTest {
     description = Some("An awesome course on machine learning."),
     instructors = List("instructor1Id"),
     partner = 123,
-    originalId = "")
+    originalId = "",
+    coursePlatform = List(CoursePlatform.NewPlatform))
   val COURSE_B = MergedCourse(
     id = "courseBId",
     name = "Probabalistic Graphical Models",
@@ -682,7 +684,8 @@ object EngineImplTest {
     description = Some("An awesome course on pgm's."),
     instructors = List("instructor2Id"),
     partner = 123,
-    originalId = "")
+    originalId = "",
+    coursePlatform = List(CoursePlatform.NewPlatform))
 
   val INSTRUCTOR_1 = MergedInstructor(
     id = "instructor1Id",

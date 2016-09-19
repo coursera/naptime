@@ -321,6 +321,7 @@ class SangriaGraphQlSchemaBuilder(
     * Provides the resolver for a schema type, which implements how to retrieve a value from the raw
     * data type. For instance, for the Integer type, it pulls an integer out of a DataMap and
     * converts the types as appropriate.
+    *
     * @param schemaType Pegasus data schema type for the field
     * @param fieldName name of the field (to pull the value out of the data map)
     * @return Sangria `Value` with the value and Sangria context on it
@@ -347,7 +348,8 @@ class SangriaGraphQlSchemaBuilder(
             case nullField: NullDataSchema => context => null
             case enumField: EnumDataSchema => context => context.value.getString(fieldName)
             case unionField: UnionDataSchema => context => context.value.getDataMap(fieldName)
-            case arrayField: ArrayDataSchema => context => context.value.getDataList(fieldName)
+            case arrayField: ArrayDataSchema => context =>
+              context.value.getDataList(fieldName).asScala
             case recordField: RecordDataSchema => context => context.value.getDataMap(fieldName)
             case _ =>
               logger.error(s"Could not match schema type $schemaType")
@@ -406,6 +408,7 @@ class SangriaGraphQlSchemaBuilder(
 
   /**
     * Builds a Sangria enum from a Pegasus enum schema
+    *
     * @param pegasusEnumSchema Pegasus representation of the enum schema
     * @return Sangria EnumType schema
     */
@@ -421,6 +424,7 @@ class SangriaGraphQlSchemaBuilder(
 
   /**
     * Builds a Sangria record from a Pegasus record schema
+    *
     * @param pegasusRecordSchema Pegasus representation of the record schema
     * @param namespace namespace for the record (potentially used for child types)
     * @return Sangria ObjectType schema
@@ -444,6 +448,7 @@ class SangriaGraphQlSchemaBuilder(
 
   /**
     * Builds a Sangria union from a Pegasus union schema
+    *
     * @param pegasusUnionSchema Pegasus representation of the union schema
     * @param fieldName field name for the union (used for creating member type names)
     * @param namespace namespace for the union (used for creating member type names)
@@ -480,6 +485,7 @@ class SangriaGraphQlSchemaBuilder(
   /**
     * Finds a resource with a given name from the provided list of resources, or throws an exception
     * if the resource cannot be found.
+    *
     * @param resourceName string name, in the format courses.v1 or CoursesV1
     * @return Resource object
     */
