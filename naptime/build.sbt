@@ -17,4 +17,6 @@ libraryDependencies ++= Seq(
   mockito
 )
 
+dependencyOverrides += playJson
+
 org.coursera.courier.sbt.CourierPlugin.courierSettings

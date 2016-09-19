@@ -636,7 +636,7 @@ class RestActionCategoryEngine2Test extends AssertionsForJUnit with ScalaFutures
       .withRelated(partnersResourceName, List(partner))
 
     val engine = RestActionCategoryEngine2.getActionCategoryEngine[String, ExpandedCourse]
-    val wireResponse = engine.mkResponse(
+    val wireResponse = engine.mkResult(
       request = FakeRequest(),
       resourceFields = coursesFields,
       requestFields = queryFields,
@@ -665,7 +665,7 @@ class RestActionCategoryEngine2Test extends AssertionsForJUnit with ScalaFutures
             "name" -> "Prof Example"))))
     assert(expected === content)
 
-    val wireResponse2 = engine.mkResponse(
+    val wireResponse2 = engine.mkResult(
       request = FakeRequest(),
       resourceFields = coursesFields,
       requestFields = queryFields,
@@ -688,7 +688,7 @@ class RestActionCategoryEngine2Test extends AssertionsForJUnit with ScalaFutures
             "name" -> "Prof Example"))))
     assert(expected2 === content2)
 
-    val wireResponse3 = engine.mkResponse(
+    val wireResponse3 = engine.mkResult(
       request = FakeRequest(),
       resourceFields = coursesFields,
       requestFields = queryFields,
@@ -707,7 +707,7 @@ class RestActionCategoryEngine2Test extends AssertionsForJUnit with ScalaFutures
       "linked" -> Json.obj())
     assert(expected3 === content3)
 
-    val wireResponse4 = engine.mkResponse(
+    val wireResponse4 = engine.mkResult(
       request = FakeRequest(),
       resourceFields = coursesFields,
       requestFields = queryFields,
@@ -761,7 +761,7 @@ class RestActionCategoryEngine2Test extends AssertionsForJUnit with ScalaFutures
               FacetFieldValue("fr", Some("French"), 0)),
             fieldCardinality = Some(23)))))
 
-    val wireResponse = engine.mkResponse(
+    val wireResponse = engine.mkResult(
       request = FakeRequest(),
       resourceFields = coursesFields,
       requestFields = QueryFields(Set("name"), Map.empty),

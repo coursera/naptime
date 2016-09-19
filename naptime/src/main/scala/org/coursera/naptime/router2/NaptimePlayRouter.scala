@@ -33,6 +33,41 @@ import play.api.routing.Router.Routes
 import scala.annotation.tailrec
 import scala.collection.immutable
 
+@Singleton
+private[naptime] case class NaptimeRoutes @Inject() (
+    injector: Injector, routerBuilders: immutable.Set[ResourceRouterBuilder]) {
+  /**
+   * Helper function to filter out those resource router builders that don't provide schemas.
+   */
+  def hasDefinedSchema(routerBuilder: ResourceRouterBuilder): Boolean = {
+    try {
+      routerBuilder.schema
+      true
+    } catch {
+      case e: scala.NotImplementedError =>
+        false
+    }
+  }
+
+  def className(routerBuilder: ResourceRouterBuilder): String = {
+    // Scala nests classes sometimes using a `$` instead of a `.`, but the JVM does not. :-)
+    routerBuilder.resourceClass().getName.replace("$", ".")
+  }
+
+  lazy val schemaMap = routerBuilders.filter(hasDefinedSchema)
+    .toList.map { routerBuilder =>
+    className(routerBuilder) -> routerBuilder.schema
+  }.toMap
+
+  // TODO(saeta): Check to ensure there are not 2 resources with the same name / version.
+  lazy val buildersToRouters = routerBuilders.map { routerBuilder =>
+    val resourceClass = routerBuilder.resourceClass()
+    routerBuilder -> routerBuilder.build(injector.getInstance(resourceClass))
+  }.toMap
+
+  lazy val routers = buildersToRouters.values.toList
+}
+
 /**
  * Handles routing for Naptime resources in an idiomatic fashion for Play projects.
  *
@@ -44,47 +79,18 @@ import scala.collection.immutable
  *
  * Requests matching the prefix for naptime resources will then be routed appropriately.
  *
- * @param injector The Injector from which to instantiate all the naptime resources.
- * @param routerBuilders The set of naptime macro resource router builders corresponding to the
- *                       collection of resources to serve. These are typically bound via Guice
- *                       multi-bindings.
+ * @param naptimeRoutes Collects the common data structures useful for request routing, including the
+ *                      router builders, as well as the routers themselves.
  * @param prefix The prefix path under which the resources should be served (in the example above:
  *               `/api`).
  */
 @Singleton
-case class NaptimePlayRouter(
-    private[naptime] val injector: Injector,
-    private[naptime] val routerBuilders: immutable.Set[ResourceRouterBuilder],
+case class NaptimePlayRouter (
+    private[naptime] val naptimeRoutes: NaptimeRoutes,
     private[naptime] val prefix: String) extends play.api.routing.Router with StrictLogging {
 
-  /**
-   * Helper function to filter out those resource router builders that don't provide schemas.
-   */
-  private[this] def hasDefinedSchema(routerBuilder: ResourceRouterBuilder): Boolean = {
-    try {
-      routerBuilder.schema
-      true
-    } catch {
-      case e: scala.NotImplementedError =>
-        false
-    }
-  }
-
-  private[this] lazy val schemaMap = routerBuilders.filter(hasDefinedSchema)
-    .toList.map { routerBuilder =>
-      // Scala nests classes sometimes using a `$` instead of a `.`, but the JVM does not. :-)
-      routerBuilder.resourceClass().getName.replace("$", ".") -> routerBuilder.schema
-    }.toMap
-
-  // TODO(saeta): Check to ensure there are not 2 resources with the same name / version.
-  private[this] lazy val routers = routerBuilders.map { routerBuilder =>
-    val resourceClass = routerBuilder.resourceClass()
-    routerBuilder.build(injector.getInstance(resourceClass))
-  }.toList
-
   @Inject
-  def this(injector: Injector, routerBuilders: immutable.Set[ResourceRouterBuilder]) =
-    this(injector, routerBuilders, "")
+  def this(naptimeRoutes: NaptimeRoutes) = this(naptimeRoutes, "")
 
   /**
    * Defer to [[handlerFor]] instead of the other way around for performance reasons.
@@ -136,14 +142,15 @@ case class NaptimePlayRouter(
       * @return (PathWithoutKeys, PathWithKeySuffix)
       */
     def computeFullPath(resourceSchema: schema.Resource): (String, String) = {
-      val previous = if (resourceSchema.parentClass.isDefined) {
+      val previous = if (resourceSchema.parentClass.isDefined &&
+          !resourceSchema.parentClass.contains("org.coursera.naptime.resources.RootResource")) {
         try {
-          computeFullPath(schemaMap(resourceSchema.parentClass.get))._2
+          computeFullPath(naptimeRoutes.schemaMap(resourceSchema.parentClass.get))._2
         } catch {
           case e: NoSuchElementException =>
             logger.error(s"Problem computing schema for resource ${resourceSchema.className}. " +
               s"Parent class ${resourceSchema.parentClass} not found in schema map keys: " +
-              s"${schemaMap.keys}", e)
+              s"${naptimeRoutes.schemaMap.keys}", e)
             prefix
         }
       } else {
@@ -164,8 +171,8 @@ case class NaptimePlayRouter(
     }
 
     for {
-      routerBuilder <- routerBuilders.toList
-      if hasDefinedSchema(routerBuilder)
+      routerBuilder <- naptimeRoutes.routerBuilders.toList
+      if naptimeRoutes.hasDefinedSchema(routerBuilder)
       (path, pathWithKey) = computeFullPath(routerBuilder.schema)
       handler <- routerBuilder.schema.handlers.sortBy(h => handlerOrder(h.kind))
     } yield {
@@ -247,7 +254,7 @@ case class NaptimePlayRouter(
         }
       }
 
-      routeRequestHelper(routers, request, path)
+      routeRequestHelper(naptimeRoutes.routers, request, path)
     } else {
       None
     }
@@ -262,8 +269,8 @@ case class NaptimePlayRouter(
    */
   @WarmUp
   private[this] def warmUp(): Unit = {
-    routers
-    schemaMap
+    naptimeRoutes.routers
+    naptimeRoutes.schemaMap
     documentation
   }
 }

@@ -1,14 +1,24 @@
 package org.coursera.naptime
 
+import com.google.inject.Guice
 import com.linkedin.data.schema.DataSchema
 import com.linkedin.data.schema.RecordDataSchema
+import org.coursera.naptime.NestedMacroCourierTests.CoursesResource
+import org.coursera.naptime.ari.Request
+import org.coursera.naptime.ari.RequestField
+import org.coursera.naptime.ari.TopLevelRequest
+import org.coursera.naptime.ari.fetcher.LocalFetcher
 import org.coursera.naptime.couriertests.ExpectedMergedCourse
 import org.coursera.naptime.model.Keyed
 import org.coursera.naptime.resources.CourierCollectionResource
+import org.coursera.naptime.router2.NaptimeRoutes
 import org.coursera.naptime.router2.Router
 import org.junit.Test
 import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.junit.AssertionsForJUnit
+import org.scalatest.mock.MockitoSugar
+import play.api.libs.json.JsString
+import play.api.test.FakeRequest
 
 /**
  * This test suite uses Courier to exercise advanced use cases for Naptime.
@@ -107,5 +117,105 @@ class NestedMacroCourierTests extends AssertionsForJUnit with ScalaFutures {
     val types = NestedMacroCourierTests.courseRouter.types
     val mergedType = types.find(_.key == "org.coursera.naptime.NestedMacroCourierTests.CoursesResource.Model").get
     assert(ExpectedMergedCourse.SCHEMA.getFields === mergedType.value.asInstanceOf[RecordDataSchema].getFields)
+  }
+
+  @Test
+  def coursesLocalFetcher_Get(): Unit = {
+    val injector = Guice.createInjector()
+    val routerBuilders = Set(NestedMacroCourierTests.courseRouter, NestedMacroCourierTests.instructorRouter)
+    val naptimeRoutes = NaptimeRoutes(injector, routerBuilders)
+    val fetcher = new LocalFetcher(naptimeRoutes)
+
+    val request = Request(
+      requestHeader = FakeRequest(),
+      topLevelRequests = List(
+        TopLevelRequest(
+          CoursesResource.ID,
+          RequestField(
+            name = "get",
+            alias = None,
+            args = Set("id" -> JsString("abc")),
+            selections = List(
+              RequestField("id", None, Set.empty, List.empty),
+              RequestField("name", None, Set.empty, List.empty))))))
+
+    val response = fetcher.data(request).futureValue
+
+    assert(1 === response.topLevelIds.size)
+    assert(1 === response.data.size)
+    assert(response.data.contains(CoursesResource.ID))
+    val coursesResponse = response.data(CoursesResource.ID)
+    assert(1 === coursesResponse.size)
+    assert(coursesResponse.contains("abc"))
+    assert("course-abc" === coursesResponse("abc").get("name"),
+      s"Data map: ${coursesResponse("abc")}")
+    // TODO: Check pagination
+  }
+
+  @Test
+  def coursesLocalFetcher_MultiGet(): Unit = {
+    val injector = Guice.createInjector()
+    val routerBuilders = Set(NestedMacroCourierTests.courseRouter, NestedMacroCourierTests.instructorRouter)
+    val naptimeRoutes = NaptimeRoutes(injector, routerBuilders)
+    val fetcher = new LocalFetcher(naptimeRoutes)
+
+    val request = Request(
+      requestHeader = FakeRequest(),
+      topLevelRequests = List(
+        TopLevelRequest(
+          CoursesResource.ID,
+          RequestField(
+            name = "multiGet",
+            alias = None,
+            args = Set("ids" -> JsString("abc,qrs")),
+            selections = List(
+              RequestField("id", None, Set.empty, List.empty),
+              RequestField("name", None, Set.empty, List.empty))))))
+
+    val response = fetcher.data(request).futureValue
+
+
+    assert(1 === response.topLevelIds.size)
+    assert(1 === response.data.size)
+    assert(response.data.contains(CoursesResource.ID))
+    val coursesResponse = response.data(CoursesResource.ID)
+    assert(2 === coursesResponse.size)
+    assert(coursesResponse.contains("abc"))
+    assert("course-abc" === coursesResponse("abc").get("name"),
+      s"Data map: ${coursesResponse("abc")}")
+    // TODO: Check pagination
+  }
+
+  @Test
+  def coursesLocalFetcher_Finder(): Unit = {
+    val injector = Guice.createInjector()
+    val routerBuilders = Set(NestedMacroCourierTests.courseRouter, NestedMacroCourierTests.instructorRouter)
+    val naptimeRoutes = NaptimeRoutes(injector, routerBuilders)
+    val fetcher = new LocalFetcher(naptimeRoutes)
+
+    val request = Request(
+      requestHeader = FakeRequest(),
+      topLevelRequests = List(
+        TopLevelRequest(
+          CoursesResource.ID,
+          RequestField(
+            name = "search",
+            alias = None,
+            args = Set("q" -> JsString("search"), "query" -> JsString("xyz")),
+            selections = List(
+              RequestField("id", None, Set.empty, List.empty),
+              RequestField("name", None, Set.empty, List.empty))))))
+
+    val response = fetcher.data(request).futureValue
+
+    assert(1 === response.topLevelIds.size)
+    assert(1 === response.data.size)
+    assert(response.data.contains(CoursesResource.ID))
+    val coursesResponse = response.data(CoursesResource.ID)
+    assert(1 === coursesResponse.size)
+    assert(coursesResponse.contains("xyz"))
+    assert("course-xyz" === coursesResponse("xyz").get("name"),
+      s"Data map: ${coursesResponse("xyz")}")
+    // TODO: Check pagination
   }
 }

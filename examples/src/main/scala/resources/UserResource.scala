@@ -6,12 +6,10 @@ import javax.inject.Singleton
 
 import org.coursera.naptime.model.KeyFormat
 import org.coursera.naptime.model.Keyed
-import org.coursera.naptime.NaptimeModule
 import org.coursera.naptime.Ok
 import org.coursera.example.User
 import org.coursera.naptime.courier.CourierFormats
 import org.coursera.naptime.resources.TopLevelCollectionResource
-import org.coursera.naptime.resources.RestActionHelpers
 import play.api.libs.json.OFormat
 
 /**
@@ -50,8 +48,7 @@ import play.api.libs.json.OFormat
 class UsersResource @Inject() (
     userStore: UserStore,
     banManager: UserBanManager)
-  extends TopLevelCollectionResource[Int, User]
-  with RestActionHelpers[Int, User] {
+  extends TopLevelCollectionResource[Int, User] {
 
   override def resourceName = "users"
   override def resourceVersion = 1  // optional; defaults to 1
@@ -61,40 +58,51 @@ class UsersResource @Inject() (
   override def keyFormat: KeyFormat[KeyType] = KeyFormat.intKeyFormat
   override implicit def resourceFormat: OFormat[User] = CourierFormats.recordTemplateFormats[User]
 
-  def get(id: Int) = Rest.get { context =>
+  def get(id: Int) = Nap.get { context =>
     OkIfPresent(id, userStore.get(id))
   }
 
-  def create() = Rest
-      .jsonBody[User]
-      .create { context =>
-        val user = context.body
-        val id = userStore.create(user)
-
-        // Could return Ok(Keyed(id, None)) if we want to return 201 Created,
-        // with an empty body. Prefer returning the updated body, however.
-        Ok(Keyed(id, Some(user)))
-      }
-}
-
-class ResourceModule extends NaptimeModule {
-  override def configure(): Unit = {
-    bindResource[UsersResource]
-    bind[UserStore].to[UserStoreImpl]
+  def multiGet(ids: Set[Int]) = Nap.multiGet { context =>
+    Ok(userStore.all()
+      .filter(user => ids.contains(user._1))
+      .map { case (id, user) => Keyed(id, user) }.toList)
   }
+
+  def getAll() = Nap.getAll { context =>
+    Ok(userStore.all().map { case (id, user) => Keyed(id, user) }.toList)
+  }
+
+  def create() = Nap
+    .jsonBody[User]
+    .create { context =>
+      val user = context.body
+      val id = userStore.create(user)
+
+      // Could return Ok(Keyed(id, None)) if we want to return 201 Created,
+      // with an empty body. Prefer returning the updated body, however.
+      Ok(Keyed(id, Some(user)))
+    }
+
+  def email(email: String) = Nap.finder { context =>
+    Ok(userStore.all()
+      .filter(_._2.email == email)
+      .map { case (id, user) => Keyed(id, user) }.toList)
+  }
+
 }
 
 
 trait UserStore {
   def get(id: Int): Option[User]
   def create(user: User): Int
+  def all(): Map[Int, User]
 }
 
+@Singleton
 class UserStoreImpl extends UserStore {
   @volatile
   var userStore = Map.empty[Int, User]
   val nextId = new AtomicInteger(0)
-
 
   def get(id: Int) = userStore.get(id)
 
@@ -104,6 +112,7 @@ class UserStoreImpl extends UserStore {
     id
   }
 
+  def all() = userStore
 
 }
 
