@@ -2,6 +2,7 @@ package org.coursera.naptime.ari
 
 import com.linkedin.data.DataList
 import com.linkedin.data.DataMap
+import com.linkedin.data.schema.DataSchema
 import com.linkedin.data.schema.RecordDataSchema
 import org.coursera.naptime.ResourceName
 import org.coursera.naptime.schema.Resource
@@ -43,17 +44,29 @@ trait FetcherApi {
  * operations, a more sophisticated SchemaProvider must be implemented.
  */
 trait SchemaProvider {
-  /**
-   * A mapping from a given resource name to the resource's schema.
-   * @return The resource's schema.
-   */
-  def resourceSchema(resourceName: ResourceName): Option[Resource]
 
   /**
    * A mapping from resource name to a record data schema.
    * @return The merged type schema corresponding to the merged type name.
    */
   def mergedType(resourceName: ResourceName): Option[RecordDataSchema]
+
+  /**
+   * The collection of all Naptime resources available.
+   */
+  def fullSchema: FullSchema
+}
+
+/**
+ * Contains the complete set of static type information to fully specify a Naptime service.
+ *
+ * @param resources The Resource schemas for all available resources.
+ * @param types All of the data types that compose the service.
+ */
+case class FullSchema(resources: Set[Resource], types: Set[DataSchema])
+
+object FullSchema {
+  val empty = FullSchema(Set.empty, Set.empty)
 }
 
 /**

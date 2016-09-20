@@ -87,7 +87,7 @@ class SangriaGraphQlSchemaBuilder(
 
     val dedupedResources = topLevelResourceObjects.groupBy(_.name).map(_._2.head).toList
     val rootObject = ObjectType[SangriaGraphQlContext, DataMap](
-      name = "Root",
+      name = "root",
       description = "Top-level accessor for Naptime resources",
       fields = dedupedResources)
     Schema(rootObject)
