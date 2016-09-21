@@ -4,10 +4,8 @@
 
 # An example controller showing a sample home page
 GET     /                           @controllers.HomeController.index
-GET     /graphql                    @controllers.GraphQlController.index
-POST    /graphql                    @controllers.GraphQlController.graphqlBody
-GET     /render-schema              @controllers.GraphQlController.renderSchema
-GET     /graphiql                   @controllers.GraphQlController.graphiql
+POST    /graphql                    @org.coursera.naptime.ari.graphql.GraphQLController.graphqlBody
+GET     /graphiql                   @controllers.HomeController.graphiql
 
 # Hook in Naptime to the URL space
 ->      /api                        org.coursera.naptime.router2.NaptimePlayRouter

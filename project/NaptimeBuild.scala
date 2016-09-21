@@ -52,7 +52,7 @@ object NaptimeBuild extends Build with NamedDependencies with PluginVersionProvi
 
   lazy val examples = configure(project)
     .in(file("examples"))
-    .dependsOn(naptime, testing)
+    .dependsOn(naptime, testing, graphql)
 
   lazy val plugin = project
     .in(file("naptime-sbt-plugin"))

@@ -27,13 +27,17 @@ import play.api.libs.json.Json
 import play.api.mvc._
 import sangria.execution.ErrorWithResolver
 import sangria.execution.Executor
+import sangria.execution.HandledException
 import sangria.execution.QueryAnalysisError
 import sangria.parser.QueryParser
 import sangria.renderer.SchemaRenderer
 import sangria.marshalling.playJson._
+import sangria.parser.SyntaxError
 
 import scala.concurrent.ExecutionContext
 import scala.concurrent.Future
+import scala.util.Failure
+import scala.util.Success
 
 
 @Singleton
@@ -43,7 +47,7 @@ class GraphQLController @Inject() (
     engine: EngineApi)
     (implicit ec: ExecutionContext)
   extends Controller
-    with StrictLogging {
+  with StrictLogging {
 
 
   def renderSchema = Action {
@@ -71,37 +75,63 @@ class GraphQLController @Inject() (
     }
   }
 
+  val exceptionHandler: Executor.ExceptionHandler = {
+    // TODO(bryan): Check superuser status here before returning message
+    case (m, e: Exception) =>
+      logger.error("Uncaught query execution error", e)
+      HandledException(e.getMessage)
+  }
+
   private def executeQuery(
       query: String,
       requestHeader: RequestHeader,
       variables: Option[JsObject],
       operation: Option[String]) = {
 
-    // TODO(bryan): Handle errors / failures properly here
-    (for {
-      request <- SangriaGraphQlParser.parse(query, requestHeader)
-      document <- QueryParser.parse(query).toOption
-    } yield {
-      val fetcherExecution: Future[Option[Response]] = if (query.contains("IntrospectionQuery")) {
-        Future.successful(None)
-      } else {
-        engine.execute(request).map(Some(_))
-      }
-      fetcherExecution.flatMap { responseOpt =>
-        val allData = responseOpt.map(
-          _.data.map { case (resourceName, response) =>
-            resourceName.identifier -> response.values.toList
-          }).getOrElse(Map.empty)
-        val context = SangriaGraphQlContext(data = allData)
-        Executor.execute(graphqlSchemaProvider.schema, document, context)
-          .map(Ok(_))
-          .recover {
-            case error: QueryAnalysisError => BadRequest(error.resolveError)
-            case error: ErrorWithResolver => InternalServerError(error.resolveError)
+    QueryParser.parse(query) match {
+      case Success(queryAst) =>
+        SangriaGraphQlParser.parse(query, requestHeader).map { request =>
+          val fetcherExecution: Future[Option[Response]] =
+            if (query.contains("IntrospectionQuery")) {
+              Future.successful(None)
+            } else {
+              engine.execute(request).map(Some(_))
+            }
+          fetcherExecution.flatMap { responseOpt =>
+            val allData = responseOpt.map(
+              _.data.map { case (resourceName, response) =>
+                resourceName.identifier -> response.values.toList
+              }).getOrElse(Map.empty)
+            val context = SangriaGraphQlContext(data = allData)
+            Executor.execute(
+              graphqlSchemaProvider.schema,
+              queryAst,
+              context,
+              exceptionHandler = exceptionHandler)
+              .map(Ok(_))
+              .recover {
+                case error: QueryAnalysisError => BadRequest(error.resolveError)
+                case error: ErrorWithResolver => InternalServerError(error.resolveError)
+              }
           }
-      }
-    }).getOrElse {
-      Future.successful(BadRequest("Invalid request"))
+        }.getOrElse {
+          Future.successful(
+            BadRequest(
+              Json.obj(
+                "syntaxError" -> "Could not parse document")))
+        }
+      case Failure(error: SyntaxError) =>
+        Future.successful(
+          BadRequest(
+            Json.obj(
+              "syntaxError" -> error.getMessage,
+              "locations" -> Json.arr(
+                Json.obj(
+                  "line" -> error.originalError.position.line,
+                  "column" -> error.originalError.position.column)))))
+
+      case Failure(error) =>
+        throw error
     }
   }
 }
