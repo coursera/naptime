@@ -21,4 +21,8 @@ class HomeController @Inject() extends Controller {
     Ok("Your new application is ready.")
   }
 
+  def graphiql = Action {
+    Ok(views.html.graphiql())
+  }
+
 }
