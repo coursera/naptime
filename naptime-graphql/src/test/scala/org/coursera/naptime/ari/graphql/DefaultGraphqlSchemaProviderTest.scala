@@ -4,6 +4,7 @@ import com.google.inject.Injector
 import com.linkedin.data.schema.DataSchema
 import com.linkedin.data.schema.RecordDataSchema
 import org.coursera.naptime.ResourceName
+import org.coursera.naptime.ari.FullSchema
 import org.coursera.naptime.ari.LocalSchemaProvider
 import org.coursera.naptime.ari.SchemaProvider
 import org.coursera.naptime.ari.engine.CoursesResource
@@ -46,8 +47,10 @@ class DefaultGraphqlSchemaProviderTest extends AssertionsForJUnit {
         underlying.mergedType(resourceName)
       }
 
-      override def fullSchema: (Set[Resource], Set[DataSchema]) = {
-        (Set.empty ++ underlying.fullSchema._1, Set.empty ++ underlying.fullSchema._2)
+      override def fullSchema: FullSchema = {
+        FullSchema(
+          Set.empty ++ underlying.fullSchema.resources,
+          Set.empty ++ underlying.fullSchema.types)
       }
     }
 
