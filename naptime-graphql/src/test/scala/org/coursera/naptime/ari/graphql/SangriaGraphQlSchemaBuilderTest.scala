@@ -24,6 +24,7 @@ import org.coursera.naptime.schema.Resource
 import org.coursera.naptime.schema.ResourceKind
 import org.junit.Test
 import org.scalatest.junit.AssertionsForJUnit
+import sangria.schema.EnumType
 import sangria.schema.ObjectType
 import sangria.schema.Schema
 import sangria.schema.UnionType
@@ -79,7 +80,7 @@ class SangriaGraphQlSchemaBuilderTest extends AssertionsForJUnit {
     val courseResourceObjectType =
       courseResourceType.asInstanceOf[ObjectType[Unit, ScalaRecordTemplate]]
     val fieldNames = courseResourceObjectType.fieldsByName.keySet
-    val expectedFieldNames = Set("name", "description", "slug", "instructors", "id", "originalId", "partner")
+    val expectedFieldNames = Set("name", "description", "slug", "instructors", "id", "originalId", "partner", "coursePlatform")
     assert(fieldNames === expectedFieldNames)
   }
 

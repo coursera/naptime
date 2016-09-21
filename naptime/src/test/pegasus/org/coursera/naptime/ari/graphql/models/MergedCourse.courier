@@ -16,4 +16,6 @@ record MergedCourse {
   partner: PartnerId
 
   originalId: union[int, string]
+
+  coursePlatform: array[enum CoursePlatform {OldPlatform NewPlatform}]
 }
