@@ -18,14 +18,13 @@ package org.coursera.naptime.ari.graphql
 
 import javax.inject.Inject
 
-import com.linkedin.data.schema.DataSchema
 import com.linkedin.data.schema.RecordDataSchema
 import com.typesafe.scalalogging.StrictLogging
 import org.coursera.naptime.ari.FullSchema
 import org.coursera.naptime.ari.SchemaProvider
-import org.coursera.naptime.schema.Resource
 import sangria.schema.ObjectType
 import sangria.schema.Schema
+import sangria.schema.SchemaValidationException
 
 import scala.util.control.NonFatal
 
@@ -79,7 +78,7 @@ class DefaultGraphqlSchemaProvider @Inject() (schemaProvider: SchemaProvider)
       cachedSchema = graphQlSchema
     } catch {
       case NonFatal(e) =>
-        logger.error(s"Could not build schema.", e)
+        logger.error(s"Could not build schema.", e.getMessage)
         fullSchema = latestSchema
         // Note: we do not update cachedSchema, but instead retain the existing schema.
     }

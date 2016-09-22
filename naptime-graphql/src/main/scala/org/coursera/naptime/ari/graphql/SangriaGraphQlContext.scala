@@ -16,6 +16,6 @@
 
 package org.coursera.naptime.ari.graphql
 
-import com.linkedin.data.DataMap
+import org.coursera.naptime.ari.Response
 
-case class SangriaGraphQlContext(data: Map[String, List[DataMap]])
+case class SangriaGraphQlContext(response: Response)

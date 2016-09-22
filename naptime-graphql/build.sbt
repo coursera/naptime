@@ -5,6 +5,7 @@ libraryDependencies ++= Seq(
   playJson,
   sangria,
   sangriaPlayJson,
+  sangriaRelay,
   scalaLogging,
   junit,
   junitInterface,

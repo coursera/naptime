@@ -66,7 +66,16 @@ class EngineImpl @Inject() (
       // If we have a schema, we can perform automatic resource inclusion.
       mergedTypeForResource(topLevelRequest.resource).map { mergedType =>
         val topLevelData = extractDataMaps(topLevelResponse, topLevelRequest)
-        val nestedLookups = topLevelRequest.selection.selections.filter(_.selections.nonEmpty)
+
+        // TODO(bryan): Pull out logic about connections in here
+        val nestedLookups = (for {
+          node <- topLevelRequest.selection.selections.find(_.name == "node")
+        } yield {
+          node.selections.filter(_.selections.nonEmpty)
+        }).getOrElse {
+          List.empty
+        }
+
         val additionalResponses = nestedLookups.map { nestedField =>
           val field = Option(mergedType.getField(nestedField.name)).getOrElse {
             logger.warn(s"Could not find field $nestedField on model $mergedType")

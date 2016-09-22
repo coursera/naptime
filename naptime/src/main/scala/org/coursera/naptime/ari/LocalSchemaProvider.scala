@@ -33,9 +33,14 @@ import org.coursera.naptime.schema.Resource
 class LocalSchemaProvider @Inject() (naptimeRoutes: NaptimeRoutes) extends SchemaProvider with StrictLogging {
 
   private[this] val resourceSchemaMap: Map[ResourceName, Resource] = naptimeRoutes.schemaMap.flatMap {
-    case (_, schema) if schema.parentClass.isEmpty => // TODO: handle sub resources
-      val resourceName = ResourceName(schema.name, version = schema.version.getOrElse(0L).toInt)
+    // TODO: handle sub resources
+    case (_, schema)
+      if schema.parentClass.isEmpty ||
+        schema.parentClass.contains("org.coursera.naptime.resources.RootResource") =>
+
+    val resourceName = ResourceName(schema.name, version = schema.version.getOrElse(0L).toInt)
       Some(resourceName -> schema)
+
     case (_, schema) =>
       logger.warn(s"Cannot handle nested resource $schema")
       None
