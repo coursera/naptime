@@ -140,6 +140,7 @@ class SangriaGraphQlSchemaBuilder(
 
   def generateObjectConnectionTypeForResource(
       resourceName: String): Option[ObjectType[SangriaGraphQlContext, Connection[DataMap]]] = {
+
     generateObjectTypeForResource(resourceName).map { resourceObjectType =>
       Connection.definition[SangriaGraphQlContext, Connection, DataMap](
         name = resourceObjectType.name,
@@ -270,8 +271,8 @@ class SangriaGraphQlSchemaBuilder(
       } yield {
         objects.collect {
           case (id, element) if topLevelIds.contains(id) => element
-        }
-      }).map(objects => Connection.connectionFromSeq(objects.toSeq, ConnectionArgs(context)))
+        }.toSeq
+      }).map(objects => Connection.connectionFromSeq(objects, ConnectionArgs(context)))
         .getOrElse(Connection.empty[DataMap])
 
       Value[SangriaGraphQlContext, Connection[DataMap]](connection)
@@ -351,9 +352,12 @@ class SangriaGraphQlSchemaBuilder(
               val resourceObjects = context.ctx.response.data.getOrElse(
                 resourceName,
                 throw new RuntimeException(s"Cannot find objects for ${relatedResourceName.toString}"))
-              val filteredObjects = resourceObjects.filter(
-                obj => context.value.getDataList(field.getName).asScala.contains(obj._1))
-              Value[SangriaGraphQlContext, Any](filteredObjects)
+              val filteredObjects = resourceObjects
+                .filter(obj => context.value.getDataList(field.getName).asScala.contains(obj._1))
+                .values
+                .toSeq
+              val connection = Connection.connectionFromSeq(filteredObjects, ConnectionArgs(context))
+              Value[SangriaGraphQlContext, Any](connection)
             })
         }.getOrElse(originalField)
 
@@ -365,14 +369,16 @@ class SangriaGraphQlSchemaBuilder(
             }
             val resourceObjects = context.ctx.response.data.getOrElse(
               resourceName,
-              throw new RuntimeException(s"Cannot find objects for ${relatedResourceName.toString}"))
+              throw new RuntimeException(s"Cannot find objects for ${relatedResourceName.toString}}"))
 
             val filteredObjects = resourceObjects
-              .find(_._1 == context.value.get(field.getName)).getOrElse {
-              throw new RuntimeException(
-                s"Cannot find ${relatedResourceName.toString} with id " +
-                  context.value.get(field.getName))
-            }
+              .find(_._1 == context.value.get(field.getName))
+              .map(_._2)
+              .getOrElse {
+                throw new RuntimeException(
+                  s"Cannot find ${relatedResourceName.toString} with id " +
+                    context.value.get(field.getName))
+              }
             Value[SangriaGraphQlContext, Any](filteredObjects)
           })
         }.getOrElse(originalField)
@@ -411,6 +417,7 @@ class SangriaGraphQlSchemaBuilder(
         getSangriaResolverForSchema(typerefField.getDereferencedDataSchema, fieldName)
       case _ =>
         val baseResolver: (Context[SangriaGraphQlContext, DataMap]) => Any = {
+
           schemaType match {
             case stringField: StringDataSchema => context => context.value.getString(fieldName)
             case intField: IntegerDataSchema => context => context.value.getInteger(fieldName)

@@ -20,7 +20,7 @@ class CoursesResource @Inject() (
   override def resourceVersion = 1
   override implicit lazy val Fields: Fields[Course] = BaseFields.withRelated(
     "instructors" -> ResourceName("instructors", 1),
-    "partners" -> ResourceName("partners", 1))
+    "partner" -> ResourceName("partners", 1))
 
   def get(id: String = "v1-123") = Nap.get { context =>
     OkIfPresent(id, courseStore.get(id))

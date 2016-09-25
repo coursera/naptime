@@ -15,13 +15,13 @@ class CourseStore {
   courseStore = courseStore + (
     "ml" -> Course(
       instructors = List("andrew-ng"),
-      partners = List("stanford"),
+      partner = "stanford",
       slug = "machine-learning",
       name = "Machine Learning",
       description = ""),
     "pgm" -> Course(
       instructors = List("barb-oakley"),
-      partners = List("ucsd"),
+      partner = "ucsd",
       slug = "learning-how-to-learn",
       name = "Learning How to Learn",
       description = ""))

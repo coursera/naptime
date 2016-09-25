@@ -34,7 +34,7 @@ class DefaultGraphqlSchemaProviderTest extends AssertionsForJUnit {
     val simpleSchema = new DefaultGraphqlSchemaProvider(simpleSchemaProvider())
 
     val nonMetadataTypes = simpleSchema.schema.allTypes.filterNot(_._1.startsWith("__"))
-    assert(nonMetadataTypes.keySet === DEFAULT_TYPES ++ Set("CoursesV1Resource", "InstructorsV1Resource"),
+    assert(nonMetadataTypes.keySet === DEFAULT_TYPES ++ COMPUTED_TYPES,
       s"${nonMetadataTypes.keySet}")
   }
 
@@ -59,7 +59,7 @@ class DefaultGraphqlSchemaProviderTest extends AssertionsForJUnit {
     val regenerating = new DefaultGraphqlSchemaProvider(regeneratingProvider)
 
     val nonMetadataTypes = regenerating.schema.allTypes.filterNot(_._1.startsWith("__"))
-    assert(nonMetadataTypes.keySet === DEFAULT_TYPES ++ Set("CoursesV1Resource", "InstructorsV1Resource"),
+    assert(nonMetadataTypes.keySet === DEFAULT_TYPES ++ COMPUTED_TYPES,
       s"${nonMetadataTypes.keySet}")
   }
 
@@ -70,6 +70,21 @@ object DefaultGraphqlSchemaProviderTest extends MockitoSugar {
   import org.coursera.naptime.ari.engine.EngineImplTest._
 
   val DEFAULT_TYPES = Set("ID", "root", "Boolean", "Long", "Float", "Int", "BigInt", "String", "BigDecimal")
+
+  val COMPUTED_TYPES = Set(
+    "CoursesV1",
+    "CoursesV1Connection",
+    "CoursesV1Edge",
+    "CoursesV1Resource",
+    "InstructorsV1",
+    "InstructorsV1Connection",
+    "InstructorsV1Edge",
+    "InstructorsV1Resource",
+    "intMember",
+    "org_coursera_naptime_ari_graphql_models_CoursePlatform",
+    "org_coursera_naptime_ari_graphql_models_originalId",
+    "PageInfo",
+    "stringMember")
 
   val extraTypes = TYPE_SCHEMAS.map { case (key, value) => Keyed(key, value) }.toList
 
