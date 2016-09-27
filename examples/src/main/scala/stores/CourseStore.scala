@@ -19,7 +19,7 @@ class CourseStore {
       slug = "machine-learning",
       name = "Machine Learning",
       description = ""),
-    "pgm" -> Course(
+    "lhtl" -> Course(
       instructors = List("barb-oakley"),
       partner = "ucsd",
       slug = "learning-how-to-learn",

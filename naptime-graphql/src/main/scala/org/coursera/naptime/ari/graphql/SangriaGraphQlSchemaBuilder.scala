@@ -230,19 +230,13 @@ class SangriaGraphQlSchemaBuilder(
     val arguments = generateHandlerArguments(handler)
     val resourceName = ResourceName(resource.name, resource.version.getOrElse(0L).toInt)
 
-    val resolver = (context: Context[SangriaGraphQlContext, DataMap]) => {
-      context.ctx.response.data.get(resourceName)
-        .flatMap { resourceSet =>
-          val idArgument = arguments.find(_.name == "id").getOrElse {
-            throw new RuntimeException("No id argument for a get")
-          }
-          resourceSet.find { resource =>
-            context.arg(idArgument) == resource._1
-          }.map(optionalElement => Value(optionalElement._2))
-        }.getOrElse {
-          throw new RuntimeException(s"Cannot find ${ResourceCompanion.versionedName(resource)}")
-        }
+    val idArgument = arguments.find(_.name == "id").getOrElse {
+      throw new RuntimeException("No id argument for a get")
     }
+
+    val idExtractor = (context: Context[SangriaGraphQlContext, DataMap]) => context.arg(idArgument)
+    val resolver = singleElementResolver(resourceName, idExtractor)
+
     generateObjectTypeForResource(resourceName.identifier).map { resourceObjectType =>
       Field.apply[SangriaGraphQlContext, DataMap, DataMap, Any](
         "get",
@@ -252,11 +246,46 @@ class SangriaGraphQlSchemaBuilder(
     }
   }
 
+  def singleElementResolver(
+      resourceName: ResourceName,
+      idExtractor: (Context[SangriaGraphQlContext, DataMap]) => Any):
+    (Context[SangriaGraphQlContext, DataMap] => Value[SangriaGraphQlContext, DataMap]) = {
+
+    (context: Context[SangriaGraphQlContext, DataMap]) => {
+      val id = idExtractor(context)
+      context.ctx.response.data.get(resourceName)
+        .flatMap { resourceSet =>
+          resourceSet.find { resource =>
+            id == resource._1
+          }.map(optionalElement => Value[SangriaGraphQlContext, DataMap](optionalElement._2))
+        }.getOrElse {
+        throw new RuntimeException(s"Cannot find ${resourceName.identifier}/$id")
+      }
+    }
+  }
+
   def generateListHandler(resource: Resource, handler: Handler) = {
     val arguments = generateHandlerArguments(handler)
     val resourceName = ResourceName(resource.name, resource.version.getOrElse(0L).toInt)
 
-    val resolver = (context: Context[SangriaGraphQlContext, DataMap]) => {
+    val fieldName = handler.kind match {
+      case HandlerKind.FINDER => handler.name
+      case HandlerKind.GET_ALL => "getAll"
+      case HandlerKind.MULTI_GET => "multiGet"
+      case _ => "error"
+    }
+
+    generateObjectConnectionTypeForResource(resourceName.identifier).map { resourceObjectConnectionType =>
+      Field.apply[SangriaGraphQlContext, DataMap, Connection[DataMap], Any](
+        fieldName,
+        resourceObjectConnectionType,
+        resolve = connectionResolver(resourceName),
+        arguments = arguments)
+    }
+  }
+
+  def connectionResolver(resourceName: ResourceName) = {
+    (context: Context[SangriaGraphQlContext, DataMap]) => {
 
       // TODO(bryan): FIX THIS!
       val selectionSet = SangriaGraphQlParser.parseField(context.astFields.head)
@@ -277,21 +306,6 @@ class SangriaGraphQlSchemaBuilder(
 
       Value[SangriaGraphQlContext, Connection[DataMap]](connection)
 
-    }
-
-    val fieldName = handler.kind match {
-      case HandlerKind.FINDER => handler.name
-      case HandlerKind.GET_ALL => "getAll"
-      case HandlerKind.MULTI_GET => "multiGet"
-      case _ => "error"
-    }
-
-    generateObjectConnectionTypeForResource(resourceName.identifier).map { resourceObjectConnectionType =>
-      Field.apply[SangriaGraphQlContext, DataMap, Connection[DataMap], Any](
-        fieldName,
-        resourceObjectConnectionType,
-        resolve = resolver,
-        arguments = arguments)
     }
   }
 
@@ -337,50 +351,48 @@ class SangriaGraphQlSchemaBuilder(
       namespace: String): Field[SangriaGraphQlContext, DataMap] = {
 
     type ResolverType = Context[SangriaGraphQlContext, DataMap] => Value[SangriaGraphQlContext, Any]
+
     val originalField = (
       getSangriaTypeForSchema(field.getType, field.getName, namespace),
       getSangriaResolverForSchema(field.getType, field.getName))
+
     val (fieldScalarType, resolver): (OutputType[Any], ResolverType) = (field.getProperties.asScala.get("related"), field.getType) match {
 
       case (Some(relatedResourceName), _: ArrayDataSchema) =>
-        generateObjectConnectionTypeForResource(relatedResourceName.toString).map { resourceObjectConnectionType =>
-          (resourceObjectConnectionType,
-            (context: Context[SangriaGraphQlContext, DataMap]) => {
-              val resourceName = ResourceName.parse(relatedResourceName.toString).getOrElse {
-                throw new RuntimeException(s"Cannot parse ${relatedResourceName.toString}")
-              }
-              val resourceObjects = context.ctx.response.data.getOrElse(
-                resourceName,
-                throw new RuntimeException(s"Cannot find objects for ${relatedResourceName.toString}"))
-              val filteredObjects = resourceObjects
-                .filter(obj => context.value.getDataList(field.getName).asScala.contains(obj._1))
-                .values
-                .toSeq
-              val connection = Connection.connectionFromSeq(filteredObjects, ConnectionArgs(context))
-              Value[SangriaGraphQlContext, Any](connection)
-            })
-        }.getOrElse(originalField)
+        (for {
+          resourceObjectConnectionType <- generateObjectConnectionTypeForResource(relatedResourceName.toString)
+          resourceName <- ResourceName.parse(relatedResourceName.toString)
+        } yield {
+          val resolver = (context: Context[SangriaGraphQlContext, DataMap]) => {
+            val connection = context.ctx.response.data.get(resourceName).map { objects =>
+              val ids = context.value.getDataList(field.getName).asScala
+              objects.collect {
+                case (id, element) if ids.contains(id) => element
+              }.toSeq
+            }
+              .map(objects => Connection.connectionFromSeq(objects, ConnectionArgs(context)))
+              .getOrElse(Connection.empty[DataMap])
+
+            Value[SangriaGraphQlContext, Any](connection)
+          }
+          (resourceObjectConnectionType, resolver)
+        }).getOrElse(originalField)
 
       case (Some(relatedResourceName), _) =>
         generateObjectTypeForResource(relatedResourceName.toString).map { resourceObjectType =>
-          (resourceObjectType, (context: Context[SangriaGraphQlContext, DataMap]) => {
-            val resourceName = ResourceName.parse(relatedResourceName.toString).getOrElse {
-              throw new RuntimeException(s"Cannot parse ${relatedResourceName.toString}")
-            }
-            val resourceObjects = context.ctx.response.data.getOrElse(
-              resourceName,
-              throw new RuntimeException(s"Cannot find objects for ${relatedResourceName.toString}}"))
 
-            val filteredObjects = resourceObjects
-              .find(_._1 == context.value.get(field.getName))
-              .map(_._2)
-              .getOrElse {
-                throw new RuntimeException(
-                  s"Cannot find ${relatedResourceName.toString} with id " +
-                    context.value.get(field.getName))
-              }
-            Value[SangriaGraphQlContext, Any](filteredObjects)
-          })
+          val idExtractor = (context: Context[SangriaGraphQlContext, DataMap]) => {
+            context.value.get(field.getName)
+          }
+
+          val resourceName = ResourceName.parse(relatedResourceName.toString).getOrElse {
+            throw new RuntimeException(s"Could not parse resource name from ${relatedResourceName.toString}")
+          }
+
+          val resolver = singleElementResolver(resourceName, idExtractor)
+            .andThen(_.asInstanceOf[Value[SangriaGraphQlContext, Any]])
+
+          (resourceObjectType, resolver)
         }.getOrElse(originalField)
 
       case (None, _) => originalField

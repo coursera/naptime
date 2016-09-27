@@ -20,7 +20,7 @@ class PartnerStore {
       name = "Stanford University",
       homepage = ""),
     "ucsd" -> Partner(
-      courses = List("learning-how-to-learn"),
+      courses = List("lhtl"),
       instructors = List("barb-oakley"),
       name = "UCSD",
       homepage = ""))
