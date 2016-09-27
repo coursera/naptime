@@ -66,33 +66,45 @@ class EngineImpl @Inject() (
       // If we have a schema, we can perform automatic resource inclusion.
       mergedTypeForResource(topLevelRequest.resource).map { mergedType =>
         val topLevelData = extractDataMaps(topLevelResponse, topLevelRequest)
-        val nestedLookups = topLevelRequest.selection.selections.filter(_.selections.nonEmpty)
-        val additionalResponses = nestedLookups.map { nestedField =>
-          val field = Option(mergedType.getField(nestedField.name)).getOrElse {
-            logger.warn(s"Could not find field $nestedField on model $mergedType")
-            throw new IllegalStateException("Could not find field on model")
-          }
-          relatedResourceForField(field, mergedType).map { relatedResource =>
-            val multiGetIds = computeMultiGetIds(topLevelData, nestedField, field)
 
-            val relatedTopLevelRequest = TopLevelRequest(
-              resource = relatedResource,
-              selection = RequestField(
-                name = "multiGet",
-                alias = None,
-                args = Set(
-                  "ids" ->
-                    JsString(multiGetIds)), // TODO: pass through original request fields for pagination
-                selections = nestedField.selections))
-            Some(executeTopLevelRequest(requestHeader, relatedTopLevelRequest).map { response =>
-              // Exclude the top level ids in the response.
-              Response(topLevelIds = Map.empty, data = response.data)
-            })
-          }.getOrElse {
-            None
+        // TODO(bryan): Pull out logic about connections in here
+        val edgeLookups = (for {
+          edges <- topLevelRequest.selection.selections.find(_.name == "edges")
+          node <- edges.selections.find(_.name == "node")
+        } yield {
+          node.selections.filter(_.selections.nonEmpty)
+        }).getOrElse {
+          List.empty
+        }
+
+        val singularLookups = topLevelRequest.selection.selections.filter { selection =>
+          selection.selections.nonEmpty && selection.name != "edges"
+        }
+
+        val nestedLookups = edgeLookups ++ singularLookups
+
+        val additionalResponses = for {
+          nestedField <- nestedLookups
+          field <- Option(mergedType.getField(nestedField.name)).toList
+          relatedResource <- relatedResourceForField(field, mergedType).toList
+        } yield {
+          val multiGetIds = computeMultiGetIds(topLevelData, nestedField, field)
+
+          val relatedTopLevelRequest = TopLevelRequest(
+            resource = relatedResource,
+            selection = RequestField(
+              name = "multiGet",
+              alias = None,
+              args = Set(
+                "ids" ->
+                  JsString(multiGetIds)), // TODO: pass through original request fields for pagination
+              selections = nestedField.selections))
+          executeTopLevelRequest(requestHeader, relatedTopLevelRequest).map { response =>
+            // Exclude the top level ids in the response.
+            Response(topLevelIds = Map.empty, data = response.data)
           }
         }
-        Future.sequence(additionalResponses.flatten).map { additionalResponses =>
+        Future.sequence(additionalResponses).map { additionalResponses =>
           additionalResponses.foldLeft(topLevelResponse)(_ ++ _)
         }
       }.getOrElse {

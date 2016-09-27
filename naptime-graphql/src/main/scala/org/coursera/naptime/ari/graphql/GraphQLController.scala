@@ -98,21 +98,22 @@ class GraphQLController @Inject() (
               engine.execute(request).map(Some(_))
             }
           fetcherExecution.flatMap { responseOpt =>
-            val allData = responseOpt.map(
-              _.data.map { case (resourceName, response) =>
-                resourceName.identifier -> response.values.toList
-              }).getOrElse(Map.empty)
-            val context = SangriaGraphQlContext(data = allData)
+            val response = responseOpt.getOrElse(Response.empty)
+            val context = SangriaGraphQlContext(response)
             Executor.execute(
               graphqlSchemaProvider.schema,
               queryAst,
               context,
               exceptionHandler = exceptionHandler)
               .map(Ok(_))
-              .recover {
-                case error: QueryAnalysisError => BadRequest(error.resolveError)
-                case error: ErrorWithResolver => InternalServerError(error.resolveError)
-              }
+
+          }.recover {
+            case error: QueryAnalysisError =>
+              BadRequest(Json.obj("error" -> error.resolveError))
+            case error: ErrorWithResolver =>
+              InternalServerError(Json.obj("error" -> error.resolveError))
+            case error: Exception =>
+              InternalServerError(Json.obj("error" -> error.getMessage))
           }
         }.getOrElse {
           Future.successful(

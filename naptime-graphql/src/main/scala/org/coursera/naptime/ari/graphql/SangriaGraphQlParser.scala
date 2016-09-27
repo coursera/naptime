@@ -84,7 +84,7 @@ object SangriaGraphQlParser extends GraphQlParser {
     Some(Request(requestHeader, topLevelRequests))
   }
 
-  private[this] def parseField(field: Field): RequestField = {
+  def parseField(field: Field): RequestField = {
     val subfields = field.selections.flatMap {
       case subfield: Field => Some(parseField(subfield))
       case _ => None

@@ -17,6 +17,9 @@ import org.coursera.naptime.ari.graphql.models.MergedPartner
 import org.coursera.naptime.model.Keyed
 import org.coursera.naptime.router2.NaptimeRoutes
 import org.coursera.naptime.router2.ResourceRouterBuilder
+import org.coursera.naptime.schema.Handler
+import org.coursera.naptime.schema.HandlerKind
+import org.coursera.naptime.schema.Parameter
 import org.coursera.naptime.schema.Resource
 import org.coursera.naptime.schema.ResourceKind
 import org.hamcrest.Matcher
@@ -30,6 +33,7 @@ import org.mockito.Mockito.when
 import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.junit.AssertionsForJUnit
 import org.scalatest.mock.MockitoSugar
+import org.scalatest.time.Span
 import play.api.libs.json.JsNumber
 import play.api.libs.json.JsString
 import play.api.test.FakeRequest
@@ -74,6 +78,8 @@ class EngineImplTest extends AssertionsForJUnit with ScalaFutures with MockitoSu
       }
     }
   }
+
+  override implicit val patienceConfig = PatienceConfig(timeout = Span.Max)
 
   val fetcherApi = mock[FetcherApi]
 
@@ -308,13 +314,17 @@ class EngineImplTest extends AssertionsForJUnit with ScalaFutures with MockitoSu
             alias = None,
             args = Set("id" -> JsString(COURSE_A.id)),
             selections = List(
-              RequestField("id", None, Set.empty, List.empty),
-              RequestField("slug", None, Set.empty, List.empty),
-              RequestField("name", None, Set.empty, List.empty),
-              RequestField("instructors", None, Set.empty, List(
-                RequestField("id", None, Set.empty, List.empty),
-                RequestField("name", None, Set.empty, List.empty),
-                RequestField("title", None, Set.empty, List.empty))))))))
+              RequestField("edges", None, Set.empty, List(
+                RequestField("node", None, Set.empty, List(
+                  RequestField("id", None, Set.empty, List.empty),
+                  RequestField("slug", None, Set.empty, List.empty),
+                  RequestField("name", None, Set.empty, List.empty),
+                  RequestField("instructors", None, Set.empty, List(
+                    RequestField("edges", None, Set.empty, List(
+                      RequestField("node", None, Set.empty, List(
+                        RequestField("id", None, Set.empty, List.empty),
+                        RequestField("name", None, Set.empty, List.empty),
+                        RequestField("title", None, Set.empty, List.empty))))))))))))))))
 
     val fetcherResponseCourse = Response(
       topLevelIds = Map(request.topLevelRequests.head -> new DataList(List(COURSE_A.id).asJava)),
@@ -326,7 +336,7 @@ class EngineImplTest extends AssertionsForJUnit with ScalaFutures with MockitoSu
         name = "multiGet",
         alias = None,
         args = Set("ids" -> JsString("instructor1Id")),
-        selections = request.topLevelRequests.head.selection.selections.drop(3).head.selections))
+        selections = request.topLevelRequests.head.selection.selections.head.selections.head.selections.drop(3).head.selections))
     val fetcherResponseInstructors = Response(
       topLevelIds = Map(expectedInstructorRequest -> new DataList(List(INSTRUCTOR_1.id).asJava)),
       data = Map(INSTRUCTORS_RESOURCE_ID -> Map(INSTRUCTOR_1.id -> INSTRUCTOR_1.data())))
@@ -374,8 +384,10 @@ class EngineImplTest extends AssertionsForJUnit with ScalaFutures with MockitoSu
           RequestField("longitude", None, Set.empty, List.empty)))))
     val instructorField =
       RequestField("instructors", None, Set.empty, List(
-        RequestField("id", None, Set.empty, List.empty),
-        RequestField("name", None, Set.empty, List.empty)))
+        RequestField("edges", None, Set.empty, List(
+          RequestField("node", None, Set.empty, List(
+            RequestField("id", None, Set.empty, List.empty),
+            RequestField("name", None, Set.empty, List.empty)))))))
     val request = Request(
       requestHeader = FakeRequest(),
       topLevelRequests = List(
@@ -386,11 +398,13 @@ class EngineImplTest extends AssertionsForJUnit with ScalaFutures with MockitoSu
             alias = None,
             args = Set("query" -> JsString("ai classes")),
             selections = List(
-              RequestField("id", None, Set.empty, List.empty),
-              RequestField("slug", None, Set.empty, List.empty),
-              RequestField("name", None, Set.empty, List.empty),
-              partnerField,
-              instructorField)))))
+              RequestField("edges", None, Set.empty, List(
+                RequestField("node", None, Set.empty, List(
+                  RequestField("id", None, Set.empty, List.empty),
+                  RequestField("slug", None, Set.empty, List.empty),
+                  RequestField("name", None, Set.empty, List.empty),
+                  partnerField,
+                  instructorField)))))))))
 
     val fetcherResponseCourse = Response(
       topLevelIds = Map(request.topLevelRequests.head -> new DataList(List(COURSE_A.id, COURSE_B.id).asJava)),
@@ -492,16 +506,18 @@ class EngineImplTest extends AssertionsForJUnit with ScalaFutures with MockitoSu
             alias = None,
             args = Set("id" -> JsString(COURSE_A.id)),
             selections = List(
-              RequestField("id", None, Set.empty, List.empty),
-              RequestField("slug", None, Set.empty, List.empty),
-              RequestField("name", None, Set.empty, List.empty),
-              RequestField("partner", None, Set.empty, List(
-                RequestField("id", None, Set.empty, List.empty),
-                RequestField("slug", None, Set.empty, List.empty),
-                RequestField("name", None, Set.empty, List.empty),
-                RequestField("geolocation", None, Set.empty, List(
-                  RequestField("latitude", None, Set.empty, List.empty),
-                  RequestField("longitude", None, Set.empty, List.empty))))))))))
+              RequestField("edges", None, Set.empty, List(
+                RequestField("node", None, Set.empty, List(
+                  RequestField("id", None, Set.empty, List.empty),
+                  RequestField("slug", None, Set.empty, List.empty),
+                  RequestField("name", None, Set.empty, List.empty),
+                  RequestField("partner", None, Set.empty, List(
+                    RequestField("id", None, Set.empty, List.empty),
+                    RequestField("slug", None, Set.empty, List.empty),
+                    RequestField("name", None, Set.empty, List.empty),
+                    RequestField("geolocation", None, Set.empty, List(
+                      RequestField("latitude", None, Set.empty, List.empty),
+                      RequestField("longitude", None, Set.empty, List.empty))))))))))))))
 
     val fetcherResponseCourse = Response(
       topLevelIds = Map(request.topLevelRequests.head -> new DataList(List(COURSE_A.id).asJava)),
@@ -513,7 +529,12 @@ class EngineImplTest extends AssertionsForJUnit with ScalaFutures with MockitoSu
         name = "multiGet",
         alias = None,
         args = Set("ids" -> JsString(s"${PARTNER_123.id}")),
-        selections = request.topLevelRequests.head.selection.selections.drop(3).head.selections))
+        selections = request.topLevelRequests
+          .head.selection.selections
+          .head.selections
+          .head.selections
+          .drop(3)
+          .head.selections))
     val fetcherResponsePartners = Response(
       topLevelIds = Map(expectedPartnersRequest -> new DataList(List(new Integer(PARTNER_123.id)).asJava)),
       data = Map(PARTNERS_RESOURCE_ID -> Map(new Integer(PARTNER_123.id) -> PARTNER_123.data())))
@@ -565,9 +586,11 @@ class EngineImplTest extends AssertionsForJUnit with ScalaFutures with MockitoSu
           RequestField("longitude", None, Set.empty, List.empty)))))
     val instructorField =
       RequestField("instructors", None, Set.empty, List(
-        RequestField("id", None, Set.empty, List.empty),
-        RequestField("name", None, Set.empty, List.empty),
-        partnerField))
+        RequestField("edges", None, Set.empty, List(
+          RequestField("node", None, Set.empty, List(
+            RequestField("id", None, Set.empty, List.empty),
+            RequestField("name", None, Set.empty, List.empty),
+            partnerField))))))
     val request = Request(
       requestHeader = FakeRequest(),
       topLevelRequests = List(
@@ -578,10 +601,12 @@ class EngineImplTest extends AssertionsForJUnit with ScalaFutures with MockitoSu
             alias = None,
             args = Set("query" -> JsString("ai classes")),
             selections = List(
-              RequestField("id", None, Set.empty, List.empty),
-              RequestField("slug", None, Set.empty, List.empty),
-              RequestField("name", None, Set.empty, List.empty),
-              instructorField)))))
+              RequestField("edges", None, Set.empty, List(
+                RequestField("node", None, Set.empty, List(
+                  RequestField("id", None, Set.empty, List.empty),
+                  RequestField("slug", None, Set.empty, List.empty),
+                  RequestField("name", None, Set.empty, List.empty),
+                  instructorField)))))))))
 
     val fetcherResponseCourse = Response(
       topLevelIds = Map(request.topLevelRequests.head -> new DataList(List(COURSE_A.id, COURSE_B.id).asJava)),
@@ -709,6 +734,18 @@ object EngineImplTest {
     slug = "x-university",
     geolocation = Coordinates(37.386824, -122.061005))
 
+  val GET_HANDLER = Handler(
+    kind = HandlerKind.GET,
+    name = "get",
+    parameters = List(Parameter(
+      name = "id",
+      `type` = "int",
+      attributes = List.empty,
+      default = None)),
+    inputBody = None,
+    customOutputBody = None,
+    attributes = List.empty)
+
   val COURSES_RESOURCE_ID = ResourceName("courses", 1)
   val COURSES_RESOURCE = Resource(
     kind = ResourceKind.COLLECTION,
@@ -718,7 +755,7 @@ object EngineImplTest {
     keyType = "string",
     valueType = "org.coursera.naptime.test.Course",
     mergedType = MergedCourse.SCHEMA.getFullName,
-    handlers = List.empty,
+    handlers = List(GET_HANDLER),
     className = "org.coursera.naptime.test.CoursesResource",
     attributes = List.empty)
 
@@ -731,7 +768,7 @@ object EngineImplTest {
     keyType = "string",
     valueType = "org.coursera.naptime.test.Instructor",
     mergedType = MergedInstructor.SCHEMA.getFullName,
-    handlers = List.empty,
+    handlers = List(GET_HANDLER),
     className = "org.coursera.naptime.test.InstructorsResource",
     attributes = List.empty)
 

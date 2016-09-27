@@ -16,10 +16,13 @@
 
 package org.coursera.naptime.ari.graphql
 
+import com.linkedin.data.DataList
+import org.coursera.naptime.ResourceName
+import org.coursera.naptime.ari.RequestField
+import org.coursera.naptime.ari.Response
+import org.coursera.naptime.ari.TopLevelRequest
 import org.coursera.naptime.ari.graphql.models.CoursePlatform
 import org.coursera.naptime.ari.graphql.models.MergedCourse
-import org.coursera.naptime.ari.graphql.models.MergedInstructor
-import org.coursera.naptime.ari.graphql.models.MergedPartner
 import org.coursera.naptime.schema.Handler
 import org.coursera.naptime.schema.HandlerKind
 import org.coursera.naptime.schema.Parameter
@@ -28,11 +31,13 @@ import org.coursera.naptime.schema.ResourceKind
 import org.junit.Test
 import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.junit.AssertionsForJUnit
+import play.api.libs.json.JsString
 import sangria.execution.Executor
 import sangria.parser.QueryParser
 import sangria.schema.Schema
 import sangria.marshalling.playJson._
 
+import scala.collection.JavaConverters._
 import scala.concurrent.ExecutionContext.Implicits.global
 
 class SangriaGraphQlSchemaExecutionTest extends AssertionsForJUnit with ScalaFutures {
@@ -81,7 +86,23 @@ class SangriaGraphQlSchemaExecutionTest extends AssertionsForJUnit with ScalaFut
       partner = 1,
       originalId = "",
       coursePlatform = List(CoursePlatform.NewPlatform))
-    val context = SangriaGraphQlContext(data = Map("courses.v1" -> List(course.data())))
+
+    val topLevelRequest = TopLevelRequest(
+      resource = ResourceName("courses", 1),
+      selection = RequestField(
+          name = "get",
+          alias = None,
+          args = Set(("id", JsString("1"))),
+          selections = List(
+            RequestField(
+              name = "coursePlatform",
+              alias = None,
+              args = Set.empty,
+              selections = List.empty))))
+    val response = Response(
+      topLevelIds = Map(topLevelRequest -> new DataList(List("1").asJava)),
+      data = Map(ResourceName("courses", 1) -> Map("1" -> course.data())))
+    val context = SangriaGraphQlContext(response)
     val execution = Executor.execute(schema, queryAst, context).futureValue
     assert(
       (execution \ "data" \ "CoursesV1Resource" \ "get" \ "coursePlatform").get.as[List[String]]
