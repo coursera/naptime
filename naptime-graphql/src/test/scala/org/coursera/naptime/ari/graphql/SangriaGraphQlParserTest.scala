@@ -332,6 +332,77 @@ class SangriaGraphQlParserTest extends AssertionsForJUnit {
   }
 
   @Test
+  def parseMissingFragment(): Unit = {
+    val query =
+      """
+        query EmptyQuery {
+          ...MissingFragment
+        }
+      """
+    val response = SangriaGraphQlParser.parse(query, requestHeader)
+    val expectedRequest = Request(requestHeader, immutable.Seq.empty)
+    assert(response.get === expectedRequest)
+  }
+
+  @Test
+  def parseMalformedQuery(): Unit = {
+    val query =
+      """
+        query EmptyQuery {
+      """
+    val response = SangriaGraphQlParser.parse(query, requestHeader)
+    val expectedRequest = Request(requestHeader, immutable.Seq.empty)
+    assert(response.get === expectedRequest)
+  }
+
+  @Test
+  def parseFragmentOnNestedResource(): Unit = {
+    val query =
+      """
+        query EmptyQuery {
+          CoursesV1Resource {
+            getAll(limit: 10) {
+              id
+              instructor {
+                ...InstructorFields
+              }
+            }
+          }
+        }
+
+        fragment InstructorFields on InstructorsV1 {
+          id
+        }
+      """
+    val response = SangriaGraphQlParser.parse(query, requestHeader)
+    val expectedRequest = Request(requestHeader, immutable.Seq(
+      TopLevelRequest(
+        ResourceName("courses", 1),
+        RequestField(
+          name = "getAll",
+          alias = None,
+          args = Set(("limit", JsNumber(10))),
+          selections = List(
+            RequestField(
+              name = "id",
+              alias = None,
+              args = Set.empty,
+              selections = List.empty),
+            RequestField(
+              name = "instructor",
+              alias = None,
+              args = Set.empty,
+              selections = List(
+                RequestField(
+                  name = "id",
+                  alias = None,
+                  args = Set.empty,
+                  selections = List.empty))))))))
+    assert(response.get === expectedRequest)
+  }
+
+
+  @Test
   def resourceNameParse(): Unit = {
     assert(SangriaGraphQlParser.fieldNameToNaptimeResource("CoursesV0Resource") ===
       Some(ResourceName("courses", 0)))
