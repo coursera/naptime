@@ -235,6 +235,103 @@ class SangriaGraphQlParserTest extends AssertionsForJUnit {
   }
 
   @Test
+  def parseFragments(): Unit = {
+    val query =
+      """
+        query EmptyQuery {
+          CoursesV1Resource {
+            ...getAllFragment
+          }
+        }
+
+        fragment getAllFragment on CoursesV1Resource {
+          getAll(limit: 10) {
+            id
+          }
+        }
+      """
+    val response = SangriaGraphQlParser.parse(query, requestHeader)
+    val expectedRequest = Request(requestHeader, immutable.Seq(
+      TopLevelRequest(
+        ResourceName("courses", 1),
+        RequestField(
+          name = "getAll",
+          alias = None,
+          args = Set(("limit", JsNumber(10))),
+          selections = List(
+            RequestField(
+              name = "id",
+              alias = None,
+              args = Set.empty,
+              selections = List.empty))))))
+    assert(response.get === expectedRequest)
+  }
+
+  @Test
+  def parseFragmentOnRoot(): Unit = {
+    val query =
+      """
+        query EmptyQuery {
+          ...CoursesV1GetAllFragment
+        }
+
+        fragment CoursesV1GetAllFragment on root {
+          CoursesV1Resource {
+            getAll(limit: 10) {
+              id
+            }
+          }
+        }
+      """
+    val response = SangriaGraphQlParser.parse(query, requestHeader)
+    val expectedRequest = Request(requestHeader, immutable.Seq(
+      TopLevelRequest(
+        ResourceName("courses", 1),
+        RequestField(
+          name = "getAll",
+          alias = None,
+          args = Set(("limit", JsNumber(10))),
+          selections = List(
+            RequestField(
+              name = "id",
+              alias = None,
+              args = Set.empty,
+              selections = List.empty))))))
+    assert(response.get === expectedRequest)
+  }
+
+  @Test
+  def parseInlineFragmentOnRoot(): Unit = {
+    val query =
+      """
+        query EmptyQuery {
+          ... on root {
+            CoursesV1Resource {
+              getAll(limit: 10) {
+                id
+              }
+            }
+          }
+        }
+      """
+    val response = SangriaGraphQlParser.parse(query, requestHeader)
+    val expectedRequest = Request(requestHeader, immutable.Seq(
+      TopLevelRequest(
+        ResourceName("courses", 1),
+        RequestField(
+          name = "getAll",
+          alias = None,
+          args = Set(("limit", JsNumber(10))),
+          selections = List(
+            RequestField(
+              name = "id",
+              alias = None,
+              args = Set.empty,
+              selections = List.empty))))))
+    assert(response.get === expectedRequest)
+  }
+
+  @Test
   def resourceNameParse(): Unit = {
     assert(SangriaGraphQlParser.fieldNameToNaptimeResource("CoursesV0Resource") ===
       Some(ResourceName("courses", 0)))

@@ -32,13 +32,18 @@ import sangria.ast.BigDecimalValue
 import sangria.ast.Field
 import sangria.ast.BigIntValue
 import sangria.ast.BooleanValue
+import sangria.ast.Document
 import sangria.ast.EnumValue
 import sangria.ast.FloatValue
+import sangria.ast.FragmentSpread
+import sangria.ast.InlineFragment
 import sangria.ast.IntValue
 import sangria.ast.ListValue
 import sangria.ast.NullValue
 import sangria.ast.ObjectField
 import sangria.ast.ObjectValue
+import sangria.ast.Selection
+import sangria.ast.SelectionContainer
 import sangria.ast.StringValue
 import sangria.ast.Value
 import sangria.ast.VariableValue
@@ -69,14 +74,9 @@ object SangriaGraphQlParser extends GraphQlParser {
       operationName = operation._1.getOrElse("")
       operationData = operation._2
       selection <- operationData.selections
-      field <- {
-        (selection match {
-          case field: Field => Some(field)
-          case _ => None
-        }).toList
-      }
+      field <- parseSelection(selection, parsedDocument)
       resource <- fieldNameToNaptimeResource(field.name).toList
-      fields = parseField(field)
+      fields = parseField(field, parsedDocument)
       fieldWithoutResourceName <- fields.selections.headOption
     } yield {
       TopLevelRequest(resource, fieldWithoutResourceName, fields.alias)
@@ -84,16 +84,32 @@ object SangriaGraphQlParser extends GraphQlParser {
     Some(Request(requestHeader, topLevelRequests))
   }
 
-  def parseField(field: Field): RequestField = {
-    val subfields = field.selections.flatMap {
-      case subfield: Field => Some(parseField(subfield))
-      case _ => None
+  private[this] def parseSelection(selection: Selection, document: Document): List[Field] = {
+    selection match {
+      case field: Field =>
+        List(field)
+      case inlineFragment: InlineFragment =>
+        inlineFragment.selections.flatMap(selection => parseSelection(selection, document))
+      case fragmentSpread: FragmentSpread =>
+        (for {
+          fragment <- document.fragments.get(fragmentSpread.name).toList
+          selection <- fragment.selections
+        } yield {
+          parseSelection(selection, document)
+        }).flatten
     }
+  }
+
+  private[this] def parseField(field: Field, document: Document): RequestField = {
+    val selectionFields = field.selections.flatMap(selection => parseSelection(selection, document))
+    val parsedFields = selectionFields.map(field => parseField(field, document))
+
     RequestField(
       field.name,
       field.alias,
       field.arguments.map(argument => (argument.name, parseValue(argument.value))).toSet,
-      subfields)
+      parsedFields)
+
   }
 
   private[this] def parseValue(sangriaValue: Value): JsValue = {
@@ -111,7 +127,6 @@ object SangriaGraphQlParser extends GraphQlParser {
       case ObjectValue(fields, _, _) => JsObject(fields.map { case ObjectField(name, value, _, _) =>
         name -> parseValue(value)
       })
-      case a: Value => JsNull
     }
   }
 
@@ -121,6 +136,7 @@ object SangriaGraphQlParser extends GraphQlParser {
     * Converts a GraphQL top-level field name to a standard Naptime [[ResourceName]].
     * For example, CoursesV1 gets parsed as ResourceName("Courses", 1).
     * Invalid field names will return a None.
+    *
     * @param fieldName field name string, in the format CoursesV1
     * @return parsed [[ResourceName]] if successful, None if unsuccessful.
     */

@@ -287,15 +287,11 @@ class SangriaGraphQlSchemaBuilder(
   def connectionResolver(resourceName: ResourceName) = {
     (context: Context[SangriaGraphQlContext, DataMap]) => {
 
-      // TODO(bryan): FIX THIS!
-      val selectionSet = SangriaGraphQlParser.parseField(context.astFields.head)
-      val topLevelRequest = TopLevelRequest(
-        resourceName,
-        selectionSet,
-        context.astFields.head.alias)
-
       val connection = (for {
-        topLevelIds <- context.ctx.response.topLevelIds.get(topLevelRequest)
+        topLevelIds <- context.ctx.response.topLevelIds.find { case (topLevelRequest, _) =>
+          topLevelRequest.resource == resourceName &&
+            topLevelRequest.alias == context.astFields.headOption.flatMap(_.alias)
+        }.map(_._2)
         objects <- context.ctx.response.data.get(resourceName)
       } yield {
         objects.collect {
@@ -641,7 +637,7 @@ object SangriaGraphQlSchemaBuilder {
     def globalIdField =
       Field(FIELD_NAME, IDType, Some(Node.GlobalIdFieldDescription),
         resolve = (ctx: Context[SangriaGraphQlContext, DataMap]) => {
-          GlobalId.toGlobalId(ctx.parentType.name, ctx.value.getString("id"))
+          GlobalId.toGlobalId(ctx.parentType.name, ctx.value.get("id").toString)
         })
   }
 
