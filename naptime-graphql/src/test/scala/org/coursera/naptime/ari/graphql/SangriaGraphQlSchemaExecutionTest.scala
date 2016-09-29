@@ -31,6 +31,7 @@ import org.coursera.naptime.schema.ResourceKind
 import org.junit.Test
 import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.junit.AssertionsForJUnit
+import play.api.libs.json.JsArray
 import play.api.libs.json.JsString
 import sangria.execution.Executor
 import sangria.parser.QueryParser
@@ -49,11 +50,17 @@ class SangriaGraphQlSchemaExecutionTest extends AssertionsForJUnit with ScalaFut
     keyType = "",
     valueType = "",
     mergedType = "org.coursera.naptime.ari.graphql.models.MergedCourse",
-    handlers = List(Handler(
-      kind = HandlerKind.GET,
-      name = "get",
-      parameters = List(Parameter(name = "id", `type` = "Integer", attributes = List.empty)),
-      attributes = List.empty)),
+    handlers = List(
+      Handler(
+        kind = HandlerKind.GET,
+        name = "get",
+        parameters = List(Parameter(name = "id", `type` = "Integer", attributes = List.empty)),
+        attributes = List.empty),
+      Handler(
+        kind = HandlerKind.MULTI_GET,
+        name = "multiGet",
+        parameters = List(Parameter(name = "ids", `type` = "List[Integer]", attributes = List.empty)),
+        attributes = List.empty)),
     className = "",
     attributes = List.empty)
 
@@ -63,6 +70,24 @@ class SangriaGraphQlSchemaExecutionTest extends AssertionsForJUnit with ScalaFut
     "org.coursera.naptime.ari.graphql.models.MergedCourse" -> MergedCourse.SCHEMA)
 
   val builder = new SangriaGraphQlSchemaBuilder(allResources, schemaTypes)
+
+  val courseOne = MergedCourse(
+    id = "1",
+    name = "Test Course",
+    slug = "test-course",
+    instructors = List.empty,
+    partner = 1,
+    originalId = "",
+    coursePlatform = List(CoursePlatform.NewPlatform))
+  val courseTwo = MergedCourse(
+    id = "2",
+    name = "Test Course 2",
+    slug = "test-course-2",
+    instructors = List.empty,
+    partner = 1,
+    originalId = "",
+    coursePlatform = List(CoursePlatform.NewPlatform))
+
 
   @Test
   def parseComplexLists(): Unit = {
@@ -78,14 +103,6 @@ class SangriaGraphQlSchemaExecutionTest extends AssertionsForJUnit with ScalaFut
       }
       """.stripMargin
     val queryAst = QueryParser.parse(query).get
-    val course = MergedCourse(
-      id = "1",
-      name = "Test Course",
-      slug = "test-course",
-      instructors = List.empty,
-      partner = 1,
-      originalId = "",
-      coursePlatform = List(CoursePlatform.NewPlatform))
 
     val topLevelRequest = TopLevelRequest(
       resource = ResourceName("courses", 1),
@@ -101,7 +118,7 @@ class SangriaGraphQlSchemaExecutionTest extends AssertionsForJUnit with ScalaFut
               selections = List.empty))))
     val response = Response(
       topLevelIds = Map(topLevelRequest -> new DataList(List("1").asJava)),
-      data = Map(ResourceName("courses", 1) -> Map("1" -> course.data())))
+      data = Map(ResourceName("courses", 1) -> Map("1" -> courseOne.data())))
     val context = SangriaGraphQlContext(response)
     val execution = Executor.execute(schema, queryAst, context).futureValue
     assert(
@@ -109,5 +126,48 @@ class SangriaGraphQlSchemaExecutionTest extends AssertionsForJUnit with ScalaFut
         === List("NewPlatform"))
   }
 
+  @Test
+  def parseAliases(): Unit = {
+    val schema = builder.generateSchema().asInstanceOf[Schema[SangriaGraphQlContext, Any]]
+    val query =
+      """
+      query {
+        courseContainer: CoursesV1Resource {
+          coursesById: multiGet(ids: ["1", "2"]) {
+            edges {
+              node {
+                coursePlatform
+              }
+            }
+          }
+        }
+      }
+      """.stripMargin
+    val queryAst = QueryParser.parse(query).get
+
+    val topLevelRequest = TopLevelRequest(
+      resource = ResourceName("courses", 1),
+      selection = RequestField(
+        name = "multiGet",
+        alias = Some("coursesById"),
+        args = Set(("ids", JsArray(List(JsString("1"), JsString("2"))))),
+        selections = List(
+          RequestField(
+            name = "coursePlatform",
+            alias = None,
+            args = Set.empty,
+            selections = List.empty))),
+      alias = Some("courseContainer"))
+    val response = Response(
+      topLevelIds = Map(topLevelRequest -> new DataList(List("1").asJava)),
+      data = Map(ResourceName("courses", 1) -> Map(
+        "1" -> courseOne.data(),
+        "2" -> courseTwo.data())))
+    val context = SangriaGraphQlContext(response)
+    val execution = Executor.execute(schema, queryAst, context).futureValue
+    assert(
+      ((execution \ "data" \ "courseContainer" \ "coursesById" \ "edges" \\ "node").head
+        \ "coursePlatform").get.as[List[String]] === List("NewPlatform"))
+  }
 
 }
