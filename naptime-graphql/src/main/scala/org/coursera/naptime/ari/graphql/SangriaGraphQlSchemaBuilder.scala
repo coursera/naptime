@@ -290,7 +290,7 @@ class SangriaGraphQlSchemaBuilder(
       val connection = (for {
         topLevelIds <- context.ctx.response.topLevelIds.find { case (topLevelRequest, _) =>
           topLevelRequest.resource == resourceName &&
-            topLevelRequest.alias == context.astFields.headOption.flatMap(_.alias)
+            topLevelRequest.selection.alias == context.astFields.headOption.flatMap(_.alias)
         }.map(_._2)
         objects <- context.ctx.response.data.get(resourceName)
       } yield {
