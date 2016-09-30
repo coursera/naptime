@@ -79,7 +79,8 @@ object SangriaGraphQlParser extends GraphQlParser {
       fields = parseField(field, parsedDocument)
       fieldWithoutResourceName <- fields.selections.headOption
     } yield {
-      TopLevelRequest(resource, fieldWithoutResourceName, fields.alias)
+      val field = withFinderArgument(fieldWithoutResourceName)
+      TopLevelRequest(resource, field, fields.alias)
     }
     Some(Request(requestHeader, topLevelRequests))
   }
@@ -129,6 +130,16 @@ object SangriaGraphQlParser extends GraphQlParser {
       })
     }
   }
+
+  private[this] def withFinderArgument(field: RequestField): RequestField = {
+    if (RESERVED_HANDLER_NAMES.contains(field.name)) {
+      field
+    } else {
+      field.copy(args = field.args + (("q", JsString(field.name))))
+    }
+  }
+
+  val RESERVED_HANDLER_NAMES = Set("get", "multiGet", "getAll")
 
   val TOP_LEVEL_RESOURCE_REGEX = "([\\w\\d]+)V(\\d)Resource".r
 

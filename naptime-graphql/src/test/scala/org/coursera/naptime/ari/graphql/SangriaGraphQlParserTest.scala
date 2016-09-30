@@ -23,6 +23,7 @@ import org.coursera.naptime.ari.TopLevelRequest
 import org.junit.Test
 import org.scalatest.junit.AssertionsForJUnit
 import play.api.libs.json.JsNumber
+import play.api.libs.json.JsString
 import play.api.test.FakeRequest
 
 import scala.collection.immutable
@@ -120,7 +121,7 @@ class SangriaGraphQlParserTest extends AssertionsForJUnit {
       """
         query DeeplyNestedQuery {
           courses: CoursesV1Resource {
-            myCourses {
+            getAll {
               id
               partner {
                 shortUrl: slug
@@ -134,7 +135,7 @@ class SangriaGraphQlParserTest extends AssertionsForJUnit {
       TopLevelRequest(
         ResourceName("courses", 1),
         RequestField(
-          name = "myCourses",
+          name = "getAll",
           alias = None,
           args = Set.empty,
           selections = List(
@@ -159,12 +160,12 @@ class SangriaGraphQlParserTest extends AssertionsForJUnit {
       """
         query EmptyQuery {
           CoursesV1Resource {
-            myCourses {
+            getAll {
               id
             }
           }
           InstructorsV1Resource {
-            favorites {
+            get {
               id
               firstName
             }
@@ -176,7 +177,7 @@ class SangriaGraphQlParserTest extends AssertionsForJUnit {
       TopLevelRequest(
         ResourceName("courses", 1),
         RequestField(
-          name = "myCourses",
+          name = "getAll",
           alias = None,
           args = Set.empty,
           selections = List(
@@ -188,7 +189,7 @@ class SangriaGraphQlParserTest extends AssertionsForJUnit {
       TopLevelRequest(
         ResourceName("instructors", 1),
         RequestField(
-          name = "favorites",
+          name = "get",
           alias = None,
           args = Set.empty,
           selections = List(
@@ -225,6 +226,37 @@ class SangriaGraphQlParserTest extends AssertionsForJUnit {
           name = "getAll",
           alias = None,
           args = Set(("limit", JsNumber(10))),
+          selections = List(
+            RequestField(
+              name = "id",
+              alias = None,
+              args = Set.empty,
+              selections = List.empty))))))
+    assert(response.get === expectedRequest)
+  }
+
+  @Test
+  def augmentFinderArguments(): Unit = {
+    val query =
+      """
+        query EmptyQuery {
+          CoursesV1Resource {
+            slug(slug: "machine-learning") {
+              id
+            }
+          }
+        }
+      """
+    val response = SangriaGraphQlParser.parse(query, requestHeader)
+    val expectedRequest = Request(requestHeader, immutable.Seq(
+      TopLevelRequest(
+        ResourceName("courses", 1),
+        RequestField(
+          name = "slug",
+          alias = None,
+          args = Set(
+            ("slug", JsString("machine-learning")),
+            ("q", JsString("slug"))),
           selections = List(
             RequestField(
               name = "id",
