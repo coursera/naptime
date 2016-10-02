@@ -79,7 +79,7 @@ object SangriaGraphQlParser extends GraphQlParser {
       fields = parseField(field, parsedDocument)
       fieldWithoutResourceName <- fields.selections.headOption
     } yield {
-      val field = withFinderArgument(fieldWithoutResourceName)
+      val field = mutateArgumentsForNaptime(fieldWithoutResourceName)
       TopLevelRequest(resource, field, fields.alias)
     }
     Some(Request(requestHeader, topLevelRequests))
@@ -131,15 +131,21 @@ object SangriaGraphQlParser extends GraphQlParser {
     }
   }
 
-  private[this] def withFinderArgument(field: RequestField): RequestField = {
-    if (RESERVED_HANDLER_NAMES.contains(field.name)) {
-      field
-    } else {
+  private[this] def mutateArgumentsForNaptime(field: RequestField): RequestField = {
+    if (field.name == GET_HANDLER_NAME) {
+      val ids = field.args.find(_._1 == "id").map(id => List(id._2)).getOrElse(List.empty)
+      field.copy(args = field.args.filterNot(_._1 == "id") + (("ids", JsArray(ids))))
+    } else if (!RESERVED_HANDLER_NAMES.contains(field.name)) {
       field.copy(args = field.args + (("q", JsString(field.name))))
+    } else {
+      field
     }
   }
 
-  val RESERVED_HANDLER_NAMES = Set("get", "multiGet", "getAll")
+  val GET_HANDLER_NAME = "get"
+  val MULTIGET_HANDLER_NAME = "multiGet"
+  val GETALL_HANDLER_NAME = "getAll"
+  val RESERVED_HANDLER_NAMES = Set(GET_HANDLER_NAME, MULTIGET_HANDLER_NAME, GETALL_HANDLER_NAME)
 
   val TOP_LEVEL_RESOURCE_REGEX = "([\\w\\d]+)V(\\d)Resource".r
 
