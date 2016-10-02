@@ -22,6 +22,7 @@ import org.coursera.naptime.ari.RequestField
 import org.coursera.naptime.ari.TopLevelRequest
 import org.junit.Test
 import org.scalatest.junit.AssertionsForJUnit
+import play.api.libs.json.JsArray
 import play.api.libs.json.JsNumber
 import play.api.libs.json.JsString
 import play.api.test.FakeRequest
@@ -165,7 +166,7 @@ class SangriaGraphQlParserTest extends AssertionsForJUnit {
             }
           }
           InstructorsV1Resource {
-            get {
+            multiGet {
               id
               firstName
             }
@@ -189,7 +190,7 @@ class SangriaGraphQlParserTest extends AssertionsForJUnit {
       TopLevelRequest(
         ResourceName("instructors", 1),
         RequestField(
-          name = "get",
+          name = "multiGet",
           alias = None,
           args = Set.empty,
           selections = List(
@@ -226,6 +227,35 @@ class SangriaGraphQlParserTest extends AssertionsForJUnit {
           name = "getAll",
           alias = None,
           args = Set(("limit", JsNumber(10))),
+          selections = List(
+            RequestField(
+              name = "id",
+              alias = None,
+              args = Set.empty,
+              selections = List.empty))))))
+    assert(response.get === expectedRequest)
+  }
+
+  @Test
+  def augmentGetArguments(): Unit = {
+    val query =
+      """
+        query EmptyQuery {
+          CoursesV1Resource {
+            get(id: "abc123") {
+              id
+            }
+          }
+        }
+      """
+    val response = SangriaGraphQlParser.parse(query, requestHeader)
+    val expectedRequest = Request(requestHeader, immutable.Seq(
+      TopLevelRequest(
+        ResourceName("courses", 1),
+        RequestField(
+          name = "get",
+          alias = None,
+          args = Set(("ids", JsArray(List(JsString("abc123"))))),
           selections = List(
             RequestField(
               name = "id",
