@@ -135,7 +135,7 @@ trait RestActionCategoryEngine2Impls {
       }.toMap
       // TODO: serialized related ones too!
       val topLevelResponseMap = Map(topLevelRequest ->
-        TopLevelResponse(topLevelDataList, ResponsePagination.empty))
+        TopLevelResponse(topLevelDataList, ok.pagination.getOrElse(ResponsePagination.empty)))
       val responseDataMap = Map(resourceName -> resourceMap)
       Future.successful(AriResponse(topLevelResponseMap, responseDataMap))
     }.getOrElse {
