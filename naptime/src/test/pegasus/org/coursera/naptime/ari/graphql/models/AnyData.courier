@@ -9,5 +9,5 @@ namespace org.coursera.naptime.ari.graphql.models
  * This will be deprecated once `AnyRecord` is available.
  */
 @passthroughExempt
-  record AnyData {
+record AnyData {
 }

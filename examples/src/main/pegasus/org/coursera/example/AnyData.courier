@@ -9,5 +9,5 @@ namespace org.coursera.example
  * This will be deprecated once `AnyRecord` is available.
  */
 @passthroughExempt
-  record AnyData {
+record AnyData {
 }
