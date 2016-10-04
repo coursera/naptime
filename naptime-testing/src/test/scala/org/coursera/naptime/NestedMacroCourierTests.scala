@@ -141,7 +141,7 @@ class NestedMacroCourierTests extends AssertionsForJUnit with ScalaFutures {
 
     val response = fetcher.data(request).futureValue
 
-    assert(1 === response.topLevelIds.size)
+    assert(1 === response.topLevelResponses.size)
     assert(1 === response.data.size)
     assert(response.data.contains(CoursesResource.ID))
     val coursesResponse = response.data(CoursesResource.ID)
@@ -175,7 +175,7 @@ class NestedMacroCourierTests extends AssertionsForJUnit with ScalaFutures {
     val response = fetcher.data(request).futureValue
 
 
-    assert(1 === response.topLevelIds.size)
+    assert(1 === response.topLevelResponses.size)
     assert(1 === response.data.size)
     assert(response.data.contains(CoursesResource.ID))
     val coursesResponse = response.data(CoursesResource.ID)
@@ -208,7 +208,7 @@ class NestedMacroCourierTests extends AssertionsForJUnit with ScalaFutures {
 
     val response = fetcher.data(request).futureValue
 
-    assert(1 === response.topLevelIds.size)
+    assert(1 === response.topLevelResponses.size)
     assert(1 === response.data.size)
     assert(response.data.contains(CoursesResource.ID))
     val coursesResponse = response.data(CoursesResource.ID)

@@ -165,6 +165,7 @@ case class ResponsePagination(
 
 object ResponsePagination {
   implicit val format = Json.format[ResponsePagination]
+  val empty = ResponsePagination(None, None, None)
 }
 
 /**

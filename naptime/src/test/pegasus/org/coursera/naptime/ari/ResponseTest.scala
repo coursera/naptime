@@ -3,6 +3,7 @@ package org.coursera.naptime.ari
 import com.linkedin.data.DataList
 import com.linkedin.data.DataMap
 import org.coursera.naptime.ResourceName
+import org.coursera.naptime.ResponsePagination
 import org.junit.Test
 import org.scalatest.junit.AssertionsForJUnit
 import play.api.libs.json.JsNumber
@@ -20,18 +21,19 @@ class ResponseTest extends AssertionsForJUnit {
       args = Set("query" -> JsString("machine learning")),
       selections = List.empty))
     val topLevelDataList = new DataList(List("abc").asJava)
+    val topLevelResponse = TopLevelResponse(topLevelDataList, ResponsePagination.empty)
     val response = Response(
-      topLevelIds = Map(topLevelRequest -> topLevelDataList),
+      topLevelResponses = Map(topLevelRequest -> topLevelResponse),
       data = Map(topLevelRequest.resource -> Map(
         "abc" -> new DataMap(Map("id" -> "abc", "slug" -> "machine-learning").asJava))))
 
     val merged = Response.empty ++ response
 
-    assert(1 === merged.topLevelIds.size)
-    assert(merged.topLevelIds.contains(topLevelRequest))
-    val topLevelResponse = merged.topLevelIds(topLevelRequest)
-    assert(1 === topLevelResponse.size())
-    assert("abc" === topLevelResponse.get(0))
+    assert(1 === merged.topLevelResponses.size)
+    assert(merged.topLevelResponses.contains(topLevelRequest))
+    val mergedTopLevelResponse = merged.topLevelResponses(topLevelRequest)
+    assert(1 === mergedTopLevelResponse.ids.size())
+    assert("abc" === mergedTopLevelResponse.ids.get(0))
 
     assert(1 === merged.data.size)
     assert(merged.data.contains(topLevelRequest.resource))
@@ -55,8 +57,10 @@ class ResponseTest extends AssertionsForJUnit {
       args = Set("query" -> JsString("machine learning")),
       selections = List.empty))
     val topLevelDataListCourses = new DataList(List("abc").asJava)
+    val topLevelResponseCourses = TopLevelResponse(topLevelDataListCourses,
+      ResponsePagination.empty)
     val responseCourses = Response(
-      topLevelIds = Map(topLevelRequestCourses -> topLevelDataListCourses),
+      topLevelResponses = Map(topLevelRequestCourses -> topLevelResponseCourses),
       data = Map(topLevelRequestCourses.resource -> Map(
         "abc" -> new DataMap(Map("id" -> "abc", "slug" -> "machine-learning").asJava))))
 
@@ -66,22 +70,24 @@ class ResponseTest extends AssertionsForJUnit {
       args = Set("id" -> JsNumber(123)),
       selections = List.empty))
     val topLevelDataListInstructors = new DataList(List(new Integer(123)).asJava)
+    val topLevelResponseInstructors = TopLevelResponse(topLevelDataListInstructors,
+      ResponsePagination.empty)
     val responseInstructors = Response(
-      topLevelIds = Map(topLevelRequestInstructors -> topLevelDataListInstructors),
+      topLevelResponses = Map(topLevelRequestInstructors -> topLevelResponseInstructors),
       data = Map(topLevelRequestInstructors.resource -> Map(
         new Integer(123) -> new DataMap(Map("id" -> new Integer(123), "name" -> "Professor X").asJava))))
 
-    val merged = Response.empty ++ responseCourses ++ responseInstructors
+    val merged: Response = Response.empty ++ responseCourses ++ responseInstructors
 
-    assert(2 === merged.topLevelIds.size)
-    assert(merged.topLevelIds.contains(topLevelRequestCourses))
-    assert(merged.topLevelIds.contains(topLevelRequestInstructors))
-    val topLevelResponseCourses = merged.topLevelIds(topLevelRequestCourses)
-    assert(1 === topLevelResponseCourses.size())
-    assert("abc" === topLevelResponseCourses.get(0))
-    val topLevelResponseInstructors = merged.topLevelIds(topLevelRequestInstructors)
-    assert(1 === topLevelResponseInstructors.size())
-    assert(new Integer(123) === topLevelResponseInstructors.get(0))
+    assert(2 === merged.topLevelResponses.size)
+    assert(merged.topLevelResponses.contains(topLevelRequestCourses))
+    assert(merged.topLevelResponses.contains(topLevelRequestInstructors))
+    val mergedTopLevelResponseCourses = merged.topLevelResponses(topLevelRequestCourses)
+    assert(1 === mergedTopLevelResponseCourses.ids.size())
+    assert("abc" === mergedTopLevelResponseCourses.ids.get(0))
+    val mergedTopLevelResponseInstructors = merged.topLevelResponses(topLevelRequestInstructors)
+    assert(1 === mergedTopLevelResponseInstructors.ids.size())
+    assert(new Integer(123) === mergedTopLevelResponseInstructors.ids.get(0))
 
     assert(2 === merged.data.size)
     assert(merged.data.contains(topLevelRequestCourses.resource))
@@ -111,8 +117,9 @@ class ResponseTest extends AssertionsForJUnit {
       args = Set("query" -> JsString("machine learning")),
       selections = List.empty))
     val topLevelDataList1 = new DataList(List("abc").asJava)
+    val topLevelResponse1 = TopLevelResponse(topLevelDataList1, ResponsePagination.empty)
     val response1 = Response(
-      topLevelIds = Map(topLevelRequest1 -> topLevelDataList1),
+      topLevelResponses = Map(topLevelRequest1 -> topLevelResponse1),
       data = Map(topLevelRequest1.resource -> Map(
         "abc" -> new DataMap(Map("id" -> "abc", "slug" -> "machine-learning").asJava))))
 
@@ -122,22 +129,23 @@ class ResponseTest extends AssertionsForJUnit {
       args = Set("id" -> JsString("xyz")),
       selections = List.empty))
     val topLevelDataList2 = new DataList(List("xyz").asJava)
+    val topLevelResponse2 = TopLevelResponse(topLevelDataList2, ResponsePagination.empty)
     val response2 = Response(
-      topLevelIds = Map(topLevelRequest2 -> topLevelDataList2),
+      topLevelResponses = Map(topLevelRequest2 -> topLevelResponse2),
       data = Map(topLevelRequest2.resource -> Map(
         "xyz" -> new DataMap(Map("id" -> "xyz", "slug" -> "pgm").asJava))))
 
-    val merged = response1 ++ response2
+    val merged: Response = response1 ++ response2
 
-    assert(2 === merged.topLevelIds.size)
-    assert(merged.topLevelIds.contains(topLevelRequest1))
-    val topLevelResponse1 = merged.topLevelIds(topLevelRequest1)
-    assert(1 === topLevelResponse1.size())
-    assert("abc" === topLevelResponse1.get(0))
-    assert(merged.topLevelIds.contains(topLevelRequest2))
-    val topLevelResponse2 = merged.topLevelIds(topLevelRequest2)
-    assert(1 === topLevelResponse2.size())
-    assert("xyz" === topLevelResponse2.get(0))
+    assert(2 === merged.topLevelResponses.size)
+    assert(merged.topLevelResponses.contains(topLevelRequest1))
+    val mergedTopLevelResponse1 = merged.topLevelResponses(topLevelRequest1)
+    assert(1 === mergedTopLevelResponse1.ids.size())
+    assert("abc" === mergedTopLevelResponse1.ids.get(0))
+    assert(merged.topLevelResponses.contains(topLevelRequest2))
+    val mergedTopLevelResponse2 = merged.topLevelResponses(topLevelRequest2)
+    assert(1 === mergedTopLevelResponse2.ids.size())
+    assert("xyz" === mergedTopLevelResponse2.ids.get(0))
 
     assert(1 === merged.data.size)
     assert(merged.data.contains(topLevelRequest1.resource))
@@ -164,8 +172,9 @@ class ResponseTest extends AssertionsForJUnit {
       args = Set("query" -> JsString("machine learning")),
       selections = List.empty))
     val topLevelDataList1 = new DataList(List("abc").asJava)
+    val topLevelResponse1 = TopLevelResponse(topLevelDataList1, ResponsePagination.empty)
     val response1 = Response(
-      topLevelIds = Map(topLevelRequest1 -> topLevelDataList1),
+      topLevelResponses = Map(topLevelRequest1 -> topLevelResponse1),
       data = Map(topLevelRequest1.resource -> Map(
         "abc" -> new DataMap(Map("id" -> "abc", "slug" -> "machine-learning").asJava))))
 
@@ -175,22 +184,23 @@ class ResponseTest extends AssertionsForJUnit {
       args = Set("id" -> JsString("abc")),
       selections = List.empty))
     val topLevelDataList2 = new DataList(List("abc").asJava)
+    val topLevelResponse2 = TopLevelResponse(topLevelDataList2, ResponsePagination.empty)
     val response2 = Response(
-      topLevelIds = Map(topLevelRequest2 -> topLevelDataList2),
+      topLevelResponses = Map(topLevelRequest2 -> topLevelResponse2),
       data = Map(topLevelRequest2.resource -> Map(
         "abc" -> new DataMap(Map("id" -> "abc", "slug" -> "machine-learning").asJava))))
 
-    val merged = response1 ++ response2
+    val merged: Response = response1 ++ response2
 
-    assert(2 === merged.topLevelIds.size)
-    assert(merged.topLevelIds.contains(topLevelRequest1))
-    val topLevelResponse1 = merged.topLevelIds(topLevelRequest1)
-    assert(1 === topLevelResponse1.size())
-    assert("abc" === topLevelResponse1.get(0))
-    assert(merged.topLevelIds.contains(topLevelRequest2))
-    val topLevelResponse2 = merged.topLevelIds(topLevelRequest2)
-    assert(1 === topLevelResponse2.size())
-    assert("abc" === topLevelResponse2.get(0))
+    assert(2 === merged.topLevelResponses.size)
+    assert(merged.topLevelResponses.contains(topLevelRequest1))
+    val mergedTopLevelResponse1 = merged.topLevelResponses(topLevelRequest1)
+    assert(1 === mergedTopLevelResponse1.ids.size())
+    assert("abc" === mergedTopLevelResponse1.ids.get(0))
+    assert(merged.topLevelResponses.contains(topLevelRequest2))
+    val mergedTopLevelResponse2 = merged.topLevelResponses(topLevelRequest2)
+    assert(1 === mergedTopLevelResponse2.ids.size())
+    assert("abc" === mergedTopLevelResponse2.ids.get(0))
 
     assert(1 === merged.data.size)
     assert(topLevelRequest1.resource === topLevelRequest2.resource)

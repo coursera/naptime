@@ -53,6 +53,7 @@ import org.coursera.common.stringkey.StringKey
 import org.coursera.naptime.ETag
 import org.coursera.naptime.ResponsePagination
 import org.coursera.naptime.ari.TopLevelRequest
+import org.coursera.naptime.ari.TopLevelResponse
 import org.coursera.naptime.ari.{Response => AriResponse}
 import org.coursera.naptime.model.KeyFormat
 import org.coursera.naptime.model.Keyed
@@ -133,9 +134,10 @@ trait RestActionCategoryEngine2Impls {
         dataMap.get("id") -> dataMap
       }.toMap
       // TODO: serialized related ones too!
-      val topLevelIdMap = Map(topLevelRequest -> topLevelDataList)
+      val topLevelResponseMap = Map(topLevelRequest ->
+        TopLevelResponse(topLevelDataList, ResponsePagination.empty))
       val responseDataMap = Map(resourceName -> resourceMap)
-      Future.successful(AriResponse(topLevelIdMap, responseDataMap))
+      Future.successful(AriResponse(topLevelResponseMap, responseDataMap))
     }.getOrElse {
       Future.failed(new IllegalArgumentException("Could not compute schema for resource value."))
     }
