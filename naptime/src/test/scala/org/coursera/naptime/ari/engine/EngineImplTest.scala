@@ -2,6 +2,8 @@ package org.coursera.naptime.ari.engine
 
 import com.google.inject.Injector
 import com.linkedin.data.DataList
+import com.linkedin.data.DataMap
+import org.coursera.courier.templates.DataTemplates.DataConversion
 import org.coursera.naptime.ResourceName
 import org.coursera.naptime.ari.FetcherApi
 import org.coursera.naptime.ari.LocalSchemaProvider
@@ -9,6 +11,7 @@ import org.coursera.naptime.ari.Request
 import org.coursera.naptime.ari.RequestField
 import org.coursera.naptime.ari.Response
 import org.coursera.naptime.ari.TopLevelRequest
+import org.coursera.naptime.ari.graphql.models.AnyData
 import org.coursera.naptime.ari.graphql.models.Coordinates
 import org.coursera.naptime.ari.graphql.models.CoursePlatform
 import org.coursera.naptime.ari.graphql.models.MergedCourse
@@ -701,7 +704,8 @@ object EngineImplTest {
     instructors = List("instructor1Id"),
     partner = 123,
     originalId = "",
-    coursePlatform = List(CoursePlatform.NewPlatform))
+    coursePlatform = List(CoursePlatform.NewPlatform),
+    arbitraryData = AnyData(new DataMap(), DataConversion.SetReadOnly))
   val COURSE_B = MergedCourse(
     id = "courseBId",
     name = "Probabalistic Graphical Models",
@@ -710,7 +714,8 @@ object EngineImplTest {
     instructors = List("instructor2Id"),
     partner = 123,
     originalId = "",
-    coursePlatform = List(CoursePlatform.NewPlatform))
+    coursePlatform = List(CoursePlatform.NewPlatform),
+    arbitraryData = AnyData(new DataMap(), DataConversion.SetReadOnly))
 
   val INSTRUCTOR_1 = MergedInstructor(
     id = "instructor1Id",

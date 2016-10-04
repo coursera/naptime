@@ -89,7 +89,8 @@ class SangriaGraphQlSchemaBuilderTest extends AssertionsForJUnit {
       "instructors",
       "originalId",
       "partner",
-      "coursePlatform")
+      "coursePlatform",
+      "arbitraryData")
     assert(fieldNames === expectedFieldNames)
   }
 

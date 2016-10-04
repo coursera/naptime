@@ -17,10 +17,14 @@
 package org.coursera.naptime.ari.graphql
 
 import com.linkedin.data.DataList
+import com.linkedin.data.DataMap
+import org.coursera.courier.templates.DataTemplates.DataConversion
 import org.coursera.naptime.ResourceName
 import org.coursera.naptime.ari.RequestField
 import org.coursera.naptime.ari.Response
 import org.coursera.naptime.ari.TopLevelRequest
+import org.coursera.naptime.ari.graphql.marshaller.NaptimeMarshaller._
+import org.coursera.naptime.ari.graphql.models.AnyData
 import org.coursera.naptime.ari.graphql.models.CoursePlatform
 import org.coursera.naptime.ari.graphql.models.MergedCourse
 import org.coursera.naptime.schema.Handler
@@ -36,7 +40,6 @@ import play.api.libs.json.JsString
 import sangria.execution.Executor
 import sangria.parser.QueryParser
 import sangria.schema.Schema
-import sangria.marshalling.playJson._
 
 import scala.collection.JavaConverters._
 import scala.concurrent.ExecutionContext.Implicits.global
@@ -78,7 +81,12 @@ class SangriaGraphQlSchemaExecutionTest extends AssertionsForJUnit with ScalaFut
     instructors = List.empty,
     partner = 1,
     originalId = "",
-    coursePlatform = List(CoursePlatform.NewPlatform))
+    coursePlatform = List(CoursePlatform.NewPlatform),
+    arbitraryData = AnyData(new DataMap(
+      Map("moduleIds" ->
+        new DataMap(Map("moduleOne" -> "abc", "moduleTwo" -> "defg").asJava))
+        .asJava),
+      DataConversion.SetReadOnly))
   val courseTwo = MergedCourse(
     id = "2",
     name = "Test Course 2",
@@ -86,7 +94,8 @@ class SangriaGraphQlSchemaExecutionTest extends AssertionsForJUnit with ScalaFut
     instructors = List.empty,
     partner = 1,
     originalId = "",
-    coursePlatform = List(CoursePlatform.NewPlatform))
+    coursePlatform = List(CoursePlatform.NewPlatform),
+    arbitraryData = AnyData(new DataMap(), DataConversion.SetReadOnly))
 
 
   @Test
@@ -168,6 +177,43 @@ class SangriaGraphQlSchemaExecutionTest extends AssertionsForJUnit with ScalaFut
     assert(
       ((execution \ "data" \ "courseContainer" \ "coursesById" \ "edges" \\ "node").head
         \ "coursePlatform").get.as[List[String]] === List("NewPlatform"))
+  }
+
+  @Test
+  def parseDataMapTypes(): Unit = {
+    val schema = builder.generateSchema().asInstanceOf[Schema[SangriaGraphQlContext, Any]]
+    val query =
+      """
+      query {
+        CoursesV1Resource {
+          get(id: "1") {
+            arbitraryData
+          }
+        }
+      }
+      """.stripMargin
+    val queryAst = QueryParser.parse(query).get
+
+    val topLevelRequest = TopLevelRequest(
+      resource = ResourceName("courses", 1),
+      selection = RequestField(
+        name = "get",
+        alias = None,
+        args = Set(("id", JsString("1"))),
+        selections = List(
+          RequestField(
+            name = "arbitraryData",
+            alias = None,
+            args = Set.empty,
+            selections = List.empty))))
+    val response = Response(
+      topLevelIds = Map(topLevelRequest -> new DataList(List("1").asJava)),
+      data = Map(ResourceName("courses", 1) -> Map("1" -> courseOne.data())))
+    val context = SangriaGraphQlContext(response)
+    val execution = Executor.execute(schema, queryAst, context).futureValue
+    assert(
+      (execution \ "data" \ "CoursesV1Resource" \ "get" \ "arbitraryData").get.as[Map[String, Map[String, String]]]
+        === Map("moduleIds" -> Map("moduleOne" -> "abc", "moduleTwo" -> "defg")))
   }
 
 }
