@@ -101,7 +101,7 @@ class EngineImpl @Inject() (
               selections = nestedField.selections))
           executeTopLevelRequest(requestHeader, relatedTopLevelRequest).map { response =>
             // Exclude the top level ids in the response.
-            Response(topLevelIds = Map.empty, data = response.data)
+            Response(topLevelResponses = Map.empty, data = response.data)
           }
         }
         Future.sequence(additionalResponses).map { additionalResponses =>

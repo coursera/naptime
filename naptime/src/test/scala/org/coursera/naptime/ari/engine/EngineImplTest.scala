@@ -5,12 +5,14 @@ import com.linkedin.data.DataList
 import com.linkedin.data.DataMap
 import org.coursera.courier.templates.DataTemplates.DataConversion
 import org.coursera.naptime.ResourceName
+import org.coursera.naptime.ResponsePagination
 import org.coursera.naptime.ari.FetcherApi
 import org.coursera.naptime.ari.LocalSchemaProvider
 import org.coursera.naptime.ari.Request
 import org.coursera.naptime.ari.RequestField
 import org.coursera.naptime.ari.Response
 import org.coursera.naptime.ari.TopLevelRequest
+import org.coursera.naptime.ari.TopLevelResponse
 import org.coursera.naptime.ari.graphql.models.AnyData
 import org.coursera.naptime.ari.graphql.models.Coordinates
 import org.coursera.naptime.ari.graphql.models.CoursePlatform
@@ -123,8 +125,9 @@ class EngineImplTest extends AssertionsForJUnit with ScalaFutures with MockitoSu
 
     val topLevelDataList = new DataList()
     topLevelDataList.add(COURSE_A.id)
+    val topLevelResponse = TopLevelResponse(topLevelDataList, ResponsePagination.empty)
     val fetcherResponse = Response(
-      topLevelIds = Map(request.topLevelRequests.head -> topLevelDataList),
+      topLevelResponses = Map(request.topLevelRequests.head -> topLevelResponse),
       data = Map(COURSES_RESOURCE_ID -> Map(
         COURSE_A.id -> COURSE_A.data())))
 
@@ -132,9 +135,9 @@ class EngineImplTest extends AssertionsForJUnit with ScalaFutures with MockitoSu
 
     val result = engine.execute(request).futureValue
 
-    assert(result.topLevelIds.contains(request.topLevelRequests.head))
-    assert(1 === result.topLevelIds(request.topLevelRequests.head).size())
-    assert(COURSE_A.id === result.topLevelIds(request.topLevelRequests.head).get(0))
+    assert(result.topLevelResponses.contains(request.topLevelRequests.head))
+    assert(1 === result.topLevelResponses(request.topLevelRequests.head).ids.size())
+    assert(COURSE_A.id === result.topLevelResponses(request.topLevelRequests.head).ids.get(0))
     assert(result.data.contains(COURSES_RESOURCE_ID))
     val coursesData = result.data(COURSES_RESOURCE_ID)
     assert(1 === coursesData.size)
@@ -162,8 +165,9 @@ class EngineImplTest extends AssertionsForJUnit with ScalaFutures with MockitoSu
 
     val topLevelDataList = new DataList()
     topLevelDataList.add(INSTRUCTOR_1.id)
+    val topLevelResponse = TopLevelResponse(topLevelDataList, ResponsePagination.empty)
     val fetcherResponse = Response(
-      topLevelIds = Map(request.topLevelRequests.head -> topLevelDataList),
+      topLevelResponses = Map(request.topLevelRequests.head -> topLevelResponse),
       data = Map(INSTRUCTORS_RESOURCE_ID -> Map(
         INSTRUCTOR_1.id -> INSTRUCTOR_1.data())))
 
@@ -171,9 +175,9 @@ class EngineImplTest extends AssertionsForJUnit with ScalaFutures with MockitoSu
 
     val result = engine.execute(request).futureValue
 
-    assert(result.topLevelIds.contains(request.topLevelRequests.head))
-    assert(1 === result.topLevelIds(request.topLevelRequests.head).size())
-    assert(INSTRUCTOR_1.id === result.topLevelIds(request.topLevelRequests.head).get(0))
+    assert(result.topLevelResponses.contains(request.topLevelRequests.head))
+    assert(1 === result.topLevelResponses(request.topLevelRequests.head).ids.size())
+    assert(INSTRUCTOR_1.id === result.topLevelResponses(request.topLevelRequests.head).ids.get(0))
     assert(result.data.contains(INSTRUCTORS_RESOURCE_ID))
     val instructorsData = result.data(INSTRUCTORS_RESOURCE_ID)
     assert(1 === instructorsData.size)
@@ -216,13 +220,15 @@ class EngineImplTest extends AssertionsForJUnit with ScalaFutures with MockitoSu
 
     val topLevelDataListCourse = new DataList(List(COURSE_A.id).asJava)
     val fetcherResponseCourse = Response(
-      topLevelIds = Map(request.topLevelRequests.head -> topLevelDataListCourse),
+      topLevelResponses = Map(request.topLevelRequests.head ->
+        TopLevelResponse(topLevelDataListCourse, ResponsePagination.empty)),
       data = Map(COURSES_RESOURCE_ID -> Map(
         COURSE_A.id -> COURSE_A.data())))
     val topLevelDataListInstructor = new DataList()
     topLevelDataListInstructor.add(INSTRUCTOR_1.id)
     val fetcherResponseInstructors = Response(
-      topLevelIds = Map(request.topLevelRequests.tail.head -> topLevelDataListInstructor),
+      topLevelResponses = Map(request.topLevelRequests.tail.head ->
+        TopLevelResponse(topLevelDataListInstructor, ResponsePagination.empty)),
       data = Map(INSTRUCTORS_RESOURCE_ID -> Map(
         INSTRUCTOR_1.id -> INSTRUCTOR_1.data())))
 
@@ -233,9 +239,9 @@ class EngineImplTest extends AssertionsForJUnit with ScalaFutures with MockitoSu
 
     val result = engine.execute(request).futureValue
 
-    assert(result.topLevelIds.contains(request.topLevelRequests.head))
-    assert(1 === result.topLevelIds(request.topLevelRequests.head).size())
-    assert(COURSE_A.id === result.topLevelIds(request.topLevelRequests.head).get(0))
+    assert(result.topLevelResponses.contains(request.topLevelRequests.head))
+    assert(1 === result.topLevelResponses(request.topLevelRequests.head).ids.size())
+    assert(COURSE_A.id === result.topLevelResponses(request.topLevelRequests.head).ids.get(0))
     assert(result.data.contains(COURSES_RESOURCE_ID))
     val coursesData = result.data(COURSES_RESOURCE_ID)
     assert(1 === coursesData.size)
@@ -245,9 +251,9 @@ class EngineImplTest extends AssertionsForJUnit with ScalaFutures with MockitoSu
     assert(COURSE_A.name === courseAResponse.getString("name"))
     assert(COURSE_A.slug === courseAResponse.getString("slug"))
 
-    assert(result.topLevelIds.contains(request.topLevelRequests.head))
-    assert(1 === result.topLevelIds(request.topLevelRequests.head).size())
-    assert(INSTRUCTOR_1.id === result.topLevelIds(request.topLevelRequests.tail.head).get(0))
+    assert(result.topLevelResponses.contains(request.topLevelRequests.head))
+    assert(1 === result.topLevelResponses(request.topLevelRequests.head).ids.size())
+    assert(INSTRUCTOR_1.id === result.topLevelResponses(request.topLevelRequests.tail.head).ids.get(0))
     assert(result.data.contains(INSTRUCTORS_RESOURCE_ID))
     val instructorsData = result.data(INSTRUCTORS_RESOURCE_ID)
     assert(1 === instructorsData.size)
@@ -279,7 +285,8 @@ class EngineImplTest extends AssertionsForJUnit with ScalaFutures with MockitoSu
 
     val topLevelDataList = new DataList(List(new Integer(PARTNER_123.id)).asJava)
     val fetcherResponse = Response(
-      topLevelIds = Map(request.topLevelRequests.head -> topLevelDataList),
+      topLevelResponses = Map(request.topLevelRequests.head ->
+        TopLevelResponse(topLevelDataList, ResponsePagination.empty)),
       data = Map(PARTNERS_RESOURCE_ID -> Map(
         new Integer(PARTNER_123.id) -> PARTNER_123.data())))
     when(fetcherApi.data(argThat(MatchesResourceType(PARTNERS_RESOURCE_ID)))).thenReturn(
@@ -287,9 +294,9 @@ class EngineImplTest extends AssertionsForJUnit with ScalaFutures with MockitoSu
 
     val result = engine.execute(request).futureValue
 
-    assert(result.topLevelIds.contains(request.topLevelRequests.head))
-    assert(1 === result.topLevelIds(request.topLevelRequests.head).size())
-    assert(PARTNER_123.id === result.topLevelIds(request.topLevelRequests.head).get(0))
+    assert(result.topLevelResponses.contains(request.topLevelRequests.head))
+    assert(1 === result.topLevelResponses(request.topLevelRequests.head).ids.size())
+    assert(PARTNER_123.id === result.topLevelResponses(request.topLevelRequests.head).ids.get(0))
     assert(result.data.contains(PARTNERS_RESOURCE_ID))
     val partnersData = result.data(PARTNERS_RESOURCE_ID)
     assert(1 === partnersData.size)
@@ -330,7 +337,8 @@ class EngineImplTest extends AssertionsForJUnit with ScalaFutures with MockitoSu
                         RequestField("title", None, Set.empty, List.empty))))))))))))))))
 
     val fetcherResponseCourse = Response(
-      topLevelIds = Map(request.topLevelRequests.head -> new DataList(List(COURSE_A.id).asJava)),
+      topLevelResponses = Map(request.topLevelRequests.head ->
+        TopLevelResponse(new DataList(List(COURSE_A.id).asJava), ResponsePagination.empty)),
       data = Map(COURSES_RESOURCE_ID -> Map(COURSE_A.id -> COURSE_A.data())))
 
     val expectedInstructorRequest = TopLevelRequest(
@@ -341,7 +349,8 @@ class EngineImplTest extends AssertionsForJUnit with ScalaFutures with MockitoSu
         args = Set("ids" -> JsString("instructor1Id")),
         selections = request.topLevelRequests.head.selection.selections.head.selections.head.selections.drop(3).head.selections))
     val fetcherResponseInstructors = Response(
-      topLevelIds = Map(expectedInstructorRequest -> new DataList(List(INSTRUCTOR_1.id).asJava)),
+      topLevelResponses = Map(expectedInstructorRequest ->
+        TopLevelResponse(new DataList(List(INSTRUCTOR_1.id).asJava), ResponsePagination.empty)),
       data = Map(INSTRUCTORS_RESOURCE_ID -> Map(INSTRUCTOR_1.id -> INSTRUCTOR_1.data())))
 
     when(fetcherApi.data(argThat(MatchesResourceType(COURSES_RESOURCE_ID)))).thenReturn(
@@ -351,10 +360,10 @@ class EngineImplTest extends AssertionsForJUnit with ScalaFutures with MockitoSu
 
     val result = engine.execute(request).futureValue
 
-    assert(1 === result.topLevelIds.size, s"Result: $result")
-    assert(result.topLevelIds.contains(request.topLevelRequests.head))
-    assert(1 === result.topLevelIds(request.topLevelRequests.head).size())
-    assert(COURSE_A.id === result.topLevelIds(request.topLevelRequests.head).get(0))
+    assert(1 === result.topLevelResponses.size, s"Result: $result")
+    assert(result.topLevelResponses.contains(request.topLevelRequests.head))
+    assert(1 === result.topLevelResponses(request.topLevelRequests.head).ids.size())
+    assert(COURSE_A.id === result.topLevelResponses(request.topLevelRequests.head).ids.get(0))
 
     assert(result.data.contains(COURSES_RESOURCE_ID))
     val coursesData = result.data(COURSES_RESOURCE_ID)
@@ -410,7 +419,10 @@ class EngineImplTest extends AssertionsForJUnit with ScalaFutures with MockitoSu
                   instructorField)))))))))
 
     val fetcherResponseCourse = Response(
-      topLevelIds = Map(request.topLevelRequests.head -> new DataList(List(COURSE_A.id, COURSE_B.id).asJava)),
+      topLevelResponses = Map(request.topLevelRequests.head ->
+        TopLevelResponse(
+          new DataList(List(COURSE_A.id, COURSE_B.id).asJava),
+          ResponsePagination.empty)),
       data = Map(COURSES_RESOURCE_ID -> Map(COURSE_A.id -> COURSE_A.data(), COURSE_B.id -> COURSE_B.data())))
 
     val expectedInstructorRequest = TopLevelRequest(
@@ -421,7 +433,10 @@ class EngineImplTest extends AssertionsForJUnit with ScalaFutures with MockitoSu
         args = Set("ids" -> JsString(s"${INSTRUCTOR_1.id},${INSTRUCTOR_2.id}")),
         selections = instructorField.selections))
     val fetcherResponseInstructors = Response(
-      topLevelIds = Map(expectedInstructorRequest -> new DataList(List(INSTRUCTOR_1.id, INSTRUCTOR_2.id).asJava)),
+      topLevelResponses = Map(expectedInstructorRequest ->
+        TopLevelResponse(
+          new DataList(List(INSTRUCTOR_1.id, INSTRUCTOR_2.id).asJava),
+          ResponsePagination.empty)),
       data = Map(INSTRUCTORS_RESOURCE_ID -> Map(
         INSTRUCTOR_1.id -> INSTRUCTOR_1.data(), INSTRUCTOR_2.id -> INSTRUCTOR_2.data())))
 
@@ -433,7 +448,10 @@ class EngineImplTest extends AssertionsForJUnit with ScalaFutures with MockitoSu
         args = Set("ids" -> JsString(s"${PARTNER_123.id}")),
         selections = partnerField.selections))
     val fetcherResponsePartners = Response(
-      topLevelIds = Map(expectedPartnersRequest -> new DataList(List(new Integer(PARTNER_123.id)).asJava)),
+      topLevelResponses = Map(expectedPartnersRequest ->
+        TopLevelResponse(
+          new DataList(List(new Integer(PARTNER_123.id)).asJava),
+          ResponsePagination.empty)),
       data = Map(PARTNERS_RESOURCE_ID -> Map(new Integer(PARTNER_123.id) -> PARTNER_123.data())))
 
     when(fetcherApi.data(argThat(MatchesResourceType(COURSES_RESOURCE_ID)))).thenReturn(
@@ -445,11 +463,11 @@ class EngineImplTest extends AssertionsForJUnit with ScalaFutures with MockitoSu
 
     val result = engine.execute(request).futureValue
 
-    assert(1 === result.topLevelIds.size, s"Result: $result")
-    assert(result.topLevelIds.contains(request.topLevelRequests.head))
-    assert(2 === result.topLevelIds(request.topLevelRequests.head).size())
-    assert(COURSE_A.id === result.topLevelIds(request.topLevelRequests.head).get(0))
-    assert(COURSE_B.id === result.topLevelIds(request.topLevelRequests.head).get(1))
+    assert(1 === result.topLevelResponses.size, s"Result: $result")
+    assert(result.topLevelResponses.contains(request.topLevelRequests.head))
+    assert(2 === result.topLevelResponses(request.topLevelRequests.head).ids.size())
+    assert(COURSE_A.id === result.topLevelResponses(request.topLevelRequests.head).ids.get(0))
+    assert(COURSE_B.id === result.topLevelResponses(request.topLevelRequests.head).ids.get(1))
 
     assert(result.data.contains(COURSES_RESOURCE_ID))
     val coursesData = result.data(COURSES_RESOURCE_ID)
@@ -523,7 +541,8 @@ class EngineImplTest extends AssertionsForJUnit with ScalaFutures with MockitoSu
                       RequestField("longitude", None, Set.empty, List.empty))))))))))))))
 
     val fetcherResponseCourse = Response(
-      topLevelIds = Map(request.topLevelRequests.head -> new DataList(List(COURSE_A.id).asJava)),
+      topLevelResponses = Map(request.topLevelRequests.head ->
+        TopLevelResponse(new DataList(List(COURSE_A.id).asJava), ResponsePagination.empty)),
       data = Map(COURSES_RESOURCE_ID -> Map(COURSE_A.id -> COURSE_A.data())))
 
     val expectedPartnersRequest = TopLevelRequest(
@@ -539,7 +558,8 @@ class EngineImplTest extends AssertionsForJUnit with ScalaFutures with MockitoSu
           .drop(3)
           .head.selections))
     val fetcherResponsePartners = Response(
-      topLevelIds = Map(expectedPartnersRequest -> new DataList(List(new Integer(PARTNER_123.id)).asJava)),
+      topLevelResponses = Map(expectedPartnersRequest ->
+        TopLevelResponse(new DataList(List(new Integer(PARTNER_123.id)).asJava), ResponsePagination.empty)),
       data = Map(PARTNERS_RESOURCE_ID -> Map(new Integer(PARTNER_123.id) -> PARTNER_123.data())))
 
     when(fetcherApi.data(argThat(MatchesResourceType(COURSES_RESOURCE_ID)))).thenReturn(
@@ -549,10 +569,10 @@ class EngineImplTest extends AssertionsForJUnit with ScalaFutures with MockitoSu
 
     val result = engine.execute(request).futureValue
 
-    assert(1 === result.topLevelIds.size, s"Result: $result")
-    assert(result.topLevelIds.contains(request.topLevelRequests.head))
-    assert(1 === result.topLevelIds(request.topLevelRequests.head).size())
-    assert(COURSE_A.id === result.topLevelIds(request.topLevelRequests.head).get(0))
+    assert(1 === result.topLevelResponses.size, s"Result: $result")
+    assert(result.topLevelResponses.contains(request.topLevelRequests.head))
+    assert(1 === result.topLevelResponses(request.topLevelRequests.head).ids.size())
+    assert(COURSE_A.id === result.topLevelResponses(request.topLevelRequests.head).ids.get(0))
 
     assert(result.data.contains(COURSES_RESOURCE_ID))
     val coursesData = result.data(COURSES_RESOURCE_ID)
@@ -612,7 +632,8 @@ class EngineImplTest extends AssertionsForJUnit with ScalaFutures with MockitoSu
                   instructorField)))))))))
 
     val fetcherResponseCourse = Response(
-      topLevelIds = Map(request.topLevelRequests.head -> new DataList(List(COURSE_A.id, COURSE_B.id).asJava)),
+      topLevelResponses = Map(request.topLevelRequests.head ->
+        TopLevelResponse(new DataList(List(COURSE_A.id, COURSE_B.id).asJava), ResponsePagination.empty)),
       data = Map(COURSES_RESOURCE_ID -> Map(COURSE_A.id -> COURSE_A.data(), COURSE_B.id -> COURSE_B.data())))
 
     val expectedInstructorRequest = TopLevelRequest(
@@ -623,7 +644,8 @@ class EngineImplTest extends AssertionsForJUnit with ScalaFutures with MockitoSu
         args = Set("ids" -> JsString(s"${INSTRUCTOR_1.id},${INSTRUCTOR_2.id}")),
         selections = instructorField.selections))
     val fetcherResponseInstructors = Response(
-      topLevelIds = Map(expectedInstructorRequest -> new DataList(List(INSTRUCTOR_1.id, INSTRUCTOR_2.id).asJava)),
+      topLevelResponses = Map(expectedInstructorRequest ->
+        TopLevelResponse(new DataList(List(INSTRUCTOR_1.id, INSTRUCTOR_2.id).asJava), ResponsePagination.empty)),
       data = Map(INSTRUCTORS_RESOURCE_ID -> Map(
         INSTRUCTOR_1.id -> INSTRUCTOR_1.data(), INSTRUCTOR_2.id -> INSTRUCTOR_2.data())))
 
@@ -635,7 +657,8 @@ class EngineImplTest extends AssertionsForJUnit with ScalaFutures with MockitoSu
         args = Set("ids" -> JsString(s"${PARTNER_123.id}")),
         selections = partnerField.selections))
     val fetcherResponsePartners = Response(
-      topLevelIds = Map(expectedPartnersRequest -> new DataList(List(new Integer(PARTNER_123.id)).asJava)),
+      topLevelResponses = Map(expectedPartnersRequest ->
+        TopLevelResponse(new DataList(List(new Integer(PARTNER_123.id)).asJava), ResponsePagination.empty)),
       data = Map(PARTNERS_RESOURCE_ID -> Map(new Integer(PARTNER_123.id) -> PARTNER_123.data())))
 
     when(fetcherApi.data(argThat(MatchesResourceType(COURSES_RESOURCE_ID)))).thenReturn(
@@ -647,11 +670,11 @@ class EngineImplTest extends AssertionsForJUnit with ScalaFutures with MockitoSu
 
     val result = engine.execute(request).futureValue
 
-    assert(1 === result.topLevelIds.size, s"Result: $result")
-    assert(result.topLevelIds.contains(request.topLevelRequests.head))
-    assert(2 === result.topLevelIds(request.topLevelRequests.head).size())
-    assert(COURSE_A.id === result.topLevelIds(request.topLevelRequests.head).get(0))
-    assert(COURSE_B.id === result.topLevelIds(request.topLevelRequests.head).get(1))
+    assert(1 === result.topLevelResponses.size, s"Result: $result")
+    assert(result.topLevelResponses.contains(request.topLevelRequests.head))
+    assert(2 === result.topLevelResponses(request.topLevelRequests.head).ids.size())
+    assert(COURSE_A.id === result.topLevelResponses(request.topLevelRequests.head).ids.get(0))
+    assert(COURSE_B.id === result.topLevelResponses(request.topLevelRequests.head).ids.get(1))
 
     assert(result.data.contains(COURSES_RESOURCE_ID))
     val coursesData = result.data(COURSES_RESOURCE_ID)

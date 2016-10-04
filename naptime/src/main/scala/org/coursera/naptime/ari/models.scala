@@ -21,6 +21,7 @@ import com.linkedin.data.DataMap
 import com.linkedin.data.schema.DataSchema
 import com.linkedin.data.schema.RecordDataSchema
 import org.coursera.naptime.ResourceName
+import org.coursera.naptime.ResponsePagination
 import org.coursera.naptime.schema.Resource
 import play.api.libs.json.JsValue
 import play.api.mvc.RequestHeader
@@ -127,18 +128,18 @@ case class RequestField(
  *
  * TODO: performance test, and determine if mutable collections yield non-trivial performance improvements.
  *
- * @param topLevelIds A map from the top level requests to a DataList containing the ordered list of IDs for the
- *                    top of the response
+ * @param topLevelResponses A map from the top level requests to a TopLevelResponse,
+  *                         containing ids and pagination
  * @param data A map from the resource name to a Map of IDs to DataMaps.
  */
 case class Response(
-  topLevelIds: Map[TopLevelRequest, DataList],
+  topLevelResponses: Map[TopLevelRequest, TopLevelResponse],
   data: Map[ResourceName, Map[AnyRef, DataMap]]) {
 
   // TODO: performance test this implementation, and consider optimizing it.
   // Note: this operation potentially mutates the current response due to interior mutability.
   def ++(other: Response): Response = {
-    val mergedTopLevel = topLevelIds ++ other.topLevelIds
+    val mergedTopLevel = topLevelResponses ++ other.topLevelResponses
     val mergedData = (data.keySet ++ other.data.keySet).map { resourceName =>
       val lhs = data.getOrElse(resourceName, Map.empty)
       val rhs = other.data.getOrElse(resourceName, Map.empty)
@@ -165,3 +166,12 @@ case class Response(
 object Response {
   val empty = Response(Map.empty, Map.empty)
 }
+
+/**
+  * Represents the response data from a TopLevelRequest, including returned ids and pagination
+  *
+  * @param ids a list of IDs returned by the top level request.
+  *            (i.e. ids 5, 6, and 7 were returned by the bySlug finder)
+  * @param pagination pagination info from the top level request, including total and next cursor
+  */
+case class TopLevelResponse(ids: DataList, pagination: ResponsePagination)

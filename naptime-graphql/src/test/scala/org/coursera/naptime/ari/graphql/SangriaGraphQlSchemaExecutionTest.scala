@@ -20,9 +20,11 @@ import com.linkedin.data.DataList
 import com.linkedin.data.DataMap
 import org.coursera.courier.templates.DataTemplates.DataConversion
 import org.coursera.naptime.ResourceName
+import org.coursera.naptime.ResponsePagination
 import org.coursera.naptime.ari.RequestField
 import org.coursera.naptime.ari.Response
 import org.coursera.naptime.ari.TopLevelRequest
+import org.coursera.naptime.ari.TopLevelResponse
 import org.coursera.naptime.ari.graphql.marshaller.NaptimeMarshaller._
 import org.coursera.naptime.ari.graphql.models.AnyData
 import org.coursera.naptime.ari.graphql.models.CoursePlatform
@@ -126,7 +128,8 @@ class SangriaGraphQlSchemaExecutionTest extends AssertionsForJUnit with ScalaFut
               args = Set.empty,
               selections = List.empty))))
     val response = Response(
-      topLevelIds = Map(topLevelRequest -> new DataList(List("1").asJava)),
+      topLevelResponses = Map(topLevelRequest ->
+        TopLevelResponse(new DataList(List("1").asJava), ResponsePagination.empty)),
       data = Map(ResourceName("courses", 1) -> Map("1" -> courseOne.data())))
     val context = SangriaGraphQlContext(response)
     val execution = Executor.execute(schema, queryAst, context).futureValue
@@ -168,7 +171,8 @@ class SangriaGraphQlSchemaExecutionTest extends AssertionsForJUnit with ScalaFut
             selections = List.empty))),
       alias = Some("courseContainer"))
     val response = Response(
-      topLevelIds = Map(topLevelRequest -> new DataList(List("1").asJava)),
+      topLevelResponses = Map(topLevelRequest ->
+        TopLevelResponse(new DataList(List("1").asJava), ResponsePagination.empty)),
       data = Map(ResourceName("courses", 1) -> Map(
         "1" -> courseOne.data(),
         "2" -> courseTwo.data())))
@@ -207,7 +211,8 @@ class SangriaGraphQlSchemaExecutionTest extends AssertionsForJUnit with ScalaFut
             args = Set.empty,
             selections = List.empty))))
     val response = Response(
-      topLevelIds = Map(topLevelRequest -> new DataList(List("1").asJava)),
+      topLevelResponses = Map(topLevelRequest ->
+        TopLevelResponse(new DataList(List("1").asJava), ResponsePagination.empty)),
       data = Map(ResourceName("courses", 1) -> Map("1" -> courseOne.data())))
     val context = SangriaGraphQlContext(response)
     val execution = Executor.execute(schema, queryAst, context).futureValue
