@@ -1,0 +1,13 @@
+namespace org.coursera.naptime.ari.graphql.models
+
+/**
+ * Marker type for arbitrary JSON data.
+ *
+ * WARN: Provided for compatibility with existing data models only. Please define schemas for all
+ * data.
+ *
+ * This will be deprecated once `AnyRecord` is available.
+ */
+@passthroughExempt
+record AnyData {
+}

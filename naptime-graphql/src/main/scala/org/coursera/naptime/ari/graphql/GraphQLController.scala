@@ -21,6 +21,7 @@ import javax.inject._
 import com.typesafe.scalalogging.StrictLogging
 import org.coursera.naptime.ari.EngineApi
 import org.coursera.naptime.ari.Response
+import org.coursera.naptime.ari.graphql.marshaller.NaptimeMarshaller._
 import play.api.libs.json.JsObject
 import play.api.libs.json.JsString
 import play.api.libs.json.Json
@@ -31,7 +32,6 @@ import sangria.execution.HandledException
 import sangria.execution.QueryAnalysisError
 import sangria.parser.QueryParser
 import sangria.renderer.SchemaRenderer
-import sangria.marshalling.playJson._
 import sangria.parser.SyntaxError
 
 import scala.concurrent.ExecutionContext

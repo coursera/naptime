@@ -69,7 +69,16 @@ class DefaultGraphqlSchemaProviderTest extends AssertionsForJUnit {
 object DefaultGraphqlSchemaProviderTest extends MockitoSugar {
   import org.coursera.naptime.ari.engine.EngineImplTest._
 
-  val DEFAULT_TYPES = Set("ID", "root", "Boolean", "Long", "Float", "Int", "BigInt", "String", "BigDecimal")
+  val DEFAULT_TYPES = Set(
+    "ID",
+    "root",
+    "Boolean",
+    "Long",
+    "Float",
+    "Int",
+    "BigInt",
+    "String",
+    "BigDecimal")
 
   val COMPUTED_TYPES = Set(
     "CoursesV1",
@@ -84,7 +93,8 @@ object DefaultGraphqlSchemaProviderTest extends MockitoSugar {
     "org_coursera_naptime_ari_graphql_models_CoursePlatform",
     "org_coursera_naptime_ari_graphql_models_originalId",
     "PageInfo",
-    "stringMember")
+    "stringMember",
+    "DataMap")
 
   val extraTypes = TYPE_SCHEMAS.map { case (key, value) => Keyed(key, value) }.toList
 
