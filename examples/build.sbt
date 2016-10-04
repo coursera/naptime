@@ -5,11 +5,8 @@ routesGenerator := InjectedRoutesGenerator
 libraryDependencies ++= Seq(
   courierRuntime,
   cache,
-  sangria,
-  sangriaPlayJson
+  sangria
 )
-
-dependencyOverrides += playJson
 
 org.coursera.courier.sbt.CourierPlugin.courierSettings
 

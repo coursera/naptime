@@ -4,7 +4,6 @@ libraryDependencies ++= Seq(
   courierRuntime,
   playJson,
   sangria,
-  sangriaPlayJson,
   sangriaRelay,
   scalaLogging,
   junit,
@@ -12,7 +11,5 @@ libraryDependencies ++= Seq(
   scalatest,
   mockito
 )
-
-dependencyOverrides += playJson
 
 org.coursera.courier.sbt.CourierPlugin.courierSettings

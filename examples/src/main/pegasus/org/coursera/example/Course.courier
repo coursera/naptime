@@ -11,4 +11,6 @@ record Course {
   slug: string
   name: string
   description: string
+
+  extraData: AnyData
 }

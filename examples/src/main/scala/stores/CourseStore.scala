@@ -3,8 +3,13 @@ package stores
 import java.util.concurrent.atomic.AtomicInteger
 import javax.inject.Singleton
 
+import com.linkedin.data.DataMap
+import org.coursera.courier.templates.DataTemplates.DataConversion
+import org.coursera.example.AnyData
 import org.coursera.example.Course
 import org.coursera.naptime.model.Keyed
+
+import scala.collection.JavaConverters._
 
 @Singleton
 class CourseStore {
@@ -18,13 +23,19 @@ class CourseStore {
       partner = "stanford",
       slug = "machine-learning",
       name = "Machine Learning",
-      description = ""),
+      description = "",
+      extraData = AnyData(new DataMap(
+        Map("firstModuleId" -> "wrh7vtpj").asJava),
+        DataConversion.SetReadOnly)),
     "lhtl" -> Course(
       instructors = List("barb-oakley"),
       partner = "ucsd",
       slug = "learning-how-to-learn",
       name = "Learning How to Learn",
-      description = ""))
+      description = "",
+      extraData = AnyData(new DataMap(
+        Map("recentEnrollments" -> new Integer(1000)).asJava),
+        DataConversion.SetReadOnly)))
 
   def get(id: String) = courseStore.get(id)
 

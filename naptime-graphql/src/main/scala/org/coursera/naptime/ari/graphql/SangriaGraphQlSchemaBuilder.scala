@@ -36,6 +36,7 @@ import com.typesafe.scalalogging.StrictLogging
 import org.coursera.naptime.PaginationConfiguration
 import org.coursera.naptime.ResourceName
 import org.coursera.naptime.ari.TopLevelRequest
+import org.coursera.naptime.ari.graphql.types.NaptimeTypes
 import org.coursera.naptime.schema.Handler
 import org.coursera.naptime.schema.HandlerKind
 import org.coursera.naptime.schema.Resource
@@ -486,6 +487,9 @@ class SangriaGraphQlSchemaBuilder(
       case nullDataSchema: NullDataSchema =>
         // TODO(bryan): Figure out nulls
         StringType
+      case recordDataSchema: RecordDataSchema
+        if recordDataSchema.getProperties.asScala.get("passthroughExempt").contains(true) =>
+        NaptimeTypes.DataMapType
       case recordDataSchema: RecordDataSchema =>
         buildRecordType(recordDataSchema, namespace)
       case unionDataSchema: UnionDataSchema =>
