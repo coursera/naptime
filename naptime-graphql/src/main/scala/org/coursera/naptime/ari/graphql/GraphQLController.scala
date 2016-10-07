@@ -104,6 +104,7 @@ class GraphQLController @Inject() (
               graphqlSchemaProvider.schema,
               queryAst,
               context,
+              variables = variables,
               exceptionHandler = exceptionHandler)
               .map(Ok(_))
 
