@@ -62,7 +62,7 @@ class GraphQLController @Inject() (
       case JsString(vars) => Some(parseVariables(vars))
       case obj: JsObject => Some(obj)
       case _ => None
-    }
+    }.getOrElse(Json.obj())
 
     executeQuery(query, request, variables, operation)
   }
@@ -85,7 +85,7 @@ class GraphQLController @Inject() (
   private def executeQuery(
       query: String,
       requestHeader: RequestHeader,
-      variables: Option[JsObject],
+      variables: JsObject,
       operation: Option[String]) = {
 
     QueryParser.parse(query) match {
