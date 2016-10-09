@@ -132,6 +132,8 @@ case class NaptimePlayRouter (
         case HandlerKind.CREATE | HandlerKind.MULTI_GET | HandlerKind.GET_ALL | HandlerKind.FINDER |
           HandlerKind.ACTION =>
           false
+        case HandlerKind.$UNKNOWN =>
+          false
       }
     }
 
@@ -167,6 +169,8 @@ case class NaptimePlayRouter (
           path -> path
         case ResourceKind.COLLECTION =>
           path -> s"$path/$$id" // TODO: add key type information
+        case ResourceKind.$UNKNOWN =>
+          path -> "unknown" // this is definitely wrong, let me know what's the right one in code review. -- Zhaojun
       }
     }
 

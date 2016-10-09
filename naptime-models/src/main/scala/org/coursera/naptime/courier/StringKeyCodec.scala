@@ -37,6 +37,7 @@ import com.linkedin.data.schema.RecordDataSchema
 
 import scala.collection.JavaConverters._
 import scala.collection.SortedSet
+import scala.reflect.ClassTag
 import scala.util.parsing.combinator.RegexParsers
 
 /**
@@ -150,7 +151,7 @@ class StringKeyCodec(schema: DataSchema, prefix: Option[String] = None) extends 
     out.toByteArray
   }
 
-  private[this] def requireSchemaType[T](schema: DataSchema, clazz: Class[T]): T = {
+  private[this] def requireSchemaType[T: ClassTag](schema: DataSchema, clazz: Class[T]): T = {
     schema.getDereferencedDataSchema match {
       case matchingSchema: T => matchingSchema
       case unknown: DataSchema =>

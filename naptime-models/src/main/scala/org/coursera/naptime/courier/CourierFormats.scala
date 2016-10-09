@@ -207,8 +207,6 @@ object CourierFormats extends StrictLogging {
       case boolean: JsBoolean => Boolean.box(boolean.value)
       case string: JsString => string.value
       case JsNull => Null.getInstance()
-      case unknown: JsValue =>
-        throw new IOException(s"Unsupported json type: ${unknown.getClass}")
     }
   }
 
