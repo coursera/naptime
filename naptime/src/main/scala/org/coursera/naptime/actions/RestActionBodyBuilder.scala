@@ -29,7 +29,6 @@ import play.api.libs.json.OFormat
 import play.api.mvc.BodyParser
 
 import scala.concurrent.Future
-import scala.util.Try
 
 /**
  * Helper class to control the creation of the rest action using either an asynchronous or a
