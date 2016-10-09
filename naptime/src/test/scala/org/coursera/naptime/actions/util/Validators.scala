@@ -18,6 +18,7 @@ package org.coursera.naptime.actions.util
 
 import org.scalatest.junit.AssertionsForJUnit
 import play.api.http.HeaderNames
+import play.api.http.HttpEntity
 import play.api.http.Status
 import play.api.libs.json.JsArray
 import play.api.libs.json.JsObject
@@ -93,9 +94,10 @@ object Validators extends AssertionsForJUnit {
    */
   def hasBody(result: Result): Boolean = {
     val headers = result.header.headers
-    headers.contains(HeaderNames.CONTENT_LENGTH) ||
-      headers.contains(HeaderNames.CONTENT_TYPE) ||
-      headers.contains(HeaderNames.CONTENT_ENCODING)
+    result.body match {
+      case HttpEntity.Strict(data, contentType) => contentType.isDefined
+      case _ => false // doesn't support matching other types right now
+    }
   }
 
   /**
@@ -104,7 +106,7 @@ object Validators extends AssertionsForJUnit {
    * @return body as a JsValue
    */
   def assertBodyIsJson(result: Result): JsValue = {
-    val contentType = result.header.headers.get(HeaderNames.CONTENT_TYPE)
+    val contentType = result.body.contentType
     assert(contentType.isDefined)
     assert(contentType.get.startsWith(MimeTypes.JSON),
       s"Content-Type must be json. Found ${contentType.get}")
