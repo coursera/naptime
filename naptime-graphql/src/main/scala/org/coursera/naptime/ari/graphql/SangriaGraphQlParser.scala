@@ -65,7 +65,7 @@ object SangriaGraphQlParser extends GraphQlParser {
     *                      the engine. May be used for authentication at a future time.
     * @return a [[Request]] if the parsing of the request was successful, otherwise None
     */
-  def parse(request: String, requestHeader: RequestHeader): Option[Request] = {
+  def parse(request: String, variables: JsObject, requestHeader: RequestHeader): Option[Request] = {
     val parsedDocumentOption = QueryParser.parse(request).toOption
     // TODO(bryan): Handle error cases here
     val topLevelRequests = for {
@@ -76,7 +76,7 @@ object SangriaGraphQlParser extends GraphQlParser {
       selection <- operationData.selections
       field <- parseSelection(selection, parsedDocument)
       resource <- fieldNameToNaptimeResource(field.name).toList
-      fields = parseField(field, parsedDocument)
+      fields = parseField(field, parsedDocument, variables)
       fieldWithoutResourceName <- fields.selections.headOption
     } yield {
       val field = mutateArgumentsForNaptime(fieldWithoutResourceName)
@@ -85,7 +85,9 @@ object SangriaGraphQlParser extends GraphQlParser {
     Some(Request(requestHeader, topLevelRequests))
   }
 
-  private[this] def parseSelection(selection: Selection, document: Document): List[Field] = {
+  private[this] def parseSelection(
+      selection: Selection,
+      document: Document): List[Field] = {
     selection match {
       case field: Field =>
         List(field)
@@ -101,19 +103,24 @@ object SangriaGraphQlParser extends GraphQlParser {
     }
   }
 
-  private[this] def parseField(field: Field, document: Document): RequestField = {
+  private[this] def parseField(
+      field: Field,
+      document: Document,
+      variables: JsObject): RequestField = {
     val selectionFields = field.selections.flatMap(selection => parseSelection(selection, document))
-    val parsedFields = selectionFields.map(field => parseField(field, document))
+    val parsedFields = selectionFields.map(field => parseField(field, document, variables))
 
     RequestField(
       field.name,
       field.alias,
-      field.arguments.map(argument => (argument.name, parseValue(argument.value))).toSet,
+      field.arguments.map(argument => (argument.name, parseValue(argument.value, variables))).toSet,
       parsedFields)
 
   }
 
-  private[this] def parseValue(sangriaValue: Value): JsValue = {
+  private[this] def parseValue(
+      sangriaValue: Value,
+      variables: JsObject): JsValue = {
     sangriaValue match {
       case IntValue(value, _, _) => JsNumber(value)
       case BigIntValue(value, _, _) => JsNumber(BigDecimal(value))
@@ -122,11 +129,11 @@ object SangriaGraphQlParser extends GraphQlParser {
       case StringValue(value, _, _) => JsString(value)
       case BooleanValue(value, _, _) => JsBoolean(value)
       case EnumValue(value, _, _) => JsString(value)
-      case ListValue(value, _, _) => JsArray(value.map(parseValue))
-      case VariableValue(value, _, _) => JsString(value)
+      case ListValue(value, _, _) => JsArray(value.map(parseValue(_, variables)))
+      case VariableValue(name, _, _) => (variables \ name).getOrElse(JsNull)
       case NullValue(_, _) => JsNull
       case ObjectValue(fields, _, _) => JsObject(fields.map { case ObjectField(name, value, _, _) =>
-        name -> parseValue(value)
+        name -> parseValue(value, variables)
       })
     }
   }

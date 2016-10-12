@@ -90,7 +90,7 @@ class GraphQLController @Inject() (
 
     QueryParser.parse(query) match {
       case Success(queryAst) =>
-        SangriaGraphQlParser.parse(query, requestHeader).map { request =>
+        SangriaGraphQlParser.parse(query, variables, requestHeader).map { request =>
           val fetcherExecution: Future[Option[Response]] =
             if (query.contains("IntrospectionQuery")) {
               Future.successful(None)

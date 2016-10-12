@@ -24,9 +24,17 @@ import org.coursera.naptime.actions.RestAction
 import org.coursera.naptime.ari.FetcherApi
 import org.coursera.naptime.ari.Request
 import org.coursera.naptime.ari.Response
+import org.coursera.naptime.ari.TopLevelRequest
 import org.coursera.naptime.router2.NaptimeRoutes
 import org.coursera.naptime.schema.Resource
+import play.api.libs.json.JsArray
+import play.api.libs.json.JsBoolean
+import play.api.libs.json.JsNull
+import play.api.libs.json.JsNumber
+import play.api.libs.json.JsObject
+import play.api.libs.json.JsString
 import play.api.libs.json.JsValue
+import play.api.libs.json.Json
 
 import scala.concurrent.Future
 
@@ -51,6 +59,10 @@ class LocalFetcher @Inject() (
       val msg = s"Too many top level requests passed to LocalFetcher: $request"
       logger.error(msg)
       Future.failed(new IllegalArgumentException(msg))
+    } else if (request.topLevelRequests.exists(_.selection.name == "get")) {
+      val msg = s"Gets are not supported in the LocalFetcher: $request"
+      logger.error(msg)
+      Future.failed(new UnsupportedOperationException(msg))
     } else {
       val topLevelRequest = request.topLevelRequests.head
       val resourceSchemaOpt = schemas.find { resourceSchema =>
@@ -62,16 +74,13 @@ class LocalFetcher @Inject() (
         resourceSchema <- resourceSchemaOpt
         router <- routers.get(resourceSchema.className)
         argMap = topLevelRequest.selection.args.toMap
-        queryString = argMap.map { arg =>
-          val strRepr = arg._2.toString().stripPrefix("\"").stripSuffix("\"")
-          arg._1 -> List(strRepr)
-        }
+        queryString = argMap.mapValues(arg => List(stringifyArg(arg)))
+        path = s"/${topLevelRequest.resource.identifier}"
         fakePlayRequest = request.requestHeader.copy(
           method = "GET", // TODO: handle non-read-only request types.
           uri = topLevelRequest.resource.identifier, // Warning: uri is not consistent with queryString
           queryString = queryString,
           headers = request.requestHeader.headers.remove("content-type")) // TODO: handle header filtering more properly
-        path = constructPath(resourceSchema, argMap)
         handler <- router.routeRequest(path, fakePlayRequest)
       } yield {
         val taggedRequest = handler.tagRequest(fakePlayRequest)
@@ -93,15 +102,20 @@ class LocalFetcher @Inject() (
     }
   }
 
-  private[this] def constructPath(resourceSchema: Resource, argMap: Map[String, JsValue]): String = {
-    val versionString = resourceSchema.version.map(v => s".v$v").getOrElse("")
-    val basePath = s"${resourceSchema.name}$versionString"
-
-    if (argMap.contains("id")) {
-      val idStr = argMap("id").toString().stripPrefix("\"").stripSuffix("\"")
-      s"/$basePath/$idStr"
-    } else {
-      s"/$basePath"
+  private[this] def stringifyArg(value: JsValue): String = {
+    value match {
+      case JsArray(arrayElements) =>
+        arrayElements.map(stringifyArg).mkString(",")
+      case stringValue: JsString =>
+        stringValue.as[String]
+      case number: JsNumber =>
+        number.toString
+      case boolean: JsBoolean =>
+        boolean.toString
+      case jsObject: JsObject =>
+        Json.stringify(jsObject)
+      case JsNull =>
+        ""
     }
   }
 }

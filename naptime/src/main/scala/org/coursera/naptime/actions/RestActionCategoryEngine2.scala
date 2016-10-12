@@ -139,7 +139,11 @@ trait RestActionCategoryEngine2Impls {
       val responseDataMap = Map(resourceName -> resourceMap)
       Future.successful(AriResponse(topLevelResponseMap, responseDataMap))
     }.getOrElse {
-      Future.failed(new IllegalArgumentException("Could not compute schema for resource value."))
+      if (things.isEmpty) {
+        Future.successful(AriResponse.empty)
+      } else {
+        Future.failed(new IllegalArgumentException("Could not compute schema for resource value."))
+      }
     }
   }
 

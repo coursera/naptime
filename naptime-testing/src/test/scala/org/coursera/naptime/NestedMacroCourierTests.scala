@@ -15,8 +15,8 @@ import org.coursera.naptime.router2.NaptimeRoutes
 import org.coursera.naptime.router2.Router
 import org.junit.Test
 import org.scalatest.concurrent.ScalaFutures
+import org.scalatest.exceptions.TestFailedException
 import org.scalatest.junit.AssertionsForJUnit
-import org.scalatest.mock.MockitoSugar
 import play.api.libs.json.JsString
 import play.api.test.FakeRequest
 
@@ -139,17 +139,11 @@ class NestedMacroCourierTests extends AssertionsForJUnit with ScalaFutures {
               RequestField("id", None, Set.empty, List.empty),
               RequestField("name", None, Set.empty, List.empty))))))
 
-    val response = fetcher.data(request).futureValue
+    val interceptedException = intercept[TestFailedException] {
+      val response = fetcher.data(request).futureValue
+    }
 
-    assert(1 === response.topLevelResponses.size)
-    assert(1 === response.data.size)
-    assert(response.data.contains(CoursesResource.ID))
-    val coursesResponse = response.data(CoursesResource.ID)
-    assert(1 === coursesResponse.size)
-    assert(coursesResponse.contains("abc"))
-    assert("course-abc" === coursesResponse("abc").get("name"),
-      s"Data map: ${coursesResponse("abc")}")
-    // TODO: Check pagination
+    assert(interceptedException.getMessage.contains("Gets are not supported in the LocalFetcher"))
   }
 
   @Test

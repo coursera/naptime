@@ -17,6 +17,7 @@
 package org.coursera.naptime.ari.graphql
 
 import org.coursera.naptime.ari.Request
+import play.api.libs.json.JsObject
 import play.api.mvc.RequestHeader
 
 /**
@@ -26,6 +27,6 @@ import play.api.mvc.RequestHeader
   */
 trait GraphQlParser {
 
-  def parse(request: String, requestHeader: RequestHeader): Option[Request]
+  def parse(request: String, variables: JsObject, requestHeader: RequestHeader): Option[Request]
 
 }
