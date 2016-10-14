@@ -21,14 +21,12 @@ import com.linkedin.data.schema.RecordDataSchema
 import com.typesafe.scalalogging.StrictLogging
 import org.coursera.naptime.PaginationConfiguration
 import org.coursera.naptime.ResourceName
-import org.coursera.naptime.ari.graphql.schema.FieldBuilder
 import org.coursera.naptime.ari.graphql.schema.NaptimePaginatedResourceField
 import org.coursera.naptime.ari.graphql.schema.NaptimeResourceField
 import org.coursera.naptime.ari.graphql.schema.SchemaMetadata
 import org.coursera.naptime.schema.Handler
 import org.coursera.naptime.schema.HandlerKind
 import org.coursera.naptime.schema.Resource
-import org.coursera.naptime.schema.ResourceCompanion
 import sangria.marshalling.FromInput
 import sangria.schema.Argument
 import sangria.schema.BigDecimalType
@@ -170,7 +168,7 @@ class SangriaGraphQlSchemaBuilder(
     val arguments = generateHandlerArguments(handler)
     val resourceName = ResourceName(resource.name, resource.version.getOrElse(0L).toInt)
 
-    val idExtractor = (context: Context[SangriaGraphQlContext, DataMap]) => context.arg[String]("id")
+    val idExtractor = (context: Context[SangriaGraphQlContext, DataMap]) => context.arg[AnyRef]("id")
 
     NaptimeResourceField.build(
       schemaMetadata = schemaMetadata,
