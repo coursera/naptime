@@ -143,7 +143,7 @@ class NestedMacroCourierTests extends AssertionsForJUnit with ScalaFutures {
       val response = fetcher.data(request).futureValue
     }
 
-    assert(interceptedException.getMessage.contains("Gets are not supported in the LocalFetcher"))
+    assert(interceptedException.getMessage.contains("Get attempted"))
   }
 
   @Test

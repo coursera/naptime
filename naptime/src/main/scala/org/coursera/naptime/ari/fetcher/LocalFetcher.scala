@@ -59,10 +59,6 @@ class LocalFetcher @Inject() (
       val msg = s"Too many top level requests passed to LocalFetcher: $request"
       logger.error(msg)
       Future.failed(new IllegalArgumentException(msg))
-    } else if (request.topLevelRequests.exists(_.selection.name == "get")) {
-      val msg = s"Gets are not supported in the LocalFetcher: $request"
-      logger.error(msg)
-      Future.failed(new UnsupportedOperationException(msg))
     } else {
       val topLevelRequest = request.topLevelRequests.head
       val resourceSchemaOpt = schemas.find { resourceSchema =>
@@ -90,7 +86,7 @@ class LocalFetcher @Inject() (
               ResourceName(resourceSchema.name, resourceSchema.version.map(_.toInt).getOrElse(0)),
               topLevelRequest)
           case _ =>
-            val msg = "Handler was not a RestAction"
+            val msg = "Handler was not a RestAction, or Get attempted"
             logger.error(msg)
             Future.failed(new IllegalArgumentException(msg))
         }

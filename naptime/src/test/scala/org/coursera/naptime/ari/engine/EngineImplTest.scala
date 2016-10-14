@@ -49,6 +49,7 @@ import scala.concurrent.ExecutionContext.Implicits.global
 
 class CoursesResource
 class InstructorsResource
+class PartnersResource
 
 /**
  * Checks basic functionality of the automatic resource inclusion engine.
@@ -324,17 +325,15 @@ class EngineImplTest extends AssertionsForJUnit with ScalaFutures with MockitoSu
             alias = None,
             args = Set("id" -> JsString(COURSE_A.id)),
             selections = List(
-              RequestField("edges", None, Set.empty, List(
-                RequestField("node", None, Set.empty, List(
-                  RequestField("id", None, Set.empty, List.empty),
-                  RequestField("slug", None, Set.empty, List.empty),
-                  RequestField("name", None, Set.empty, List.empty),
-                  RequestField("instructors", None, Set.empty, List(
-                    RequestField("edges", None, Set.empty, List(
-                      RequestField("node", None, Set.empty, List(
-                        RequestField("id", None, Set.empty, List.empty),
-                        RequestField("name", None, Set.empty, List.empty),
-                        RequestField("title", None, Set.empty, List.empty))))))))))))))))
+              RequestField("elements", None, Set.empty, List(
+                RequestField("id", None, Set.empty, List.empty),
+                RequestField("slug", None, Set.empty, List.empty),
+                RequestField("name", None, Set.empty, List.empty),
+                RequestField("instructors", None, Set.empty, List(
+                  RequestField("elements", None, Set.empty, List(
+                    RequestField("id", None, Set.empty, List.empty),
+                    RequestField("name", None, Set.empty, List.empty),
+                    RequestField("title", None, Set.empty, List.empty))))))))))))
 
     val fetcherResponseCourse = Response(
       topLevelResponses = Map(request.topLevelRequests.head ->
@@ -347,7 +346,7 @@ class EngineImplTest extends AssertionsForJUnit with ScalaFutures with MockitoSu
         name = "multiGet",
         alias = None,
         args = Set("ids" -> JsString("instructor1Id")),
-        selections = request.topLevelRequests.head.selection.selections.head.selections.head.selections.drop(3).head.selections))
+        selections = request.topLevelRequests.head.selection.selections.head.selections.drop(3).head.selections))
     val fetcherResponseInstructors = Response(
       topLevelResponses = Map(expectedInstructorRequest ->
         TopLevelResponse(new DataList(List(INSTRUCTOR_1.id).asJava), ResponsePagination.empty)),
@@ -396,10 +395,9 @@ class EngineImplTest extends AssertionsForJUnit with ScalaFutures with MockitoSu
           RequestField("longitude", None, Set.empty, List.empty)))))
     val instructorField =
       RequestField("instructors", None, Set.empty, List(
-        RequestField("edges", None, Set.empty, List(
-          RequestField("node", None, Set.empty, List(
-            RequestField("id", None, Set.empty, List.empty),
-            RequestField("name", None, Set.empty, List.empty)))))))
+        RequestField("elements", None, Set.empty, List(
+          RequestField("id", None, Set.empty, List.empty),
+          RequestField("name", None, Set.empty, List.empty)))))
     val request = Request(
       requestHeader = FakeRequest(),
       topLevelRequests = List(
@@ -410,13 +408,12 @@ class EngineImplTest extends AssertionsForJUnit with ScalaFutures with MockitoSu
             alias = None,
             args = Set("query" -> JsString("ai classes")),
             selections = List(
-              RequestField("edges", None, Set.empty, List(
-                RequestField("node", None, Set.empty, List(
-                  RequestField("id", None, Set.empty, List.empty),
-                  RequestField("slug", None, Set.empty, List.empty),
-                  RequestField("name", None, Set.empty, List.empty),
-                  partnerField,
-                  instructorField)))))))))
+              RequestField("elements", None, Set.empty, List(
+                RequestField("id", None, Set.empty, List.empty),
+                RequestField("slug", None, Set.empty, List.empty),
+                RequestField("name", None, Set.empty, List.empty),
+                partnerField,
+                instructorField)))))))
 
     val fetcherResponseCourse = Response(
       topLevelResponses = Map(request.topLevelRequests.head ->
@@ -527,18 +524,17 @@ class EngineImplTest extends AssertionsForJUnit with ScalaFutures with MockitoSu
             alias = None,
             args = Set("id" -> JsString(COURSE_A.id)),
             selections = List(
-              RequestField("edges", None, Set.empty, List(
-                RequestField("node", None, Set.empty, List(
+              RequestField("elements", None, Set.empty, List(
+                RequestField("id", None, Set.empty, List.empty),
+                RequestField("slug", None, Set.empty, List.empty),
+                RequestField("name", None, Set.empty, List.empty),
+                RequestField("partner", None, Set.empty, List(
                   RequestField("id", None, Set.empty, List.empty),
                   RequestField("slug", None, Set.empty, List.empty),
                   RequestField("name", None, Set.empty, List.empty),
-                  RequestField("partner", None, Set.empty, List(
-                    RequestField("id", None, Set.empty, List.empty),
-                    RequestField("slug", None, Set.empty, List.empty),
-                    RequestField("name", None, Set.empty, List.empty),
-                    RequestField("geolocation", None, Set.empty, List(
-                      RequestField("latitude", None, Set.empty, List.empty),
-                      RequestField("longitude", None, Set.empty, List.empty))))))))))))))
+                  RequestField("geolocation", None, Set.empty, List(
+                    RequestField("latitude", None, Set.empty, List.empty),
+                    RequestField("longitude", None, Set.empty, List.empty))))))))))))
 
     val fetcherResponseCourse = Response(
       topLevelResponses = Map(request.topLevelRequests.head ->
@@ -553,7 +549,6 @@ class EngineImplTest extends AssertionsForJUnit with ScalaFutures with MockitoSu
         args = Set("ids" -> JsString(s"${PARTNER_123.id}")),
         selections = request.topLevelRequests
           .head.selection.selections
-          .head.selections
           .head.selections
           .drop(3)
           .head.selections))
@@ -609,11 +604,10 @@ class EngineImplTest extends AssertionsForJUnit with ScalaFutures with MockitoSu
           RequestField("longitude", None, Set.empty, List.empty)))))
     val instructorField =
       RequestField("instructors", None, Set.empty, List(
-        RequestField("edges", None, Set.empty, List(
-          RequestField("node", None, Set.empty, List(
-            RequestField("id", None, Set.empty, List.empty),
-            RequestField("name", None, Set.empty, List.empty),
-            partnerField))))))
+        RequestField("elements", None, Set.empty, List(
+          RequestField("id", None, Set.empty, List.empty),
+          RequestField("name", None, Set.empty, List.empty),
+          partnerField))))
     val request = Request(
       requestHeader = FakeRequest(),
       topLevelRequests = List(
@@ -624,12 +618,11 @@ class EngineImplTest extends AssertionsForJUnit with ScalaFutures with MockitoSu
             alias = None,
             args = Set("query" -> JsString("ai classes")),
             selections = List(
-              RequestField("edges", None, Set.empty, List(
-                RequestField("node", None, Set.empty, List(
-                  RequestField("id", None, Set.empty, List.empty),
-                  RequestField("slug", None, Set.empty, List.empty),
-                  RequestField("name", None, Set.empty, List.empty),
-                  instructorField)))))))))
+              RequestField("elements", None, Set.empty, List(
+                RequestField("id", None, Set.empty, List.empty),
+                RequestField("slug", None, Set.empty, List.empty),
+                RequestField("name", None, Set.empty, List.empty),
+                instructorField)))))))
 
     val fetcherResponseCourse = Response(
       topLevelResponses = Map(request.topLevelRequests.head ->

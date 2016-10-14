@@ -77,12 +77,13 @@ object SangriaGraphQlParser extends GraphQlParser {
       field <- parseSelection(selection, parsedDocument)
       resource <- fieldNameToNaptimeResource(field.name).toList
       fields = parseField(field, parsedDocument, variables)
-      fieldWithoutResourceName <- fields.selections.headOption
     } yield {
-      val field = mutateArgumentsForNaptime(fieldWithoutResourceName)
-      TopLevelRequest(resource, field, fields.alias)
+      fields.selections.map { field =>
+        val mutatedField = mutateArgumentsForNaptime(field)
+        TopLevelRequest(resource, mutatedField, fields.alias)
+      }
     }
-    Some(Request(requestHeader, topLevelRequests))
+    Some(Request(requestHeader, topLevelRequests.flatten))
   }
 
   private[this] def parseSelection(

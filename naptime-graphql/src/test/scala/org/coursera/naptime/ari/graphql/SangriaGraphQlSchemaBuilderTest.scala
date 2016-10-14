@@ -20,6 +20,9 @@ import org.coursera.courier.templates.ScalaRecordTemplate
 import org.coursera.naptime.ari.graphql.models.MergedCourse
 import org.coursera.naptime.ari.graphql.models.MergedInstructor
 import org.coursera.naptime.ari.graphql.models.MergedPartner
+import org.coursera.naptime.schema.Handler
+import org.coursera.naptime.schema.HandlerKind
+import org.coursera.naptime.schema.Parameter
 import org.coursera.naptime.schema.Resource
 import org.coursera.naptime.schema.ResourceKind
 import org.junit.Test
@@ -31,40 +34,7 @@ import sangria.schema.UnionType
 
 class SangriaGraphQlSchemaBuilderTest extends AssertionsForJUnit {
 
-  val courseResource = Resource(
-    kind = ResourceKind.COLLECTION,
-    name = "courses",
-    version = Some(1),
-    keyType = "",
-    valueType = "",
-    mergedType = "org.coursera.naptime.ari.graphql.models.MergedCourse",
-    handlers = List.empty,
-    className = "",
-    attributes = List.empty)
-
-  val instructorResource = Resource(
-    kind = ResourceKind.COLLECTION,
-    name = "instructors",
-    version = Some(1),
-    keyType = "",
-    valueType = "",
-    mergedType = "org.coursera.naptime.ari.graphql.models.MergedInstructor",
-    handlers = List.empty,
-    className = "",
-    attributes = List.empty)
-
-  val partnersResource = Resource(
-    kind = ResourceKind.COLLECTION,
-    name = "partners",
-    version = Some(1),
-    keyType = "",
-    valueType = "",
-    mergedType = "org.coursera.naptime.ari.graphql.models.MergedPartner",
-    handlers = List.empty,
-    className = "",
-    attributes = List.empty)
-
-  val allResources = Set(courseResource, instructorResource, partnersResource)
+  val allResources = Set(Models.courseResource, Models.instructorResource, Models.partnersResource)
 
   val schemaTypes = Map(
     "org.coursera.naptime.ari.graphql.models.MergedCourse" -> MergedCourse.SCHEMA,
@@ -75,13 +45,12 @@ class SangriaGraphQlSchemaBuilderTest extends AssertionsForJUnit {
 
   @Test
   def parseTopLevelFields(): Unit = {
-    val schema = Schema(builder.generateObjectTypeForResource("courses.v1").get)
+    val schema = Schema(builder.generateLookupTypeForResource("courses.v1").get)
     val (_, courseResourceType) = schema.types.get("CoursesV1").get
     val courseResourceObjectType =
       courseResourceType.asInstanceOf[ObjectType[Unit, ScalaRecordTemplate]]
     val fieldNames = courseResourceObjectType.fieldsByName.keySet
     val expectedFieldNames = Set(
-      "__id",
       "id",
       "name",
       "description",
@@ -96,7 +65,7 @@ class SangriaGraphQlSchemaBuilderTest extends AssertionsForJUnit {
 
   @Test
   def parseUnionFields(): Unit = {
-    val schema = Schema(builder.generateObjectTypeForResource("courses.v1").get)
+    val schema = Schema(builder.generateLookupTypeForResource("courses.v1").get)
     val courseUnionType =
       schema.unionTypes.get("org_coursera_naptime_ari_graphql_models_originalId").get
     val courseUnionUnionType = courseUnionType.asInstanceOf[UnionType[Unit]]
@@ -107,7 +76,7 @@ class SangriaGraphQlSchemaBuilderTest extends AssertionsForJUnit {
 
   @Test
   def parseUnionMemberFields(): Unit = {
-    val schema = Schema(builder.generateObjectTypeForResource("courses.v1").get)
+    val schema = Schema(builder.generateLookupTypeForResource("courses.v1").get)
     val (_, coursePlatformMemberType) = schema.types.get("intMember").get
     val coursePlatformMemberObjectType =
       coursePlatformMemberType.asInstanceOf[ObjectType[Unit, ScalaRecordTemplate]]

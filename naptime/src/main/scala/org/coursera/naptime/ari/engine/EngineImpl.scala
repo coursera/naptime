@@ -68,20 +68,19 @@ class EngineImpl @Inject() (
         val topLevelData = extractDataMaps(topLevelResponse, topLevelRequest)
 
         // TODO(bryan): Pull out logic about connections in here
-        val edgeLookups = (for {
-          edges <- topLevelRequest.selection.selections.find(_.name == "edges")
-          node <- edges.selections.find(_.name == "node")
+        val elementLookups = (for {
+          elements <- topLevelRequest.selection.selections.find(_.name == "elements")
         } yield {
-          node.selections.filter(_.selections.nonEmpty)
+          elements.selections.filter(_.selections.nonEmpty)
         }).getOrElse {
           List.empty
         }
 
         val singularLookups = topLevelRequest.selection.selections.filter { selection =>
-          selection.selections.nonEmpty && selection.name != "edges"
+          selection.selections.nonEmpty && selection.name != "elements"
         }
 
-        val nestedLookups = edgeLookups ++ singularLookups
+        val nestedLookups = elementLookups ++ singularLookups
 
         val additionalResponses = for {
           nestedField <- nestedLookups
