@@ -16,6 +16,8 @@
 
 package org.coursera.naptime
 
+import com.linkedin.data.schema.NamedDataSchema
+import com.linkedin.data.schema.RecordDataSchema
 import org.coursera.naptime.model.KeyFormat
 import org.coursera.naptime.model.Keyed
 import play.api.libs.json.JsArray
@@ -25,6 +27,7 @@ import play.api.libs.json.Json
 import play.api.libs.json.OWrites
 import play.api.mvc.RequestHeader
 
+import scala.collection.JavaConverters._
 import scala.language.existentials
 
 /**
@@ -127,5 +130,39 @@ private[naptime] object JsonUtilities {
       obj = obj + ("links" -> formatLinksMeta(queryIncludes, requestFields, fields, response))
     }
     obj
+  }
+}
+
+/**
+ * Helpers for working with Courier/Pegasus Schemas.
+ */
+object SchemaUtils {
+
+  /**
+   * Fixes up inferred schemas with additional type information.
+   *
+   * When computing the schemas for resources, if the model or value type is not a courier
+   * (or known type), the macro calls [[org.coursera.naptime.courier.SchemaInference]], which
+   * attempts to infer the schema via reflection. There are a number of types that the schema
+   * inferencer cannot handle. This function will take a scala-guice map-binding and fix up
+   * the inappropriately inferred schemas with configured types.
+   *
+   * Note: this is a destructive operation, and mutates the input record data schema. Please
+   * use with care to ensure that the schemas are not being modified inappropriately.
+   */
+  def fixupInferredSchemas(
+      schemaToFix: RecordDataSchema,
+      typeOverrides: NaptimeModule.SchemaTypeOverrides): Unit = {
+    schemaToFix.getFields.asScala.foreach { field =>
+      val fieldType = field.getType
+      fieldType.getDereferencedDataSchema match {
+        case named: NamedDataSchema if typeOverrides.contains(named.getFullName) =>
+          val overrideType = typeOverrides(named.getFullName)
+          field.setType(overrideType)
+        case recordType: RecordDataSchema =>
+          fixupInferredSchemas(recordType, typeOverrides)
+        case _ => // Do nothing otherwise.
+      }
+    }
   }
 }
