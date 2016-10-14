@@ -10,7 +10,6 @@ import org.coursera.naptime.ari.graphql.GraphqlSchemaProvider
 import resources.UserStore
 import resources.UserStoreImpl
 import resources.UsersResource
-import org.coursera.naptime.model.Keyed
 import resources.CoursesResource
 import resources.InstructorsResource
 import resources.PartnersResource

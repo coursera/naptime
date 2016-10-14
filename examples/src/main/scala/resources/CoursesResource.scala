@@ -6,7 +6,6 @@ import javax.inject.Singleton
 import org.coursera.example.Course
 import org.coursera.naptime.Fields
 import org.coursera.naptime.Ok
-import org.coursera.naptime.ResourceName
 import org.coursera.naptime.model.Keyed
 import org.coursera.naptime.resources.CourierCollectionResource
 import stores.CourseStore

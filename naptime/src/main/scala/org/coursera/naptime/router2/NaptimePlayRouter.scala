@@ -20,6 +20,7 @@ import javax.inject.Inject
 import javax.inject.Singleton
 
 import com.google.inject.Injector
+import com.linkedin.data.schema.DataSchema
 import com.netflix.governator.annotations.WarmUp
 import com.typesafe.scalalogging.StrictLogging
 import org.coursera.naptime.schema.HandlerKind
@@ -35,7 +36,8 @@ import scala.collection.immutable
 
 @Singleton
 private[naptime] case class NaptimeRoutes @Inject() (
-    injector: Injector, routerBuilders: immutable.Set[ResourceRouterBuilder]) {
+    injector: Injector,
+    routerBuilders: immutable.Set[ResourceRouterBuilder]) {
   /**
    * Helper function to filter out those resource router builders that don't provide schemas.
    */
