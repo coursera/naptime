@@ -78,7 +78,7 @@ object FieldBuilder {
         NaptimeUnionField.build(schemaMetadata, unionDataSchema, fieldName, namespace)
 
       case (None, typerefDataSchema: TyperefDataSchema) =>
-        val referencedType = new RecordDataSchemaField(typerefDataSchema.getRef)
+        val referencedType = new RecordDataSchemaField(typerefDataSchema.getDereferencedDataSchema)
         val innerField = buildField(schemaMetadata, referencedType, namespace, Some(fieldName))
         Field.apply[SangriaGraphQlContext, DataMap, Any, Any](
           name = fieldName,

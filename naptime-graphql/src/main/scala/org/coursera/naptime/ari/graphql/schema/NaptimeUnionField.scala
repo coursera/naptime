@@ -49,8 +49,7 @@ object NaptimeUnionField {
     val unionName = buildFullyQualifiedName(namespace.getOrElse(""), fieldName)
     new UnionType(unionName, None, objects) {
       // write a custom type mapper to use field names to determine the union member type
-      override def typeOf[Ctx](value: Any, schema: Schema[Ctx, _]): Option[ObjectType[Ctx, _]] =
-      {
+      override def typeOf[Ctx](value: Any, schema: Schema[Ctx, _]): Option[ObjectType[Ctx, _]] = {
         val typedValue = value.asInstanceOf[DataMap]
         objects.find { obj =>
           obj.fieldsByName.keySet.intersect(typedValue.keySet().asScala).nonEmpty
