@@ -9,6 +9,7 @@ import org.coursera.naptime.ari.LocalSchemaProvider
 import org.coursera.naptime.ari.SchemaProvider
 import org.coursera.naptime.ari.engine.CoursesResource
 import org.coursera.naptime.ari.engine.InstructorsResource
+import org.coursera.naptime.ari.engine.PartnersResource
 import org.coursera.naptime.model.Keyed
 import org.coursera.naptime.router2.NaptimeRoutes
 import org.coursera.naptime.router2.ResourceRouterBuilder
@@ -83,16 +84,15 @@ object DefaultGraphqlSchemaProviderTest extends MockitoSugar {
   val COMPUTED_TYPES = Set(
     "CoursesV1",
     "CoursesV1Connection",
-    "CoursesV1Edge",
     "CoursesV1Resource",
     "InstructorsV1",
     "InstructorsV1Connection",
-    "InstructorsV1Edge",
     "InstructorsV1Resource",
     "intMember",
+    "org_coursera_naptime_ari_graphql_models_Coordinates",
     "org_coursera_naptime_ari_graphql_models_CoursePlatform",
     "org_coursera_naptime_ari_graphql_models_originalId",
-    "PageInfo",
+    "PartnersV1",
     "stringMember",
     "DataMap")
 
@@ -112,8 +112,18 @@ object DefaultGraphqlSchemaProviderTest extends MockitoSugar {
     when(instructorRouterBuilder.types).thenReturn(extraTypes)
     when(instructorRouterBuilder.resourceClass()).thenReturn(
       classOf[InstructorsResource].asInstanceOf[Class[instructorRouterBuilder.ResourceClass]])
+
+    val partnerRouterBuilder = mock[ResourceRouterBuilder]
+    when(partnerRouterBuilder.schema).thenReturn(PARTNERS_RESOURCE)
+    when(partnerRouterBuilder.types).thenReturn(extraTypes)
+    when(partnerRouterBuilder.resourceClass()).thenReturn(
+      classOf[PartnersResource].asInstanceOf[Class[partnerRouterBuilder.ResourceClass]])
+
     val injector = mock[Injector]
-    new LocalSchemaProvider(NaptimeRoutes(injector, Set(courseRouterBuilder, instructorRouterBuilder)))
+    new LocalSchemaProvider(NaptimeRoutes(injector, Set(
+      courseRouterBuilder,
+      instructorRouterBuilder,
+      partnerRouterBuilder)))
   }
 
   def emptySchemaProvider() = {

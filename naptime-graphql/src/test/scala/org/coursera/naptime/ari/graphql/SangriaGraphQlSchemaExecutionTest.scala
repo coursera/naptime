@@ -29,6 +29,8 @@ import org.coursera.naptime.ari.graphql.marshaller.NaptimeMarshaller._
 import org.coursera.naptime.ari.graphql.models.AnyData
 import org.coursera.naptime.ari.graphql.models.CoursePlatform
 import org.coursera.naptime.ari.graphql.models.MergedCourse
+import org.coursera.naptime.ari.graphql.models.MergedInstructor
+import org.coursera.naptime.ari.graphql.models.MergedPartner
 import org.coursera.naptime.schema.Handler
 import org.coursera.naptime.schema.HandlerKind
 import org.coursera.naptime.schema.Parameter
@@ -39,6 +41,7 @@ import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.junit.AssertionsForJUnit
 import play.api.libs.json.JsArray
 import play.api.libs.json.JsString
+import play.api.libs.json.Json
 import sangria.execution.Executor
 import sangria.parser.QueryParser
 import sangria.schema.Schema
@@ -48,31 +51,12 @@ import scala.concurrent.ExecutionContext.Implicits.global
 
 class SangriaGraphQlSchemaExecutionTest extends AssertionsForJUnit with ScalaFutures {
 
-  val courseResource = Resource(
-    kind = ResourceKind.COLLECTION,
-    name = "courses",
-    version = Some(1),
-    keyType = "",
-    valueType = "",
-    mergedType = "org.coursera.naptime.ari.graphql.models.MergedCourse",
-    handlers = List(
-      Handler(
-        kind = HandlerKind.GET,
-        name = "get",
-        parameters = List(Parameter(name = "id", `type` = "Integer", attributes = List.empty)),
-        attributes = List.empty),
-      Handler(
-        kind = HandlerKind.MULTI_GET,
-        name = "multiGet",
-        parameters = List(Parameter(name = "ids", `type` = "List[Integer]", attributes = List.empty)),
-        attributes = List.empty)),
-    className = "",
-    attributes = List.empty)
-
-  val allResources = Set(courseResource)
+  val allResources = Set(Models.courseResource, Models.instructorResource, Models.partnersResource)
 
   val schemaTypes = Map(
-    "org.coursera.naptime.ari.graphql.models.MergedCourse" -> MergedCourse.SCHEMA)
+    "org.coursera.naptime.ari.graphql.models.MergedCourse" -> MergedCourse.SCHEMA,
+    "org.coursera.naptime.ari.graphql.models.MergedPartner" -> MergedPartner.SCHEMA,
+    "org.coursera.naptime.ari.graphql.models.MergedInstructor" -> MergedInstructor.SCHEMA)
 
   val builder = new SangriaGraphQlSchemaBuilder(allResources, schemaTypes)
 
@@ -146,10 +130,8 @@ class SangriaGraphQlSchemaExecutionTest extends AssertionsForJUnit with ScalaFut
       query {
         courseContainer: CoursesV1Resource {
           coursesById: multiGet(ids: ["1", "2"]) {
-            edges {
-              node {
-                coursePlatform
-              }
+            elements {
+              coursePlatform
             }
           }
         }
@@ -165,10 +147,14 @@ class SangriaGraphQlSchemaExecutionTest extends AssertionsForJUnit with ScalaFut
         args = Set(("ids", JsArray(List(JsString("1"), JsString("2"))))),
         selections = List(
           RequestField(
-            name = "coursePlatform",
+            name = "elements",
             alias = None,
             args = Set.empty,
-            selections = List.empty))),
+            selections = List(RequestField(
+              name = "coursePlatform",
+              alias = None,
+              args = Set.empty,
+              selections = List.empty))))),
       alias = Some("courseContainer"))
     val response = Response(
       topLevelResponses = Map(topLevelRequest ->
@@ -178,8 +164,9 @@ class SangriaGraphQlSchemaExecutionTest extends AssertionsForJUnit with ScalaFut
         "2" -> courseTwo.data())))
     val context = SangriaGraphQlContext(response)
     val execution = Executor.execute(schema, queryAst, context).futureValue
+    println(Json.stringify(execution))
     assert(
-      ((execution \ "data" \ "courseContainer" \ "coursesById" \ "edges" \\ "node").head
+      ((execution \ "data" \ "courseContainer" \ "coursesById" \ "elements").head
         \ "coursePlatform").get.as[List[String]] === List("NewPlatform"))
   }
 
