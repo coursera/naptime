@@ -10,11 +10,13 @@ import com.linkedin.data.schema.FloatDataSchema
 import com.linkedin.data.schema.IntegerDataSchema
 import com.linkedin.data.schema.LongDataSchema
 import com.linkedin.data.schema.MapDataSchema
+import com.linkedin.data.schema.NullDataSchema
 import com.linkedin.data.schema.RecordDataSchema
 import com.linkedin.data.schema.RecordDataSchema.{Field => RecordDataSchemaField}
 import com.linkedin.data.schema.StringDataSchema
 import com.linkedin.data.schema.TyperefDataSchema
 import com.linkedin.data.schema.UnionDataSchema
+import com.typesafe.scalalogging.StrictLogging
 import org.coursera.naptime.ari.graphql.SangriaGraphQlContext
 import org.coursera.naptime.ari.graphql.types.NaptimeTypes
 import sangria.schema.BooleanType
@@ -31,7 +33,7 @@ import sangria.schema.Value
 import scala.collection.JavaConverters._
 
 
-object FieldBuilder {
+object FieldBuilder extends StrictLogging {
 
   type ResolverType = Context[SangriaGraphQlContext, DataMap] => Value[SangriaGraphQlContext, Any]
 
@@ -141,6 +143,19 @@ object FieldBuilder {
           name = fieldName,
           fieldType = FloatType,
           resolve = context => context.value.getFloat(fieldName))
+
+      case (None, _: NullDataSchema) =>
+        Field.apply[SangriaGraphQlContext, DataMap, Any, Any](
+          name = fieldName,
+          fieldType = NaptimeTypes.DataMapType,
+          resolve = context => null)
+
+      case (None, _) =>
+        logger.error(s"Constructing field for unknown type ${field.getType} [$fieldName]")
+        Field.apply[SangriaGraphQlContext, DataMap, Any, Any](
+          name = fieldName,
+          fieldType = NaptimeTypes.DataMapType,
+          resolve = context => context.value)
     }
 
     val fieldTypeWithOptionality = if (field.getOptional) {
