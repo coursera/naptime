@@ -78,7 +78,7 @@ class DefaultGraphqlSchemaProvider @Inject() (schemaProvider: SchemaProvider)
       cachedSchema = graphQlSchema
     } catch {
       case NonFatal(e) =>
-        logger.error(s"Could not build schema.", e.getMessage)
+        logger.error(s"Could not build schema.", e)
         fullSchema = latestSchema
         // Note: we do not update cachedSchema, but instead retain the existing schema.
     }
