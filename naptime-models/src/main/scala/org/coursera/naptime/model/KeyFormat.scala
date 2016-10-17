@@ -35,9 +35,7 @@ import scala.annotation.implicitNotFound
 /**
  * Marshaller for resource id types.
  */
-@implicitNotFound(msg =
-  """Implicit `KeyFormat` not found for ${K}.
-  |Create one in ${K}'s companion object with a method in `KeyFormat`.""".stripMargin)
+@implicitNotFound(msg ="Implicit `KeyFormat` not found for {K}. Create one in ${K}'s companion object with a method in `KeyFormat`.")
 sealed trait KeyFormat[K] extends Format[K] {
 
   /** Marshals resource id into a string that can be used in URLs. */

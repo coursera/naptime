@@ -516,6 +516,7 @@ private[naptime] case class DelegateFields(delegate: RequestFields,
  * Note: it is possible for field names to include the `.` character.
  */
 private[naptime] object QueryStringParser extends RegexParsers {
+  import scala.language.postfixOps
 
   class NaptimeParseError(source: String, msg: String) extends NaptimeActionException(
     httpCode = Status.BAD_REQUEST,

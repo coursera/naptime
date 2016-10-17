@@ -86,8 +86,7 @@ private[courier] class ScalaClassTraverser(rootType: ru.Type) {
   def extractPegasusSchemaIfPresent(): Option[JsObject] = {
     if (rootType <:< runtimeMirror.typeOf[DataTemplate[_]]) {
       val maybeSchema = runtimeMirror.runtimeClass(rootType) match {
-        case clazz: Class[DataTemplate[DataComplex]] => Some(CourierSerializer.getSchema(clazz))
-        case _: ru.RuntimeClass => None
+        case clazz: Class[DataTemplate[DataComplex] @unchecked] => Some(CourierSerializer.getSchema(clazz))
       }
       maybeSchema.map(schemaToJson)
     } else if (rootType <:< ru.typeOf[scala.Enumeration#Value]) {
@@ -96,6 +95,7 @@ private[courier] class ScalaClassTraverser(rootType: ru.Type) {
           // Is the enum a Courier generated enum?
           if enumSymbol.isType &&
              enumSymbol.asType.toType <:< runtimeMirror.typeOf[CourierCompanionObject] =>
+            import scala.language.reflectiveCalls
             schemaToJson(enum.asInstanceOf[CourierCompanionObject].SCHEMA)
       }
     } else {
