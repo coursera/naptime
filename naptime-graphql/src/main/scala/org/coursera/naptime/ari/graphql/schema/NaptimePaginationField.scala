@@ -57,7 +57,7 @@ object NaptimePaginationField extends StrictLogging {
   val paginationArguments = List(limitArgument, startArgument)
 
 
-  private[this] def getResolver(
+  private[schema] def getResolver(
       resourceName: String,
       fieldName: String): Context[SangriaGraphQlContext, ParentContext] => Value[SangriaGraphQlContext, ResponsePagination] = {
     (context: Context[SangriaGraphQlContext, ParentContext]) => {
@@ -71,8 +71,10 @@ object NaptimePaginationField extends StrictLogging {
           val startOption = context.value.parentContext.arg(startArgument)
           val limit = context.value.parentContext.arg(limitArgument)
 
-          val startIndex = startOption.map(start => idsFromParent.indexOf(start)).getOrElse(0)
-          val next = idsFromParent.splitAt(startIndex)._2.drop(limit).headOption.map(_.toString)
+          val idsAfterStart = startOption
+            .map(start => idsFromParent.dropWhile(_.toString != start))
+            .getOrElse(idsFromParent)
+          val next = idsAfterStart.drop(limit).headOption.map(_.toString)
           val total = idsFromParent.size
           ResponsePagination(next, Some(total.toLong))
 
