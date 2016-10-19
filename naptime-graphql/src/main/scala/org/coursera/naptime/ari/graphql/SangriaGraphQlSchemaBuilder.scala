@@ -22,6 +22,7 @@ import com.typesafe.scalalogging.StrictLogging
 import org.coursera.naptime.PaginationConfiguration
 import org.coursera.naptime.ResourceName
 import org.coursera.naptime.ari.graphql.schema.NaptimePaginatedResourceField
+import org.coursera.naptime.ari.graphql.schema.NaptimePaginationField
 import org.coursera.naptime.ari.graphql.schema.NaptimeResourceField
 import org.coursera.naptime.ari.graphql.schema.SchemaMetadata
 import org.coursera.naptime.schema.Handler
@@ -170,11 +171,13 @@ class SangriaGraphQlSchemaBuilder(
 
     val idExtractor = (context: Context[SangriaGraphQlContext, DataMap]) => context.arg[AnyRef]("id")
 
-    NaptimeResourceField.build(
+    val field = NaptimeResourceField.build(
       schemaMetadata = schemaMetadata,
       resourceName = resourceName.identifier,
       fieldName = "get",
-      idExtractor = Some(idExtractor)).copy(arguments = arguments)
+      idExtractor = Some(idExtractor))
+
+    field.copy(arguments = arguments ++ field.arguments)
   }
 
   def generateListHandler(
@@ -190,37 +193,26 @@ class SangriaGraphQlSchemaBuilder(
       case _ => "error"
     }
 
-    NaptimePaginatedResourceField.build(
+    val field = NaptimePaginatedResourceField.build(
       schemaMetadata = schemaMetadata,
       resourceName = resourceName.identifier,
-      fieldName = fieldName).copy(arguments = arguments)
+      fieldName = fieldName)
+
+    field.copy(arguments = arguments ++ field.arguments)
   }
 
+  val PAGINATION_ARGUMENT_NAMES = NaptimePaginationField.paginationArguments.map(_.name)
+
   def generateHandlerArguments(handler: Handler): List[Argument[Any]] = {
-    val explicitArguments: List[Argument[Any]] = handler.parameters.map { parameter =>
-      val tpe = parameter.`type`
-      // TODO(bryan): Use argument defaults here
-      Argument(
-        name = parameter.name,
-        argumentType = scalaTypeToSangria(tpe))(scalaTypeToFromInput(tpe), implicitly).asInstanceOf[Argument[Any]]
-    }.toList
-
-    val paginationArguments: List[Argument[Any]] = handler.kind match {
-      case HandlerKind.FINDER | HandlerKind.GET_ALL | HandlerKind.MULTI_GET =>
-        List(
-          Argument(
-            name = "limit",
-            argumentType = OptionInputType(IntType),
-            defaultValue = PaginationConfiguration().defaultLimit).asInstanceOf[Argument[Any]],
-          Argument(
-            name = "start",
-            argumentType = OptionInputType(StringType),
-            description = "Cursor to start pagination at").asInstanceOf[Argument[Any]])
-      case _ =>
-        List.empty
-    }
-
-    explicitArguments ++ paginationArguments
+    handler.parameters
+      .filterNot(parameter => PAGINATION_ARGUMENT_NAMES.contains(parameter.name))
+      .map { parameter =>
+        val tpe = parameter.`type`
+        // TODO(bryan): Use argument defaults here
+        Argument(
+          name = parameter.name,
+          argumentType = scalaTypeToSangria(tpe))(scalaTypeToFromInput(tpe), implicitly).asInstanceOf[Argument[Any]]
+      }.toList
   }
 
 

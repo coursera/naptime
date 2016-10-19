@@ -108,7 +108,7 @@ object FieldBuilder extends StrictLogging {
           fieldType = StringType,
           resolve = context => context.value.getString(fieldName))
 
-      case (None, intdataschema: IntegerDataSchema) =>
+      case (None, _: IntegerDataSchema) =>
         Field.apply[SangriaGraphQlContext, DataMap, Any, Any](
           name = fieldName,
           fieldType = IntType,

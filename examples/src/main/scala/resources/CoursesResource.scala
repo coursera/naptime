@@ -30,7 +30,18 @@ class CoursesResource @Inject() (
   }
 
   def getAll() = Nap.getAll { context =>
-    Ok(courseStore.all().map { case (id, course) => Keyed(id, course) }.toList)
+
+    val courses = courseStore.all().toList.map { case (id, course) => Keyed(id, course) }
+    val coursesAfterNext = context.paging.start
+      .map(s => courses.dropWhile(_.key != s))
+      .getOrElse(courses)
+
+    val coursesSubset = coursesAfterNext.take(context.paging.limit)
+
+    val next = coursesAfterNext.drop(context.paging.limit).headOption.map(_.key)
+
+    Ok(coursesSubset)
+      .withPagination(next, Some(courses.size.toLong))
   }
 
 }

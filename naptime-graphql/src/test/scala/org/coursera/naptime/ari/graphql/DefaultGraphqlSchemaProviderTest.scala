@@ -93,6 +93,7 @@ object DefaultGraphqlSchemaProviderTest extends MockitoSugar {
     "org_coursera_naptime_ari_graphql_models_CoursePlatform",
     "org_coursera_naptime_ari_graphql_models_originalId",
     "PartnersV1",
+    "ResponsePagination",
     "stringMember",
     "DataMap")
 

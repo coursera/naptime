@@ -21,51 +21,62 @@ object NaptimePaginatedResourceField {
     Field.apply[SangriaGraphQlContext, DataMap, Any, Any](
       name = fieldName,
       fieldType = getType(schemaMetadata, resourceName, fieldName),
-      resolve = getResolver(resourceName, fieldName))
+      resolve = context => ParentContext(context),
+      arguments = NaptimePaginationField.paginationArguments)
   }
 
   //TODO(bryan): add arguments for pagination in here
   private[this] def getType(
       schemaMetadata: SchemaMetadata,
       resourceName: String,
-      fieldName: String): ObjectType[SangriaGraphQlContext, DataMap] = {
+      fieldName: String): ObjectType[SangriaGraphQlContext, ParentContext] = {
 
     val resource = schemaMetadata.getResource(resourceName)
     schemaMetadata.getSchema(resource).getOrElse {
       throw new SchemaGenerationException(s"Cannot find schema for $resourceName")
     }
 
-    ObjectType[SangriaGraphQlContext, DataMap](
+    ObjectType[SangriaGraphQlContext, ParentContext](
       name = formatPaginatedResourceName(resource),
       fieldsFn = () => {
         val elementType = NaptimeResourceField.getType(schemaMetadata, resourceName)
         val listType = ListType(elementType)
-        List(Field.apply[SangriaGraphQlContext, DataMap, Any, Any](
-          name = "elements",
-          fieldType = listType,
-          resolve = context => context.value))
+        List(
+          Field.apply[SangriaGraphQlContext, ParentContext, Any, Any](
+            name = "elements",
+            fieldType = listType,
+            resolve = getResolver(resourceName, fieldName)),
+          Field.apply[SangriaGraphQlContext, ParentContext, Any, Any](
+            name = "paging",
+            fieldType = NaptimePaginationField.getField(resourceName, fieldName),
+            resolve = context => context.value
+          ))
       })
 
   }
 
   private[this] def getResolver(
       resourceName: String,
-      fieldName: String): FieldBuilder.ResolverType = {
-    (context: Context[SangriaGraphQlContext, DataMap]) => {
+      fieldName: String): Context[SangriaGraphQlContext, ParentContext] => Value[SangriaGraphQlContext, Any] = {
+    (context: Context[SangriaGraphQlContext, ParentContext]) => {
       // TODO(bryan): Figure out pagination here
       val parsedResourceName = ResourceName.parse(resourceName).getOrElse {
         throw new SchemaExecutionException(s"Cannot parse resource name from $resourceName")
       }
-      println(context.ctx.response)
       val connection = context.ctx.response.data.get(parsedResourceName).map { objects =>
-        val ids = Option(context.value).map { parentElement =>
+        val ids = Option(context.value.parentContext.value).map { parentElement =>
           // Nested Request
-          parentElement.getDataList(fieldName).asScala
+          val allIds = parentElement.getDataList(fieldName).asScala
+          val startOption = context.value.parentContext.arg(NaptimePaginationField.startArgument)
+          val limit = context.value.parentContext.arg(NaptimePaginationField.limitArgument)
+          val idsWithStart = startOption.map(s => allIds.dropWhile(_ != s)).getOrElse(allIds)
+          idsWithStart.take(limit)
         }.getOrElse {
           // Top-Level Request
           context.ctx.response.topLevelResponses.find { case (topLevelRequest, _) =>
             topLevelRequest.resource.identifier == resourceName &&
-              topLevelRequest.selection.alias == context.astFields.headOption.flatMap(_.alias)
+              topLevelRequest.selection.alias ==
+                context.value.parentContext.astFields.headOption.flatMap(_.alias)
           }.map(_._2.ids.asScala).getOrElse(List.empty)
         }
         objects.collect {
@@ -86,5 +97,7 @@ object NaptimePaginatedResourceField {
   private[this] def formatPaginatedResourceName(resource: Resource): String = {
     s"${resource.name.capitalize}V${resource.version.getOrElse(0)}Connection"
   }
+
+  case class ParentContext(parentContext: Context[SangriaGraphQlContext, DataMap])
 
 }
