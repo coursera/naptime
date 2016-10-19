@@ -75,7 +75,8 @@ object NaptimePaginatedResourceField {
           // Top-Level Request
           context.ctx.response.topLevelResponses.find { case (topLevelRequest, _) =>
             topLevelRequest.resource.identifier == resourceName &&
-              topLevelRequest.selection.alias == context.astFields.headOption.flatMap(_.alias)
+              topLevelRequest.selection.alias ==
+                context.value.parentContext.astFields.headOption.flatMap(_.alias)
           }.map(_._2.ids.asScala).getOrElse(List.empty)
         }
         objects.collect {

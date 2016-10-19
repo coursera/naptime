@@ -31,11 +31,6 @@ import org.coursera.naptime.ari.graphql.models.CoursePlatform
 import org.coursera.naptime.ari.graphql.models.MergedCourse
 import org.coursera.naptime.ari.graphql.models.MergedInstructor
 import org.coursera.naptime.ari.graphql.models.MergedPartner
-import org.coursera.naptime.schema.Handler
-import org.coursera.naptime.schema.HandlerKind
-import org.coursera.naptime.schema.Parameter
-import org.coursera.naptime.schema.Resource
-import org.coursera.naptime.schema.ResourceKind
 import org.junit.Test
 import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.junit.AssertionsForJUnit
@@ -164,7 +159,6 @@ class SangriaGraphQlSchemaExecutionTest extends AssertionsForJUnit with ScalaFut
         "2" -> courseTwo.data())))
     val context = SangriaGraphQlContext(response)
     val execution = Executor.execute(schema, queryAst, context).futureValue
-    println(Json.stringify(execution))
     assert(
       ((execution \ "data" \ "courseContainer" \ "coursesById" \ "elements").head
         \ "coursePlatform").get.as[List[String]] === List("NewPlatform"))
