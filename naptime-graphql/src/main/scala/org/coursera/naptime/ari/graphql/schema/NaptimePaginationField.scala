@@ -1,12 +1,10 @@
 package org.coursera.naptime.ari.graphql.schema
 
-import com.linkedin.data.DataMap
 import com.typesafe.scalalogging.StrictLogging
 import org.coursera.naptime.PaginationConfiguration
 import org.coursera.naptime.ResourceName
 import org.coursera.naptime.ResponsePagination
 import org.coursera.naptime.ari.graphql.SangriaGraphQlContext
-import org.coursera.naptime.ari.graphql.schema.NaptimePaginatedResourceField.ParentContext
 import sangria.schema.Argument
 import sangria.schema.Context
 import sangria.schema.Field

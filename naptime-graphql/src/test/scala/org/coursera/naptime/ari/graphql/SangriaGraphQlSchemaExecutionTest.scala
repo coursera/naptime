@@ -35,6 +35,7 @@ import org.junit.Test
 import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.junit.AssertionsForJUnit
 import play.api.libs.json.JsArray
+import play.api.libs.json.JsNull
 import play.api.libs.json.JsString
 import play.api.libs.json.Json
 import sangria.execution.Executor
@@ -200,6 +201,50 @@ class SangriaGraphQlSchemaExecutionTest extends AssertionsForJUnit with ScalaFut
     assert(
       (execution \ "data" \ "CoursesV1Resource" \ "get" \ "arbitraryData").get.as[Map[String, Map[String, String]]]
         === Map("moduleIds" -> Map("moduleOne" -> "abc", "moduleTwo" -> "defg")))
+  }
+
+  @Test
+  def errorHandling_get_404(): Unit = {
+    val schema = builder.generateSchema().asInstanceOf[Schema[SangriaGraphQlContext, Any]]
+    val query =
+      """
+      query {
+        CoursesV1Resource {
+          idOne: get(id: "1") {
+            id
+          }
+          idTwo: get(id: "2") {
+            id
+          }
+        }
+      }
+      """.stripMargin
+    val queryAst = QueryParser.parse(query).get
+
+    val topLevelRequestOne = TopLevelRequest(
+      resource = ResourceName("courses", 1),
+      selection = RequestField(
+        name = "get",
+        alias = Some("idOne"),
+        args = Set(("id", JsString("1"))),
+        selections = List(
+          RequestField(
+            name = "id",
+            alias = None,
+            args = Set.empty,
+            selections = List.empty))))
+    val response = Response(
+      topLevelResponses = Map(topLevelRequestOne ->
+        TopLevelResponse(new DataList(List("1").asJava), ResponsePagination.empty)),
+      data = Map(ResourceName("courses", 1) -> Map("1" -> courseOne.data())))
+    val context = SangriaGraphQlContext(response)
+    val execution = Executor.execute(schema, queryAst, context).futureValue
+
+    assert((execution \ "data" \ "CoursesV1Resource" \ "idOne" \ "id").as[String] === "1")
+
+    assert((execution \ "data" \ "CoursesV1Resource" \ "idTwo").get === JsNull)
+
+    assert((execution \ "errors" \\ "message").head.as[String] === "Cannot find courses.v1/2")
   }
 
 }
