@@ -4,6 +4,7 @@ import com.linkedin.data.DataMap
 import com.linkedin.data.schema.ArrayDataSchema
 import com.linkedin.data.schema.BooleanDataSchema
 import com.linkedin.data.schema.BytesDataSchema
+import com.linkedin.data.schema.DataSchema
 import com.linkedin.data.schema.DoubleDataSchema
 import com.linkedin.data.schema.EnumDataSchema
 import com.linkedin.data.schema.FloatDataSchema
@@ -16,6 +17,10 @@ import com.linkedin.data.schema.RecordDataSchema.{Field => RecordDataSchemaField
 import com.linkedin.data.schema.StringDataSchema
 import com.linkedin.data.schema.TyperefDataSchema
 import com.linkedin.data.schema.UnionDataSchema
+import com.linkedin.data.schema.validation.CoercionMode
+import com.linkedin.data.schema.validation.RequiredMode
+import com.linkedin.data.schema.validation.ValidateDataAgainstSchema
+import com.linkedin.data.schema.validation.ValidationOptions
 import com.typesafe.scalalogging.StrictLogging
 import org.coursera.naptime.ari.graphql.SangriaGraphQlContext
 import org.coursera.naptime.ari.graphql.types.NaptimeTypes
@@ -27,10 +32,12 @@ import sangria.schema.IntType
 import sangria.schema.ListType
 import sangria.schema.LongType
 import sangria.schema.OptionType
+import sangria.schema.ScalarType
 import sangria.schema.StringType
 import sangria.schema.Value
 
 import scala.collection.JavaConverters._
+import scala.reflect.ClassTag
 
 
 object FieldBuilder extends StrictLogging {
@@ -102,47 +109,13 @@ object FieldBuilder extends StrictLogging {
           resolve = context => context.value.getDataMap(fieldName))
 
       // Primitives
-      case (None, _: StringDataSchema) =>
-        Field.apply[SangriaGraphQlContext, DataMap, Any, Any](
-          name = fieldName,
-          fieldType = StringType,
-          resolve = context => context.value.getString(fieldName))
-
-      case (None, _: IntegerDataSchema) =>
-        Field.apply[SangriaGraphQlContext, DataMap, Any, Any](
-          name = fieldName,
-          fieldType = IntType,
-          resolve = context => context.value.getInteger(fieldName))
-
-      case (None, _: LongDataSchema) =>
-        Field.apply[SangriaGraphQlContext, DataMap, Any, Any](
-          name = fieldName,
-          fieldType = LongType,
-          resolve = context => context.value.getLong(fieldName))
-
-      case (None, _: BooleanDataSchema) =>
-        Field.apply[SangriaGraphQlContext, DataMap, Any, Any](
-          name = fieldName,
-          fieldType = BooleanType,
-          resolve = context => context.value.getBoolean(fieldName))
-
-      case (None, _: BytesDataSchema) =>
-        Field.apply[SangriaGraphQlContext, DataMap, Any, Any](
-          name = fieldName,
-          fieldType = StringType,
-          resolve = context => context.value.getByteString(fieldName))
-
-      case (None, _: DoubleDataSchema) =>
-        Field.apply[SangriaGraphQlContext, DataMap, Any, Any](
-          name = fieldName,
-          fieldType = FloatType,
-          resolve = context => context.value.getDouble(fieldName))
-
-      case (None, _: FloatDataSchema) =>
-        Field.apply[SangriaGraphQlContext, DataMap, Any, Any](
-          name = fieldName,
-          fieldType = FloatType,
-          resolve = context => context.value.getFloat(fieldName))
+      case (None, ds: StringDataSchema) => buildPrimitiveField[String](fieldName, ds, StringType)
+      case (None, ds: BytesDataSchema) => buildPrimitiveField[String](fieldName, ds, StringType)
+      case (None, ds: IntegerDataSchema) => buildPrimitiveField[Int](fieldName, ds, IntType)
+      case (None, ds: LongDataSchema) => buildPrimitiveField[Long](fieldName, ds, LongType)
+      case (None, ds: BooleanDataSchema) => buildPrimitiveField[Boolean](fieldName, ds, BooleanType)
+      case (None, ds: DoubleDataSchema) => buildPrimitiveField[Double](fieldName, ds, FloatType)
+      case (None, ds: FloatDataSchema) => buildPrimitiveField[Float](fieldName, ds, FloatType)
 
       case (None, _: NullDataSchema) =>
         Field.apply[SangriaGraphQlContext, DataMap, Any, Any](
@@ -167,6 +140,33 @@ object FieldBuilder extends StrictLogging {
     sangriaField.copy(
       description = fieldDoc,
       fieldType = fieldTypeWithOptionality)
+  }
+
+  private[this] val validationOptions = new ValidationOptions(
+    RequiredMode.FIXUP_ABSENT_WITH_DEFAULT,
+    CoercionMode.STRING_TO_PRIMITIVE)
+
+  private[schema] def buildPrimitiveField[ParseType](
+      fieldName: String,
+      dataSchema: DataSchema,
+      sangriaScalarType: ScalarType[_])
+      (implicit tag: ClassTag[ParseType]) = {
+    Field.apply[SangriaGraphQlContext, DataMap, Any, Any](
+      name = fieldName,
+      fieldType = sangriaScalarType,
+      resolve = context => {
+        val rawValue = context.value.get(fieldName)
+        val result = ValidateDataAgainstSchema.validate(rawValue, dataSchema, validationOptions)
+
+        if (result.isValid) {
+          result.getFixed match {
+            case value: ParseType => value
+            case _ => throw ResponseFormatException(s"$fieldName's value is an invalid type")
+          }
+        } else {
+          throw ResponseFormatException(s"$fieldName could not be fixed-up or parsed")
+        }
+      })
   }
 
   /**
