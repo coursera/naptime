@@ -25,7 +25,6 @@ import org.coursera.naptime.ari.Response
 import org.coursera.naptime.ari.TopLevelRequest
 import org.coursera.naptime.ari.TopLevelResponse
 import org.coursera.naptime.ari.graphql.SangriaGraphQlContext
-import org.coursera.naptime.ari.graphql.schema.NaptimePaginatedResourceField.ParentContext
 import org.junit.Test
 import org.scalatest.junit.AssertionsForJUnit
 import sangria.schema.Args

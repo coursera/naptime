@@ -59,7 +59,7 @@ object NaptimePaginatedResourceField {
       resourceName: String,
       fieldName: String): Context[SangriaGraphQlContext, ParentContext] => Value[SangriaGraphQlContext, Any] = {
     (context: Context[SangriaGraphQlContext, ParentContext]) => {
-      // TODO(bryan): Figure out pagination here
+
       val parsedResourceName = ResourceName.parse(resourceName).getOrElse {
         throw new SchemaExecutionException(s"Cannot parse resource name from $resourceName")
       }
@@ -97,7 +97,5 @@ object NaptimePaginatedResourceField {
   private[this] def formatPaginatedResourceName(resource: Resource): String = {
     s"${resource.name.capitalize}V${resource.version.getOrElse(0)}Connection"
   }
-
-  case class ParentContext(parentContext: Context[SangriaGraphQlContext, DataMap])
 
 }
