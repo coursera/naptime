@@ -23,7 +23,7 @@ class CourseStore {
       partner = "stanford",
       slug = "machine-learning",
       name = "Machine Learning",
-      description = "",
+      description = Some("Machine learning is the science of getting computers to act without being explicitly programmed."),
       extraData = AnyData(new DataMap(
         Map("firstModuleId" -> "wrh7vtpj").asJava),
         DataConversion.SetReadOnly)),
@@ -32,7 +32,7 @@ class CourseStore {
       partner = "ucsd",
       slug = "learning-how-to-learn",
       name = "Learning How to Learn",
-      description = "",
+      description = None,
       extraData = AnyData(new DataMap(
         Map("recentEnrollments" -> new Integer(1000)).asJava),
         DataConversion.SetReadOnly)))
