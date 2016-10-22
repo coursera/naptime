@@ -27,6 +27,7 @@ import play.api.libs.json.JsValue
 import play.api.mvc.RequestHeader
 
 import scala.concurrent.Future
+import scala.concurrent.duration.FiniteDuration
 
 /**
  * The engine layer presents this EngineAPI to the presentation layer. The engine layer handles query validation,
@@ -123,6 +124,10 @@ case class RequestField(
   args: Set[(String, JsValue)], // TODO: Should JsValue be a specific ARI type?
   selections: List[RequestField])
 
+case class ResponseMetrics(
+  numRequests: Int = 0,
+  duration: FiniteDuration = FiniteDuration(0, "seconds"))
+
 /**
  * All of the data required to assemble a response to an automatic includes query.
  *
@@ -134,7 +139,8 @@ case class RequestField(
  */
 case class Response(
   topLevelResponses: Map[TopLevelRequest, TopLevelResponse],
-  data: Map[ResourceName, Map[AnyRef, DataMap]]) {
+  data: Map[ResourceName, Map[AnyRef, DataMap]],
+  metrics: ResponseMetrics = ResponseMetrics()) {
 
   // TODO: performance test this implementation, and consider optimizing it.
   // Note: this operation potentially mutates the current response due to interior mutability.
@@ -159,7 +165,10 @@ case class Response(
       }.toMap
       resourceName -> mergedMap
     }.toMap
-    Response(mergedTopLevel, mergedData)
+    val mergedMetrics = ResponseMetrics(
+      numRequests = metrics.numRequests + other.metrics.numRequests,
+      duration = metrics.duration + other.metrics.duration)
+    Response(mergedTopLevel, mergedData, mergedMetrics)
   }
 }
 

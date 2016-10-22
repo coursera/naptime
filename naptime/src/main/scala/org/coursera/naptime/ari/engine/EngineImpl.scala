@@ -29,6 +29,7 @@ import org.coursera.naptime.ari.FetcherApi
 import org.coursera.naptime.ari.Request
 import org.coursera.naptime.ari.RequestField
 import org.coursera.naptime.ari.Response
+import org.coursera.naptime.ari.ResponseMetrics
 import org.coursera.naptime.ari.SchemaProvider
 import org.coursera.naptime.ari.TopLevelRequest
 import play.api.libs.json.JsString
@@ -37,10 +38,12 @@ import play.api.mvc.RequestHeader
 import scala.collection.JavaConverters._
 import scala.concurrent.ExecutionContext
 import scala.concurrent.Future
+import scala.concurrent.duration.FiniteDuration
 
 class EngineImpl @Inject() (
     schemaProvider: SchemaProvider,
-    fetcher: FetcherApi)
+    fetcher: FetcherApi,
+    metricsCollector: EngineMetricsCollector)
     (implicit executionContext: ExecutionContext) extends EngineApi with StrictLogging {
 
   private[this] def mergedTypeForResource(resourceName: ResourceName): Option[RecordDataSchema] = {
@@ -52,20 +55,34 @@ class EngineImpl @Inject() (
       executeTopLevelRequest(request.requestHeader, topLevelRequest)
     }
     val futureResponses = Future.sequence(responseFutures)
-    futureResponses.map { responses =>
+    val finalResponseFut = futureResponses.map { responses =>
       responses.foldLeft(Response.empty)(_ ++ _)
     }
+    finalResponseFut.map { finalResponse =>
+      metricsCollector.markExecutionCompletion(finalResponse.metrics)
+    }
+    finalResponseFut.onFailure {
+      case e: Throwable =>
+        metricsCollector.markExecutionFailure()
+    }
+
+    finalResponseFut
   }
 
   private[this] def executeTopLevelRequest(
       requestHeader: RequestHeader,
       topLevelRequest: TopLevelRequest): Future[Response] = {
+    val startTime = System.nanoTime()
     val topLevelResponse = fetcher.data(Request(requestHeader, List(topLevelRequest)))
 
     topLevelResponse.flatMap { topLevelResponse =>
+      val topLevelResponseWithMetrics = topLevelResponse.copy(
+        metrics = ResponseMetrics(
+          numRequests = 1,
+          duration = FiniteDuration(System.nanoTime() - startTime, "nanos")))
       // If we have a schema, we can perform automatic resource inclusion.
       mergedTypeForResource(topLevelRequest.resource).map { mergedType =>
-        val topLevelData = extractDataMaps(topLevelResponse, topLevelRequest)
+        val topLevelData = extractDataMaps(topLevelResponseWithMetrics, topLevelRequest)
 
         // TODO(bryan): Pull out logic about connections in here
         val elementLookups = (for {
@@ -100,15 +117,18 @@ class EngineImpl @Inject() (
               selections = nestedField.selections))
           executeTopLevelRequest(requestHeader, relatedTopLevelRequest).map { response =>
             // Exclude the top level ids in the response.
-            Response(topLevelResponses = Map.empty, data = response.data)
+            Response(
+              topLevelResponses = Map.empty,
+              data = response.data,
+              metrics = response.metrics)
           }
         }
         Future.sequence(additionalResponses).map { additionalResponses =>
-          additionalResponses.foldLeft(topLevelResponse)(_ ++ _)
+          additionalResponses.foldLeft(topLevelResponseWithMetrics)(_ ++ _)
         }
       }.getOrElse {
         logger.error(s"No merged type found for resource ${topLevelRequest.resource}. Skipping automatic inclusions.")
-        Future.successful(topLevelResponse)
+        Future.successful(topLevelResponseWithMetrics)
       }
     }
   }
@@ -153,3 +173,4 @@ class EngineImpl @Inject() (
     }.toSet.map[String, Set[String]](_.toString).mkString(",") // TODO: escape appropriately.
   }
 }
+

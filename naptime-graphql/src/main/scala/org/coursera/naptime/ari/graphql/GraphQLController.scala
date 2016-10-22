@@ -106,7 +106,8 @@ class GraphQLController @Inject() (
               context,
               variables = variables,
               exceptionHandler = exceptionHandler)
-              .map(Ok(_))
+              .map(Ok(_).withHeaders(
+                ("X-Naptime-Downstream-Requests", response.metrics.numRequests.toString)))
 
           }.recover {
             case error: QueryAnalysisError =>

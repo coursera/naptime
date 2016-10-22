@@ -107,7 +107,8 @@ class EngineImplTest extends AssertionsForJUnit with ScalaFutures with MockitoSu
   val injector = mock[Injector]
   val schemaProvider =
     new LocalSchemaProvider(NaptimeRoutes(injector, Set(courseRouterBuilder, instructorRouterBuilder)))
-  val engine = new EngineImpl(schemaProvider, fetcherApi)
+  val metricsCollector = new NoopEngineMetricsCollector()
+  val engine = new EngineImpl(schemaProvider, fetcherApi, metricsCollector)
 
   @Test
   def singleResourceFetch_Courses(): Unit = {
