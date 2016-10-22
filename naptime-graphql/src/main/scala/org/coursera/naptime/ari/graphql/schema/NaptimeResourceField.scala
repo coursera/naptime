@@ -17,6 +17,8 @@ object NaptimeResourceField {
 
   type IdExtractor = (Context[SangriaGraphQlContext, DataMap]) => Any
 
+  val COMPLEXITY_COST = 10.0D
+
   def build(
       schemaMetadata: SchemaMetadata,
       resourceName: String,
@@ -25,7 +27,10 @@ object NaptimeResourceField {
     Field.apply[SangriaGraphQlContext, DataMap, Any, Any](
       name = fieldName,
       fieldType = getType(schemaMetadata, resourceName),
-      resolve = getResolver(resourceName, fieldName, idExtractor))
+      resolve = getResolver(resourceName, fieldName, idExtractor),
+      complexity = Some((ctx, args, childScore) => {
+        COMPLEXITY_COST * childScore
+      }))
   }
 
 
@@ -57,7 +62,7 @@ object NaptimeResourceField {
         context.value.get(fieldName)
       }
       val parsedResourceName = ResourceName.parse(resourceName).getOrElse {
-        throw new SchemaExecutionException(s"Cannot parse resource name from $resourceName")
+        throw SchemaExecutionException(s"Cannot parse resource name from $resourceName")
       }
       context.ctx.response.data.get(parsedResourceName)
         .flatMap { resourceSet =>
@@ -65,7 +70,7 @@ object NaptimeResourceField {
             .find(resource => id == resource._1)
             .map(optionalElement => Value[SangriaGraphQlContext, Any](optionalElement._2))
         }.getOrElse {
-        throw new NotFoundException(s"Cannot find $resourceName/$id")
+        throw NotFoundException(s"Cannot find $resourceName/$id")
       }
     }
   }
