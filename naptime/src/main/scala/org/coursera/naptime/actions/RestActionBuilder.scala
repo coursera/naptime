@@ -19,7 +19,6 @@ package org.coursera.naptime.actions
 import com.typesafe.scalalogging.StrictLogging
 import org.coursera.naptime.model.KeyFormat
 import org.coursera.naptime.model.Keyed
-import org.coursera.naptime
 import org.coursera.naptime.NaptimeActionException
 import org.coursera.naptime.RestError
 import org.coursera.naptime.access.HeaderAccessControl
