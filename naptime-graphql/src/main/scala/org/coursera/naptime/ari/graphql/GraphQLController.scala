@@ -96,36 +96,37 @@ class GraphQLController @Inject() (
       case Success(queryAst) =>
         SangriaGraphQlParser.parse(query, variables, requestHeader).map { request =>
 
-          val complexity = computeComplexity(queryAst, variables)
-          if (complexity > MAX_COMPLEXITY) {
-            Future.successful(BadRequest(Json.obj(
-              "error" -> "Query is too complex.",
-              "complexity" -> complexity)))
-          } else {
-            val fetcherExecution: Future[Option[Response]] =
-              if (query.contains("IntrospectionQuery")) {
-                Future.successful(None)
-              } else {
-                engine.execute(request).map(Some(_))
-              }
-            fetcherExecution.flatMap { responseOpt =>
-              val response = responseOpt.getOrElse(Response.empty)
-              val context = SangriaGraphQlContext(response)
-              Executor.execute(
-                graphqlSchemaProvider.schema,
-                queryAst,
-                context,
-                variables = variables,
-                exceptionHandler = exceptionHandler)
-                .map(Ok(_))
+          computeComplexity(queryAst, variables).flatMap { complexity =>
+            if (complexity > MAX_COMPLEXITY) {
+              Future.successful(BadRequest(Json.obj(
+                "error" -> "Query is too complex.",
+                "complexity" -> complexity)))
+            } else {
+              val fetcherExecution: Future[Option[Response]] =
+                if (query.contains("IntrospectionQuery")) {
+                  Future.successful(None)
+                } else {
+                  engine.execute(request).map(Some(_))
+                }
+              fetcherExecution.flatMap { responseOpt =>
+                val response = responseOpt.getOrElse(Response.empty)
+                val context = SangriaGraphQlContext(response)
+                Executor.execute(
+                  graphqlSchemaProvider.schema,
+                  queryAst,
+                  context,
+                  variables = variables,
+                  exceptionHandler = exceptionHandler)
+                  .map(Ok(_))
 
-            }.recover {
-              case error: QueryAnalysisError =>
-                BadRequest(Json.obj("error" -> error.resolveError))
-              case error: ErrorWithResolver =>
-                InternalServerError(Json.obj("error" -> error.resolveError))
-              case error: Exception =>
-                InternalServerError(Json.obj("error" -> error.getMessage))
+              }.recover {
+                case error: QueryAnalysisError =>
+                  BadRequest(Json.obj("error" -> error.resolveError))
+                case error: ErrorWithResolver =>
+                  InternalServerError(Json.obj("error" -> error.resolveError))
+                case error: Exception =>
+                  InternalServerError(Json.obj("error" -> error.getMessage))
+              }
             }
           }
         }.getOrElse {
@@ -148,14 +149,16 @@ class GraphQLController @Inject() (
         throw error
     }
   }
-  private def computeComplexity(queryAst: Document, variables: JsObject): Double = {
+  private[graphql] def computeComplexity(
+      queryAst: Document,
+      variables: JsObject): Future[Double] = {
     // TODO(bryan): is there a way around this var?
     var complexity = 0D
     val complReducer = QueryReducer.measureComplexity[SangriaGraphQlContext] { (c, ctx) ⇒
       complexity = c
       ctx
     }
-    Executor.execute(
+    val executorFut = Executor.execute(
       graphqlSchemaProvider.schema,
       queryAst,
       SangriaGraphQlContext(Response.empty),
@@ -163,6 +166,9 @@ class GraphQLController @Inject() (
       exceptionHandler = exceptionHandler,
       queryReducers = List(complReducer))
 
-    complexity
+    executorFut.map { _ =>
+      complexity
+    }
+
   }
 }
