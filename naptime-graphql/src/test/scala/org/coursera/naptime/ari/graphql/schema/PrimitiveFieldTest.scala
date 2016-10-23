@@ -108,4 +108,14 @@ class PrimitiveFieldTest extends AssertionsForJUnit with MockitoSugar {
     assert(caughtException.msg === "relatedIds could not be fixed-up or parsed")
   }
 
+  @Test
+  def optionalField(): Unit = {
+    val longDataSchema = new LongDataSchema()
+    val field = FieldBuilder.buildPrimitiveField[Long](fieldName, longDataSchema, LongType)
+    val graphqlContext = SangriaGraphQlContext(Response.empty)
+    val context = createContext(graphqlContext, new DataMap(Map.empty.asJava))
+    val result = field.resolve(context).asInstanceOf[Value[SangriaGraphQlContext, Any]]
+    assert(result.value === null)
+  }
+
 }

@@ -34,11 +34,12 @@ object NaptimeResourceField {
       resourceName: String): OptionType[DataMap] = {
     val resource = schemaMetadata.getResource(resourceName)
     val schema = schemaMetadata.getSchema(resource).getOrElse {
-      throw new SchemaGenerationException(s"Cannot find schema for $resourceName")
+      throw SchemaGenerationException(s"Cannot find schema for $resourceName")
     }
 
     val resourceObjectType = OptionType(ObjectType[SangriaGraphQlContext, DataMap](
       name = formatResourceName(resource),
+      description = schema.getDoc,
       fieldsFn = () => {
         Option(schema.getFields).map(_.asScala.map { field =>
           FieldBuilder.buildField(schemaMetadata, field, Option(schema.getNamespace))
@@ -46,7 +47,6 @@ object NaptimeResourceField {
       }))
     resourceObjectType
   }
-
 
   private[this] def getResolver(
       resourceName: String,
@@ -57,7 +57,7 @@ object NaptimeResourceField {
         context.value.get(fieldName)
       }
       val parsedResourceName = ResourceName.parse(resourceName).getOrElse {
-        throw new SchemaExecutionException(s"Cannot parse resource name from $resourceName")
+        throw SchemaExecutionException(s"Cannot parse resource name from $resourceName")
       }
       context.ctx.response.data.get(parsedResourceName)
         .flatMap { resourceSet =>
@@ -65,7 +65,7 @@ object NaptimeResourceField {
             .find(resource => id == resource._1)
             .map(optionalElement => Value[SangriaGraphQlContext, Any](optionalElement._2))
         }.getOrElse {
-        throw new NotFoundException(s"Cannot find $resourceName/$id")
+        throw NotFoundException(s"Cannot find $resourceName/$id")
       }
     }
   }
