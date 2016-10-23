@@ -39,6 +39,7 @@ import play.api.libs.json.JsNull
 import play.api.libs.json.JsString
 import play.api.libs.json.Json
 import sangria.execution.Executor
+import sangria.execution.QueryReducer
 import sangria.parser.QueryParser
 import sangria.schema.Schema
 
@@ -245,6 +246,42 @@ class SangriaGraphQlSchemaExecutionTest extends AssertionsForJUnit with ScalaFut
     assert((execution \ "data" \ "CoursesV1Resource" \ "idTwo").get === JsNull)
 
     assert((execution \ "errors" \\ "message").head.as[String] === "Cannot find courses.v1/2")
+  }
+
+  @Test
+  def complexityCalculation(): Unit = {
+    val schema = builder.generateSchema().asInstanceOf[Schema[SangriaGraphQlContext, Any]]
+    val query =
+      """
+      query {
+        CoursesV1Resource {             # 421 complexity points
+          getAll(limit: 20) {           # 420 [2 * 10 * 21] complexity points
+            elements {                  # 21 complexity points
+              instructors(limit: 5) {   # 20 [1 * 10 * 2] complexity points
+                elements {              # 2 complexity points
+                  id                    # 1 complexity point
+                }
+              }
+            }
+          }
+        }
+      }
+      """.stripMargin
+    val queryAst = QueryParser.parse(query).get
+
+    var complexity = 0D
+    val complReducer = QueryReducer.measureComplexity[SangriaGraphQlContext] { (c, ctx) ⇒
+      complexity = c
+      ctx
+    }
+    Executor.execute(
+      schema,
+      queryAst,
+      SangriaGraphQlContext(Response.empty),
+      variables = Json.obj(),
+      queryReducers = List(complReducer)).futureValue
+
+    assert(complexity === 421.0D)
   }
 
 }

@@ -17,6 +17,8 @@ object NaptimeResourceField {
 
   type IdExtractor = (Context[SangriaGraphQlContext, DataMap]) => Any
 
+  val COMPLEXITY_COST = 10.0D
+
   def build(
       schemaMetadata: SchemaMetadata,
       resourceName: String,
@@ -25,7 +27,10 @@ object NaptimeResourceField {
     Field.apply[SangriaGraphQlContext, DataMap, Any, Any](
       name = fieldName,
       fieldType = getType(schemaMetadata, resourceName),
-      resolve = getResolver(resourceName, fieldName, idExtractor))
+      resolve = getResolver(resourceName, fieldName, idExtractor),
+      complexity = Some((ctx, args, childScore) => {
+        COMPLEXITY_COST * childScore
+      }))
   }
 
 
