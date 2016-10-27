@@ -42,8 +42,7 @@ import scala.concurrent.duration.FiniteDuration
 
 class EngineImpl @Inject() (
     schemaProvider: SchemaProvider,
-    fetcher: FetcherApi,
-    metricsCollector: EngineMetricsCollector)
+    fetcher: FetcherApi)
     (implicit executionContext: ExecutionContext) extends EngineApi with StrictLogging {
 
   private[this] def mergedTypeForResource(resourceName: ResourceName): Option[RecordDataSchema] = {
@@ -55,19 +54,9 @@ class EngineImpl @Inject() (
       executeTopLevelRequest(request.requestHeader, topLevelRequest)
     }
     val futureResponses = Future.sequence(responseFutures)
-    val finalResponseFut = futureResponses.map { responses =>
+    futureResponses.map { responses =>
       responses.foldLeft(Response.empty)(_ ++ _)
     }
-    finalResponseFut.map { finalResponse =>
-      metricsCollector.markExecutionCompletion(finalResponse.metrics)
-    }
-    finalResponseFut.onFailure {
-      case e: Throwable =>
-        metricsCollector.markExecutionFailure()
-    }
-
-    finalResponseFut
-  }
 
   private[this] def executeTopLevelRequest(
       requestHeader: RequestHeader,

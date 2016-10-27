@@ -126,7 +126,14 @@ case class RequestField(
 
 case class ResponseMetrics(
   numRequests: Int = 0,
-  duration: FiniteDuration = FiniteDuration(0, "seconds"))
+  duration: FiniteDuration = FiniteDuration(0, "seconds")) {
+
+  def ++(other: ResponseMetrics): ResponseMetrics = {
+    ResponseMetrics(
+      numRequests = numRequests + other.numRequests,
+      duration = duration + other.duration)
+  }
+}
 
 /**
  * All of the data required to assemble a response to an automatic includes query.
@@ -165,9 +172,7 @@ case class Response(
       }.toMap
       resourceName -> mergedMap
     }.toMap
-    val mergedMetrics = ResponseMetrics(
-      numRequests = metrics.numRequests + other.metrics.numRequests,
-      duration = metrics.duration + other.metrics.duration)
+    val mergedMetrics = metrics ++ other.metrics
     Response(mergedTopLevel, mergedData, mergedMetrics)
   }
 }

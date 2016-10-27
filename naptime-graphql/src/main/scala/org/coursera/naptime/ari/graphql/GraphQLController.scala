@@ -21,6 +21,7 @@ import javax.inject._
 import com.typesafe.scalalogging.StrictLogging
 import org.coursera.naptime.ari.EngineApi
 import org.coursera.naptime.ari.Response
+import org.coursera.naptime.ari.engine.EngineMetricsCollector
 import org.coursera.naptime.ari.graphql.marshaller.NaptimeMarshaller._
 import play.api.libs.json.JsObject
 import play.api.libs.json.JsString
@@ -46,7 +47,8 @@ import scala.util.Success
 class GraphQLController @Inject() (
     graphqlSchemaProvider: GraphqlSchemaProvider,
     schemaProvider: GraphqlSchemaProvider,
-    engine: EngineApi)
+    engine: EngineApi,
+    metricsCollector: EngineMetricsCollector)
     (implicit ec: ExecutionContext)
   extends Controller
   with StrictLogging {
@@ -109,6 +111,7 @@ class GraphQLController @Inject() (
                   engine.execute(request).map(Some(_))
                 }
               fetcherExecution.flatMap { responseOpt =>
+                responseOpt.foreach(r => metricsCollector.markExecutionCompletion(r.metrics))
                 val response = responseOpt.getOrElse(Response.empty)
                 val context = SangriaGraphQlContext(response)
                 Executor.execute(
