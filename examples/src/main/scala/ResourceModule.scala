@@ -4,6 +4,8 @@ import org.coursera.naptime.ari.FetcherApi
 import org.coursera.naptime.ari.LocalSchemaProvider
 import org.coursera.naptime.ari.SchemaProvider
 import org.coursera.naptime.ari.engine.EngineImpl
+import org.coursera.naptime.ari.engine.EngineMetricsCollector
+import org.coursera.naptime.ari.engine.LoggingEngineMetricsCollector
 import org.coursera.naptime.ari.fetcher.LocalFetcher
 import org.coursera.naptime.ari.graphql.DefaultGraphqlSchemaProvider
 import org.coursera.naptime.ari.graphql.GraphqlSchemaProvider
@@ -24,6 +26,7 @@ class ResourceModule extends NaptimeModule {
     bind[UserStore].to[UserStoreImpl]
     bind[EngineApi].to[EngineImpl]
     bind[FetcherApi].to[LocalFetcher]
+    bind[EngineMetricsCollector].to[LoggingEngineMetricsCollector]
     bind[SchemaProvider].to[LocalSchemaProvider]
     bind[GraphqlSchemaProvider].to[DefaultGraphqlSchemaProvider]
   }
