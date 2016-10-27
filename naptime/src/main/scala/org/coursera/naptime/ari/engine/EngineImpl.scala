@@ -57,6 +57,7 @@ class EngineImpl @Inject() (
     futureResponses.map { responses =>
       responses.foldLeft(Response.empty)(_ ++ _)
     }
+  }
 
   private[this] def executeTopLevelRequest(
       requestHeader: RequestHeader,
