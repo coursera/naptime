@@ -14,6 +14,8 @@ import scala.collection.JavaConverters._
 
 object NaptimePaginatedResourceField {
 
+  val COMPLEXITY_COST = 10.0D
+
   def build(
       schemaMetadata: SchemaMetadata,
       resourceName: String,
@@ -22,6 +24,12 @@ object NaptimePaginatedResourceField {
       name = fieldName,
       fieldType = getType(schemaMetadata, resourceName, fieldName),
       resolve = context => ParentContext(context),
+      complexity = Some((ctx, args, childScore) => {
+        // API calls should count 10x, and we take limit into account because there could be
+        // N child API calls for each response here
+        val limit = args.arg(NaptimePaginationField.limitArgument)
+        Math.max(limit / 10, 1) * COMPLEXITY_COST * childScore
+      }),
       arguments = NaptimePaginationField.paginationArguments)
   }
 
@@ -33,7 +41,7 @@ object NaptimePaginatedResourceField {
 
     val resource = schemaMetadata.getResource(resourceName)
     schemaMetadata.getSchema(resource).getOrElse {
-      throw new SchemaGenerationException(s"Cannot find schema for $resourceName")
+      throw SchemaGenerationException(s"Cannot find schema for $resourceName")
     }
 
     ObjectType[SangriaGraphQlContext, ParentContext](
@@ -61,7 +69,7 @@ object NaptimePaginatedResourceField {
     (context: Context[SangriaGraphQlContext, ParentContext]) => {
 
       val parsedResourceName = ResourceName.parse(resourceName).getOrElse {
-        throw new SchemaExecutionException(s"Cannot parse resource name from $resourceName")
+        throw SchemaExecutionException(s"Cannot parse resource name from $resourceName")
       }
       val connection = context.ctx.response.data.get(parsedResourceName).map { objects =>
         val ids = Option(context.value.parentContext.value).map { parentElement =>

@@ -25,6 +25,11 @@ object Models {
         kind = HandlerKind.MULTI_GET,
         name = "multiGet",
         parameters = List(Parameter(name = "ids", `type` = "List[Integer]", attributes = List.empty)),
+        attributes = List.empty),
+      Handler(
+        kind = HandlerKind.GET_ALL,
+        name = "getAll",
+        parameters = List.empty,
         attributes = List.empty)),
     className = "",
     attributes = List.empty)

@@ -155,17 +155,18 @@ object FieldBuilder extends StrictLogging {
       name = fieldName,
       fieldType = sangriaScalarType,
       resolve = context => {
-        val rawValue = context.value.get(fieldName)
-        val result = ValidateDataAgainstSchema.validate(rawValue, dataSchema, validationOptions)
+        Option(context.value.get(fieldName)).map { rawValue =>
+          val result = ValidateDataAgainstSchema.validate(rawValue, dataSchema, validationOptions)
 
-        if (result.isValid) {
-          result.getFixed match {
-            case value: ParseType => value
-            case _ => throw ResponseFormatException(s"$fieldName's value is an invalid type")
+          if (result.isValid) {
+            result.getFixed match {
+              case value: ParseType => value
+              case _ => throw ResponseFormatException(s"$fieldName's value is an invalid type")
+            }
+          } else {
+            throw ResponseFormatException(s"$fieldName could not be fixed-up or parsed")
           }
-        } else {
-          throw ResponseFormatException(s"$fieldName could not be fixed-up or parsed")
-        }
+        }.getOrElse(null)
       })
   }
 
