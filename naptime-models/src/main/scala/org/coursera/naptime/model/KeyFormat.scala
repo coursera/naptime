@@ -54,11 +54,11 @@ object KeyFormat extends PrimitiveFormats {
    * Defines a `KeyFormat` that only adds the `"id"` field to response objects. The `"id"` field
    * will contain a string representation of the id, as specified by `stringKeyFormatT`.
    *
-   * Note: If [[K]] contains a single, primitive type field (like `case class A(i: Int)`), you may
+   * Note: If `K` contains a single, primitive type field (like `case class A(i: Int)`), you may
    * want to use [[idAsPrimitive]] instead. With [[idAsStringOnly]], the output object will
    * be `{"id": "3"}`, whereas with [[idAsPrimitive]], it'll be `{"id": 3}`.
    *
-   * Note: If you want to add additional fields to JSON response objects (for example, if [[K]] is a
+   * Note: If you want to add additional fields to JSON response objects (for example, if `K` is a
    * composite key), use [[idAsStringWithFields]] instead.
    */
   def idAsStringOnly[K](implicit stringKeyFormatT: StringKeyFormat[K]): KeyFormat[K] = {
@@ -80,7 +80,7 @@ object KeyFormat extends PrimitiveFormats {
 
   /**
    * Defines a format that only adds the `"id"` field to response objects. The `"id"` field
-   * will contain the natural JSON representation for primitive type [[P]].
+   * will contain the natural JSON representation for primitive type `P`.
    * (JSON number for `Int`, etc.)
    */
   def idAsPrimitive[K, P](
@@ -144,9 +144,9 @@ object KeyFormat extends PrimitiveFormats {
   }
 
   /**
-   * Augment [[K]]'s format with an additional fallback JsReads implementation.
+   * Augment `K`'s format with an additional fallback JsReads implementation.
    *
-   * @param altReads An alternate JsValue to [[K]] Reads implementation.
+   * @param altReads An alternate JsValue to `K` Reads implementation.
    * @param keyFormat The standard KeyFormat to augment.
    * @tparam K The key type.
    * @return The augmented KeyFormat.

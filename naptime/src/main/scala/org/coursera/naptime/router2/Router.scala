@@ -78,9 +78,10 @@ class Router @Inject() (
   def onRouteRequest(requestHeader: RequestHeader): Option[RouteAction] = {
     if (requestHeader.path.startsWith("/api")) {
       val path = requestHeader.path.substring("/api".length)
+
       /**
        * Helper function to find the first resource that matches the request and route appropriately
- *
+       *
        * @param resourceRouters The registered resource routers.
        * @param requestHeader The request to route.
        * @return Some(RouteAction) if the request corresponds to a registered resource, else None

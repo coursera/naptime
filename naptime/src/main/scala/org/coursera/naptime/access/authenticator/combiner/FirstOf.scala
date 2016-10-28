@@ -45,6 +45,8 @@ private[authenticator] trait FirstOf {
           .map(Authenticator.authenticateAndRecover(_, requestHeader))
 
         /**
+         * Takes the first defined.
+         *
          * @return the first non-`None` element from the list of `Future`s, or `None` if all
          * elements are `None`.
          */

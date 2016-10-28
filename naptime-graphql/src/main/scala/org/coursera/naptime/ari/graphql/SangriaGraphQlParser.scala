@@ -50,21 +50,22 @@ import sangria.ast.VariableValue
 import sangria.parser.QueryParser
 
 /**
-  * The SangriaGraphQlParser uses the [Sangria library](https://github.com/sangria-graphql/sangria)
-  * to parse a GraphQL input into a Naptime ARI [[Request]] for further processing.
-  */
+ * The SangriaGraphQlParser uses the [Sangria library](https://github.com/sangria-graphql/sangria)
+ * to parse a GraphQL input into a Naptime ARI [[org.coursera.naptime.ari.Request]] for further
+ * processing.
+ */
 object SangriaGraphQlParser extends GraphQlParser {
 
   /**
-    * For a given request, consisting of a GraphQL query (represented as a string) and a
-    * [[RequestHeader]], parse the input into a Naptime [[Request]] to be passed to the
-    * [[org.coursera.naptime.ari.EngineApi]]
-    *
-    * @param request A string representation of a GraphQL query / mutation
-    * @param requestHeader RequestHeader from the incoming request, which gets propagated down to
-    *                      the engine. May be used for authentication at a future time.
-    * @return a [[Request]] if the parsing of the request was successful, otherwise None
-    */
+   * For a given request, consisting of a GraphQL query (represented as a string) and a
+   * [[play.api.mvc.RequestHeader]], parse the input into a Naptime [[org.coursera.naptime.ari.Request]]
+   * to be passed to the [[org.coursera.naptime.ari.EngineApi]]
+   *
+   * @param request A string representation of a GraphQL query / mutation
+   * @param requestHeader RequestHeader from the incoming request, which gets propagated down to
+   *                      the engine. May be used for authentication at a future time.
+   * @return a [[org.coursera.naptime.ari.Request]] if the parsing of the request was successful
+   */
   def parse(request: String, variables: JsObject, requestHeader: RequestHeader): Option[Request] = {
     val parsedDocumentOption = QueryParser.parse(request).toOption
     // TODO(bryan): Handle error cases here
@@ -158,13 +159,13 @@ object SangriaGraphQlParser extends GraphQlParser {
   val TOP_LEVEL_RESOURCE_REGEX = "([\\w\\d]+)V(\\d)Resource".r
 
   /**
-    * Converts a GraphQL top-level field name to a standard Naptime [[ResourceName]].
-    * For example, CoursesV1 gets parsed as ResourceName("Courses", 1).
-    * Invalid field names will return a None.
-    *
-    * @param fieldName field name string, in the format CoursesV1
-    * @return parsed [[ResourceName]] if successful, None if unsuccessful.
-    */
+   * Converts a GraphQL top-level field name to a standard Naptime [[org.coursera.naptime.ResourceName]].
+   * For example, CoursesV1 gets parsed as ResourceName("Courses", 1).
+   * Invalid field names will return a None.
+   *
+   * @param fieldName field name string, in the format CoursesV1
+   * @return parsed [[org.coursera.naptime.ResourceName]] if successful, [[scala.None]] if unsuccessful.
+   */
   def fieldNameToNaptimeResource(fieldName: String): Option[ResourceName] = {
     // TODO(bryan): provide more information on a parse error than simply returning a None
     fieldName match {

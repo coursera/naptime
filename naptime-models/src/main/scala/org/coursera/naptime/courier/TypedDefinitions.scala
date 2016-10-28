@@ -44,7 +44,7 @@ object TypedDefinitions {
    *
    * For example, given the schema:
    *
-   * ```
+   * {{{
    * namespace org.example
    *
    * @@typedDefinition = {
@@ -55,14 +55,14 @@ object TypedDefinitions {
    *   record Alpha {}
    *   record Beta {}
    * ]
-   * ```
+   * }}}
    *
    * The Scala expression:
    *
-   * ```
+   * {{{
    * val member = ExampleUnion.AlphaMember(Alpha())
    * TypedDefinitions.typeName(member)
-   * ```
+   * }}}
    *
    * returns "alpha"
    */
