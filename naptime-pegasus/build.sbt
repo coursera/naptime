@@ -19,7 +19,3 @@ libraryDependencies ++= Seq(
   "com.linkedin.pegasus" % "data" % "2.6.0",
   junit,
   "com.novocode" % "junit-interface" % "0.11" % "test->default")
-
-// Disable deprecation warnings entirely so they don't turn into errors.
-scalacOptions := scalacOptions.value.filterNot(_.startsWith("-deprecation"))
-scalacOptions ++= Seq("-deprecation:false", "-Xfatal-warnings")
