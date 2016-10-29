@@ -152,15 +152,17 @@ object SchemaUtils {
    */
   def fixupInferredSchemas(
       schemaToFix: RecordDataSchema,
-      typeOverrides: NaptimeModule.SchemaTypeOverrides): Unit = {
+      typeOverrides: NaptimeModule.SchemaTypeOverrides,
+      visitedFields: Set[String] = Set.empty): Unit = {
     schemaToFix.getFields.asScala.foreach { field =>
       val fieldType = field.getType
       fieldType.getDereferencedDataSchema match {
         case named: NamedDataSchema if typeOverrides.contains(named.getFullName) =>
           val overrideType = typeOverrides(named.getFullName)
           field.setType(overrideType)
-        case recordType: RecordDataSchema =>
-          fixupInferredSchemas(recordType, typeOverrides)
+        case recordType: RecordDataSchema if !visitedFields.contains(recordType.getFullName) =>
+          val updatedVisitedFields = visitedFields + recordType.getFullName
+          fixupInferredSchemas(recordType, typeOverrides, updatedVisitedFields)
         case _ => // Do nothing otherwise.
       }
     }
