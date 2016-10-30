@@ -140,11 +140,11 @@ case class NaptimePlayRouter (
     }
 
     /**
-      * Computes the URL path to access the resource.
+     * Computes the URL path to access the resource.
      *
      * @param resourceSchema The resource to compute.
-      * @return (PathWithoutKeys, PathWithKeySuffix)
-      */
+     * @return (PathWithoutKeys, PathWithKeySuffix)
+     */
     def computeFullPath(resourceSchema: schema.Resource): (String, String) = {
       val previous = if (resourceSchema.parentClass.isDefined &&
           !resourceSchema.parentClass.contains("org.coursera.naptime.resources.RootResource")) {

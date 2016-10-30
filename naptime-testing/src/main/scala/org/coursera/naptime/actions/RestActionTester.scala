@@ -28,7 +28,6 @@ import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.exceptions.TestFailedException
 import play.api.test.FakeRequest
 
-import scala.concurrent.Future
 import scala.util.Try
 
 /**
@@ -51,7 +50,8 @@ trait RestActionTester { this: ScalaFutures =>
   }
 
   /**
-   * Add an extra `.testAction` method to [[RestAction]] to make testing easier.
+   * Add an extra `.testAction` method to [[org.coursera.naptime.actions.RestAction]] to make testing
+   * easier.
    */
   protected[this] implicit class RestActionTestOps[AuthType, BodyType, ResponseType](
     action: RestAction[_, AuthType, BodyType, _, _, ResponseType]) {

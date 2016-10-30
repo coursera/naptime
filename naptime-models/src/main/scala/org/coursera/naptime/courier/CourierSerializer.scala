@@ -37,7 +37,8 @@ import scala.reflect.ClassTag
  * Provides methods for serializing and deserializing the Pegasus data types used by Courier
  * to JSON.
  *
- * This uses [[TypedDefinitionCodec]], the default codec for use with Courier at Coursera.
+ * This uses [[org.coursera.pegasus.TypedDefinitionCodec]], the default codec for use with Courier
+ * at Coursera.
  *
  * For example, given a generated Courier data binding class named `Profile`, to serialize the
  * Courier data binding class (a.k.a. data template) to JSON:
@@ -58,7 +59,7 @@ object CourierSerializer {
   /**
    * Reads a record template from a JSON string.
    *
-   * @throws DataValidationException if validation fails.
+   * @throws org.coursera.courier.templates.DataValidationException if validation fails.
    */
   def read[T <: DataTemplate[DataMap]](json: String)(implicit tag: ClassTag[T]): T = {
     val clazz = tag.runtimeClass.asInstanceOf[Class[T]]
@@ -76,7 +77,7 @@ object CourierSerializer {
   /**
    * Reads a union template from a JSON string.
    *
-   * @throws DataValidationException if validation fails.
+   * @throws org.coursera.courier.templates.DataValidationException if validation fails.
    */
   def readUnion[T <: UnionTemplate](json: String)(implicit tag: ClassTag[T]): T = {
     val clazz = tag.runtimeClass.asInstanceOf[Class[T]]
