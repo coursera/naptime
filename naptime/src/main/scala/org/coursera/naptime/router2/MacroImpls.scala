@@ -312,9 +312,10 @@ class MacroImpls(val c: blackbox.Context) {
       q"""{
         val mergedType: String = ${mergedType(resourceType)}
         val keySchemaOption: Option[com.linkedin.data.schema.DataSchema] = $keySchemaOption
+        val keySchema: com.linkedin.data.schema.DataSchema = keySchemaOption
+          .getOrElse(new com.linkedin.data.schema.StringDataSchema)
         val bodySchemaOption: Option[com.linkedin.data.schema.RecordDataSchema] = $bodySchemaOption
         (for {
-          keySchema <- keySchemaOption
           bodySchema <- bodySchemaOption
         } yield {
           org.coursera.naptime.model.Keyed(
