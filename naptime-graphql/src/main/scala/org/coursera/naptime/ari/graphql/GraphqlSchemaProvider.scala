@@ -17,6 +17,7 @@
 package org.coursera.naptime.ari.graphql
 
 import javax.inject.Inject
+import javax.inject.Singleton
 
 import com.linkedin.data.schema.RecordDataSchema
 import com.typesafe.scalalogging.StrictLogging
@@ -24,7 +25,6 @@ import org.coursera.naptime.ari.FullSchema
 import org.coursera.naptime.ari.SchemaProvider
 import sangria.schema.ObjectType
 import sangria.schema.Schema
-import sangria.schema.SchemaValidationException
 
 import scala.util.control.NonFatal
 
@@ -53,10 +53,13 @@ trait GraphqlSchemaProvider {
  *
  * @param schemaProvider A schema provider.
  */
+
+@Singleton
 class DefaultGraphqlSchemaProvider @Inject() (schemaProvider: SchemaProvider)
   extends GraphqlSchemaProvider with StrictLogging {
   private[this] var fullSchema = FullSchema.empty
-  private[this] var cachedSchema: Schema[SangriaGraphQlContext, Any] = DefaultGraphqlSchemaProvider.EMPTY_SCHEMA
+  private[this] var cachedSchema: Schema[SangriaGraphQlContext, Any] =
+    DefaultGraphqlSchemaProvider.EMPTY_SCHEMA
 
   private[this] def recomputeSchema(latestSchema: FullSchema): Unit = {
     val typesMap = latestSchema.types.collect {
@@ -99,5 +102,6 @@ class DefaultGraphqlSchemaProvider @Inject() (schemaProvider: SchemaProvider)
 }
 
 object DefaultGraphqlSchemaProvider {
-  val EMPTY_SCHEMA = Schema(query = ObjectType[SangriaGraphQlContext, Any](name = "root", fields = List.empty))
+  val EMPTY_SCHEMA = Schema(
+    query = ObjectType[SangriaGraphQlContext, Any](name = "root", fields = List.empty))
 }
