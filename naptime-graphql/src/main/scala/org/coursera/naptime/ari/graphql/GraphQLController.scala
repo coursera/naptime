@@ -46,7 +46,6 @@ import scala.util.Success
 @Singleton
 class GraphQLController @Inject() (
     graphqlSchemaProvider: GraphqlSchemaProvider,
-    schemaProvider: GraphqlSchemaProvider,
     engine: EngineApi,
     metricsCollector: EngineMetricsCollector)
     (implicit ec: ExecutionContext)
@@ -132,6 +131,13 @@ class GraphQLController @Inject() (
                   InternalServerError(Json.obj("error" -> error.getMessage))
               }
             }
+          }.recover {
+            case error: QueryAnalysisError =>
+              BadRequest(Json.obj("error" -> error.resolveError))
+            case error: ErrorWithResolver =>
+              InternalServerError(Json.obj("error" -> error.resolveError))
+            case error: Exception =>
+              InternalServerError(Json.obj("error" -> error.getMessage))
           }
         }.getOrElse {
           Future.successful(
