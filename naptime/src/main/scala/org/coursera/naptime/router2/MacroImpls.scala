@@ -243,6 +243,33 @@ class MacroImpls(val c: blackbox.Context) {
       }
     }
 
+    private[this] def getDataSchemaDataMapForType(targetType: c.Type): c.Tree = {
+      val schema = if (targetType <:< SCALA_RECORD_TEMPLATE) {
+        q"""Some(
+          org.coursera.courier.templates.DataTemplates
+            .getSchema[$targetType]
+            .asInstanceOf[com.linkedin.data.schema.DataSchema])"""
+      } else {
+        q"""
+          scala.util.Try {
+            import scala.collection.JavaConversions._
+            val resolver = new com.linkedin.data.schema.resolver.DefaultDataSchemaResolver()
+            val parser = new com.linkedin.data.schema.SchemaParser(resolver)
+            val schemaJson = org.coursera.naptime.courier.SchemaInference.inferSchema(
+              scala.reflect.runtime.universe.typeTag[$targetType])
+            parser.parse(schemaJson.toString)
+            parser.topLevelDataSchemas.head.asInstanceOf[com.linkedin.data.schema.DataSchema]
+          }.toOption"""
+      }
+      q"""
+        val schemaOpt = $schema
+        schemaOpt.flatMap { schema =>
+          val dataCodec = new com.linkedin.data.codec.JacksonDataCodec();
+          scala.util.Try(dataCodec.stringToMap(schema.toString)).toOption
+        }
+      """
+    }
+
     private[this] def computeKeyType(keyType: c.Type): c.Tree = {
       keyType match {
         case _ if keyType =:= typeOf[Int] =>
@@ -367,7 +394,7 @@ class MacroImpls(val c: blackbox.Context) {
         // TODO(saeta): handle path keys appropriately!
         val parameterModelName = TermName(c.freshName())
         // TODO(saeta): Handle attributes!
-        if (param.asTerm.isParamWithDefault) {
+        val parameterDefinition = if (param.asTerm.isParamWithDefault) {
           val defaultFnName = TermName(s"${method.name}$$default$$" + (i + 1))
           val defaultValue = if (param.typeSignature <:< DATA_TEMPLATE) {
             q"""org.coursera.naptime.schema.ArbitraryValue.ArbitraryRecordMember(
@@ -419,6 +446,15 @@ class MacroImpls(val c: blackbox.Context) {
             )
           """
         }
+        q"""
+          val parameterWithoutTypeSchema = $parameterDefinition
+          val typeSchema = ${getDataSchemaDataMapForType(param.typeSignature)}
+          val updatedDataMap = parameterWithoutTypeSchema.data().clone()
+          typeSchema.foreach(t => updatedDataMap.put("typeSchema", t))
+          org.coursera.naptime.schema.Parameter(
+            updatedDataMap,
+            org.coursera.courier.templates.DataTemplates.DataConversion.SetReadOnly)
+        """
       }
       // TODO: handle input, custom output bodies, and attributes
       q"""

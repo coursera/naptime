@@ -11,6 +11,8 @@ record Parameter {
 
   type: TypeName
 
+  typeSchema: ParameterDataSchema?
+
   attributes: array[Attribute]
 
   /**

@@ -1,0 +1,13 @@
+namespace org.coursera.naptime.schema
+
+/**
+ * Marker type identifying a Pegasus data schema.
+ *
+ * Because Pegasus data schemas are not self describing, they are represented in Courier with this
+ * record. Instances of this record will, however, be non-empty-- their underlying DataMap will
+ * contain the JSON representation of a Pegasus data schema.
+ */
+@passthroughExempt
+record ParameterDataSchema {
+  // Intentionally empty!
+}
