@@ -1,0 +1,79 @@
+package org.coursera.naptime.ari.graphql.controllers.filters
+
+import javax.inject.Inject
+import javax.inject.Singleton
+
+import com.typesafe.scalalogging.StrictLogging
+import org.coursera.naptime.ari.Response
+import org.coursera.naptime.ari.graphql.GraphqlSchemaProvider
+import org.coursera.naptime.ari.graphql.SangriaGraphQlContext
+import org.coursera.naptime.ari.graphql.controllers.GraphQLController
+import org.coursera.naptime.ari.graphql.marshaller.NaptimeMarshaller._
+import play.api.libs.json.JsObject
+import play.api.libs.json.Json
+import play.api.mvc.Results
+import sangria.ast.Document
+import sangria.execution.ErrorWithResolver
+import sangria.execution.Executor
+import sangria.execution.QueryAnalysisError
+import sangria.execution.QueryReducer
+
+import scala.concurrent.ExecutionContext
+import scala.concurrent.Future
+
+@Singleton
+class QueryComplexityFilter @Inject() (
+    graphqlSchemaProvider: GraphqlSchemaProvider)
+    (implicit executionContext: ExecutionContext)
+  extends Filter
+  with Results
+  with StrictLogging {
+
+  val MAX_COMPLEXITY = 10000 // TODO(bryan): pull this out to config?
+
+  def apply(nextFilter: FilterFn): FilterFn = { incoming =>
+    computeComplexity(incoming.document, incoming.variables).flatMap { complexity =>
+      if (complexity > MAX_COMPLEXITY) {
+        Future.successful(
+          OutgoingQuery(
+            result = BadRequest(
+              Json.obj(
+                "error" -> "Query is too complex.",
+                "complexity" -> complexity)),
+            ariResponse = None))
+      } else {
+        nextFilter.apply(incoming)
+      }
+    }.recover {
+      case error: QueryAnalysisError =>
+        OutgoingQuery(BadRequest(Json.obj("error" -> error.resolveError)), None)
+      case error: ErrorWithResolver =>
+        OutgoingQuery(InternalServerError(Json.obj("error" -> error.resolveError)), None)
+      case error: Exception =>
+        OutgoingQuery(InternalServerError(Json.obj("error" -> error.getMessage)), None)
+    }
+  }
+
+  private[graphql] def computeComplexity(
+      queryAst: Document,
+      variables: JsObject): Future[Double] = {
+    // TODO(bryan): is there a way around this var?
+    var complexity = 0D
+    val complReducer = QueryReducer.measureComplexity[SangriaGraphQlContext] { (c, ctx) =>
+      complexity = c
+      ctx
+    }
+    val executorFut = Executor.execute(
+      graphqlSchemaProvider.schema,
+      queryAst,
+      SangriaGraphQlContext(Response.empty),
+      variables = variables,
+      exceptionHandler = GraphQLController.exceptionHandler(logger),
+      queryReducers = List(complReducer))
+
+    executorFut.map { _ =>
+      complexity
+    }
+
+  }
+}
