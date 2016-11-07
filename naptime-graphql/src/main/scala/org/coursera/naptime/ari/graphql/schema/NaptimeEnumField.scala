@@ -16,7 +16,7 @@ object NaptimeEnumField {
       fieldName: String): Field[SangriaGraphQlContext, DataMap] = {
 
     Field.apply[SangriaGraphQlContext, DataMap, Any, Any](
-      name = enumDataSchema.getName,
+      name = fieldName,
       fieldType = getType(enumDataSchema),
       resolve = context => context.value.getString(fieldName))
   }
