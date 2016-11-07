@@ -59,7 +59,7 @@ class QueryComplexityFilter @Inject() (
       variables: JsObject): Future[Double] = {
     // TODO(bryan): is there a way around this var?
     var complexity = 0D
-    val complReducer = QueryReducer.measureComplexity[SangriaGraphQlContext] { (c, ctx) ⇒
+    val complReducer = QueryReducer.measureComplexity[SangriaGraphQlContext] { (c, ctx) =>
       complexity = c
       ctx
     }
