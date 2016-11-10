@@ -36,21 +36,20 @@ class QueryComplexityFilter @Inject() (
       if (complexity > MAX_COMPLEXITY) {
         Future.successful(
           OutgoingQuery(
-            result = BadRequest(
-              Json.obj(
+            response = Json.obj(
                 "error" -> "Query is too complex.",
-                "complexity" -> complexity)),
+                "complexity" -> complexity),
             ariResponse = None))
       } else {
         nextFilter.apply(incoming)
       }
     }.recover {
       case error: QueryAnalysisError =>
-        OutgoingQuery(BadRequest(Json.obj("error" -> error.resolveError)), None)
+        OutgoingQuery(Json.obj("error" -> error.resolveError), None)
       case error: ErrorWithResolver =>
-        OutgoingQuery(InternalServerError(Json.obj("error" -> error.resolveError)), None)
+        OutgoingQuery(Json.obj("error" -> error.resolveError), None)
       case error: Exception =>
-        OutgoingQuery(InternalServerError(Json.obj("error" -> error.getMessage)), None)
+        OutgoingQuery(Json.obj("error" -> error.getMessage), None)
     }
   }
 
