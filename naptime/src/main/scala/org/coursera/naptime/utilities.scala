@@ -167,19 +167,34 @@ object SchemaUtils {
       }
     }
 
+    def recursivelyFixup(schema: DataSchema) = {
+      schema.getDereferencedDataSchema match {
+        case recordType: RecordDataSchema =>
+          fixupInferredSchemas(recordType, typeOverrides, visitedFields)
+        case _ =>
+      }
+    }
+
     schemaToFix.getFields.asScala.foreach { field =>
       val fieldType = field.getType
       fieldType.getDereferencedDataSchema match {
+
+        case named: NamedDataSchema if typeOverrides.contains(named.getFullName) =>
+          getTypeOverride(named).foreach { overrideType =>
+            field.setType(overrideType)
+          }
 
         case arrayType: ArrayDataSchema =>
           getTypeOverride(arrayType.getItems).foreach { overrideType =>
             field.setType(new ArrayDataSchema(overrideType))
           }
+          recursivelyFixup(arrayType.getItems)
 
         case mapType: MapDataSchema =>
           getTypeOverride(mapType.getValues).foreach { overrideType =>
             field.setType(new MapDataSchema(overrideType))
           }
+          recursivelyFixup(mapType.getValues)
 
         case recordType: RecordDataSchema if !visitedFields.contains(recordType.getFullName) =>
           val updatedVisitedFields = visitedFields + recordType.getFullName

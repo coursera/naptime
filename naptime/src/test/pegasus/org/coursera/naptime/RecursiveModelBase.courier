@@ -3,5 +3,6 @@ namespace org.coursera.naptime
 record RecursiveModelBase {
   recursiveChild: RecursiveChild
   recursiveChildren: array[RecursiveChild]
+  nestedChild: array[NestedChild]
   recursiveChildMap: map[string, RecursiveChild]
 }
