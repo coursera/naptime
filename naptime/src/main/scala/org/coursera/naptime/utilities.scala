@@ -16,6 +16,9 @@
 
 package org.coursera.naptime
 
+import com.linkedin.data.schema.ArrayDataSchema
+import com.linkedin.data.schema.DataSchema
+import com.linkedin.data.schema.MapDataSchema
 import com.linkedin.data.schema.NamedDataSchema
 import com.linkedin.data.schema.RecordDataSchema
 import org.coursera.naptime.model.KeyFormat
@@ -154,17 +157,43 @@ object SchemaUtils {
       schemaToFix: RecordDataSchema,
       typeOverrides: NaptimeModule.SchemaTypeOverrides,
       visitedFields: Set[String] = Set.empty): Unit = {
+
+    def getTypeOverride(schema: DataSchema): Option[DataSchema] = {
+      schema.getDereferencedDataSchema match {
+        case named: NamedDataSchema if typeOverrides.contains(named.getFullName) =>
+          Some(typeOverrides(named.getFullName))
+        case _ =>
+          None
+      }
+    }
+
     schemaToFix.getFields.asScala.foreach { field =>
       val fieldType = field.getType
       fieldType.getDereferencedDataSchema match {
-        case named: NamedDataSchema if typeOverrides.contains(named.getFullName) =>
-          val overrideType = typeOverrides(named.getFullName)
-          field.setType(overrideType)
+
+        case arrayType: ArrayDataSchema =>
+          getTypeOverride(arrayType.getItems).foreach { overrideType =>
+            field.setType(new ArrayDataSchema(overrideType))
+          }
+
+        case mapType: MapDataSchema =>
+          getTypeOverride(mapType.getValues).foreach { overrideType =>
+            field.setType(new MapDataSchema(overrideType))
+          }
+
         case recordType: RecordDataSchema if !visitedFields.contains(recordType.getFullName) =>
           val updatedVisitedFields = visitedFields + recordType.getFullName
           fixupInferredSchemas(recordType, typeOverrides, updatedVisitedFields)
+
+        case named: NamedDataSchema =>
+          getTypeOverride(named).foreach { overrideType =>
+            field.setType(overrideType)
+          }
+
         case _ => // Do nothing otherwise.
       }
     }
   }
+
+
 }
