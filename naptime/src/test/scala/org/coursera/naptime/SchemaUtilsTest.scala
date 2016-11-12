@@ -5,6 +5,7 @@ import com.linkedin.data.schema.DataSchema
 import com.linkedin.data.schema.DataSchemaUtil
 import com.linkedin.data.schema.MapDataSchema
 import com.linkedin.data.schema.RecordDataSchema
+import com.linkedin.data.schema.UnionDataSchema
 import org.coursera.naptime.ari.graphql.models.MergedCourse
 import org.junit._
 import org.scalatest.junit.AssertionsForJUnit
@@ -67,6 +68,18 @@ class SchemaUtilsTest extends AssertionsForJUnit {
     assert(schemaToFix
       .getField("nestedChild").getType.asInstanceOf[ArrayDataSchema]
       .getItems.asInstanceOf[RecordDataSchema]
+      .getField("stringLikeField").getType === stringDataSchema)
+  }
+
+  @Test
+  def testFixupSchema_RecursiveUnionSchema_WithOverrides(): Unit = {
+    val schemaToFix = RecursiveModelBase.SCHEMA
+    val stringDataSchema = DataSchemaUtil.dataSchemaTypeToPrimitiveDataSchema(DataSchema.Type.STRING)
+    val overrides = Map("org.coursera.naptime.StringLikeField" -> stringDataSchema)
+    SchemaUtils.fixupInferredSchemas(schemaToFix, overrides)
+    assert(schemaToFix
+      .getField("unionChild").getType.asInstanceOf[UnionDataSchema]
+      .getTypeByName("NestedChild").asInstanceOf[RecordDataSchema]
       .getField("stringLikeField").getType === stringDataSchema)
   }
 

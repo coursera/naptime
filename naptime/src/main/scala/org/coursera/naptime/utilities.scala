@@ -21,6 +21,7 @@ import com.linkedin.data.schema.DataSchema
 import com.linkedin.data.schema.MapDataSchema
 import com.linkedin.data.schema.NamedDataSchema
 import com.linkedin.data.schema.RecordDataSchema
+import com.linkedin.data.schema.UnionDataSchema
 import org.coursera.naptime.model.KeyFormat
 import org.coursera.naptime.model.Keyed
 import play.api.libs.json.JsArray
@@ -161,7 +162,7 @@ object SchemaUtils {
     def getTypeOverride(schema: DataSchema): Option[DataSchema] = {
       schema.getDereferencedDataSchema match {
         case named: NamedDataSchema if typeOverrides.contains(named.getFullName) =>
-          Some(typeOverrides(named.getFullName))
+          typeOverrides.get(named.getFullName)
         case _ =>
           None
       }
@@ -169,15 +170,16 @@ object SchemaUtils {
 
     def recursivelyFixup(schema: DataSchema) = {
       schema.getDereferencedDataSchema match {
-        case recordType: RecordDataSchema =>
-          fixupInferredSchemas(recordType, typeOverrides, visitedFields)
+        case recordType: RecordDataSchema if !visitedFields.contains(recordType.getFullName) =>
+          val updatedVisitedFields = visitedFields + recordType.getFullName
+          fixupInferredSchemas(recordType, typeOverrides, updatedVisitedFields)
         case _ =>
       }
     }
 
-    schemaToFix.getFields.asScala.foreach { field =>
+    Option(schemaToFix.getFields).map(_.asScala).getOrElse(List.empty).foreach { field =>
       val fieldType = field.getType
-      fieldType.getDereferencedDataSchema match {
+      Option(fieldType.getDereferencedDataSchema).foreach {
 
         case named: NamedDataSchema if typeOverrides.contains(named.getFullName) =>
           getTypeOverride(named).foreach { overrideType =>
@@ -189,6 +191,16 @@ object SchemaUtils {
             field.setType(new ArrayDataSchema(overrideType))
           }
           recursivelyFixup(arrayType.getItems)
+
+        case unionType: UnionDataSchema =>
+          val updatedTypes = unionType.getTypes.asScala.map { innerType =>
+            recursivelyFixup(innerType)
+            getTypeOverride(innerType).getOrElse(innerType)
+          }
+          val newUnion = new UnionDataSchema()
+          val stringBuilder = new java.lang.StringBuilder()
+          newUnion.setTypes(updatedTypes.asJava, stringBuilder)
+          newUnion
 
         case mapType: MapDataSchema =>
           getTypeOverride(mapType.getValues).foreach { overrideType =>
