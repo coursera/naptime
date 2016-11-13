@@ -221,6 +221,4 @@ object SchemaUtils {
       }
     }
   }
-
-
 }
