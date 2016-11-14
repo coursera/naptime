@@ -5,6 +5,7 @@
 # An example controller showing a sample home page
 GET     /                           @controllers.HomeController.index
 POST    /graphql                    @org.coursera.naptime.ari.graphql.controllers.GraphQLController.graphqlBody
+POST    /graphqlBatch               @org.coursera.naptime.ari.graphql.controllers.GraphQLController.graphqlBatch
 GET     /graphiql                   @controllers.HomeController.graphiql
 GET     /graphql-schema             @org.coursera.naptime.ari.graphql.controllers.GraphQLController.renderSchema
 

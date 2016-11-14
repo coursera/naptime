@@ -4,6 +4,7 @@ import javax.inject.Inject
 import javax.inject.Singleton
 
 import org.coursera.naptime.ari.engine.EngineMetricsCollector
+import play.api.libs.json.Json
 
 import scala.concurrent.ExecutionContext
 
@@ -15,11 +16,12 @@ class EngineMetricsFilter @Inject() (
 
   def apply(nextFilter: FilterFn): FilterFn = { incoming =>
     nextFilter.apply(incoming).map { outgoingQuery =>
-      outgoingQuery.ariResponse.map { response =>
-        metricsCollector.markExecutionCompletion(response.metrics)
-        val resultWithHeader = outgoingQuery.result.withHeaders(
-          ("X-Naptime-Downstream-Requests", response.metrics.numRequests.toString))
-        outgoingQuery.copy(result = resultWithHeader)
+      outgoingQuery.ariResponse.map { ariResponse =>
+        metricsCollector.markExecutionCompletion(ariResponse.metrics)
+        val meta = Json.obj("__meta" ->
+          Json.obj("downtreamRequests" -> ariResponse.metrics.numRequests))
+        val responseWithMetrics = outgoingQuery.response ++ meta
+        outgoingQuery.copy(response = responseWithMetrics)
       }.getOrElse {
         outgoingQuery
       }

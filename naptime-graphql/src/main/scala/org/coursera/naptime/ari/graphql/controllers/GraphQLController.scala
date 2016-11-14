@@ -62,6 +62,7 @@ class GraphQLController @Inject() (
   }
 
   def graphqlBody = Action.async(parse.json) { request =>
+
     val query = (request.body \ "query").as[String]
     val operation = (request.body \ "operationName").asOpt[String]
 
@@ -71,7 +72,29 @@ class GraphQLController @Inject() (
       case _ => None
     }.getOrElse(Json.obj())
 
-    executeQuery(query, request, variables, operation)
+    executeQuery(query, request, variables, operation).map { res =>
+      Ok(res.response)
+    }
+  }
+
+  def graphqlBatch = Action.async(parse.json) { request =>
+
+    val queries = request.body.as[List[JsObject]]
+    val resultsFut = Future.traverse(queries) { queryObj =>
+      val query = (queryObj \ "query").as[String]
+      val operation = (queryObj \ "operationName").asOpt[String]
+
+      val variables = (queryObj \ "variables").toOption.flatMap {
+        case JsString(vars) => Some(parseVariables(vars))
+        case obj: JsObject => Some(obj)
+        case _ => None
+      }.getOrElse(Json.obj())
+
+      executeQuery(query, request, variables, operation)
+    }
+    resultsFut.map { results =>
+      Ok(Json.arr(results.map(_.response)))
+    }
   }
 
   private def parseVariables(variables: String) = {
@@ -109,20 +132,18 @@ class GraphQLController @Inject() (
                 variables = variables,
                 exceptionHandler = GraphQLController.exceptionHandler(logger))
                 .map { executionResponse =>
-                  OutgoingQuery(Ok(executionResponse), Some(response))
+                  OutgoingQuery(executionResponse.as[JsObject], Some(response))
                 }
             }.recover {
               case error: QueryAnalysisError =>
-                OutgoingQuery(BadRequest(Json.obj("error" -> error.resolveError)), None)
+                OutgoingQuery(Json.obj("error" -> error.resolveError), None)
               case error: ErrorWithResolver =>
-                OutgoingQuery(InternalServerError(Json.obj("error" -> error.resolveError)), None)
+                OutgoingQuery(Json.obj("error" -> error.resolveError), None)
               case error: Exception =>
-                OutgoingQuery(InternalServerError(Json.obj("error" -> error.getMessage)), None)
+                OutgoingQuery(Json.obj("error" -> error.getMessage), None)
             }
           }.getOrElse {
-            val result = BadRequest(
-              Json.obj(
-                "syntaxError" -> "Could not parse document"))
+            val result = Json.obj("syntaxError" -> "Could not parse document")
             Future.successful(OutgoingQuery(result, None))
           }
         }
@@ -134,17 +155,17 @@ class GraphQLController @Inject() (
             filter.apply(accumulatedFilters)
           }
 
-        filterFn(incomingQuery).map(_.result)
+        filterFn(incomingQuery)
 
       case Failure(error: SyntaxError) =>
         Future.successful(
-          BadRequest(
+          OutgoingQuery(
             Json.obj(
               "syntaxError" -> error.getMessage,
               "locations" -> Json.arr(
                 Json.obj(
                   "line" -> error.originalError.position.line,
-                  "column" -> error.originalError.position.column)))))
+                  "column" -> error.originalError.position.column))), None))
 
       case Failure(error) =>
         throw error
