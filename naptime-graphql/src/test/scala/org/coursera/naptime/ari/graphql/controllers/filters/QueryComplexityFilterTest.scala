@@ -6,7 +6,8 @@ import scala.concurrent.ExecutionContext.Implicits.global
 
 class QueryComplexityFilterTest extends FilterTest {
 
-  val filter = new QueryComplexityFilter(graphqlSchemaProvider)
+  val config = ComplexityFilterConfiguration.DEFAULT
+  val filter = new QueryComplexityFilter(graphqlSchemaProvider, config)
 
   @Test
   def emptyQuery(): Unit = {
