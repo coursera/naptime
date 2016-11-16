@@ -19,7 +19,7 @@ class EngineMetricsFilter @Inject() (
       outgoingQuery.ariResponse.map { ariResponse =>
         metricsCollector.markExecutionCompletion(ariResponse.metrics)
         val meta = Json.obj("__meta" ->
-          Json.obj("downtreamRequests" -> ariResponse.metrics.numRequests))
+          Json.obj("downstreamRequests" -> ariResponse.metrics.numRequests))
         val responseWithMetrics = outgoingQuery.response ++ meta
         outgoingQuery.copy(response = responseWithMetrics)
       }.getOrElse {
