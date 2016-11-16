@@ -23,13 +23,14 @@ import scala.concurrent.Future
 
 @Singleton
 class QueryComplexityFilter @Inject() (
-    graphqlSchemaProvider: GraphqlSchemaProvider)
+    graphqlSchemaProvider: GraphqlSchemaProvider,
+    configuration: ComplexityFilterConfiguration)
     (implicit executionContext: ExecutionContext)
   extends Filter
   with Results
   with StrictLogging {
 
-  val MAX_COMPLEXITY = 10000 // TODO(bryan): pull this out to config?
+  val MAX_COMPLEXITY = configuration.maxComplexity
 
   def apply(nextFilter: FilterFn): FilterFn = { incoming =>
     computeComplexity(incoming.document, incoming.variables).flatMap { complexity =>
@@ -75,4 +76,10 @@ class QueryComplexityFilter @Inject() (
     }
 
   }
+}
+
+case class ComplexityFilterConfiguration(maxComplexity: Int)
+
+object ComplexityFilterConfiguration {
+  val DEFAULT = ComplexityFilterConfiguration(10000)
 }
