@@ -29,8 +29,10 @@ import org.coursera.naptime.ari.graphql.marshaller.NaptimeMarshaller._
 import org.coursera.naptime.ari.graphql.models.AnyData
 import org.coursera.naptime.ari.graphql.models.CoursePlatform
 import org.coursera.naptime.ari.graphql.models.MergedCourse
+import org.coursera.naptime.ari.graphql.models.MergedCourse.PlatformSpecificData.OldPlatformDataMember
 import org.coursera.naptime.ari.graphql.models.MergedInstructor
 import org.coursera.naptime.ari.graphql.models.MergedPartner
+import org.coursera.naptime.ari.graphql.models.OldPlatformData
 import org.junit.Test
 import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.junit.AssertionsForJUnit
@@ -64,6 +66,7 @@ class SangriaGraphQlSchemaExecutionTest extends AssertionsForJUnit with ScalaFut
     instructors = List.empty,
     partner = 1,
     originalId = "",
+    platformSpecificData = OldPlatformDataMember(OldPlatformData("Not Available.")),
     coursePlatform = List(CoursePlatform.NewPlatform),
     arbitraryData = AnyData(new DataMap(
       Map("moduleIds" ->
@@ -77,6 +80,7 @@ class SangriaGraphQlSchemaExecutionTest extends AssertionsForJUnit with ScalaFut
     instructors = List.empty,
     partner = 1,
     originalId = "",
+    platformSpecificData = OldPlatformDataMember(OldPlatformData("Not Available.")),
     coursePlatform = List(CoursePlatform.NewPlatform),
     arbitraryData = AnyData(new DataMap(), DataConversion.SetReadOnly))
 
@@ -164,6 +168,47 @@ class SangriaGraphQlSchemaExecutionTest extends AssertionsForJUnit with ScalaFut
     assert(
       ((execution \ "data" \ "courseContainer" \ "coursesById" \ "elements").head
         \ "coursePlatform").get.as[List[String]] === List("NewPlatform"))
+  }
+
+  @Test
+  def parseUnions(): Unit = {
+    val schema = builder.generateSchema().asInstanceOf[Schema[SangriaGraphQlContext, Any]]
+    val query =
+      """
+      query {
+        CoursesV1Resource {
+          get(id: "1") {
+            platformSpecificData {
+              ... on org_coursera_naptime_ari_graphql_models_OldPlatformDataMember {
+                org_coursera_naptime_ari_graphql_models_OldPlatformData {
+                  notAvailableMessage
+                }
+              }
+            }
+          }
+        }
+      }
+      """.stripMargin
+    val queryAst = QueryParser.parse(query).get
+
+    val topLevelRequest = TopLevelRequest(
+      resource = ResourceName("courses", 1),
+      selection = RequestField(
+        name = "get",
+        alias = None,
+        args = Set(("id", JsString("1"))),
+        selections = List.empty))
+    val response = Response(
+      topLevelResponses = Map(topLevelRequest ->
+        TopLevelResponse(new DataList(List("1").asJava), ResponsePagination.empty)),
+      data = Map(ResourceName("courses", 1) -> Map(
+        "1" -> courseOne.data())))
+    val context = SangriaGraphQlContext(response)
+    val execution = Executor.execute(schema, queryAst, context).futureValue
+    assert(
+      (execution \ "data" \ "CoursesV1Resource" \ "get" \ "platformSpecificData" \
+        "org_coursera_naptime_ari_graphql_models_OldPlatformData" \ "notAvailableMessage")
+        .get.as[String] === "Not Available.")
   }
 
   @Test

@@ -17,8 +17,10 @@ import org.coursera.naptime.ari.graphql.models.AnyData
 import org.coursera.naptime.ari.graphql.models.Coordinates
 import org.coursera.naptime.ari.graphql.models.CoursePlatform
 import org.coursera.naptime.ari.graphql.models.MergedCourse
+import org.coursera.naptime.ari.graphql.models.MergedCourse.PlatformSpecificData.OldPlatformDataMember
 import org.coursera.naptime.ari.graphql.models.MergedInstructor
 import org.coursera.naptime.ari.graphql.models.MergedPartner
+import org.coursera.naptime.ari.graphql.models.OldPlatformData
 import org.coursera.naptime.model.Keyed
 import org.coursera.naptime.router2.NaptimeRoutes
 import org.coursera.naptime.router2.ResourceRouterBuilder
@@ -720,6 +722,7 @@ object EngineImplTest {
     instructors = List("instructor1Id"),
     partner = 123,
     originalId = "",
+    platformSpecificData = OldPlatformDataMember(OldPlatformData("Not Available.")),
     coursePlatform = List(CoursePlatform.NewPlatform),
     arbitraryData = AnyData(new DataMap(), DataConversion.SetReadOnly))
   val COURSE_B = MergedCourse(
@@ -730,6 +733,7 @@ object EngineImplTest {
     instructors = List("instructor2Id"),
     partner = 123,
     originalId = "",
+    platformSpecificData = OldPlatformDataMember(OldPlatformData("Not Available.")),
     coursePlatform = List(CoursePlatform.NewPlatform),
     arbitraryData = AnyData(new DataMap(), DataConversion.SetReadOnly))
 

@@ -1,0 +1,11 @@
+namespace org.coursera.naptime.ari.graphql.models
+
+/**
+ * Fields used only by the old platform
+ */
+record OldPlatformData {
+  /**
+   * Course not available message
+   */
+  notAvailableMessage: string
+}
