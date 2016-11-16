@@ -18,7 +18,7 @@ object NaptimeRecordField {
       namespace: Option[String]) = {
 
     Field.apply[SangriaGraphQlContext, DataMap, Any, Any](
-      name = fieldName,
+      name = FieldBuilder.formatName(fieldName),
       fieldType = getType(schemaMetadata, recordDataSchema, namespace),
       resolve = context => context.value.getDataMap(fieldName))
   }

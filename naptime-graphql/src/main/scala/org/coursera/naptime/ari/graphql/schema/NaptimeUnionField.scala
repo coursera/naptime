@@ -36,10 +36,10 @@ object NaptimeUnionField {
         schemaMetadata,
         new RecordDataSchemaField(subType),
         namespace,
-        Some(fieldName))
+        Some(subType.getUnionMemberKey))
 
       val field = Field.apply[SangriaGraphQlContext, DataMap, Any, Any](
-        FieldBuilder.formatName(subType.getUnionMemberKey),
+        fieldName,
         subTypeField.fieldType,
         resolve = subTypeField.resolve)
       ObjectType[SangriaGraphQlContext, DataMap](
@@ -52,7 +52,9 @@ object NaptimeUnionField {
       override def typeOf[Ctx](value: Any, schema: Schema[Ctx, _]): Option[ObjectType[Ctx, _]] = {
         val typedValue = value.asInstanceOf[DataMap]
         objects.find { obj =>
-          obj.fieldsByName.keySet.intersect(typedValue.keySet().asScala).nonEmpty
+          val formattedMemberNames = typedValue.keySet.asScala
+            .flatMap(key => Option(key).map(FieldBuilder.formatName))
+          obj.fieldsByName.keySet.intersect(formattedMemberNames).nonEmpty
         }.map(_.asInstanceOf[ObjectType[Ctx, DataMap]])
       }
     }
