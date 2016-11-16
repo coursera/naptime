@@ -57,6 +57,7 @@ class SangriaGraphQlSchemaBuilderTest extends AssertionsForJUnit {
       "slug",
       "instructors",
       "originalId",
+      "platformSpecificData",
       "partner",
       "coursePlatform",
       "arbitraryData")
