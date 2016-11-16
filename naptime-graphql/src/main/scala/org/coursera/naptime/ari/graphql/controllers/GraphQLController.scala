@@ -93,7 +93,7 @@ class GraphQLController @Inject() (
       executeQuery(query, request, variables, operation)
     }
     resultsFut.map { results =>
-      Ok(Json.arr(results.map(_.response)))
+      Ok(Json.toJson(results.map(_.response)))
     }
   }
 
