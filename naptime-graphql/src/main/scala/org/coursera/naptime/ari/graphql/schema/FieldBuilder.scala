@@ -72,7 +72,7 @@ object FieldBuilder extends StrictLogging {
         if recordDataSchema.getProperties.asScala.get("passthroughExempt").contains(true) =>
 
         Field.apply[SangriaGraphQlContext, DataMap, Any, Any](
-          name = fieldName,
+          name = FieldBuilder.formatName(fieldName),
           fieldType = NaptimeTypes.DataMapType,
           resolve = context => context.value.getDataMap(fieldName))
 
@@ -90,7 +90,7 @@ object FieldBuilder extends StrictLogging {
         val referencedType = new RecordDataSchemaField(typerefDataSchema.getDereferencedDataSchema)
         val innerField = buildField(schemaMetadata, referencedType, namespace, Some(fieldName))
         Field.apply[SangriaGraphQlContext, DataMap, Any, Any](
-          name = fieldName,
+          name = FieldBuilder.formatName(fieldName),
           fieldType = innerField.fieldType,
           resolve = innerField.resolve)
 
@@ -98,13 +98,13 @@ object FieldBuilder extends StrictLogging {
         val subType = new RecordDataSchemaField(arrayDataSchema.getItems)
         val innerField = buildField(schemaMetadata, subType, namespace, Some(fieldName))
         Field.apply[SangriaGraphQlContext, DataMap, Any, Any](
-          name = fieldName,
+          name = FieldBuilder.formatName(fieldName),
           fieldType = ListType(innerField.fieldType),
           resolve = context => context.value.getDataList(fieldName).asScala)
 
       case (None, _: MapDataSchema) =>
         Field.apply[SangriaGraphQlContext, DataMap, Any, Any](
-          name = fieldName,
+          name = FieldBuilder.formatName(fieldName),
           fieldType = NaptimeTypes.DataMapType,
           resolve = context => context.value.getDataMap(fieldName))
 
@@ -119,14 +119,14 @@ object FieldBuilder extends StrictLogging {
 
       case (None, _: NullDataSchema) =>
         Field.apply[SangriaGraphQlContext, DataMap, Any, Any](
-          name = fieldName,
+          name = FieldBuilder.formatName(fieldName),
           fieldType = NaptimeTypes.DataMapType,
           resolve = context => null)
 
       case (None, _) =>
         logger.error(s"Constructing field for unknown type ${field.getType} [$fieldName]")
         Field.apply[SangriaGraphQlContext, DataMap, Any, Any](
-          name = fieldName,
+          name = FieldBuilder.formatName(fieldName),
           fieldType = NaptimeTypes.DataMapType,
           resolve = context => context.value)
     }
@@ -152,7 +152,7 @@ object FieldBuilder extends StrictLogging {
       sangriaScalarType: ScalarType[_])
       (implicit tag: ClassTag[ParseType]) = {
     Field.apply[SangriaGraphQlContext, DataMap, Any, Any](
-      name = fieldName,
+      name = FieldBuilder.formatName(fieldName),
       fieldType = sangriaScalarType,
       resolve = context => {
         Option(context.value.get(fieldName)).map { rawValue =>
