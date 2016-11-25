@@ -140,6 +140,7 @@ class GraphQLController @Inject() (
               case error: ErrorWithResolver =>
                 OutgoingQuery(Json.obj("error" -> error.resolveError), None)
               case error: Exception =>
+                logger.error("GraphQL execution error", error)
                 OutgoingQuery(Json.obj("error" -> error.getMessage), None)
             }
           }.getOrElse {

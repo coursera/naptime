@@ -22,8 +22,11 @@ import com.linkedin.data.schema.validation.RequiredMode
 import com.linkedin.data.schema.validation.ValidateDataAgainstSchema
 import com.linkedin.data.schema.validation.ValidationOptions
 import com.typesafe.scalalogging.StrictLogging
+import org.coursera.courier.templates.DataTemplates.DataConversion
+import org.coursera.naptime.Types.Relations
 import org.coursera.naptime.ari.graphql.SangriaGraphQlContext
 import org.coursera.naptime.ari.graphql.types.NaptimeTypes
+import org.coursera.naptime.schema.ReverseRelationAnnotation
 import sangria.schema.BooleanType
 import sangria.schema.Context
 import sangria.schema.Field
@@ -51,7 +54,12 @@ object FieldBuilder extends StrictLogging {
       fieldNameOverride: Option[String] = None): Field[SangriaGraphQlContext, DataMap] = {
     type ResolverType = Context[SangriaGraphQlContext, DataMap] => Value[SangriaGraphQlContext, Any]
 
-    val relatedResourceOption = field.getProperties.asScala.get("related").map(_.toString)
+    val forwardRelationOption = field.getProperties.asScala.get(Relations.PROPERTY_NAME).map(_.toString)
+    val reverseRelationOption = field.getProperties.asScala.get(Relations.REVERSE_PROPERTY_NAME)
+      .map(dataMap => ReverseRelationAnnotation(dataMap.asInstanceOf[DataMap], DataConversion.SetReadOnly))
+      .map(_.resourceName)
+
+    val relatedResourceOption = forwardRelationOption.orElse(reverseRelationOption)
 
     val fieldName = fieldNameOverride.getOrElse(field.getName)
 
