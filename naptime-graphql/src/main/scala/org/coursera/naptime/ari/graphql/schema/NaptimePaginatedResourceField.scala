@@ -3,6 +3,8 @@ package org.coursera.naptime.ari.graphql.schema
 import com.linkedin.data.DataMap
 import org.coursera.naptime.ResourceName
 import org.coursera.naptime.ari.graphql.SangriaGraphQlContext
+import org.coursera.naptime.ari.graphql.SangriaGraphQlSchemaBuilder
+import org.coursera.naptime.schema.HandlerKind
 import org.coursera.naptime.schema.Resource
 import sangria.schema.Context
 import sangria.schema.Field
@@ -19,18 +21,29 @@ object NaptimePaginatedResourceField {
   def build(
       schemaMetadata: SchemaMetadata,
       resourceName: String,
-      fieldName: String): Field[SangriaGraphQlContext, DataMap] = {
-    Field.apply[SangriaGraphQlContext, DataMap, Any, Any](
-      name = fieldName,
-      fieldType = getType(schemaMetadata, resourceName, fieldName),
-      resolve = context => ParentContext(context),
-      complexity = Some((ctx, args, childScore) => {
-        // API calls should count 10x, and we take limit into account because there could be
-        // N child API calls for each response here
-        val limit = args.arg(NaptimePaginationField.limitArgument)
-        Math.max(limit / 10, 1) * COMPLEXITY_COST * childScore
-      }),
-      arguments = NaptimePaginationField.paginationArguments)
+      fieldName: String): Option[Field[SangriaGraphQlContext, DataMap]] = {
+
+    val resource = schemaMetadata.getResource(resourceName)
+
+    for {
+      schema <- schemaMetadata.getSchema(resource)
+      multiGet <- resource.handlers.find(_.kind == HandlerKind.MULTI_GET)
+    } yield {
+      val arguments = SangriaGraphQlSchemaBuilder
+        .generateHandlerArguments(multiGet, includePagination = true)
+        .filterNot(_.name == "ids")
+      Field.apply[SangriaGraphQlContext, DataMap, Any, Any](
+        name = fieldName,
+        fieldType = getType(schemaMetadata, resourceName, fieldName),
+        resolve = context => ParentContext(context),
+        complexity = Some((ctx, args, childScore) => {
+          // API calls should count 10x, and we take limit into account because there could be
+          // N child API calls for each response here
+          val limit = args.arg(NaptimePaginationField.limitArgument)
+          Math.max(limit / 10, 1) * COMPLEXITY_COST * childScore
+        }),
+        arguments = arguments)
+    }
   }
 
   //TODO(bryan): add arguments for pagination in here
@@ -60,7 +73,6 @@ object NaptimePaginatedResourceField {
             resolve = context => context.value
           ))
       })
-
   }
 
   private[this] def getResolver(
