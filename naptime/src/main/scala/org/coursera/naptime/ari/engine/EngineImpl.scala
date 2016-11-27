@@ -104,23 +104,29 @@ class EngineImpl @Inject() (
             case (Some(resourceName), None) =>
               val multiGetIds = computeMultiGetIds(topLevelData, nestedField, field)
 
-              val relatedTopLevelRequest = TopLevelRequest(
-                resource = resourceName,
-                selection = RequestField(
-                  name = "multiGet",
-                  alias = None,
-                  args = Set(
-                    "ids" ->
-                      JsString(multiGetIds)), // TODO: pass through original request fields for pagination
-                  selections = nestedField.selections))
-              executeTopLevelRequest(requestHeader, relatedTopLevelRequest).map { response =>
-                // Exclude the top level ids in the response.
-                Response(
-                  topLevelResponses = Map.empty,
-                  data = response.data,
-                  metrics = response.metrics)
-              }.map { response =>
-                FieldRelationResponse(field, Map.empty, List(response))
+              if (multiGetIds.nonEmpty) {
+
+                val relatedTopLevelRequest = TopLevelRequest(
+                  resource = resourceName,
+                  selection = RequestField(
+                    name = "multiGet",
+                    alias = None,
+
+                    // TODO: pass through original request fields for pagination
+                    args = Set("ids" -> JsString(multiGetIds)),
+
+                    selections = nestedField.selections))
+                executeTopLevelRequest(requestHeader, relatedTopLevelRequest).map { response =>
+                  // Exclude the top level ids in the response.
+                  Response(
+                    topLevelResponses = Map.empty,
+                    data = response.data,
+                    metrics = response.metrics)
+                }.map { response =>
+                  FieldRelationResponse(field, response)
+                }
+              } else {
+                Future.successful(FieldRelationResponse(field))
               }
             case (None, Some(reverse)) =>
               val resourceName = ResourceName.parse(reverse.resourceName).getOrElse {
@@ -133,7 +139,9 @@ class EngineImpl @Inject() (
                   .mapValues { value =>
                     InterpolationRegex.replaceAllIn(value, { regexMatch =>
                       val variableName = regexMatch.group("variableName")
-                      Option(topLevelElement.get(variableName)).map(_.toString).getOrElse(variableName)
+                      Option(topLevelElement.get(variableName))
+                        .map(_.toString)
+                        .getOrElse(variableName)
                     })
                   }
                   .mapValues(value => JsString(value))
@@ -152,19 +160,20 @@ class EngineImpl @Inject() (
                     metrics = response.metrics)
                 }
               }
-              Future.sequence(responses).map { responseIdPairs =>
-                val idMap = responseIdPairs.toMap.flatMap { case (id, response) =>
-                  response.data.headOption.map { case (resourceName, data) =>
-                    id -> data.keys.toList
-                  }
+              Future.fold(responses)(FieldRelationResponse(field)) { case (frr, (id, response)) =>
+                val idMap = response.data.headOption.map { case (_, data) =>
+                  id -> data.keys.toList
                 }
-                FieldRelationResponse(field, idMap, responseIdPairs.map(_._2).toList)
+                frr.copy(
+                  response = frr.response ++ response,
+                  idsToAnnotate = Some(frr.idsToAnnotate.getOrElse(Map.empty) ++ idMap))
               }
 
             case (Some(forward), Some(reverse)) =>
               throw new RuntimeException(
                 s"Both forward and reverse relations cannot be defined on ${field.getName}")
-            case (None, None) => Future.successful(FieldRelationResponse(field, Map.empty, List.empty))
+            case (None, None) =>
+              Future.successful(FieldRelationResponse(field))
           }
         }
         Future.sequence(additionalResponses).map { fieldResponses =>
@@ -172,48 +181,56 @@ class EngineImpl @Inject() (
             .map(_.clone())
             .map(data => data.get("id") -> data)
             .toMap
-          fieldResponses.map { fieldRelationResponse =>
-            mutableTopLevelData.foreach { case (id, data) =>
-              val ids = fieldRelationResponse.idMap.getOrElse(id, List.empty)
-              data.put(fieldRelationResponse.field.getName, new DataList(ids.asJava))
-            }
-            fieldRelationResponse.responses
+          for {
+            fieldRelationResponse <- fieldResponses
+            (id, data) <- mutableTopLevelData
+            idMap <- fieldRelationResponse.idsToAnnotate
+          } yield {
+            val ids = idMap.getOrElse(id, List.empty)
+            data.put(fieldRelationResponse.field.getName, new DataList(ids.asJava))
           }
-          val updatedData = topLevelResponseWithMetrics.data + (topLevelRequest.resource -> mutableTopLevelData)
+          val updatedData = topLevelResponseWithMetrics.data +
+            (topLevelRequest.resource -> mutableTopLevelData)
           val responseWithUpdatedData = topLevelResponseWithMetrics.copy(data = updatedData)
-          val additionalResponses = fieldResponses.flatMap(_.responses)
+          val additionalResponses = fieldResponses.map(_.response)
           additionalResponses.foldLeft(responseWithUpdatedData)(_ ++ _)
         }
       }.getOrElse {
-        logger.error(s"No merged type found for resource ${topLevelRequest.resource}. Skipping automatic inclusions.")
+        logger.error(s"No merged type found for resource ${topLevelRequest.resource}. " +
+          s"Skipping automatic inclusions.")
         Future.successful(topLevelResponseWithMetrics)
       }
     }
   }
 
-  private[this] def extractDataMaps(response: Response, request: TopLevelRequest): Iterable[DataMap] = {
+  private[this] def extractDataMaps(
+      response: Response,
+      request: TopLevelRequest): Iterable[DataMap] = {
     response.data.get(request.resource).toIterable.flatMap { dataMap =>
       dataMap.values
     }
   }
 
-  private[this] def relatedResourceForField(field: RecordDataSchema.Field, mergedType: RecordDataSchema): Option[ResourceName] = {
+  private[this] def relatedResourceForField(
+      field: RecordDataSchema.Field,
+      mergedType: RecordDataSchema): Option[ResourceName] = {
     Option(field.getProperties.get(Relations.PROPERTY_NAME)).map {
       case idString: String =>
         ResourceName.parse(idString).getOrElse {
-          throw new IllegalStateException(s"Could not parse identifier '$idString' for field '$field' in " +
-            s"merged type $mergedType")
+          throw new IllegalStateException(s"Could not parse identifier '$idString' " +
+            s"for field '$field' in merged type $mergedType")
         }
       case identifier =>
-        throw new IllegalStateException(s"Unexpected type for identifier '$identifier' for field '$field' " +
-          s"in merged type $mergedType")
+        throw new IllegalStateException(s"Unexpected type for identifier '$identifier' " +
+          s"for field '$field' in merged type $mergedType")
     }
   }
 
-  private[this] def reverseRelationForField(field: RecordDataSchema.Field, mergedType: RecordDataSchema): Option[ReverseRelationAnnotation] = {
+  private[this] def reverseRelationForField(
+      field: RecordDataSchema.Field,
+      mergedType: RecordDataSchema): Option[ReverseRelationAnnotation] = {
     Option(field.getProperties.get(Relations.REVERSE_PROPERTY_NAME)).map {
-      case dataMap: DataMap =>
-        ReverseRelationAnnotation(dataMap, DataConversion.SetReadOnly)
+      case dataMap: DataMap => ReverseRelationAnnotation(dataMap, DataConversion.SetReadOnly)
     }
   }
 
@@ -226,8 +243,8 @@ class EngineImpl @Inject() (
         Option(elem.get(nestedField.name))
       } else if (field.getType.getDereferencedDataSchema.isInstanceOf[ArrayDataSchema]) {
         Option(elem.getDataList(nestedField.name)).map(_.asScala).getOrElse {
-          logger.debug(
-            s"Field $nestedField was not found / was not a data list in $elem for query field $field")
+          logger.debug(s"Field $nestedField was not found / was not a data list " +
+            s"in $elem for query field $field")
           List.empty
         }
       } else {
@@ -241,6 +258,6 @@ class EngineImpl @Inject() (
 
 case class FieldRelationResponse(
     field: RecordDataSchema.Field,
-    idMap: Map[AnyRef, List[AnyRef]],
-    responses: List[Response])
+    response: Response = Response.empty,
+    idsToAnnotate: Option[Map[AnyRef, List[AnyRef]]] = None)
 

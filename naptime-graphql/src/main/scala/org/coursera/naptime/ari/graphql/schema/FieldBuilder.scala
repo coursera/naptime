@@ -54,9 +54,10 @@ object FieldBuilder extends StrictLogging {
       fieldNameOverride: Option[String] = None): Field[SangriaGraphQlContext, DataMap] = {
     type ResolverType = Context[SangriaGraphQlContext, DataMap] => Value[SangriaGraphQlContext, Any]
 
-    val forwardRelationOption = field.getProperties.asScala.get(Relations.PROPERTY_NAME).map(_.toString)
-    val reverseRelationOption = field.getProperties.asScala.get(Relations.REVERSE_PROPERTY_NAME)
-      .map(dataMap => ReverseRelationAnnotation(dataMap.asInstanceOf[DataMap], DataConversion.SetReadOnly))
+    val fieldProperties = field.getProperties.asScala
+    val forwardRelationOption = fieldProperties.get(Relations.PROPERTY_NAME).map(_.toString)
+    val reverseRelationOption = fieldProperties.get(Relations.REVERSE_PROPERTY_NAME)
+      .map(d => ReverseRelationAnnotation(d.asInstanceOf[DataMap], DataConversion.SetReadOnly))
       .map(_.resourceName)
 
     val relatedResourceOption = forwardRelationOption.orElse(reverseRelationOption)

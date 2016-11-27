@@ -344,7 +344,7 @@ sealed case class Fields[T](
   }
 
   def withReverseRelations(newRelations: Map[String, ReverseRelation[_]]): Fields[T] = {
-    val intersection = newRelations.keySet.intersect(relations.keySet)
+    val intersection = newRelations.keySet.intersect(reverseRelations.keySet)
     require(intersection.isEmpty, s"Duplicate relations provided for: $intersection")
     copy(reverseRelations = reverseRelations ++ newRelations)
   }
