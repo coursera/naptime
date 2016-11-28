@@ -165,8 +165,9 @@ case class Response(
           case (Some(dm), None) => dm
           case (None, Some(dm)) => dm
           case (Some(l), Some(r)) =>
-            l.putAll(r)
-            l
+            val mutableL = l.clone()
+            mutableL.putAll(r)
+            mutableL
         }
         key -> merged
       }.toMap

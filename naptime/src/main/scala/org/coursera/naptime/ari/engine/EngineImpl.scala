@@ -132,7 +132,7 @@ class EngineImpl @Inject() (
     }.getOrElse {
       logger.error(s"No merged type found for resource ${topLevelRequest.resource}. " +
         s"Skipping automatic inclusions.")
-      Future.successful(Response.empty)
+      Future.successful(topLevelResponse)
     }
   }
 
