@@ -18,6 +18,7 @@ package org.coursera.naptime
 
 import com.linkedin.data.DataMap
 import org.coursera.naptime.QueryStringParser.NaptimeParseError
+import org.coursera.naptime.schema.RelationType
 import org.coursera.naptime.schema.ReverseRelationAnnotation
 import play.api.http.Status
 import play.api.i18n.Lang
@@ -593,6 +594,20 @@ private[naptime] object QueryStringParser extends RegexParsers {
     parse(includesAllContent, input)
 }
 
-case class ReverseRelation[KeyType](resourceName: ResourceName, arguments: Map[String, String]) {
-  def toAnnotation() = ReverseRelationAnnotation(resourceName.identifier, arguments)
+trait ReverseRelation[KeyType] {
+  val resourceName: ResourceName
+  val arguments: Map[String, String]
+
+  def toAnnotation: ReverseRelationAnnotation
+}
+
+case class FinderReverseRelation[KeyType](
+    resourceName: ResourceName,
+    finderName: String,
+    arguments: Map[String, String]) extends ReverseRelation[KeyType] {
+
+  def toAnnotation: ReverseRelationAnnotation = {
+    val mergedArguments = arguments + ("q" -> finderName)
+    ReverseRelationAnnotation(resourceName.identifier, mergedArguments, RelationType.FINDER)
+  }
 }

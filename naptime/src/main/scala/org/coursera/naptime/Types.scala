@@ -111,7 +111,7 @@ object Types extends StrictLogging {
           newField.setRecord(mergedSchema)
 
           val reverseRelatedMap = Map[String, AnyRef](
-            Relations.REVERSE_PROPERTY_NAME -> reverseRelation.toAnnotation().data())
+            Relations.REVERSE_PROPERTY_NAME -> reverseRelation.toAnnotation.data())
           newField.setProperties(reverseRelatedMap.asJava)
 
           val existingFields = mergedSchema.getFields

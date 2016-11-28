@@ -5,9 +5,9 @@ import javax.inject.Singleton
 
 import org.coursera.example.Instructor
 import org.coursera.naptime.Fields
+import org.coursera.naptime.FinderReverseRelation
 import org.coursera.naptime.Ok
 import org.coursera.naptime.ResourceName
-import org.coursera.naptime.ReverseRelation
 import org.coursera.naptime.model.Keyed
 import org.coursera.naptime.resources.CourierCollectionResource
 import stores.InstructorStore
@@ -21,11 +21,10 @@ class InstructorsResource @Inject() (
   override def resourceVersion = 1
   override implicit lazy val Fields: Fields[Instructor] = BaseFields
     .withReverseRelations(
-      "courses" -> ReverseRelation[String](
+      "courses" -> FinderReverseRelation[String](
         resourceName = ResourceName("courses", 1),
-        arguments = Map(
-          "q" -> "byInstructor",
-          "instructorId" -> "$id")))
+        finderName = "byInstructor",
+        arguments = Map("instructorId" -> "$id")))
 
   def get(id: String) = Nap.get { context =>
     OkIfPresent(id, instructorStore.get(id))
