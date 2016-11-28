@@ -4,8 +4,11 @@ import com.linkedin.data.DataMap
 import org.coursera.naptime.ResourceName
 import org.coursera.naptime.ari.graphql.SangriaGraphQlContext
 import org.coursera.naptime.ari.graphql.SangriaGraphQlSchemaBuilder
+import org.coursera.naptime.schema.Handler
 import org.coursera.naptime.schema.HandlerKind
+import org.coursera.naptime.schema.RelationType
 import org.coursera.naptime.schema.Resource
+import org.coursera.naptime.schema.ReverseRelationAnnotation
 import sangria.schema.Context
 import sangria.schema.Field
 import sangria.schema.ListType
@@ -21,28 +24,60 @@ object NaptimePaginatedResourceField {
   def build(
       schemaMetadata: SchemaMetadata,
       resourceName: String,
-      fieldName: String): Option[Field[SangriaGraphQlContext, DataMap]] = {
+      fieldName: String,
+      handlerOverride: Option[Handler] = None,
+      fieldRelation: FieldRelation): Option[Field[SangriaGraphQlContext, DataMap]] = {
 
     val resource = schemaMetadata.getResource(resourceName)
 
-    for {
-      schema <- schemaMetadata.getSchema(resource)
-      multiGet <- resource.handlers.find(_.kind == HandlerKind.MULTI_GET)
-    } yield {
-      val arguments = SangriaGraphQlSchemaBuilder
-        .generateHandlerArguments(multiGet, includePagination = true)
-        .filterNot(_.name == "ids")
-      Field.apply[SangriaGraphQlContext, DataMap, Any, Any](
-        name = fieldName,
-        fieldType = getType(schemaMetadata, resourceName, fieldName),
-        resolve = context => ParentContext(context),
-        complexity = Some((ctx, args, childScore) => {
-          // API calls should count 10x, and we take limit into account because there could be
-          // N child API calls for each response here
-          val limit = args.arg(NaptimePaginationField.limitArgument)
-          Math.max(limit / 10, 1) * COMPLEXITY_COST * childScore
-        }),
-        arguments = arguments)
+    schemaMetadata.getSchema(resource).flatMap { schema =>
+      val handlerOpt = (handlerOverride, fieldRelation) match {
+        case (Some(handler), _) =>
+          Some(handler)
+        case (None, FieldRelation(Some(forward), None)) =>
+          resource.handlers.find(_.kind == HandlerKind.MULTI_GET)
+        case (None, FieldRelation(None, Some(reverse))) =>
+          reverse.relationType match {
+
+            case RelationType.FINDER =>
+              val finderName = reverse.arguments.get("q").getOrElse {
+                throw new IllegalStateException("Finder reverse relation on " +
+                  s"${reverse.resourceName} does not have a q parameter specified")
+              }
+              resource.handlers.find(_.name == finderName)
+
+            case RelationType.MULTI_GET =>
+              resource.handlers.find(_.kind == HandlerKind.MULTI_GET)
+
+            case RelationType.$UNKNOWN =>
+              None
+          }
+        case _ =>
+          resource.handlers.find(_.kind == HandlerKind.MULTI_GET)
+      }
+
+      handlerOpt.map { handler =>
+
+        val reverseRelationSpecifiedArguments = fieldRelation.reverseRelation.map { reverse =>
+          reverse.arguments.keySet
+        }.getOrElse(Set.empty)
+        val arguments = SangriaGraphQlSchemaBuilder
+          .generateHandlerArguments(handler, includePagination = true)
+          .filterNot(_.name == "ids")
+          .filterNot(arg => reverseRelationSpecifiedArguments.contains(arg.name))
+        Field.apply[SangriaGraphQlContext, DataMap, Any, Any](
+          name = fieldName,
+          fieldType = getType(schemaMetadata, resourceName, fieldName),
+          resolve = context => ParentContext(context),
+          complexity = Some(
+            (ctx, args, childScore) => {
+              // API calls should count 10x, and we take limit into account because there could be
+              // N child API calls for each response here
+              val limit = args.arg(NaptimePaginationField.limitArgument)
+              Math.max(limit / 10, 1) * COMPLEXITY_COST * childScore
+            }),
+          arguments = arguments)
+      }
     }
   }
 
@@ -119,3 +154,7 @@ object NaptimePaginatedResourceField {
   }
 
 }
+
+case class FieldRelation(
+    forwardRelation: Option[String] = None,
+    reverseRelation: Option[ReverseRelationAnnotation] = None)

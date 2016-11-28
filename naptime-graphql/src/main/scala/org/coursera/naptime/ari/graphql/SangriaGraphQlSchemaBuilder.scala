@@ -21,6 +21,7 @@ import com.linkedin.data.schema.RecordDataSchema
 import com.typesafe.scalalogging.StrictLogging
 import org.coursera.naptime.PaginationConfiguration
 import org.coursera.naptime.ResourceName
+import org.coursera.naptime.ari.graphql.schema.FieldRelation
 import org.coursera.naptime.ari.graphql.schema.NaptimePaginatedResourceField
 import org.coursera.naptime.ari.graphql.schema.NaptimePaginationField
 import org.coursera.naptime.ari.graphql.schema.NaptimeResourceField
@@ -157,9 +158,12 @@ class SangriaGraphQlSchemaBuilder(
     val field = NaptimePaginatedResourceField.build(
       schemaMetadata = schemaMetadata,
       resourceName = resourceName.identifier,
-      fieldName = fieldName)
+      fieldName = fieldName,
+      handlerOverride = Some(handler),
+      fieldRelation = FieldRelation())
       .getOrElse {
-        throw SchemaGenerationException(s"Cannot build field for $resourceName / ${handler.name}")
+        throw SchemaGenerationException(
+          s"Cannot build field for ${resourceName.identifier} / ${handler.name}")
       }
 
     val mergedArguments = (field.arguments ++ arguments)

@@ -59,10 +59,9 @@ object FieldBuilder extends StrictLogging {
     val forwardRelationOption = fieldProperties.get(Relations.PROPERTY_NAME).map(_.toString)
     val reverseRelationOption = fieldProperties.get(Relations.REVERSE_PROPERTY_NAME)
       .map(d => ReverseRelationAnnotation(d.asInstanceOf[DataMap], DataConversion.SetReadOnly))
-      .map(_.resourceName)
 
     val relatedResourceOption = if (followRelations) {
-      forwardRelationOption.orElse(reverseRelationOption)
+      forwardRelationOption.orElse(reverseRelationOption.map(_.resourceName))
     } else {
       None
     }
@@ -75,7 +74,8 @@ object FieldBuilder extends StrictLogging {
 
       // Related resource in a list
       case (Some(relatedResourceName), _: ArrayDataSchema) =>
-        NaptimePaginatedResourceField.build(schemaMetadata, relatedResourceName, fieldName)
+        val fieldRelation = FieldRelation(forwardRelationOption, reverseRelationOption)
+        NaptimePaginatedResourceField.build(schemaMetadata, relatedResourceName, fieldName, None, fieldRelation)
           .getOrElse {
             buildField(schemaMetadata, field, namespace, fieldNameOverride, followRelations = false)
           }

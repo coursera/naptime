@@ -276,7 +276,7 @@ class EngineImpl @Inject() (
         selection = RequestField(
           name = "reverseRelation",
           alias = None,
-          args = interpolatedArguments,
+          args = interpolatedArguments ++ requestField.args,
           selections = requestField.selections))
       executeTopLevelRequest(requestHeader, relatedTopLevelRequest).map { response =>
         topLevelElement.get("id") -> Response(
