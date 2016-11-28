@@ -101,9 +101,7 @@ class EngineImpl @Inject() (
             selection = RequestField(
               name = "multiGet",
               alias = None,
-              args = Set(
-                "ids" ->
-                  JsString(multiGetIds)), // TODO: pass through original request fields for pagination
+              args = Set("ids" -> JsString(multiGetIds)) ++ nestedField.args,
               selections = nestedField.selections))
           executeTopLevelRequest(requestHeader, relatedTopLevelRequest).map { response =>
             // Exclude the top level ids in the response.
