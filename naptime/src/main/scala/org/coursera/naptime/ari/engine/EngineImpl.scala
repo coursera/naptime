@@ -231,7 +231,7 @@ class EngineImpl @Inject() (
           alias = None,
 
           // TODO: pass through original request fields for pagination
-          args = Set("ids" -> JsString(multiGetIds)),
+          args = Set("ids" -> JsString(multiGetIds)) ++ requestField.args,
 
           selections = requestField.selections))
       executeTopLevelRequest(requestHeader, relatedTopLevelRequest).map { response =>

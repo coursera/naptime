@@ -51,7 +51,8 @@ object FieldBuilder extends StrictLogging {
       schemaMetadata: SchemaMetadata,
       field: RecordDataSchemaField,
       namespace: Option[String],
-      fieldNameOverride: Option[String] = None): Field[SangriaGraphQlContext, DataMap] = {
+      fieldNameOverride: Option[String] = None,
+      followRelations: Boolean = true): Field[SangriaGraphQlContext, DataMap] = {
     type ResolverType = Context[SangriaGraphQlContext, DataMap] => Value[SangriaGraphQlContext, Any]
 
     val fieldProperties = field.getProperties.asScala
@@ -60,7 +61,11 @@ object FieldBuilder extends StrictLogging {
       .map(d => ReverseRelationAnnotation(d.asInstanceOf[DataMap], DataConversion.SetReadOnly))
       .map(_.resourceName)
 
-    val relatedResourceOption = forwardRelationOption.orElse(reverseRelationOption)
+    val relatedResourceOption = if (followRelations) {
+      forwardRelationOption.orElse(reverseRelationOption)
+    } else {
+      None
+    }
 
     val fieldName = fieldNameOverride.getOrElse(field.getName)
 
@@ -71,6 +76,9 @@ object FieldBuilder extends StrictLogging {
       // Related resource in a list
       case (Some(relatedResourceName), _: ArrayDataSchema) =>
         NaptimePaginatedResourceField.build(schemaMetadata, relatedResourceName, fieldName)
+          .getOrElse {
+            buildField(schemaMetadata, field, namespace, fieldNameOverride, followRelations = false)
+          }
 
       // Single related resource
       case (Some(relatedResourceName), _) =>

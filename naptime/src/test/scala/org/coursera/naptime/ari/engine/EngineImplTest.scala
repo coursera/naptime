@@ -771,6 +771,18 @@ object EngineImplTest {
     customOutputBody = None,
     attributes = List.empty)
 
+  val MULTIGET_HANDLER = Handler(
+    kind = HandlerKind.MULTI_GET,
+    name = "multiGet",
+    parameters = List(Parameter(
+      name = "ids",
+      `type` = "List[int]",
+      attributes = List.empty,
+      default = None)),
+    inputBody = None,
+    customOutputBody = None,
+    attributes = List.empty)
+
   val COURSES_RESOURCE_ID = ResourceName("courses", 1)
   val COURSES_RESOURCE = Resource(
     kind = ResourceKind.COLLECTION,
@@ -780,7 +792,7 @@ object EngineImplTest {
     keyType = "string",
     valueType = "org.coursera.naptime.test.Course",
     mergedType = MergedCourse.SCHEMA.getFullName,
-    handlers = List(GET_HANDLER),
+    handlers = List(GET_HANDLER, MULTIGET_HANDLER),
     className = "org.coursera.naptime.test.CoursesResource",
     attributes = List.empty)
 
@@ -793,7 +805,7 @@ object EngineImplTest {
     keyType = "string",
     valueType = "org.coursera.naptime.test.Instructor",
     mergedType = MergedInstructor.SCHEMA.getFullName,
-    handlers = List(GET_HANDLER),
+    handlers = List(GET_HANDLER, MULTIGET_HANDLER),
     className = "org.coursera.naptime.test.InstructorsResource",
     attributes = List.empty)
 

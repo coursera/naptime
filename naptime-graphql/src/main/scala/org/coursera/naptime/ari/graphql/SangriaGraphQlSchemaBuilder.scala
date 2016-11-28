@@ -24,6 +24,7 @@ import org.coursera.naptime.ResourceName
 import org.coursera.naptime.ari.graphql.schema.NaptimePaginatedResourceField
 import org.coursera.naptime.ari.graphql.schema.NaptimePaginationField
 import org.coursera.naptime.ari.graphql.schema.NaptimeResourceField
+import org.coursera.naptime.ari.graphql.schema.SchemaGenerationException
 import org.coursera.naptime.ari.graphql.schema.SchemaMetadata
 import org.coursera.naptime.schema.Handler
 import org.coursera.naptime.schema.HandlerKind
@@ -86,47 +87,6 @@ class SangriaGraphQlSchemaBuilder(
     Schema(rootObject)
   }
 
-  def scalaTypeToSangria(typeName: String): InputType[Any] = {
-    import sangria.marshalling.FromInput.seqInput
-    import sangria.marshalling.FromInput.coercedScalaInput
-
-    val listPattern = "(Set|List|Seq|immutable.Seq)\\[(.*)\\]".r
-    val optionPattern = "(Option)\\[(.*)\\]".r
-    // TODO(bryan): Fill in the missing types here
-    typeName match {
-      case listPattern(outerType, innerType) => ListInputType(scalaTypeToSangria(innerType))
-      case optionPattern(outerType, innerType) => OptionInputType(scalaTypeToSangria(innerType))
-      case "string" | "String" => StringType
-      case "int" | "Int" => IntType
-      case "long" | "Long" => LongType
-      case "float" | "Float" => FloatType
-      case "decimal" | "Decimal" => BigDecimalType
-      case "boolean" | "Boolean" => BooleanType
-      case _ => {
-        logger.warn(s"could not parse type from $typeName")
-        StringType
-      }
-    }
-  }
-
-  def scalaTypeToFromInput(typeName: String): FromInput[Any] = {
-    import sangria.marshalling.FromInput.seqInput
-    import sangria.marshalling.FromInput.coercedScalaInput
-
-    val listPattern = "(set|list|seq|immutable.Seq)\\[(.*)\\]".r
-    val optionPattern = "(Option)\\[(.*)\\]".r
-
-    // TODO(bryan): Fix all of this :)
-    typeName.toLowerCase match {
-      case listPattern(outerType, innerType) =>
-        sangria.marshalling.FromInput.seqInput.asInstanceOf[FromInput[Any]]
-      case "string" | "int" | "long" | "float" | "decimal" | "boolean" =>
-        sangria.marshalling.FromInput.coercedScalaInput.asInstanceOf[FromInput[Any]]
-      case _ =>
-        sangria.marshalling.FromInput.coercedScalaInput.asInstanceOf[FromInput[Any]]
-    }
-  }
-
   /**
     * Generates an object-type for a given resource name, with each field on the merged output
     * schema available on this object-type.
@@ -166,7 +126,7 @@ class SangriaGraphQlSchemaBuilder(
   def generateGetHandler(
       resource: Resource,
       handler: Handler): Field[SangriaGraphQlContext, DataMap] = {
-    val arguments = generateHandlerArguments(handler)
+    val arguments = SangriaGraphQlSchemaBuilder.generateHandlerArguments(handler)
     val resourceName = ResourceName(resource.name, resource.version.getOrElse(0L).toInt)
 
     val idExtractor = (context: Context[SangriaGraphQlContext, DataMap]) => context.arg[AnyRef]("id")
@@ -183,8 +143,9 @@ class SangriaGraphQlSchemaBuilder(
   def generateListHandler(
       resource: Resource,
       handler: Handler): Field[SangriaGraphQlContext, DataMap] = {
-    val arguments = generateHandlerArguments(handler)
     val resourceName = ResourceName(resource.name, resource.version.getOrElse(0L).toInt)
+    val arguments = SangriaGraphQlSchemaBuilder.generateHandlerArguments(handler)
+
 
     val fieldName = handler.kind match {
       case HandlerKind.FINDER => handler.name
@@ -197,24 +158,17 @@ class SangriaGraphQlSchemaBuilder(
       schemaMetadata = schemaMetadata,
       resourceName = resourceName.identifier,
       fieldName = fieldName)
+      .getOrElse {
+        throw SchemaGenerationException(s"Cannot build field for $resourceName / ${handler.name}")
+      }
 
-    field.copy(arguments = arguments ++ field.arguments)
+    val mergedArguments = (field.arguments ++ arguments)
+      .groupBy(_.name)
+      .map(_._2.head)
+      .map(_.asInstanceOf[Argument[Any]])
+      .toList
+    field.copy(arguments = mergedArguments)
   }
-
-  val PAGINATION_ARGUMENT_NAMES = NaptimePaginationField.paginationArguments.map(_.name)
-
-  def generateHandlerArguments(handler: Handler): List[Argument[Any]] = {
-    handler.parameters
-      .filterNot(parameter => PAGINATION_ARGUMENT_NAMES.contains(parameter.name))
-      .map { parameter =>
-        val tpe = parameter.`type`
-        // TODO(bryan): Use argument defaults here
-        Argument(
-          name = parameter.name,
-          argumentType = scalaTypeToSangria(tpe))(scalaTypeToFromInput(tpe), implicitly).asInstanceOf[Argument[Any]]
-      }.toList
-  }
-
 
   /**
     * Converts a resource name to a GraphQL compatible name. (i.e. 'courses.v1' to 'CoursesV1')
@@ -234,5 +188,72 @@ class SangriaGraphQlSchemaBuilder(
     */
   def formatResourceTopLevelName(resource: Resource): String = {
     s"${formatResourceName(resource)}Resource"
+  }
+}
+
+object SangriaGraphQlSchemaBuilder extends StrictLogging {
+
+  val PAGINATION_ARGUMENT_NAMES = NaptimePaginationField.paginationArguments.map(_.name)
+
+  def generateHandlerArguments(handler: Handler, includePagination: Boolean = false): List[Argument[Any]] = {
+    val baseParameters = handler.parameters
+      .filterNot(parameter => PAGINATION_ARGUMENT_NAMES.contains(parameter.name))
+      .map { parameter =>
+        val tpe = parameter.`type`
+        // TODO(bryan): Use argument defaults here
+        Argument(
+          name = parameter.name,
+          argumentType = scalaTypeToSangria(tpe))(scalaTypeToFromInput(tpe), implicitly).asInstanceOf[Argument[Any]]
+      }.toList
+    val paginationParameters = if (includePagination) {
+      NaptimePaginationField.paginationArguments
+    } else {
+      List.empty
+    }
+    (baseParameters ++ paginationParameters)
+      .groupBy(_.name)
+      .map(_._2.head.asInstanceOf[Argument[Any]])
+      .toList
+  }
+
+  def scalaTypeToSangria(typeName: String): InputType[Any] = {
+    import sangria.marshalling.FromInput.seqInput
+    import sangria.marshalling.FromInput.coercedScalaInput
+
+    val listPattern = "(Set|List|Seq|immutable.Seq)\\[(.*)\\]".r
+    val optionPattern = "(Option)\\[(.*)\\]".r
+    // TODO(bryan): Fill in the missing types here
+    typeName match {
+      case listPattern(outerType, innerType) => ListInputType(scalaTypeToSangria(innerType))
+      case optionPattern(outerType, innerType) => OptionInputType(scalaTypeToSangria(innerType))
+      case "string" | "String" => StringType
+      case "int" | "Int" => IntType
+      case "long" | "Long" => LongType
+      case "float" | "Float" => FloatType
+      case "decimal" | "Decimal" => BigDecimalType
+      case "boolean" | "Boolean" => BooleanType
+      case _ => {
+        logger.warn(s"could not parse type from $typeName")
+        StringType
+      }
+    }
+  }
+
+  def scalaTypeToFromInput(typeName: String): FromInput[Any] = {
+    import sangria.marshalling.FromInput.seqInput
+    import sangria.marshalling.FromInput.coercedScalaInput
+
+    val listPattern = "(set|list|seq|immutable.Seq)\\[(.*)\\]".r
+    val optionPattern = "(Option)\\[(.*)\\]".r
+
+    // TODO(bryan): Fix all of this :)
+    typeName.toLowerCase match {
+      case listPattern(outerType, innerType) =>
+        sangria.marshalling.FromInput.seqInput.asInstanceOf[FromInput[Any]]
+      case "string" | "int" | "long" | "float" | "decimal" | "boolean" =>
+        sangria.marshalling.FromInput.coercedScalaInput.asInstanceOf[FromInput[Any]]
+      case _ =>
+        sangria.marshalling.FromInput.coercedScalaInput.asInstanceOf[FromInput[Any]]
+    }
   }
 }
