@@ -122,7 +122,8 @@ case class RequestField(
   name: String,
   alias: Option[String],
   args: Set[(String, JsValue)], // TODO: Should JsValue be a specific ARI type?
-  selections: List[RequestField])
+  selections: List[RequestField],
+  typeCondition: Option[String] = None)
 
 case class ResponseMetrics(
   numRequests: Int = 0,

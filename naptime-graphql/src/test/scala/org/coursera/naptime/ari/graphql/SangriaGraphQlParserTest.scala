@@ -323,6 +323,7 @@ class SangriaGraphQlParserTest extends AssertionsForJUnit {
           name = "getAll",
           alias = None,
           args = Set(("limit", JsNumber(10))),
+          typeCondition = Some("CoursesV1Resource"),
           selections = List(
             RequestField(
               name = "id",
@@ -462,7 +463,8 @@ class SangriaGraphQlParserTest extends AssertionsForJUnit {
                   name = "id",
                   alias = None,
                   args = Set.empty,
-                  selections = List.empty))))))))
+                  selections = List.empty,
+                  typeCondition = Some("InstructorsV1")))))))))
     assert(response.get === expectedRequest)
   }
 
@@ -523,6 +525,55 @@ class SangriaGraphQlParserTest extends AssertionsForJUnit {
               alias = None,
               args = Set.empty,
               selections = List.empty))))))
+    assert(response.get === expectedRequest)
+  }
+
+  @Test
+  def parseUnion(): Unit = {
+    val query =
+      """
+        query EmptyQuery($limit: Int!) {
+          CoursesV1Resource {
+            getAll(limit: $limit) {
+              ... on UnionTypeOne {
+                id
+                name
+              }
+              ... on UnionTypeTwo {
+                description
+              }
+            }
+          }
+        }
+      """
+    val variables = Json.obj()
+    val response = SangriaGraphQlParser.parse(query, variables, requestHeader)
+    val expectedRequest = Request(requestHeader, immutable.Seq(
+      TopLevelRequest(
+        ResourceName("courses", 1),
+        RequestField(
+          name = "getAll",
+          alias = None,
+          args = Set(("limit", JsNull)),
+          selections = List(
+            RequestField(
+              name = "id",
+              alias = None,
+              args = Set.empty,
+              selections = List.empty,
+              typeCondition = Some("UnionTypeOne")),
+            RequestField(
+              name = "name",
+              alias = None,
+              args = Set.empty,
+              selections = List.empty,
+              typeCondition = Some("UnionTypeOne")),
+            RequestField(
+              name = "description",
+              alias = None,
+              args = Set.empty,
+              selections = List.empty,
+              typeCondition = Some("UnionTypeTwo")))))))
     assert(response.get === expectedRequest)
   }
 

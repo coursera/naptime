@@ -75,9 +75,9 @@ object SangriaGraphQlParser extends GraphQlParser {
       operationName = operation._1.getOrElse("")
       operationData = operation._2
       selection <- operationData.selections
-      field <- parseSelection(selection, parsedDocument)
-      resource <- fieldNameToNaptimeResource(field.name).toList
-      fields = parseField(field, parsedDocument, variables)
+      typedField <- parseSelection(selection, parsedDocument, None)
+      resource <- fieldNameToNaptimeResource(typedField.field.name).toList
+      fields = parseField(typedField, parsedDocument, variables)
     } yield {
       fields.selections.map { field =>
         val mutatedField = mutateArgumentsForNaptime(field)
@@ -89,34 +89,43 @@ object SangriaGraphQlParser extends GraphQlParser {
 
   private[this] def parseSelection(
       selection: Selection,
-      document: Document): List[Field] = {
+      document: Document,
+      typeCondition: Option[String]): List[OptionallyTypedField] = {
     selection match {
       case field: Field =>
-        List(field)
+        List(OptionallyTypedField(field, typeCondition))
       case inlineFragment: InlineFragment =>
-        inlineFragment.selections.flatMap(selection => parseSelection(selection, document))
+        inlineFragment.selections.flatMap { selection =>
+          println(inlineFragment.typeCondition)
+          parseSelection(selection, document, inlineFragment.typeCondition.map(_.name))
+        }
       case fragmentSpread: FragmentSpread =>
         (for {
           fragment <- document.fragments.get(fragmentSpread.name).toList
           selection <- fragment.selections
         } yield {
-          parseSelection(selection, document)
+          println(fragment.typeConditionOpt)
+          parseSelection(selection, document, fragment.typeConditionOpt.map(_.name))
         }).flatten
     }
   }
 
   private[this] def parseField(
-      field: Field,
+      typedField: OptionallyTypedField,
       document: Document,
       variables: JsObject): RequestField = {
-    val selectionFields = field.selections.flatMap(selection => parseSelection(selection, document))
-    val parsedFields = selectionFields.map(field => parseField(field, document, variables))
+    val selectionFields = typedField.field.selections.flatMap { selection =>
+      parseSelection(selection, document, None)}
+    val parsedFields = selectionFields.map { field =>
+      parseField(field, document, variables)
+    }
 
     RequestField(
-      field.name,
-      field.alias,
-      field.arguments.map(argument => (argument.name, parseValue(argument.value, variables))).toSet,
-      parsedFields)
+      typedField.field.name,
+      typedField.field.alias,
+      typedField.field.arguments.map(argument => (argument.name, parseValue(argument.value, variables))).toSet,
+      parsedFields,
+      typedField.typeCondition)
 
   }
 
@@ -171,7 +180,8 @@ object SangriaGraphQlParser extends GraphQlParser {
     fieldName match {
       case TOP_LEVEL_RESOURCE_REGEX(resourceName, version) =>
         try {
-          val lowercaseResourceName = Character.toLowerCase(resourceName.charAt(0)) + resourceName.substring(1)
+          val lowercaseResourceName = Character.toLowerCase(resourceName.charAt(0)) +
+            resourceName.substring(1)
           Some(ResourceName(lowercaseResourceName, version.toInt))
         } catch {
           case e: NumberFormatException => None
@@ -179,5 +189,7 @@ object SangriaGraphQlParser extends GraphQlParser {
       case _ => None
     }
   }
+
+  case class OptionallyTypedField(field: Field, typeCondition: Option[String] = None)
 
 }

@@ -20,6 +20,10 @@ import javax.inject.Inject
 
 import com.linkedin.data.DataList
 import com.linkedin.data.DataMap
+import com.linkedin.data.element.DataElement
+import com.linkedin.data.it.Builder
+import com.linkedin.data.it.IterationOrder
+import com.linkedin.data.it.Predicate
 import com.linkedin.data.schema.ArrayDataSchema
 import com.linkedin.data.schema.RecordDataSchema
 import com.typesafe.scalalogging.StrictLogging
@@ -40,6 +44,7 @@ import play.api.libs.json.JsValue
 import play.api.mvc.RequestHeader
 
 import scala.collection.JavaConverters._
+import scala.collection.mutable
 import scala.concurrent.ExecutionContext
 import scala.concurrent.Future
 import scala.concurrent.duration.FiniteDuration
@@ -67,6 +72,112 @@ class EngineImpl @Inject() (
     }
   }
 
+  case class ForwardRelatedField(selection: RequestField, resourceName: ResourceName, ids: List[String])
+  case class ReverseRelatedField(selection: RequestField, path: Seq[String], element: DataMap, annotation: ReverseRelationAnnotation)
+
+  private[this] def getSelections(selection: RequestField): List[RequestField] = {
+    val elementLookups = (for {
+      elements <- selection.selections.find(_.name == "elements")
+    } yield {
+      elements.selections.filter(_.selections.nonEmpty)
+    }).getOrElse {
+      List.empty
+    }
+
+    val singularLookups = selection.selections.filter { selection =>
+      selection.selections.nonEmpty && selection.name != "elements"
+    }
+
+    elementLookups ++ singularLookups
+  }
+
+  private[this] def replaceAtPath(element: DataMap, schema: RecordDataSchema, path: Seq[String], updatedData: AnyRef): Unit = {
+    def pathEqualsPredicate = new Predicate {
+      def evaluate(element: DataElement): Boolean = {
+        element.path.toSeq.map(_.toString) == path.dropRight(1)
+      }
+    }
+    val it = Builder
+      .create(element, schema, IterationOrder.PRE_ORDER)
+      .filterBy(pathEqualsPredicate)
+      .dataIterator()
+    var dataElement: DataElement = null
+    while ( {
+      dataElement = it.next(); dataElement
+    } != null) {
+      dataElement.getValue.asInstanceOf[DataMap].put(path.last, updatedData)
+    }
+  }
+
+  private[this] def collectRelations(
+      selection: RequestField,
+      data: Iterable[DataMap],
+      schema: RecordDataSchema): (List[ForwardRelatedField], List[ReverseRelatedField]) = {
+    val forwardRelations = mutable.Buffer[ForwardRelatedField]()
+    val reverseRelations = mutable.Buffer[ReverseRelatedField]()
+
+    val dataElements = data.flatMap { element =>
+      val dataElements = mutable.Map[Seq[String], (DataMap, DataElement)]()
+      val it = Builder.create(element, schema, IterationOrder.PRE_ORDER).dataIterator()
+      var dataElement: DataElement = null
+      while ( {
+        dataElement = it.next(); dataElement
+      } != null) {
+        val path = dataElement.path.toSeq.map(_.toString)
+        dataElements += (path -> (element, dataElement))
+      }
+      dataElements.toList
+    }
+
+    for {
+      (path, (element, dataElement)) <- dataElements
+      nestedSelection <- getSelections(selection).headOption.map(sel => RequestField("", None, Set.empty, List(sel), None)).toList // TODO(bryan): Fix this
+      selection <- selectionAtPath(nestedSelection, path).toList
+        if selection.selections.nonEmpty
+      recordField <- dataElement.getSchema match {
+        case record: RecordDataSchema => record.getFields.asScala
+        case _ => List.empty
+      }
+      fieldSelection <- selection.selections.find(_.name == recordField.getName)
+    } yield {
+      forwardRelationForField(recordField).foreach { forwardRelation =>
+        val forwardIds = getFieldValues(recordField, dataElement.getValue.asInstanceOf[DataMap])
+        forwardRelations += ForwardRelatedField(fieldSelection, forwardRelation, forwardIds)
+      }
+
+      reverseRelationForField(recordField).foreach { reverseRelation =>
+        reverseRelations += ReverseRelatedField(fieldSelection, path :+ recordField.getName, element, reverseRelation)
+      }
+    }
+    (forwardRelations.toList, reverseRelations.toList)
+  }
+
+  def getFieldValues(field: RecordDataSchema.Field, element: DataMap): List[String] = {
+    if (field.getType.getDereferencedDataSchema.isPrimitive) {
+      List(element.get(field.getName).toString)
+    } else if (field.getType.getDereferencedDataSchema.isInstanceOf[ArrayDataSchema]) {
+      Option(element.getDataList(field.getName)).map(_.asScala.map(_.toString).toList).getOrElse {
+        logger.debug(s"Field ${field.getName} was not found / was not a data list " +
+          s"in $element for query field $field")
+        List.empty
+      }
+    } else {
+      throw new IllegalStateException(
+        s"Cannot join on an unknown field type '${field.getType.getDereferencedType}' " +
+          s"for field '${field.getName}'")
+    }
+  }
+
+  private[this] def selectionAtPath(selection: RequestField, path: Seq[String]): Option[RequestField] = {
+    if (path.isEmpty) {
+      Some(selection)
+    } else {
+      selection.selections.find(_.name == path.head.replaceAll("\\.", "_")).flatMap { childSelection =>
+        selectionAtPath(childSelection, path.tail)
+      }
+    }
+  }
+
   private[this] def executeTopLevelRequest(
       requestHeader: RequestHeader,
       topLevelRequest: TopLevelRequest): Future[Response] = {
@@ -86,22 +197,27 @@ class EngineImpl @Inject() (
       topLevelRequest: TopLevelRequest): Future[Response] = {
     val topLevelData = extractDataMaps(topLevelResponse, topLevelRequest.resource)
     mergedTypeForResource(topLevelRequest.resource).map { mergedType =>
-      val topLevelResponses = getNestedFields(mergedType, topLevelRequest, topLevelResponse)
-        .map { case (nestedField, field) =>
-          val forwardRelation = relatedResourceForField(field)
-          val reverseRelation = reverseRelationForField(field)
-          (forwardRelation, reverseRelation) match {
-            case (Some(resourceName), None) =>
-              fetchForwardRelation(requestHeader, nestedField, topLevelData, field, resourceName)
-            case (None, Some(reverse)) =>
-              fetchReverseRelation(requestHeader, nestedField, topLevelData, field, reverse)
-            case (Some(forward), Some(reverse)) =>
-              throw new RuntimeException(
-                s"Both forward and reverse relations cannot be defined on ${field.getName}")
-            case (None, None) =>
-              Future.successful(FieldRelationResponse(field, nestedField))
-          }
+      val (forwardRelations, reverseRelations) = collectRelations(
+        topLevelRequest.selection,
+        topLevelData,
+        mergedType)
+
+      val forwardRelationResponses = forwardRelations
+        .groupBy(relation => (relation.resourceName, relation.selection))
+        .mapValues(_.foldLeft(List[String]())(_ ++ _.ids))
+        .map { case ((resourceName, selection), ids) =>
+          fetchForwardRelation(requestHeader, selection, resourceName, ids)
         }
+
+      val reverseRelationResponses = reverseRelations
+        .groupBy(relation => (relation.selection, relation.path, relation.annotation))
+        .mapValues(_.map(_.element))
+        .map { case ((selection, path, annotation), elements) =>
+          fetchReverseRelation(requestHeader, selection, elements, path, annotation)
+        }
+
+      val topLevelResponses = forwardRelationResponses ++ reverseRelationResponses
+
       Future.sequence(topLevelResponses).flatMap { fieldResponses =>
         val mutableTopLevelData = topLevelData
           .map(_.clone())
@@ -113,17 +229,21 @@ class EngineImpl @Inject() (
           idMap <- fieldRelationResponse.idsToAnnotate
         } yield {
           val ids = idMap.getOrElse(id, List.empty)
-          data.put(fieldRelationResponse.field.getName, new DataList(ids.asJava))
+          replaceAtPath(data, mergedType, fieldRelationResponse.path, new DataList(ids.asJava))
         }
         val updatedData = topLevelResponse.data +
           (topLevelRequest.resource -> mutableTopLevelData)
         val responseWithUpdatedData = topLevelResponse.copy(data = updatedData)
+
         val finalResponse = fieldResponses.foldLeft(responseWithUpdatedData)(_ ++ _.response)
-        val relatedResponsesFut = fieldResponses.map { fieldResponse =>
-          val newTopLevelRequest = TopLevelRequest(
-            fieldResponse.response.data.head._1,
-            fieldResponse.requestField)
-          executeRelatedRequest(requestHeader, finalResponse.copy(metrics = ResponseMetrics()), newTopLevelRequest)
+        val relatedResponsesFut = fieldResponses.flatMap { fieldResponse =>
+          fieldResponse.response.data.headOption.map { case (resourceName, data) =>
+            val newTopLevelRequest = TopLevelRequest(resourceName, fieldResponse.requestField)
+            executeRelatedRequest(
+              requestHeader,
+              finalResponse.copy(metrics = ResponseMetrics()),
+              newTopLevelRequest)
+          }
         }
         Future.sequence(relatedResponsesFut).map { relatedResponses =>
           relatedResponses.foldLeft(finalResponse)(_ ++ _)
@@ -144,7 +264,7 @@ class EngineImpl @Inject() (
     }
   }
 
-  private[this] def relatedResourceForField(
+  private[this] def forwardRelationForField(
       field: RecordDataSchema.Field): Option[ResourceName] = {
     Option(field.getProperties.get(Relations.PROPERTY_NAME)).map {
       case idString: String =>
@@ -165,86 +285,31 @@ class EngineImpl @Inject() (
     }
   }
 
-  private[this] def computeMultiGetIds(
-      topLevelData: Iterable[DataMap],
-      nestedField: RequestField,
-      field: RecordDataSchema.Field): String = {
-    topLevelData.flatMap { elem =>
-      if (field.getType.getDereferencedDataSchema.isPrimitive) {
-        Option(elem.get(nestedField.name))
-      } else if (field.getType.getDereferencedDataSchema.isInstanceOf[ArrayDataSchema]) {
-        Option(elem.getDataList(nestedField.name)).map(_.asScala).getOrElse {
-          logger.debug(s"Field $nestedField was not found / was not a data list " +
-            s"in $elem for query field $field")
-          List.empty
-        }
-      } else {
-        throw new IllegalStateException(
-          s"Cannot join on an unknown field type '${field.getType.getDereferencedType}' " +
-            s"for field '${field.getName}'")
-      }
-    }.toSet.map[String, Set[String]](_.toString).mkString(",") // TODO: escape appropriately.
-  }
-
-  private[this] def getNestedFields(
-      mergedType: RecordDataSchema,
-      topLevelRequest: TopLevelRequest,
-      response: Response) = {
-
-    // TODO(bryan): Pull out logic about connections in here
-    val elementLookups = (for {
-      elements <- topLevelRequest.selection.selections.find(_.name == "elements")
-    } yield {
-      elements.selections.filter(_.selections.nonEmpty)
-    }).getOrElse {
-      List.empty
-    }
-
-    val singularLookups = topLevelRequest.selection.selections.filter { selection =>
-      selection.selections.nonEmpty && selection.name != "elements"
-    }
-
-    val nestedLookups = elementLookups ++ singularLookups
-
-    for {
-      nestedField <- nestedLookups
-      field <- Option(mergedType.getField(nestedField.name)).toList
-    } yield {
-      (nestedField, field)
-    }
-  }
-
   private[this] def fetchForwardRelation(
       requestHeader: RequestHeader,
       requestField: RequestField,
-      data: Iterable[DataMap],
-      field: RecordDataSchema.Field,
-      resourceName: ResourceName) = {
-    val multiGetIds = computeMultiGetIds(data, requestField, field)
+      resourceName: ResourceName,
+      ids: List[String]): Future[FieldRelationResponse] = {
+    val multiGetIds = ids.toSet.mkString(",")
 
     if (multiGetIds.nonEmpty) {
-
       val relatedTopLevelRequest = TopLevelRequest(
         resource = resourceName,
         selection = RequestField(
           name = "multiGet",
           alias = None,
-
-          // TODO: pass through original request fields for pagination
           args = Set("ids" -> JsString(multiGetIds)) ++ requestField.args,
-
           selections = requestField.selections))
       executeTopLevelRequest(requestHeader, relatedTopLevelRequest).map { response =>
         // Exclude the top level ids in the response.
-        Response(
+        val res = Response(
           topLevelResponses = Map.empty,
           data = response.data,
           metrics = response.metrics)
-      }.map { response =>
-        FieldRelationResponse(field, requestField, response)
+        FieldRelationResponse(Seq.empty, requestField, res)
       }
     } else {
-      Future.successful(FieldRelationResponse(field, requestField))
+      Future.successful(FieldRelationResponse(Seq.empty, requestField))
     }
   }
 
@@ -252,11 +317,11 @@ class EngineImpl @Inject() (
       requestHeader: RequestHeader,
       requestField: RequestField,
       data: Iterable[DataMap],
-      field: RecordDataSchema.Field,
+      path: Seq[String],
       reverse: ReverseRelationAnnotation) = {
     val resourceName = ResourceName.parse(reverse.resourceName).getOrElse {
       throw new IllegalStateException(s"Could not parse identifier " +
-        s"'${reverse.resourceName}' for field '$field'")
+        s"'${reverse.resourceName}''")
     }
     val responses = data.map { topLevelElement =>
       val InterpolationRegex = new Regex("""\$([a-zA-Z0-9_]+)""", "variableName")
@@ -285,7 +350,7 @@ class EngineImpl @Inject() (
           metrics = response.metrics)
       }
     }
-    Future.fold(responses)(FieldRelationResponse(field, requestField)) { case (frr, (id, response)) =>
+    Future.fold(responses)(FieldRelationResponse(path, requestField)) { case (frr, (id, response)) =>
       val idMap = response.data.headOption.map { case (_, data) =>
         id -> data.keys.toList
       }
@@ -297,7 +362,7 @@ class EngineImpl @Inject() (
 }
 
 case class FieldRelationResponse(
-    field: RecordDataSchema.Field,
+    path: Seq[String],
     requestField: RequestField,
     response: Response = Response.empty,
     idsToAnnotate: Option[Map[AnyRef, List[AnyRef]]] = None)
