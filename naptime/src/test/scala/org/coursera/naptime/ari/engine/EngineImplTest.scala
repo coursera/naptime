@@ -106,9 +106,15 @@ class EngineImplTest extends AssertionsForJUnit with ScalaFutures with MockitoSu
   when(instructorRouterBuilder.resourceClass()).thenReturn(
     classOf[InstructorsResource].asInstanceOf[Class[instructorRouterBuilder.ResourceClass]])
 
+  val partnerRouterBuilder = mock[ResourceRouterBuilder]
+  when(partnerRouterBuilder.schema).thenReturn(PARTNERS_RESOURCE)
+  when(partnerRouterBuilder.types).thenReturn(extraTypes)
+  when(partnerRouterBuilder.resourceClass()).thenReturn(
+    classOf[PartnersResource].asInstanceOf[Class[partnerRouterBuilder.ResourceClass]])
+
   val injector = mock[Injector]
   val schemaProvider =
-    new LocalSchemaProvider(NaptimeRoutes(injector, Set(courseRouterBuilder, instructorRouterBuilder)))
+    new LocalSchemaProvider(NaptimeRoutes(injector, Set(courseRouterBuilder, instructorRouterBuilder, partnerRouterBuilder)))
   val engine = new EngineImpl(schemaProvider, fetcherApi)
 
   @Test
@@ -461,6 +467,8 @@ class EngineImplTest extends AssertionsForJUnit with ScalaFutures with MockitoSu
       Future.successful(fetcherResponseInstructors))
 
     val result = engine.execute(request).futureValue
+
+    verify(fetcherApi, times(3)).data(any())
 
     assert(1 === result.topLevelResponses.size, s"Result: $result")
     assert(result.topLevelResponses.contains(request.topLevelRequests.head))

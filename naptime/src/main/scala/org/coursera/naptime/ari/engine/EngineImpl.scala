@@ -20,16 +20,9 @@ import javax.inject.Inject
 
 import com.linkedin.data.DataList
 import com.linkedin.data.DataMap
-import com.linkedin.data.element.DataElement
-import com.linkedin.data.it.Builder
-import com.linkedin.data.it.IterationOrder
-import com.linkedin.data.it.Predicate
-import com.linkedin.data.schema.ArrayDataSchema
 import com.linkedin.data.schema.RecordDataSchema
 import com.typesafe.scalalogging.StrictLogging
-import org.coursera.courier.templates.DataTemplates.DataConversion
 import org.coursera.naptime.ResourceName
-import org.coursera.naptime.Types.Relations
 import org.coursera.naptime.ari.EngineApi
 import org.coursera.naptime.ari.FetcherApi
 import org.coursera.naptime.ari.Request
@@ -44,7 +37,6 @@ import play.api.libs.json.JsValue
 import play.api.mvc.RequestHeader
 
 import scala.collection.JavaConverters._
-import scala.collection.mutable
 import scala.concurrent.ExecutionContext
 import scala.concurrent.Future
 import scala.concurrent.duration.FiniteDuration
@@ -53,18 +45,17 @@ import scala.util.matching.Regex
 class EngineImpl @Inject() (
     schemaProvider: SchemaProvider,
     fetcher: FetcherApi)
-    (implicit executionContext: ExecutionContext) extends EngineApi with StrictLogging {
+    (implicit executionContext: ExecutionContext)
+  extends EngineApi
+  with StrictLogging {
 
-  private[this] def mergedTypeForResource(resourceName: ResourceName): Option[RecordDataSchema] = {
-    schemaProvider.mergedType(resourceName)
-  }
+  import EngineHelpers._
 
   override def execute(request: Request): Future[Response] = {
     val responseFutures = request.topLevelRequests.map { topLevelRequest =>
       executeTopLevelRequest(request.requestHeader, topLevelRequest).flatMap { response =>
-        executeRelatedRequest(request.requestHeader, response, topLevelRequest)
+        executeRelatedRequest(request.requestHeader, topLevelRequest, response)
       }
-
     }
     val futureResponses = Future.sequence(responseFutures)
     futureResponses.map { responses =>
@@ -72,112 +63,12 @@ class EngineImpl @Inject() (
     }
   }
 
-  case class ForwardRelatedField(selection: RequestField, resourceName: ResourceName, ids: List[String])
-  case class ReverseRelatedField(selection: RequestField, path: Seq[String], element: DataMap, annotation: ReverseRelationAnnotation)
-
-  private[this] def getSelections(selection: RequestField): List[RequestField] = {
-    val elementLookups = (for {
-      elements <- selection.selections.find(_.name == "elements")
-    } yield {
-      elements.selections.filter(_.selections.nonEmpty)
-    }).getOrElse {
-      List.empty
-    }
-
-    val singularLookups = selection.selections.filter { selection =>
-      selection.selections.nonEmpty && selection.name != "elements"
-    }
-
-    elementLookups ++ singularLookups
-  }
-
-  private[this] def replaceAtPath(element: DataMap, schema: RecordDataSchema, path: Seq[String], updatedData: AnyRef): Unit = {
-    def pathEqualsPredicate = new Predicate {
-      def evaluate(element: DataElement): Boolean = {
-        element.path.toSeq.map(_.toString) == path.dropRight(1)
-      }
-    }
-    val it = Builder
-      .create(element, schema, IterationOrder.PRE_ORDER)
-      .filterBy(pathEqualsPredicate)
-      .dataIterator()
-    var dataElement: DataElement = null
-    while ( {
-      dataElement = it.next(); dataElement
-    } != null) {
-      dataElement.getValue.asInstanceOf[DataMap].put(path.last, updatedData)
-    }
-  }
-
-  private[this] def collectRelations(
-      selection: RequestField,
-      data: Iterable[DataMap],
-      schema: RecordDataSchema): (List[ForwardRelatedField], List[ReverseRelatedField]) = {
-    val forwardRelations = mutable.Buffer[ForwardRelatedField]()
-    val reverseRelations = mutable.Buffer[ReverseRelatedField]()
-
-    val dataElements = data.flatMap { element =>
-      val dataElements = mutable.Map[Seq[String], (DataMap, DataElement)]()
-      val it = Builder.create(element, schema, IterationOrder.PRE_ORDER).dataIterator()
-      var dataElement: DataElement = null
-      while ( {
-        dataElement = it.next(); dataElement
-      } != null) {
-        val path = dataElement.path.toSeq.map(_.toString)
-        dataElements += (path -> (element, dataElement))
-      }
-      dataElements.toList
-    }
-
-    for {
-      (path, (element, dataElement)) <- dataElements
-      nestedSelection <- getSelections(selection).headOption.map(sel => RequestField("", None, Set.empty, List(sel), None)).toList // TODO(bryan): Fix this
-      selection <- selectionAtPath(nestedSelection, path).toList
-        if selection.selections.nonEmpty
-      recordField <- dataElement.getSchema match {
-        case record: RecordDataSchema => record.getFields.asScala
-        case _ => List.empty
-      }
-      fieldSelection <- selection.selections.find(_.name == recordField.getName)
-    } yield {
-      forwardRelationForField(recordField).foreach { forwardRelation =>
-        val forwardIds = getFieldValues(recordField, dataElement.getValue.asInstanceOf[DataMap])
-        forwardRelations += ForwardRelatedField(fieldSelection, forwardRelation, forwardIds)
-      }
-
-      reverseRelationForField(recordField).foreach { reverseRelation =>
-        reverseRelations += ReverseRelatedField(fieldSelection, path :+ recordField.getName, element, reverseRelation)
-      }
-    }
-    (forwardRelations.toList, reverseRelations.toList)
-  }
-
-  def getFieldValues(field: RecordDataSchema.Field, element: DataMap): List[String] = {
-    if (field.getType.getDereferencedDataSchema.isPrimitive) {
-      List(element.get(field.getName).toString)
-    } else if (field.getType.getDereferencedDataSchema.isInstanceOf[ArrayDataSchema]) {
-      Option(element.getDataList(field.getName)).map(_.asScala.map(_.toString).toList).getOrElse {
-        logger.debug(s"Field ${field.getName} was not found / was not a data list " +
-          s"in $element for query field $field")
-        List.empty
-      }
-    } else {
-      throw new IllegalStateException(
-        s"Cannot join on an unknown field type '${field.getType.getDereferencedType}' " +
-          s"for field '${field.getName}'")
-    }
-  }
-
-  private[this] def selectionAtPath(selection: RequestField, path: Seq[String]): Option[RequestField] = {
-    if (path.isEmpty) {
-      Some(selection)
-    } else {
-      selection.selections.find(_.name == path.head.replaceAll("\\.", "_")).flatMap { childSelection =>
-        selectionAtPath(childSelection, path.tail)
-      }
-    }
-  }
-
+  /**
+    * Executes a request on the fetcher to load data off a resource
+    * @param requestHeader incoming requestheader containing cookies, headers, etc.
+    * @param topLevelRequest request specifying resource name, arguments, etc.
+    * @return a Response containing response data, ids, and metrics about the request and response
+    */
   private[this] def executeTopLevelRequest(
       requestHeader: RequestHeader,
       topLevelRequest: TopLevelRequest): Future[Response] = {
@@ -191,16 +82,25 @@ class EngineImpl @Inject() (
           duration = FiniteDuration(System.nanoTime() - startTime, "nanos")))
     }
   }
+
+  /**
+    * Traverses through the request and response to find all forward and reverse relations,
+    * and then execute those relations by creating and executing additional topLevelRequests
+    * @param requestHeader incoming requestheader containing cookies, headers, etc.
+    * @param topLevelRequest request used to generate the topLevelResponse
+    * @param topLevelResponse response containing data associated with the topLevelRequest
+    * @return
+    */
   private[this] def executeRelatedRequest(
       requestHeader: RequestHeader,
-      topLevelResponse: Response,
-      topLevelRequest: TopLevelRequest): Future[Response] = {
-    val topLevelData = extractDataMaps(topLevelResponse, topLevelRequest.resource)
-    mergedTypeForResource(topLevelRequest.resource).map { mergedType =>
+      topLevelRequest: TopLevelRequest,
+      topLevelResponse: Response): Future[Response] = {
+    val topLevelData = topLevelResponse.data.get(topLevelRequest.resource)
+      .toIterable.flatMap(_.values)
+
+    schemaProvider.mergedType(topLevelRequest.resource).map { mergedType =>
       val (forwardRelations, reverseRelations) = collectRelations(
-        topLevelRequest.selection,
-        topLevelData,
-        mergedType)
+        topLevelRequest.selection, topLevelData, mergedType)
 
       val forwardRelationResponses = forwardRelations
         .groupBy(relation => (relation.resourceName, relation.selection))
@@ -229,7 +129,7 @@ class EngineImpl @Inject() (
           idMap <- fieldRelationResponse.idsToAnnotate
         } yield {
           val ids = idMap.getOrElse(id, List.empty)
-          replaceAtPath(data, mergedType, fieldRelationResponse.path, new DataList(ids.asJava))
+          insertAtPath(data, mergedType, fieldRelationResponse.path, new DataList(ids.asJava))
         }
         val updatedData = topLevelResponse.data +
           (topLevelRequest.resource -> mutableTopLevelData)
@@ -241,8 +141,8 @@ class EngineImpl @Inject() (
             val newTopLevelRequest = TopLevelRequest(resourceName, fieldResponse.requestField)
             executeRelatedRequest(
               requestHeader,
-              finalResponse.copy(metrics = ResponseMetrics()),
-              newTopLevelRequest)
+              newTopLevelRequest,
+              finalResponse.copy(metrics = ResponseMetrics()))
           }
         }
         Future.sequence(relatedResponsesFut).map { relatedResponses =>
@@ -256,35 +156,14 @@ class EngineImpl @Inject() (
     }
   }
 
-  private[this] def extractDataMaps(
-      response: Response,
-      resourceName: ResourceName): Iterable[DataMap] = {
-    response.data.get(resourceName).toIterable.flatMap { dataMap =>
-      dataMap.values
-    }
-  }
-
-  private[this] def forwardRelationForField(
-      field: RecordDataSchema.Field): Option[ResourceName] = {
-    Option(field.getProperties.get(Relations.PROPERTY_NAME)).map {
-      case idString: String =>
-        ResourceName.parse(idString).getOrElse {
-          throw new IllegalStateException(s"Could not parse identifier '$idString' " +
-            s"for field '$field'")
-        }
-      case identifier =>
-        throw new IllegalStateException(s"Unexpected type for identifier '$identifier' " +
-          s"for field '$field'")
-    }
-  }
-
-  private[this] def reverseRelationForField(
-      field: RecordDataSchema.Field): Option[ReverseRelationAnnotation] = {
-    Option(field.getProperties.get(Relations.REVERSE_PROPERTY_NAME)).map {
-      case dataMap: DataMap => ReverseRelationAnnotation(dataMap, DataConversion.SetReadOnly)
-    }
-  }
-
+  /**
+    * Execute a topLevelRequest for a forward relation
+    * @param requestHeader incoming requestheader containing cookies, headers, etc.
+    * @param requestField selection specifying arguments and nested selections on the relation
+    * @param resourceName resource name to query (using a multiGet on the resource)
+    * @param ids list of ids to fetch elements for (turns into a query parameter on the request)
+    * @return a FieldRelationResponse containing the selection and response
+    */
   private[this] def fetchForwardRelation(
       requestHeader: RequestHeader,
       requestField: RequestField,
@@ -306,19 +185,30 @@ class EngineImpl @Inject() (
           topLevelResponses = Map.empty,
           data = response.data,
           metrics = response.metrics)
-        FieldRelationResponse(Seq.empty, requestField, res)
+        FieldRelationResponse(requestField, response = res)
       }
     } else {
-      Future.successful(FieldRelationResponse(Seq.empty, requestField))
+      Future.successful(FieldRelationResponse(requestField))
     }
   }
 
+  /**
+    * Executes a series of topLevelRequests for a reverse relation
+    * @param requestHeader incoming requestheader containing cookies, headers, etc.
+    * @param requestField selection specifying arguments and nested selections on the relation
+    * @param data list of dataMaps containing the resources that the reverse relation is on.
+    *             (these are necessary in order to support interpolation of arguments)
+    * @param path path of the new, dynamic field where the reverse relation will be inserted
+    * @param reverse ReverseRelationAnnotation containing arguments, resource name, and type
+    * @return a FieldRelationResponse containing a merged response
+    *         and merged list of ids to be added to the parent element at the specified path
+    */
   private[this] def fetchReverseRelation(
       requestHeader: RequestHeader,
       requestField: RequestField,
       data: Iterable[DataMap],
       path: Seq[String],
-      reverse: ReverseRelationAnnotation) = {
+      reverse: ReverseRelationAnnotation): Future[FieldRelationResponse] = {
     val resourceName = ResourceName.parse(reverse.resourceName).getOrElse {
       throw new IllegalStateException(s"Could not parse identifier " +
         s"'${reverse.resourceName}''")
@@ -350,20 +240,25 @@ class EngineImpl @Inject() (
           metrics = response.metrics)
       }
     }
-    Future.fold(responses)(FieldRelationResponse(path, requestField)) { case (frr, (id, response)) =>
-      val idMap = response.data.headOption.map { case (_, data) =>
-        id -> data.keys.toList
-      }
+    Future.fold(responses)(FieldRelationResponse(requestField, path)) { case (frr, (id, res)) =>
+      val idMap = res.data.headOption.map { case (_, elements) => id -> elements.keys.toList }
       frr.copy(
-        response = frr.response ++ response,
+        response = frr.response ++ res,
         idsToAnnotate = Some(frr.idsToAnnotate.getOrElse(Map.empty) ++ idMap))
     }
   }
-}
 
-case class FieldRelationResponse(
-    path: Seq[String],
-    requestField: RequestField,
-    response: Response = Response.empty,
-    idsToAnnotate: Option[Map[AnyRef, List[AnyRef]]] = None)
+  /**
+    * Helper case class containing information about a response from a forward or reverse relation
+    * @param requestField selection on the field, containing arguments and nested selections
+    * @param path path of the field relation, used for annotating ids for reverse relations
+    * @param response a top level response with returned elements and response metrics
+    * @param idsToAnnotate a map of data ids to fetched ids, used for populating reverse relations
+    */
+  case class FieldRelationResponse(
+      requestField: RequestField,
+      path: Seq[String] = Seq.empty,
+      response: Response = Response.empty,
+      idsToAnnotate: Option[Map[AnyRef, List[AnyRef]]] = None)
+}
 
