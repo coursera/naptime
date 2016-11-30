@@ -25,6 +25,8 @@ import com.typesafe.scalalogging.StrictLogging
 import org.coursera.courier.templates.DataTemplates.DataConversion
 import org.coursera.naptime.Types.Relations
 import org.coursera.naptime.ari.graphql.SangriaGraphQlContext
+import org.coursera.naptime.ari.graphql.schema.NaptimePaginatedResourceField.ForwardRelation
+import org.coursera.naptime.ari.graphql.schema.NaptimePaginatedResourceField.ReverseRelation
 import org.coursera.naptime.ari.graphql.types.NaptimeTypes
 import org.coursera.naptime.schema.ReverseRelationAnnotation
 import sangria.schema.BooleanType
@@ -74,8 +76,10 @@ object FieldBuilder extends StrictLogging {
 
       // Related resource in a list
       case (Some(relatedResourceName), _: ArrayDataSchema) =>
-        val fieldRelation = FieldRelation(forwardRelationOption, reverseRelationOption)
-        NaptimePaginatedResourceField.build(schemaMetadata, relatedResourceName, fieldName, None, fieldRelation)
+        val fieldRelation = forwardRelationOption.map(ForwardRelation)
+          .orElse(reverseRelationOption.map(ReverseRelation))
+        NaptimePaginatedResourceField
+          .build(schemaMetadata, relatedResourceName, fieldName, None, fieldRelation)
           .getOrElse {
             buildField(schemaMetadata, field, namespace, fieldNameOverride, followRelations = false)
           }

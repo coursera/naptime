@@ -21,12 +21,17 @@ object NaptimePaginatedResourceField {
 
   val COMPLEXITY_COST = 10.0D
 
+  sealed trait FieldRelation
+
+  case class ForwardRelation(resourceName: String) extends FieldRelation
+  case class ReverseRelation(annotation: ReverseRelationAnnotation) extends FieldRelation
+
   def build(
       schemaMetadata: SchemaMetadata,
       resourceName: String,
       fieldName: String,
       handlerOverride: Option[Handler] = None,
-      fieldRelation: FieldRelation): Option[Field[SangriaGraphQlContext, DataMap]] = {
+      fieldRelation: Option[FieldRelation]): Option[Field[SangriaGraphQlContext, DataMap]] = {
 
     val resource = schemaMetadata.getResource(resourceName)
 
@@ -34,15 +39,14 @@ object NaptimePaginatedResourceField {
       val handlerOpt = (handlerOverride, fieldRelation) match {
         case (Some(handler), _) =>
           Some(handler)
-        case (None, FieldRelation(Some(forward), None)) =>
+        case (None, Some(ForwardRelation(_))) =>
           resource.handlers.find(_.kind == HandlerKind.MULTI_GET)
-        case (None, FieldRelation(None, Some(reverse))) =>
-          reverse.relationType match {
+        case (None, Some(ReverseRelation(annotation))) =>
+          annotation.relationType match {
 
             case RelationType.FINDER =>
-              val finderName = reverse.arguments.get("q").getOrElse {
-                throw new IllegalStateException("Finder reverse relation on " +
-                  s"${reverse.resourceName} does not have a q parameter specified")
+              val finderName = annotation.arguments.get("q").getOrElse {throw new IllegalStateException("Finder reverse relation on " +
+                  s"${annotation.resourceName} does not have a q parameter specified")
               }
               resource.handlers.find(_.name == finderName)
 
@@ -58,9 +62,11 @@ object NaptimePaginatedResourceField {
 
       handlerOpt.map { handler =>
 
-        val reverseRelationSpecifiedArguments = fieldRelation.reverseRelation.map { reverse =>
-          reverse.arguments.keySet
-        }.getOrElse(Set.empty)
+        val reverseRelationSpecifiedArguments = fieldRelation match {
+          case Some(ReverseRelation(annotation)) => annotation.arguments.keySet
+          case _ => Set[String]()
+        }
+
         val arguments = SangriaGraphQlSchemaBuilder
           .generateHandlerArguments(handler, includePagination = true)
           .filterNot(_.name == "ids")
@@ -154,7 +160,3 @@ object NaptimePaginatedResourceField {
   }
 
 }
-
-case class FieldRelation(
-    forwardRelation: Option[String] = None,
-    reverseRelation: Option[ReverseRelationAnnotation] = None)

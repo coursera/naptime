@@ -96,7 +96,6 @@ object SangriaGraphQlParser extends GraphQlParser {
         List(OptionallyTypedField(field, typeCondition))
       case inlineFragment: InlineFragment =>
         inlineFragment.selections.flatMap { selection =>
-          println(inlineFragment.typeCondition)
           parseSelection(selection, document, inlineFragment.typeCondition.map(_.name))
         }
       case fragmentSpread: FragmentSpread =>
@@ -104,7 +103,6 @@ object SangriaGraphQlParser extends GraphQlParser {
           fragment <- document.fragments.get(fragmentSpread.name).toList
           selection <- fragment.selections
         } yield {
-          println(fragment.typeConditionOpt)
           parseSelection(selection, document, fragment.typeConditionOpt.map(_.name))
         }).flatten
     }

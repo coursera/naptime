@@ -91,17 +91,12 @@ object EngineHelpers extends StrictLogging {
       schema: RecordDataSchema,
       path: Seq[String],
       data: AnyRef): Unit = {
-    val it = Builder
-      .create(element, schema, IterationOrder.PRE_ORDER)
-      .dataIterator()
-    var dataElement: DataElement = null
-    while ( {
-      dataElement = it.next(); dataElement
-    } != null) {
-      if (dataElement.path.toSeq.map(_.toString) == path.dropRight(1)) {
-        dataElement.getValue.asInstanceOf[DataMap].put(path.last, data)
-      }
-    }
+    val it = Builder.create(element, schema, IterationOrder.PRE_ORDER).dataIterator()
+    Iterator
+      .continually(it.next)
+      .takeWhile(_ != null)
+      .filter(_.path.toSeq.map(_.toString) == path.dropRight(1))
+      .foreach(_.getValue.asInstanceOf[DataMap].put(path.last, data))
   }
 
   /**
@@ -123,34 +118,34 @@ object EngineHelpers extends StrictLogging {
 
     data.foreach { element =>
       val it = Builder.create(element, schema, IterationOrder.PRE_ORDER).dataIterator()
-      var dataElement: DataElement = null
-      while ( {
-        dataElement = it.next(); dataElement
-      } != null) {
-        val path = dataElement.path.toSeq.map(_.toString)
-        for {
-          selection <- selectionAtPath(selection, path).toList
-          if selection.selections.nonEmpty
-          recordField <- dataElement.getSchema match {
-            case record: RecordDataSchema => record.getFields.asScala
-            case _ => List.empty
-          }
-          fieldSelection <- getSelections(selection).find(_.name == recordField.getName)
-        } yield {
-          forwardRelationForField(recordField).foreach { forwardRelation =>
-            val forwardIds = getFieldValues(recordField, dataElement.getValue.asInstanceOf[DataMap])
-            forwardRelations += ForwardRelatedField(fieldSelection, forwardRelation, forwardIds)
-          }
+      Iterator
+        .continually(it.next)
+        .takeWhile(_ != null)
+        .foreach { dataElement =>
+          val path = dataElement.path.toSeq.map(_.toString)
+          for {
+            selection <- selectionAtPath(selection, path).toList
+            if selection.selections.nonEmpty
+            recordField <- dataElement.getSchema match {
+              case record: RecordDataSchema => record.getFields.asScala
+              case _ => List.empty
+            }
+            fieldSelection <- getSelections(selection).find(_.name == recordField.getName)
+          } yield {
+            forwardRelationForField(recordField).foreach { forwardRelation =>
+              val forwardIds = getFieldValues(recordField, dataElement.getValue.asInstanceOf[DataMap])
+              forwardRelations += ForwardRelatedField(fieldSelection, forwardRelation, forwardIds)
+            }
 
-          reverseRelationForField(recordField).foreach { reverseRelation =>
-            reverseRelations += ReverseRelatedField(
-              selection = fieldSelection,
-              path = path :+ recordField.getName,
-              element = element,
-              annotation = reverseRelation)
+            reverseRelationForField(recordField).foreach { reverseRelation =>
+              reverseRelations += ReverseRelatedField(
+                selection = fieldSelection,
+                path = path :+ recordField.getName,
+                element = element,
+                annotation = reverseRelation)
+            }
           }
         }
-      }
     }
     (forwardRelations.toList, reverseRelations.toList)
   }
