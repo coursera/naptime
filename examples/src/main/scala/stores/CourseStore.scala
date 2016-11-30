@@ -7,6 +7,7 @@ import com.linkedin.data.DataMap
 import org.coursera.courier.templates.DataTemplates.DataConversion
 import org.coursera.example.AnyData
 import org.coursera.example.Course
+import org.coursera.example.CourseMetadata
 import org.coursera.naptime.model.Keyed
 
 import scala.collection.JavaConverters._
@@ -26,7 +27,9 @@ class CourseStore {
       description = Some("Machine learning is the science of getting computers to act without being explicitly programmed."),
       extraData = AnyData(new DataMap(
         Map("firstModuleId" -> "wrh7vtpj").asJava),
-        DataConversion.SetReadOnly)),
+        DataConversion.SetReadOnly),
+      courseMetadata = CourseMetadata(
+        certificateInstructor = "andrew-ng")),
     "lhtl" -> Course(
       instructors = List("barb-oakley"),
       partner = "ucsd",
@@ -35,7 +38,9 @@ class CourseStore {
       description = None,
       extraData = AnyData(new DataMap(
         Map("recentEnrollments" -> new Integer(1000)).asJava),
-        DataConversion.SetReadOnly)))
+        DataConversion.SetReadOnly),
+      courseMetadata = CourseMetadata(
+        certificateInstructor = "andrew-ng")))
 
   def get(id: String) = courseStore.get(id)
 

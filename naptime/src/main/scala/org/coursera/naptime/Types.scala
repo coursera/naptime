@@ -18,6 +18,7 @@ package org.coursera.naptime
 
 import java.lang.StringBuilder
 
+import com.linkedin.data.schema.ArrayDataSchema
 import com.linkedin.data.schema.DataSchema
 import com.linkedin.data.schema.Name
 import com.linkedin.data.schema.PrimitiveDataSchema
@@ -26,12 +27,14 @@ import com.linkedin.data.schema.RecordDataSchema.RecordType
 import com.linkedin.data.schema.StringDataSchema
 import com.linkedin.data.schema.TyperefDataSchema
 import com.typesafe.scalalogging.StrictLogging
+
 import scala.collection.JavaConverters._
 
 object Types extends StrictLogging {
 
   object Relations {
     val PROPERTY_NAME = "related"
+    val REVERSE_PROPERTY_NAME = "relatedOn"
   }
 
   @deprecated("Please use the one with fields included", "0.2.4")
@@ -93,6 +96,27 @@ object Types extends StrictLogging {
           val relatedMap = Map[String, AnyRef](
             Relations.PROPERTY_NAME -> relation.identifier)
           field.setProperties((properties ++ relatedMap).asJava)
+      }
+    }
+    for ((name, reverseRelation) <- fields.reverseRelations) {
+      Option(mergedSchema.getField(name)) match {
+        case Some(field) =>
+          logger.warn(s"Fields for resource $typeName tries to add reverse relation on field " +
+            s"'$name', but that field is already defined on the model")
+        case None =>
+          val errorMessageBuilder = new StringBuilder
+          val newField = new RecordDataSchema.Field(new ArrayDataSchema(new StringDataSchema)) // TODO(bryan): fix type here
+          newField.setOptional(false)
+          newField.setName(name, errorMessageBuilder)
+          newField.setRecord(mergedSchema)
+
+          val reverseRelatedMap = Map[String, AnyRef](
+            Relations.REVERSE_PROPERTY_NAME -> reverseRelation.toAnnotation.data())
+          newField.setProperties(reverseRelatedMap.asJava)
+
+          val existingFields = mergedSchema.getFields
+          val newFields = (existingFields.asScala ++ List(newField)).asJava
+          mergedSchema.setFields(newFields, errorMessageBuilder)
       }
     }
     mergedSchema

@@ -122,7 +122,8 @@ case class RequestField(
   name: String,
   alias: Option[String],
   args: Set[(String, JsValue)], // TODO: Should JsValue be a specific ARI type?
-  selections: List[RequestField])
+  selections: List[RequestField],
+  typeCondition: Option[String] = None)
 
 case class ResponseMetrics(
   numRequests: Int = 0,
@@ -165,8 +166,9 @@ case class Response(
           case (Some(dm), None) => dm
           case (None, Some(dm)) => dm
           case (Some(l), Some(r)) =>
-            l.putAll(r)
-            l
+            val mutableL = l.clone()
+            mutableL.putAll(r)
+            mutableL
         }
         key -> merged
       }.toMap

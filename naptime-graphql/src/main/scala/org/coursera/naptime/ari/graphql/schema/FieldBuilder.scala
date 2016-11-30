@@ -22,8 +22,13 @@ import com.linkedin.data.schema.validation.RequiredMode
 import com.linkedin.data.schema.validation.ValidateDataAgainstSchema
 import com.linkedin.data.schema.validation.ValidationOptions
 import com.typesafe.scalalogging.StrictLogging
+import org.coursera.courier.templates.DataTemplates.DataConversion
+import org.coursera.naptime.Types.Relations
 import org.coursera.naptime.ari.graphql.SangriaGraphQlContext
+import org.coursera.naptime.ari.graphql.schema.NaptimePaginatedResourceField.ForwardRelation
+import org.coursera.naptime.ari.graphql.schema.NaptimePaginatedResourceField.ReverseRelation
 import org.coursera.naptime.ari.graphql.types.NaptimeTypes
+import org.coursera.naptime.schema.ReverseRelationAnnotation
 import sangria.schema.BooleanType
 import sangria.schema.Context
 import sangria.schema.Field
@@ -48,10 +53,20 @@ object FieldBuilder extends StrictLogging {
       schemaMetadata: SchemaMetadata,
       field: RecordDataSchemaField,
       namespace: Option[String],
-      fieldNameOverride: Option[String] = None): Field[SangriaGraphQlContext, DataMap] = {
+      fieldNameOverride: Option[String] = None,
+      followRelations: Boolean = true): Field[SangriaGraphQlContext, DataMap] = {
     type ResolverType = Context[SangriaGraphQlContext, DataMap] => Value[SangriaGraphQlContext, Any]
 
-    val relatedResourceOption = field.getProperties.asScala.get("related").map(_.toString)
+    val fieldProperties = field.getProperties.asScala
+    val forwardRelationOption = fieldProperties.get(Relations.PROPERTY_NAME).map(_.toString)
+    val reverseRelationOption = fieldProperties.get(Relations.REVERSE_PROPERTY_NAME)
+      .map(d => ReverseRelationAnnotation(d.asInstanceOf[DataMap], DataConversion.SetReadOnly))
+
+    val relatedResourceOption = if (followRelations) {
+      forwardRelationOption.orElse(reverseRelationOption.map(_.resourceName))
+    } else {
+      None
+    }
 
     val fieldName = fieldNameOverride.getOrElse(field.getName)
 
@@ -61,7 +76,13 @@ object FieldBuilder extends StrictLogging {
 
       // Related resource in a list
       case (Some(relatedResourceName), _: ArrayDataSchema) =>
-        NaptimePaginatedResourceField.build(schemaMetadata, relatedResourceName, fieldName)
+        val fieldRelation = forwardRelationOption.map(ForwardRelation)
+          .orElse(reverseRelationOption.map(ReverseRelation))
+        NaptimePaginatedResourceField
+          .build(schemaMetadata, relatedResourceName, fieldName, None, fieldRelation)
+          .getOrElse {
+            buildField(schemaMetadata, field, namespace, fieldNameOverride, followRelations = false)
+          }
 
       // Single related resource
       case (Some(relatedResourceName), _) =>

@@ -44,4 +44,10 @@ class CoursesResource @Inject() (
       .withPagination(next, Some(courses.size.toLong))
   }
 
+  def byInstructor(instructorId: String) = Nap.finder { context =>
+    val courses = courseStore.all()
+      .filter(course => course._2.instructors.contains(instructorId))
+    Ok(courses.toList.map { case (id, course) => Keyed(id, course) })
+  }
+
 }

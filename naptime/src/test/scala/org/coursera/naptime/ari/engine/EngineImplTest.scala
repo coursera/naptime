@@ -106,9 +106,15 @@ class EngineImplTest extends AssertionsForJUnit with ScalaFutures with MockitoSu
   when(instructorRouterBuilder.resourceClass()).thenReturn(
     classOf[InstructorsResource].asInstanceOf[Class[instructorRouterBuilder.ResourceClass]])
 
+  val partnerRouterBuilder = mock[ResourceRouterBuilder]
+  when(partnerRouterBuilder.schema).thenReturn(PARTNERS_RESOURCE)
+  when(partnerRouterBuilder.types).thenReturn(extraTypes)
+  when(partnerRouterBuilder.resourceClass()).thenReturn(
+    classOf[PartnersResource].asInstanceOf[Class[partnerRouterBuilder.ResourceClass]])
+
   val injector = mock[Injector]
   val schemaProvider =
-    new LocalSchemaProvider(NaptimeRoutes(injector, Set(courseRouterBuilder, instructorRouterBuilder)))
+    new LocalSchemaProvider(NaptimeRoutes(injector, Set(courseRouterBuilder, instructorRouterBuilder, partnerRouterBuilder)))
   val engine = new EngineImpl(schemaProvider, fetcherApi)
 
   @Test
@@ -462,6 +468,8 @@ class EngineImplTest extends AssertionsForJUnit with ScalaFutures with MockitoSu
 
     val result = engine.execute(request).futureValue
 
+    verify(fetcherApi, times(3)).data(any())
+
     assert(1 === result.topLevelResponses.size, s"Result: $result")
     assert(result.topLevelResponses.contains(request.topLevelRequests.head))
     assert(2 === result.topLevelResponses(request.topLevelRequests.head).ids.size())
@@ -771,6 +779,18 @@ object EngineImplTest {
     customOutputBody = None,
     attributes = List.empty)
 
+  val MULTIGET_HANDLER = Handler(
+    kind = HandlerKind.MULTI_GET,
+    name = "multiGet",
+    parameters = List(Parameter(
+      name = "ids",
+      `type` = "List[int]",
+      attributes = List.empty,
+      default = None)),
+    inputBody = None,
+    customOutputBody = None,
+    attributes = List.empty)
+
   val COURSES_RESOURCE_ID = ResourceName("courses", 1)
   val COURSES_RESOURCE = Resource(
     kind = ResourceKind.COLLECTION,
@@ -780,7 +800,7 @@ object EngineImplTest {
     keyType = "string",
     valueType = "org.coursera.naptime.test.Course",
     mergedType = MergedCourse.SCHEMA.getFullName,
-    handlers = List(GET_HANDLER),
+    handlers = List(GET_HANDLER, MULTIGET_HANDLER),
     className = "org.coursera.naptime.test.CoursesResource",
     attributes = List.empty)
 
@@ -793,7 +813,7 @@ object EngineImplTest {
     keyType = "string",
     valueType = "org.coursera.naptime.test.Instructor",
     mergedType = MergedInstructor.SCHEMA.getFullName,
-    handlers = List(GET_HANDLER),
+    handlers = List(GET_HANDLER, MULTIGET_HANDLER),
     className = "org.coursera.naptime.test.InstructorsResource",
     attributes = List.empty)
 

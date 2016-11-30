@@ -14,12 +14,10 @@ class InstructorStore {
 
   instructorStore = instructorStore + (
     "andrew-ng" -> Instructor(
-      courses = List("ml"),
       partner = "stanford",
       name = "Andrew Ng",
       photoUrl = ""),
     "barb-oakley" -> Instructor(
-      courses = List("learning-how-to-learn"),
       partner = "ucsd",
       name = "Barb Oakley",
       photoUrl = ""))

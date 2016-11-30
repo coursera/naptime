@@ -18,6 +18,8 @@ package org.coursera.naptime
 
 import com.linkedin.data.DataMap
 import org.coursera.naptime.QueryStringParser.NaptimeParseError
+import org.coursera.naptime.schema.RelationType
+import org.coursera.naptime.schema.ReverseRelationAnnotation
 import play.api.http.Status
 import play.api.i18n.Lang
 import play.api.libs.json.JsObject
@@ -253,7 +255,8 @@ object QueryIncludes {
 sealed case class Fields[T](
     defaultFields: Set[String],
     fieldsPermissionsFunction: FieldsFunction,
-    relations: Map[String, ResourceName])
+    relations: Map[String, ResourceName],
+    reverseRelations: Map[String, ReverseRelation[_]])
     (implicit format: OFormat[T]) {
 
   private[this] val relationsInJson = relations.map { case (field, resourceName) =>
@@ -340,16 +343,30 @@ sealed case class Fields[T](
   def withRelated(newRelations: (String, ResourceName)*): Fields[T] = {
     withRelated(newRelations.toMap)
   }
+
+  def withReverseRelations(newRelations: Map[String, ReverseRelation[_]]): Fields[T] = {
+    val intersection = newRelations.keySet.intersect(reverseRelations.keySet)
+    require(intersection.isEmpty, s"Duplicate relations provided for: $intersection")
+    copy(reverseRelations = reverseRelations ++ newRelations)
+  }
+
+  def withReverseRelations(newRelations: (String, ReverseRelation[_])*): Fields[T] = {
+    withReverseRelations(newRelations.toMap)
+  }
 }
 
 object Fields {
   def apply[T](implicit format: OFormat[T]): Fields[T] = {
-    Fields(Set.empty, FieldsFunction.default, Map.empty)
+    Fields(Set.empty, FieldsFunction.default, Map.empty, Map.empty)
   }
 
   val FIELDS_HEADER = "X-Coursera-Naptime-Fields"
 
-  private[naptime] val FAKE_FIELDS: Fields[_] = Fields(Set.empty, FieldsFunction.default, Map.empty)(null)
+  private[naptime] val FAKE_FIELDS: Fields[_] = Fields(
+    Set.empty,
+    FieldsFunction.default,
+    Map.empty,
+    Map.empty)(null)
 }
 
 // TODO(saeta): FieldFn should also take advantage of the authentication applied. This will require
@@ -575,4 +592,22 @@ private[naptime] object QueryStringParser extends RegexParsers {
   def parseQueryFields(input: String): ParseResult[QueryFields] = parse(fieldsAllContent, input)
   def parseQueryIncludes(input: String): ParseResult[QueryIncludes] =
     parse(includesAllContent, input)
+}
+
+trait ReverseRelation[KeyType] {
+  val resourceName: ResourceName
+  val arguments: Map[String, String]
+
+  def toAnnotation: ReverseRelationAnnotation
+}
+
+case class FinderReverseRelation[KeyType](
+    resourceName: ResourceName,
+    finderName: String,
+    arguments: Map[String, String]) extends ReverseRelation[KeyType] {
+
+  def toAnnotation: ReverseRelationAnnotation = {
+    val mergedArguments = arguments + ("q" -> finderName)
+    ReverseRelationAnnotation(resourceName.identifier, mergedArguments, RelationType.FINDER)
+  }
 }

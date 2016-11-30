@@ -13,4 +13,6 @@ record Course {
   description: string?
 
   extraData: AnyData
+
+  courseMetadata: union[CourseMetadata]
 }
