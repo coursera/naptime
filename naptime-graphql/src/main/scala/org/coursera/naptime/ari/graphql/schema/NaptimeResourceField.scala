@@ -3,6 +3,8 @@ package org.coursera.naptime.ari.graphql.schema
 import com.linkedin.data.DataMap
 import org.coursera.naptime.ResourceName
 import org.coursera.naptime.ari.graphql.SangriaGraphQlContext
+import org.coursera.naptime.ari.graphql.SangriaGraphQlSchemaBuilder
+import org.coursera.naptime.schema.HandlerKind
 import org.coursera.naptime.schema.Resource
 import sangria.execution.ExecutionError
 import sangria.schema.Context
@@ -24,10 +26,19 @@ object NaptimeResourceField {
       resourceName: String,
       fieldName: String,
       idExtractor: Option[IdExtractor] = None): Field[SangriaGraphQlContext, DataMap] = {
+
+    val resource = schemaMetadata.getResource(resourceName)
+    val arguments = resource.handlers.find(_.kind == HandlerKind.MULTI_GET).map { handler =>
+      SangriaGraphQlSchemaBuilder
+        .generateHandlerArguments(handler, includePagination = false)
+        .filterNot(_.name == "ids")
+    }.getOrElse(List.empty)
+
     Field.apply[SangriaGraphQlContext, DataMap, Any, Any](
       name = fieldName,
       fieldType = getType(schemaMetadata, resourceName),
       resolve = getResolver(resourceName, fieldName, idExtractor),
+      arguments = arguments,
       complexity = Some((ctx, args, childScore) => {
         COMPLEXITY_COST * childScore
       }))
