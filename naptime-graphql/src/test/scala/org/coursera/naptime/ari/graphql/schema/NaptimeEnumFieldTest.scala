@@ -45,7 +45,7 @@ class NaptimeEnumFieldTest extends AssertionsForJUnit with MockitoSugar {
   @Test
   def build_EmptyEnum() = {
     val values = List()
-    val expectedValues = List("$UNKNOWN")
+    val expectedValues = List("UNKNOWN")
     val enum = buildEnumDataSchema(values)
     val field = NaptimeEnumField.build(enum, "myField")
     assert(field.fieldType.asInstanceOf[EnumType[String]].values.map(_.name) === expectedValues)
