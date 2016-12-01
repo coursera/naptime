@@ -25,7 +25,7 @@ object NaptimeEnumField {
     val enumSymbols = if (enumDataSchema.getSymbols.asScala.nonEmpty) {
       enumDataSchema.getSymbols.asScala.toList
     } else {
-      List("$UNKNOWN")
+      List("UNKNOWN")
     }
     EnumType(
       name = FieldBuilder.formatName(enumDataSchema.getFullName),
