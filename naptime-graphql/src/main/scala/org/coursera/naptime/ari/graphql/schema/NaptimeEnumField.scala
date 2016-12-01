@@ -22,9 +22,14 @@ object NaptimeEnumField {
   }
 
   private[schema] def getType(enumDataSchema: EnumDataSchema): EnumType[String] = {
+    val enumSymbols = if (enumDataSchema.getSymbols.asScala.nonEmpty) {
+      enumDataSchema.getSymbols.asScala.toList
+    } else {
+      List("$UNKNOWN")
+    }
     EnumType(
       name = FieldBuilder.formatName(enumDataSchema.getFullName),
-      values = enumDataSchema.getSymbols.asScala.toList.map(symbol =>
+      values = enumSymbols.map(symbol =>
         EnumValue(
           name = FieldBuilder.formatName(symbol),
           description = enumDataSchema.getSymbolDocs.asScala.get(symbol),
