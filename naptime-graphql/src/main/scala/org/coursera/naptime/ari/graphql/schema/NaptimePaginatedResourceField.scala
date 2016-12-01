@@ -130,7 +130,9 @@ object NaptimePaginatedResourceField {
           val allIds = parentElement.getDataList(fieldName).asScala
           val startOption = context.value.parentContext.arg(NaptimePaginationField.startArgument)
           val limit = context.value.parentContext.arg(NaptimePaginationField.limitArgument)
-          val idsWithStart = startOption.map(s => allIds.dropWhile(_ != s)).getOrElse(allIds)
+          val idsWithStart = startOption
+            .map(s => allIds.dropWhile(_.toString != s))
+            .getOrElse(allIds)
           idsWithStart.take(limit)
         }.getOrElse {
           // Top-Level Request
