@@ -116,6 +116,17 @@ class NaptimePaginationFieldTest extends AssertionsForJUnit with MockitoSugar {
   }
 
   @Test
+  def resolveNestedWithNonStringStart(): Unit = {
+    val model = new DataMap(Map(fieldName -> new DataList(List(1, 2, 3).asJava)).asJava)
+    val context = createContext(
+      resourceContext,
+      ParentContext(createContext(resourceContext, model, Map("limit" -> 1, "start" -> Some("2")))))
+    val resolver = NaptimePaginationField.getResolver(resourceName, fieldName)
+    val paginationData = resolver(context).value
+    assert(paginationData === ResponsePagination(Some("3"), Some(3)))
+  }
+
+  @Test
   def resolveTopLevel(): Unit = {
     val context = createContext(
       resourceContext,
