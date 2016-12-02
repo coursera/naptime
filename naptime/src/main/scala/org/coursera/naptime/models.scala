@@ -611,3 +611,12 @@ case class FinderReverseRelation[KeyType](
     ReverseRelationAnnotation(resourceName.identifier, mergedArguments, RelationType.FINDER)
   }
 }
+
+case class MultiGetReverseRelation[KeyType](
+    resourceName: ResourceName,
+    arguments: Map[String, String]) extends ReverseRelation[KeyType] {
+
+  def toAnnotation: ReverseRelationAnnotation = {
+    ReverseRelationAnnotation(resourceName.identifier, arguments, RelationType.MULTI_GET)
+  }
+}
