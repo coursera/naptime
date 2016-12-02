@@ -86,7 +86,11 @@ object FieldBuilder extends StrictLogging {
 
       // Single related resource
       case (Some(relatedResourceName), _) =>
-        NaptimeResourceField.build(schemaMetadata, relatedResourceName, fieldName)
+        NaptimeResourceField
+          .build(schemaMetadata, relatedResourceName, fieldName)
+          .getOrElse {
+            buildField(schemaMetadata, field, namespace, fieldNameOverride, followRelations = false)
+          }
 
       // Passthrough Exempt types (fallback to DataMap)
       case (None, recordDataSchema: RecordDataSchema)

@@ -136,6 +136,10 @@ class SangriaGraphQlSchemaBuilder(
       resourceName = resourceName.identifier,
       fieldName = "get",
       idExtractor = Some(idExtractor))
+      .getOrElse {
+        throw SchemaGenerationException(
+          s"Cannot build field for ${resourceName.identifier} / ${handler.name}")
+      }
 
     field.copy(arguments = arguments ++ field.arguments)
   }

@@ -17,6 +17,12 @@ case class SchemaMetadata(
     }
   }
 
+  def getResourceOpt(resourceName: String): Option[Resource] = {
+    resources.find { resource =>
+      ResourceName(resource.name, resource.version.getOrElse(0L).toInt).identifier == resourceName
+    }
+  }
+
   def getSchema(resource: Resource): Option[RecordDataSchema] = {
     schemas.get(resource.mergedType).flatMap(Option(_))
   }
