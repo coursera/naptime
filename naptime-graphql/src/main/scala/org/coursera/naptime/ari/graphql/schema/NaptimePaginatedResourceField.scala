@@ -33,9 +33,10 @@ object NaptimePaginatedResourceField {
       handlerOverride: Option[Handler] = None,
       fieldRelation: Option[FieldRelation]): Option[Field[SangriaGraphQlContext, DataMap]] = {
 
-    val resource = schemaMetadata.getResource(resourceName)
-
-    schemaMetadata.getSchema(resource).flatMap { schema =>
+    (for {
+      resource <- schemaMetadata.getResourceOpt(resourceName)
+      schema <- schemaMetadata.getSchema(resource)
+    } yield {
       val handlerOpt = (handlerOverride, fieldRelation) match {
         case (Some(handler), _) =>
           Some(handler)
@@ -84,7 +85,7 @@ object NaptimePaginatedResourceField {
             }),
           arguments = arguments)
       }
-    }
+    }).flatten
   }
 
   //TODO(bryan): add arguments for pagination in here
@@ -93,7 +94,9 @@ object NaptimePaginatedResourceField {
       resourceName: String,
       fieldName: String): ObjectType[SangriaGraphQlContext, ParentContext] = {
 
-    val resource = schemaMetadata.getResource(resourceName)
+    val resource = schemaMetadata.getResourceOpt(resourceName).getOrElse {
+      throw SchemaGenerationException(s"Cannot find schema for $resourceName")
+    }
     schemaMetadata.getSchema(resource).getOrElse {
       throw SchemaGenerationException(s"Cannot find schema for $resourceName")
     }

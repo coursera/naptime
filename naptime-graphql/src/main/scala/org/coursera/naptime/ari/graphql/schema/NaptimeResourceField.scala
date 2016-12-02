@@ -25,23 +25,25 @@ object NaptimeResourceField {
       schemaMetadata: SchemaMetadata,
       resourceName: String,
       fieldName: String,
-      idExtractor: Option[IdExtractor] = None): Field[SangriaGraphQlContext, DataMap] = {
+      idExtractor: Option[IdExtractor] = None): Option[Field[SangriaGraphQlContext, DataMap]] = {
 
-    val resource = schemaMetadata.getResource(resourceName)
-    val arguments = resource.handlers.find(_.kind == HandlerKind.MULTI_GET).map { handler =>
-      SangriaGraphQlSchemaBuilder
-        .generateHandlerArguments(handler, includePagination = false)
-        .filterNot(_.name == "ids")
-    }.getOrElse(List.empty)
+    schemaMetadata.getResourceOpt(resourceName).map { resource =>
+      val arguments = resource.handlers.find(_.kind == HandlerKind.MULTI_GET).map { handler =>
+        SangriaGraphQlSchemaBuilder
+          .generateHandlerArguments(handler, includePagination = false)
+          .filterNot(_.name == "ids")
+      }.getOrElse(List.empty)
 
-    Field.apply[SangriaGraphQlContext, DataMap, Any, Any](
-      name = fieldName,
-      fieldType = getType(schemaMetadata, resourceName),
-      resolve = getResolver(resourceName, fieldName, idExtractor),
-      arguments = arguments,
-      complexity = Some((ctx, args, childScore) => {
-        COMPLEXITY_COST * childScore
-      }))
+      Field.apply[SangriaGraphQlContext, DataMap, Any, Any](
+        name = fieldName,
+        fieldType = getType(schemaMetadata, resourceName),
+        resolve = getResolver(resourceName, fieldName, idExtractor),
+        arguments = arguments,
+        complexity = Some(
+          (ctx, args, childScore) => {
+            COMPLEXITY_COST * childScore
+          }))
+    }
   }
 
 
