@@ -94,7 +94,9 @@ object NaptimePaginatedResourceField {
       resourceName: String,
       fieldName: String): ObjectType[SangriaGraphQlContext, ParentContext] = {
 
-    val resource = schemaMetadata.getResource(resourceName)
+    val resource = schemaMetadata.getResourceOpt(resourceName).getOrElse {
+      throw SchemaGenerationException(s"Cannot find schema for $resourceName")
+    }
     schemaMetadata.getSchema(resource).getOrElse {
       throw SchemaGenerationException(s"Cannot find schema for $resourceName")
     }

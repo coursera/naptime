@@ -33,7 +33,7 @@ class NaptimePaginatedResourceFieldTest extends AssertionsForJUnit with MockitoS
 
   val schemaMetadata = mock[SchemaMetadata]
   val resource = Models.courseResource
-  when(schemaMetadata.getResource(resourceName)).thenReturn(resource)
+  when(schemaMetadata.getResourceOpt(resourceName)).thenReturn(Some(resource))
   when(schemaMetadata.getSchema(resource)).thenReturn(Some(null))
 
   @Test
