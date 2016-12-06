@@ -52,7 +52,8 @@ class GraphQLController @Inject() (
     graphqlSchemaProvider: GraphqlSchemaProvider,
     schemaProvider: GraphqlSchemaProvider,
     engine: EngineApi,
-    filterList: FilterList)
+    filterList: FilterList,
+    metricsCollector: GraphQlControllerMetricsCollector)
     (implicit ec: ExecutionContext)
   extends Controller
   with StrictLogging {
@@ -81,16 +82,18 @@ class GraphQLController @Inject() (
 
     val queries = request.body.as[List[JsObject]]
     val resultsFut = Future.traverse(queries) { queryObj =>
-      val query = (queryObj \ "query").as[String]
-      val operation = (queryObj \ "operationName").asOpt[String]
+      Future {
+        val query = (queryObj \ "query").as[String]
+        val operation = (queryObj \ "operationName").asOpt[String]
 
-      val variables = (queryObj \ "variables").toOption.flatMap {
-        case JsString(vars) => Some(parseVariables(vars))
-        case obj: JsObject => Some(obj)
-        case _ => None
-      }.getOrElse(Json.obj())
+        val variables = (queryObj \ "variables").toOption.flatMap {
+          case JsString(vars) => Some(parseVariables(vars))
+          case obj: JsObject => Some(obj)
+          case _ => None
+        }.getOrElse(Json.obj())
 
-      executeQuery(query, request, variables, operation)
+        executeQuery(query, request, variables, operation)
+      }.flatMap(identity)
     }
     resultsFut.map { results =>
       Ok(Json.toJson(results.map(_.response)))
@@ -111,11 +114,15 @@ class GraphQLController @Inject() (
       variables: JsObject,
       operation: Option[String]) = {
 
+    val startSangriaQueryParser = System.nanoTime()
     QueryParser.parse(query) match {
       case Success(queryAst) =>
-
+        metricsCollector.markSangriaQueryParserTime(System.nanoTime() - startSangriaQueryParser)
         val baseFilter: IncomingQuery => Future[OutgoingQuery] = (incoming: IncomingQuery) => {
+          val startNaptimeQueryParser = System.nanoTime()
           SangriaGraphQlParser.parse(query, variables, requestHeader).map { request =>
+            metricsCollector.markNaptimeQueryParserTime(System.nanoTime() - startNaptimeQueryParser)
+            val startEngineExecution = System.nanoTime()
             val fetcherExecution: Future[Option[Response]] =
               if (query.contains("IntrospectionQuery")) {
                 Future.successful(None)
@@ -123,8 +130,10 @@ class GraphQLController @Inject() (
                 engine.execute(request).map(Some(_))
               }
             fetcherExecution.flatMap { responseOpt =>
+              metricsCollector.markEngineExecutionTime(System.nanoTime() - startEngineExecution)
               val response = responseOpt.getOrElse(Response.empty)
               val context = SangriaGraphQlContext(response)
+              val startSangriaHydration = System.nanoTime()
               Executor.execute(
                 graphqlSchemaProvider.schema,
                 queryAst,
@@ -132,6 +141,8 @@ class GraphQLController @Inject() (
                 variables = variables,
                 exceptionHandler = GraphQLController.exceptionHandler(logger))
                 .map { executionResponse =>
+                  metricsCollector.markSangriaHydrationTime(
+                    System.nanoTime() - startSangriaHydration)
                   OutgoingQuery(executionResponse.as[JsObject], Some(response))
                 }
             }.recover {
