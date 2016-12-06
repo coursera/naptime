@@ -82,18 +82,16 @@ class GraphQLController @Inject() (
 
     val queries = request.body.as[List[JsObject]]
     val resultsFut = Future.traverse(queries) { queryObj =>
-      Future {
-        val query = (queryObj \ "query").as[String]
-        val operation = (queryObj \ "operationName").asOpt[String]
+      val query = (queryObj \ "query").as[String]
+      val operation = (queryObj \ "operationName").asOpt[String]
 
-        val variables = (queryObj \ "variables").toOption.flatMap {
-          case JsString(vars) => Some(parseVariables(vars))
-          case obj: JsObject => Some(obj)
-          case _ => None
-        }.getOrElse(Json.obj())
+      val variables = (queryObj \ "variables").toOption.flatMap {
+        case JsString(vars) => Some(parseVariables(vars))
+        case obj: JsObject => Some(obj)
+        case _ => None
+      }.getOrElse(Json.obj())
 
-        executeQuery(query, request, variables, operation)
-      }.flatMap(identity)
+      executeQuery(query, request, variables, operation)
     }
     resultsFut.map { results =>
       Ok(Json.toJson(results.map(_.response)))
@@ -112,76 +110,78 @@ class GraphQLController @Inject() (
       query: String,
       requestHeader: RequestHeader,
       variables: JsObject,
-      operation: Option[String]) = {
-
-    val startSangriaQueryParser = System.nanoTime()
-    QueryParser.parse(query) match {
-      case Success(queryAst) =>
-        metricsCollector.markSangriaQueryParserTime(System.nanoTime() - startSangriaQueryParser)
-        val baseFilter: IncomingQuery => Future[OutgoingQuery] = (incoming: IncomingQuery) => {
-          val startNaptimeQueryParser = System.nanoTime()
-          SangriaGraphQlParser.parse(query, variables, requestHeader).map { request =>
-            metricsCollector.markNaptimeQueryParserTime(System.nanoTime() - startNaptimeQueryParser)
-            val startEngineExecution = System.nanoTime()
-            val fetcherExecution: Future[Option[Response]] =
-              if (query.contains("IntrospectionQuery")) {
-                Future.successful(None)
-              } else {
-                engine.execute(request).map(Some(_))
-              }
-            fetcherExecution.flatMap { responseOpt =>
-              metricsCollector.markEngineExecutionTime(System.nanoTime() - startEngineExecution)
-              val response = responseOpt.getOrElse(Response.empty)
-              val context = SangriaGraphQlContext(response)
-              val startSangriaHydration = System.nanoTime()
-              Executor.execute(
-                graphqlSchemaProvider.schema,
-                queryAst,
-                context,
-                variables = variables,
-                exceptionHandler = GraphQLController.exceptionHandler(logger))
-                .map { executionResponse =>
-                  metricsCollector.markSangriaHydrationTime(
-                    System.nanoTime() - startSangriaHydration)
-                  OutgoingQuery(executionResponse.as[JsObject], Some(response))
+      operation: Option[String]): Future[OutgoingQuery] = {
+    Future {
+      val startSangriaQueryParser = System.nanoTime()
+      QueryParser.parse(query) match {
+        case Success(queryAst) =>
+          metricsCollector.markSangriaQueryParserTime(System.nanoTime() - startSangriaQueryParser)
+          val baseFilter: IncomingQuery => Future[OutgoingQuery] = (incoming: IncomingQuery) => {
+            val startNaptimeQueryParser = System.nanoTime()
+            SangriaGraphQlParser.parse(query, variables, requestHeader).map { request =>
+              metricsCollector
+                .markNaptimeQueryParserTime(System.nanoTime() - startNaptimeQueryParser)
+              val startEngineExecution = System.nanoTime()
+              val fetcherExecution: Future[Option[Response]] =
+                if (query.contains("IntrospectionQuery")) {
+                  Future.successful(None)
+                } else {
+                  engine.execute(request).map(Some(_))
                 }
-            }.recover {
-              case error: QueryAnalysisError =>
-                OutgoingQuery(Json.obj("error" -> error.resolveError), None)
-              case error: ErrorWithResolver =>
-                OutgoingQuery(Json.obj("error" -> error.resolveError), None)
-              case error: Exception =>
-                logger.error("GraphQL execution error", error)
-                OutgoingQuery(Json.obj("error" -> error.getMessage), None)
+              fetcherExecution.flatMap { responseOpt =>
+                metricsCollector.markEngineExecutionTime(System.nanoTime() - startEngineExecution)
+                val response = responseOpt.getOrElse(Response.empty)
+                val context = SangriaGraphQlContext(response)
+                val startSangriaHydration = System.nanoTime()
+                Executor.execute(
+                  graphqlSchemaProvider.schema,
+                  queryAst,
+                  context,
+                  variables = variables,
+                  exceptionHandler = GraphQLController.exceptionHandler(logger))
+                  .map { executionResponse =>
+                    metricsCollector.markSangriaHydrationTime(
+                      System.nanoTime() - startSangriaHydration)
+                    OutgoingQuery(executionResponse.as[JsObject], Some(response))
+                  }
+              }.recover {
+                case error: QueryAnalysisError =>
+                  OutgoingQuery(Json.obj("error" -> error.resolveError), None)
+                case error: ErrorWithResolver =>
+                  OutgoingQuery(Json.obj("error" -> error.resolveError), None)
+                case error: Exception =>
+                  logger.error("GraphQL execution error", error)
+                  OutgoingQuery(Json.obj("error" -> error.getMessage), None)
+              }
+            }.getOrElse {
+              val result = Json.obj("syntaxError" -> "Could not parse document")
+              Future.successful(OutgoingQuery(result, None))
             }
-          }.getOrElse {
-            val result = Json.obj("syntaxError" -> "Could not parse document")
-            Future.successful(OutgoingQuery(result, None))
-          }
-        }
-
-        val incomingQuery = IncomingQuery(queryAst, requestHeader, variables, operation)
-
-        val filterFn = filterList.filters.reverse.foldLeft(baseFilter) {
-          case (accumulatedFilters, filter) =>
-            filter.apply(accumulatedFilters)
           }
 
-        filterFn(incomingQuery)
+          val incomingQuery = IncomingQuery(queryAst, requestHeader, variables, operation)
 
-      case Failure(error: SyntaxError) =>
-        Future.successful(
-          OutgoingQuery(
-            Json.obj(
-              "syntaxError" -> error.getMessage,
-              "locations" -> Json.arr(
-                Json.obj(
-                  "line" -> error.originalError.position.line,
-                  "column" -> error.originalError.position.column))), None))
+          val filterFn = filterList.filters.reverse.foldLeft(baseFilter) {
+            case (accumulatedFilters, filter) =>
+              filter.apply(accumulatedFilters)
+          }
 
-      case Failure(error) =>
-        throw error
-    }
+          filterFn(incomingQuery)
+
+        case Failure(error: SyntaxError) =>
+          Future.successful(
+            OutgoingQuery(
+              Json.obj(
+                "syntaxError" -> error.getMessage,
+                "locations" -> Json.arr(
+                  Json.obj(
+                    "line" -> error.originalError.position.line,
+                    "column" -> error.originalError.position.column))), None))
+
+        case Failure(error) =>
+          throw error
+      }
+    }.flatMap(identity)
   }
 }
 
