@@ -101,9 +101,9 @@ class SangriaGraphQlSchemaBuilder(
       val fields = resource.handlers.flatMap { handler =>
         handler.kind match {
           case HandlerKind.GET =>
-            Some(generateGetHandler(resource, handler))
+            generateGetHandler(resource, handler)
           case HandlerKind.GET_ALL | HandlerKind.MULTI_GET | HandlerKind.FINDER =>
-            Some(generateListHandler(resource, handler))
+            generateListHandler(resource, handler)
           case _ => None
         }
       }.toList
@@ -125,28 +125,25 @@ class SangriaGraphQlSchemaBuilder(
 
   def generateGetHandler(
       resource: Resource,
-      handler: Handler): Field[SangriaGraphQlContext, DataMap] = {
+      handler: Handler): Option[Field[SangriaGraphQlContext, DataMap]] = {
     val arguments = SangriaGraphQlSchemaBuilder.generateHandlerArguments(handler)
     val resourceName = ResourceName(resource.name, resource.version.getOrElse(0L).toInt)
 
     val idExtractor = (context: Context[SangriaGraphQlContext, DataMap]) => context.arg[AnyRef]("id")
 
-    val field = NaptimeResourceField.build(
+    NaptimeResourceField.build(
       schemaMetadata = schemaMetadata,
       resourceName = resourceName.identifier,
       fieldName = "get",
       idExtractor = Some(idExtractor))
-      .getOrElse {
-        throw SchemaGenerationException(
-          s"Cannot build field for ${resourceName.identifier} / ${handler.name}")
+      .map { field =>
+        field.copy(arguments = arguments ++ field.arguments)
       }
-
-    field.copy(arguments = arguments ++ field.arguments)
   }
 
   def generateListHandler(
       resource: Resource,
-      handler: Handler): Field[SangriaGraphQlContext, DataMap] = {
+      handler: Handler): Option[Field[SangriaGraphQlContext, DataMap]] = {
     val resourceName = ResourceName(resource.name, resource.version.getOrElse(0L).toInt)
     val arguments = SangriaGraphQlSchemaBuilder.generateHandlerArguments(handler)
 
@@ -158,23 +155,20 @@ class SangriaGraphQlSchemaBuilder(
       case _ => "error"
     }
 
-    val field = NaptimePaginatedResourceField.build(
+    NaptimePaginatedResourceField.build(
       schemaMetadata = schemaMetadata,
       resourceName = resourceName.identifier,
       fieldName = fieldName,
       handlerOverride = Some(handler),
-      fieldRelation = None)
-      .getOrElse {
-        throw SchemaGenerationException(
-          s"Cannot build field for ${resourceName.identifier} / ${handler.name}")
-      }
+      fieldRelation = None).map { field =>
 
-    val mergedArguments = (field.arguments ++ arguments)
-      .groupBy(_.name)
-      .map(_._2.head)
-      .map(_.asInstanceOf[Argument[Any]])
-      .toList
-    field.copy(arguments = mergedArguments)
+      val mergedArguments = (field.arguments ++ arguments)
+        .groupBy(_.name)
+        .map(_._2.head)
+        .map(_.asInstanceOf[Argument[Any]])
+        .toList
+      field.copy(arguments = mergedArguments)
+    }
   }
 
   /**
