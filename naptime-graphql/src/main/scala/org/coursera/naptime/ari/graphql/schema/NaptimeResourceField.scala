@@ -74,16 +74,20 @@ object NaptimeResourceField {
       val id = idExtractor.map(_.apply(context)).getOrElse {
         context.value.get(fieldName)
       }
-      val parsedResourceName = ResourceName.parse(resourceName).getOrElse {
-        throw SchemaExecutionException(s"Cannot parse resource name from $resourceName")
-      }
-      context.ctx.response.data.get(parsedResourceName)
-        .flatMap { resourceSet =>
-          resourceSet
-            .find(resource => id == resource._1)
-            .map(optionalElement => Value[SangriaGraphQlContext, Any](optionalElement._2))
-        }.getOrElse {
-        throw NotFoundException(s"Cannot find $resourceName/$id")
+      if (id == null) {
+        Value[SangriaGraphQlContext, Any](null)
+      } else {
+        val parsedResourceName = ResourceName.parse(resourceName).getOrElse {
+          throw SchemaExecutionException(s"Cannot parse resource name from $resourceName")
+        }
+        context.ctx.response.data.get(parsedResourceName)
+          .flatMap { resourceSet =>
+            resourceSet
+              .find(resource => id == resource._1)
+              .map(optionalElement => Value[SangriaGraphQlContext, Any](optionalElement._2))
+          }.getOrElse {
+            throw NotFoundException(s"Cannot find $resourceName/$id")
+          }
       }
     }
   }

@@ -31,6 +31,10 @@ import org.coursera.naptime.ari.Response
 import org.coursera.naptime.ari.ResponseMetrics
 import org.coursera.naptime.ari.SchemaProvider
 import org.coursera.naptime.ari.TopLevelRequest
+import org.coursera.naptime.schema.RelationType.FINDER
+import org.coursera.naptime.schema.RelationType.GET
+import org.coursera.naptime.schema.RelationType.MULTI_GET
+import org.coursera.naptime.schema.RelationType.SINGLE_ELEMENT_FINDER
 import org.coursera.naptime.schema.ReverseRelationAnnotation
 import play.api.libs.json.JsString
 import play.api.libs.json.JsValue
@@ -128,8 +132,8 @@ class EngineImpl @Inject() (
           (id, data) <- mutableTopLevelData
           idMap <- fieldRelationResponse.idsToAnnotate
         } yield {
-          val ids = idMap.getOrElse(id, List.empty)
-          insertAtPath(data, mergedType, fieldRelationResponse.path, new DataList(ids.asJava))
+          val ids = idMap.getOrElse(id, new DataList())
+          insertAtPath(data, mergedType, fieldRelationResponse.path, ids)
         }
         val updatedData = topLevelResponse.data +
           (topLevelRequest.resource -> mutableTopLevelData)
@@ -213,38 +217,96 @@ class EngineImpl @Inject() (
       throw new IllegalStateException(s"Could not parse identifier " +
         s"'${reverse.resourceName}''")
     }
-    val responses = data.map { topLevelElement =>
+    val argumentsByElement = data.map { topLevelElement =>
       val InterpolationRegex = new Regex("""\$([a-zA-Z0-9_]+)""", "variableName")
-      val interpolatedArguments: Set[(String, JsValue)] = reverse.arguments
+      val arguments: Set[(String, JsValue)] = reverse.arguments
         .mapValues { value =>
-          InterpolationRegex.replaceAllIn(value, { regexMatch =>
-            val variableName = regexMatch.group("variableName")
-            Option(topLevelElement.get(variableName))
-              .map(_.toString)
-              .getOrElse(variableName)
-          })
+          InterpolationRegex.replaceAllIn(
+            value, { regexMatch =>
+              val variableName = regexMatch.group("variableName")
+              Option(topLevelElement.get(variableName)).map {
+                case dataList: DataList => dataList.asScala.mkString(",")
+                case other: Any => other.toString
+              }.getOrElse(variableName)
+            })
         }
         .mapValues(value => JsString(value))
         .toSet
-      val relatedTopLevelRequest = TopLevelRequest(
-        resource = resourceName,
-        selection = RequestField(
-          name = "reverseRelation",
-          alias = None,
-          args = interpolatedArguments ++ requestField.args,
-          selections = requestField.selections))
-      executeTopLevelRequest(requestHeader, relatedTopLevelRequest).map { response =>
-        topLevelElement.get("id") -> Response(
-          topLevelResponses = Map.empty,
-          data = response.data,
-          metrics = response.metrics)
-      }
+      topLevelElement -> arguments
+    }.toMap
+    val futureIdMapAndResponse = reverse.relationType match {
+      case MULTI_GET | GET =>
+        // Group requests by all arguments other than `ids`, and them merge the ids together
+        // This lets us make as few requests as possible while still fetching all ids
+        // and maintaining element-level arguments
+        val groupedRequests = argumentsByElement.groupBy(_._2.filterNot(_._1 == "ids"))
+        groupedRequests.map { case (nonIdArguments, elementsAndArguments) =>
+          val ids = elementsAndArguments
+            .flatMap(_._2.find(_._1 == "ids"))
+            .map(ids => EngineHelpers.stringifyArg(ids._2))
+            .mkString(",")
+          val arguments = nonIdArguments + ("ids" -> JsString(ids))
+          val relatedTopLevelRequest = TopLevelRequest(
+            resource = resourceName,
+            selection = RequestField(
+              name = "reverseRelation",
+              alias = None,
+              args = arguments ++ requestField.args,
+              selections = requestField.selections))
+          executeTopLevelRequest(requestHeader, relatedTopLevelRequest).map { response =>
+            val responseIds = response.data.headOption.map(_._2.keys.toList).getOrElse(List.empty)
+            val idMap = elementsAndArguments.map { case (element, elementArguments) =>
+              val ids = elementArguments.find(_._1 == "ids")
+                .map(_._2.as[String].split(",").map(_.asInstanceOf[AnyRef]).toList)
+                .getOrElse(List[AnyRef]())
+
+              // MultiGets return a list of ids, and Gets return a single id (or null)
+              val filteredIds = reverse.relationType match {
+                case MULTI_GET => new DataList(ids.intersect(responseIds).asJava)
+                case GET => ids.intersect(responseIds).headOption.orNull
+                case _ => throw new RuntimeException(s"Unhandled relation type")
+              }
+              element.get("id") -> filteredIds
+            }
+
+            (idMap, Response(
+              topLevelResponses = Map.empty,
+              data = response.data,
+              metrics = response.metrics))
+          }
+        }
+      case FINDER | SINGLE_ELEMENT_FINDER =>
+        data.map { topLevelElement =>
+          val arguments: Set[(String, JsValue)] =
+            argumentsByElement.get(topLevelElement).map(_.toSet).getOrElse(Set.empty)
+          val relatedTopLevelRequest = TopLevelRequest(
+            resource = resourceName,
+            selection = RequestField(
+              name = "reverseRelation",
+              alias = None,
+              args = arguments ++ requestField.args,
+              selections = requestField.selections))
+          executeTopLevelRequest(requestHeader, relatedTopLevelRequest).map { response =>
+            val responseIds = response.data.headOption.map { case (_, elements) => elements.keys.toList }.getOrElse(List.empty)
+            val filteredResponseIds = reverse.relationType match {
+              case FINDER => new DataList(responseIds.asJava)
+              case SINGLE_ELEMENT_FINDER => responseIds.headOption.orNull
+              case _ => throw new RuntimeException(s"Unhandled relation type")
+            }
+            val idMap = Map(topLevelElement.get("id") -> filteredResponseIds)
+            (idMap, Response(
+              topLevelResponses = Map.empty,
+              data = response.data,
+              metrics = response.metrics))
+          }
+        }
+      case _ => throw new RuntimeException(s"Unhandled relation type: ${reverse.relationType}")
     }
-    Future.fold(responses)(FieldRelationResponse(requestField, path)) { case (frr, (id, res)) =>
-      val idMap = res.data.headOption.map { case (_, elements) => id -> elements.keys.toList }
-      frr.copy(
-        response = frr.response ++ res,
-        idsToAnnotate = Some(frr.idsToAnnotate.getOrElse(Map.empty) ++ idMap))
+    Future.fold(futureIdMapAndResponse)(FieldRelationResponse(requestField, path)) {
+      case (fieldRelationResponse, (idMap, res)) =>
+        fieldRelationResponse.copy(
+          response = fieldRelationResponse.response ++ res,
+          idsToAnnotate = Some(fieldRelationResponse.idsToAnnotate.getOrElse(Map.empty) ++ idMap))
     }
   }
 
@@ -259,6 +321,6 @@ class EngineImpl @Inject() (
       requestField: RequestField,
       path: Seq[String] = Seq.empty,
       response: Response = Response.empty,
-      idsToAnnotate: Option[Map[AnyRef, List[AnyRef]]] = None)
+      idsToAnnotate: Option[Map[AnyRef, AnyRef]] = None)
 }
 

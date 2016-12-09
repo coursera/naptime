@@ -27,6 +27,10 @@ import com.linkedin.data.schema.RecordDataSchema.RecordType
 import com.linkedin.data.schema.StringDataSchema
 import com.linkedin.data.schema.TyperefDataSchema
 import com.typesafe.scalalogging.StrictLogging
+import org.coursera.naptime.schema.RelationType.FINDER
+import org.coursera.naptime.schema.RelationType.GET
+import org.coursera.naptime.schema.RelationType.MULTI_GET
+import org.coursera.naptime.schema.RelationType.SINGLE_ELEMENT_FINDER
 
 import scala.collection.JavaConverters._
 
@@ -105,8 +109,16 @@ object Types extends StrictLogging {
             s"'$name', but that field is already defined on the model")
         case None =>
           val errorMessageBuilder = new StringBuilder
-          val newField = new RecordDataSchema.Field(new ArrayDataSchema(new StringDataSchema)) // TODO(bryan): fix type here
-          newField.setOptional(false)
+          val newField = reverseRelation.toAnnotation.relationType match {
+            case FINDER | MULTI_GET =>
+              val newField = new RecordDataSchema.Field(new ArrayDataSchema(new StringDataSchema)) // TODO(bryan): fix type here
+              newField.setOptional(false)
+              newField
+            case SINGLE_ELEMENT_FINDER | GET =>
+              val newField = new RecordDataSchema.Field(new StringDataSchema) // TODO(bryan): fix type here
+              newField.setOptional(true)
+              newField
+          }
           newField.setName(name, errorMessageBuilder)
           newField.setRecord(mergedSchema)
 

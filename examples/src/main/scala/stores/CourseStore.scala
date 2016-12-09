@@ -20,8 +20,8 @@ class CourseStore {
 
   courseStore = courseStore + (
     "ml" -> Course(
-      instructors = List("andrew-ng"),
-      partner = "stanford",
+      instructorIds = List("andrew-ng"),
+      partnerId = "stanford",
       slug = "machine-learning",
       name = "Machine Learning",
       description = Some("Machine learning is the science of getting computers to act without being explicitly programmed."),
@@ -31,8 +31,8 @@ class CourseStore {
       courseMetadata = CourseMetadata(
         certificateInstructor = "andrew-ng")),
     "lhtl" -> Course(
-      instructors = List("barb-oakley"),
-      partner = "ucsd",
+      instructorIds = List("barb-oakley"),
+      partnerId = "ucsd",
       slug = "learning-how-to-learn",
       name = "Learning How to Learn",
       description = None,
