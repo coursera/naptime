@@ -303,10 +303,10 @@ class EngineImpl @Inject() (
       case _ => throw new RuntimeException(s"Unhandled relation type: ${reverse.relationType}")
     }
     Future.fold(futureIdMapAndResponse)(FieldRelationResponse(requestField, path)) {
-      case (frr, (idMap, res)) =>
-        frr.copy(
-          response = frr.response ++ res,
-          idsToAnnotate = Some(frr.idsToAnnotate.getOrElse(Map.empty) ++ idMap))
+      case (fieldRelationResponse, (idMap, res)) =>
+        fieldRelationResponse.copy(
+          response = fieldRelationResponse.response ++ res,
+          idsToAnnotate = Some(fieldRelationResponse.idsToAnnotate.getOrElse(Map.empty) ++ idMap))
     }
   }
 
