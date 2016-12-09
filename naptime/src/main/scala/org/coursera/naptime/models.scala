@@ -614,9 +614,33 @@ case class FinderReverseRelation[KeyType](
 
 case class MultiGetReverseRelation[KeyType](
     resourceName: ResourceName,
+    idsString: String,
     arguments: Map[String, String]) extends ReverseRelation[KeyType] {
 
   def toAnnotation: ReverseRelationAnnotation = {
-    ReverseRelationAnnotation(resourceName.identifier, arguments, RelationType.MULTI_GET)
+    val mergedArguments = arguments + ("ids" -> idsString)
+    ReverseRelationAnnotation(resourceName.identifier, mergedArguments, RelationType.MULTI_GET)
+  }
+}
+
+case class GetReverseRelation[KeyType](
+    resourceName: ResourceName,
+    id: String,
+    arguments: Map[String, String]) extends ReverseRelation[KeyType] {
+
+  def toAnnotation: ReverseRelationAnnotation = {
+    val mergedArguments = arguments + ("ids" -> id)
+    ReverseRelationAnnotation(resourceName.identifier, mergedArguments, RelationType.GET)
+  }
+}
+
+case class SingleElementFinderReverseRelation[KeyType](
+    resourceName: ResourceName,
+    finderName: String,
+    arguments: Map[String, String]) extends ReverseRelation[KeyType] {
+
+  def toAnnotation: ReverseRelationAnnotation = {
+    val mergedArguments = arguments + ("q" -> finderName)
+    ReverseRelationAnnotation(resourceName.identifier, mergedArguments, RelationType.SINGLE_ELEMENT_FINDER)
   }
 }

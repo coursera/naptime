@@ -15,6 +15,9 @@ record ReverseRelationAnnotation {
    */
   arguments: map[string, string]
 
-  relationType: enum RelationType { FINDER, MULTI_GET }
+  /**
+   * Type of the relation (which describes how the data is fetched)
+   */
+  relationType: enum RelationType { FINDER, MULTI_GET, GET, SINGLE_ELEMENT_FINDER }
 
 }

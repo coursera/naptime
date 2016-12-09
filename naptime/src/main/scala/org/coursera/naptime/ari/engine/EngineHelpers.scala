@@ -28,6 +28,14 @@ import org.coursera.naptime.ResourceName
 import org.coursera.naptime.Types.Relations
 import org.coursera.naptime.ari.RequestField
 import org.coursera.naptime.schema.ReverseRelationAnnotation
+import play.api.libs.json.JsArray
+import play.api.libs.json.JsBoolean
+import play.api.libs.json.JsNull
+import play.api.libs.json.JsNumber
+import play.api.libs.json.JsObject
+import play.api.libs.json.JsString
+import play.api.libs.json.JsValue
+import play.api.libs.json.Json
 
 import scala.collection.JavaConverters._
 import scala.collection.mutable
@@ -91,12 +99,14 @@ object EngineHelpers extends StrictLogging {
       schema: RecordDataSchema,
       path: Seq[String],
       data: AnyRef): Unit = {
-    val it = Builder.create(element, schema, IterationOrder.PRE_ORDER).dataIterator()
-    Iterator
-      .continually(it.next)
-      .takeWhile(_ != null)
-      .filter(_.path.toSeq.map(_.toString) == path.dropRight(1))
-      .foreach(_.getValue.asInstanceOf[DataMap].put(path.last, data))
+    if (data != null) {
+      val it = Builder.create(element, schema, IterationOrder.PRE_ORDER).dataIterator()
+      Iterator
+        .continually(it.next)
+        .takeWhile(_ != null)
+        .filter(_.path.toSeq.map(_.toString) == path.dropRight(1))
+        .foreach(_.getValue.asInstanceOf[DataMap].put(path.last, data))
+    }
   }
 
   /**
@@ -217,6 +227,23 @@ object EngineHelpers extends StrictLogging {
         .flatMap { childSelection =>
           selectionAtPath(childSelection, path.tail)
         }
+    }
+  }
+
+  private[engine] def stringifyArg(value: JsValue): String = {
+    value match {
+      case JsArray(arrayElements) =>
+        arrayElements.map(stringifyArg).mkString(",")
+      case stringValue: JsString =>
+        stringValue.as[String]
+      case number: JsNumber =>
+        number.toString
+      case boolean: JsBoolean =>
+        boolean.toString
+      case jsObject: JsObject =>
+        Json.stringify(jsObject)
+      case JsNull =>
+        ""
     }
   }
 
