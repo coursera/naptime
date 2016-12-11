@@ -117,7 +117,7 @@ class EngineImpl @Inject() (
         .groupBy(relation => (relation.selection, relation.path, relation.annotation))
         .mapValues(_.map(_.element))
         .map { case ((selection, path, annotation), elements) =>
-          fetchReverseRelation(requestHeader, selection, elements, path, annotation)
+          fetchReverseRelation(requestHeader, selection, elements, mergedType, path, annotation)
         }
 
       val topLevelResponses = forwardRelationResponses ++ reverseRelationResponses
@@ -211,6 +211,7 @@ class EngineImpl @Inject() (
       requestHeader: RequestHeader,
       requestField: RequestField,
       data: Iterable[DataMap],
+      schema: RecordDataSchema,
       path: Seq[String],
       reverse: ReverseRelationAnnotation): Future[FieldRelationResponse] = {
     val resourceName = ResourceName.parse(reverse.resourceName).getOrElse {
@@ -218,13 +219,15 @@ class EngineImpl @Inject() (
         s"'${reverse.resourceName}''")
     }
     val argumentsByElement = data.map { topLevelElement =>
-      val InterpolationRegex = new Regex("""\$([a-zA-Z0-9_]+)""", "variableName")
+      val InterpolationRegex = new Regex("""\$(?:([a-zA-Z0-9_]+)|\{([^\}]+)\})""", "withoutBraces", "withBraces")
       val arguments: Set[(String, JsValue)] = reverse.arguments
         .mapValues { value =>
           InterpolationRegex.replaceAllIn(
             value, { regexMatch =>
-              val variableName = regexMatch.group("variableName")
-              Option(topLevelElement.get(variableName)).map {
+              val withoutBraces = Option(regexMatch.group("withoutBraces"))
+              val withBraces = Option(regexMatch.group("withBraces"))
+              val variableName = withoutBraces.orElse(withBraces).getOrElse("")
+              EngineHelpers.getValueAtPath(topLevelElement, schema, variableName.split("/")).map {
                 case dataList: DataList => dataList.asScala.mkString(",")
                 case other: Any => other.toString
               }.getOrElse(variableName)
@@ -242,8 +245,8 @@ class EngineImpl @Inject() (
         val groupedRequests = argumentsByElement.groupBy(_._2.filterNot(_._1 == "ids"))
         groupedRequests.map { case (nonIdArguments, elementsAndArguments) =>
           val ids = elementsAndArguments
-            .flatMap(_._2.find(_._1 == "ids"))
-            .map(ids => EngineHelpers.stringifyArg(ids._2))
+            .flatMap(_._2.find(_._1 == "ids").map(_._2))
+            .map(ids => EngineHelpers.stringifyArg(ids))
             .mkString(",")
           val arguments = nonIdArguments + ("ids" -> JsString(ids))
           val relatedTopLevelRequest = TopLevelRequest(

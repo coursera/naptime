@@ -20,12 +20,14 @@ import java.lang.StringBuilder
 
 import com.linkedin.data.schema.ArrayDataSchema
 import com.linkedin.data.schema.DataSchema
+import com.linkedin.data.schema.MapDataSchema
 import com.linkedin.data.schema.Name
 import com.linkedin.data.schema.PrimitiveDataSchema
 import com.linkedin.data.schema.RecordDataSchema
 import com.linkedin.data.schema.RecordDataSchema.RecordType
 import com.linkedin.data.schema.StringDataSchema
 import com.linkedin.data.schema.TyperefDataSchema
+import com.linkedin.data.schema.UnionDataSchema
 import com.typesafe.scalalogging.StrictLogging
 import org.coursera.naptime.schema.RelationType.FINDER
 import org.coursera.naptime.schema.RelationType.GET
@@ -118,17 +120,15 @@ object Types extends StrictLogging {
               val newField = new RecordDataSchema.Field(new StringDataSchema) // TODO(bryan): fix type here
               newField.setOptional(true)
               newField
+            case _ =>
+              throw new RuntimeException("unknown relation type: " +
+                reverseRelation.toAnnotation.relationType.toString)
           }
-          newField.setName(name, errorMessageBuilder)
-          newField.setRecord(mergedSchema)
-
           val reverseRelatedMap = Map[String, AnyRef](
             Relations.REVERSE_PROPERTY_NAME -> reverseRelation.toAnnotation.data())
           newField.setProperties(reverseRelatedMap.asJava)
-
-          val existingFields = mergedSchema.getFields
-          val newFields = (existingFields.asScala ++ List(newField)).asJava
-          mergedSchema.setFields(newFields, errorMessageBuilder)
+          newField.setName(name.split("/").last, errorMessageBuilder)
+          insertFieldAtLocation(mergedSchema, name.split("/").dropRight(1).toList, newField)
       }
     }
     mergedSchema
@@ -193,5 +193,49 @@ object Types extends StrictLogging {
       logger.warn(s"Error while computing asymmetric type $typeName: $errorMessageBuilder")
     }
     recordDataSchema
+  }
+
+  // Adapted from DataSchemaUtil.getField
+  private[this] def insertFieldAtLocation(
+    schema: DataSchema,
+    location: List[String],
+    field: RecordDataSchema.Field): DataSchema = {
+
+    schema.getDereferencedDataSchema match {
+      case mapDataSchema: MapDataSchema =>
+        insertFieldAtLocation(mapDataSchema.getValues, location, field)
+      case arrayDataSchema: ArrayDataSchema =>
+        insertFieldAtLocation(arrayDataSchema.getItems, location, field)
+      case recordDataSchema: RecordDataSchema =>
+        if (location.isEmpty) {
+          field.setRecord(recordDataSchema)
+          val existingFields = recordDataSchema.getFields
+          val newFields = (existingFields.asScala ++ List(field)).asJava
+          val errorMessageBuilder = new StringBuilder
+          recordDataSchema.setFields(newFields, errorMessageBuilder)
+          recordDataSchema
+        } else {
+          val fieldOption = Option(recordDataSchema.getField(location.head))
+          fieldOption.map { recordField =>
+            insertFieldAtLocation(recordField.getType, location.tail, field)
+          }.getOrElse {
+            logger.warn(s"Could not find field ${location.headOption} on record $schema")
+            schema
+          }
+        }
+      case unionDataSchema: UnionDataSchema =>
+        location
+          .headOption
+          .flatMap(loc => Option(unionDataSchema.getType(loc)))
+          .map { unionSchema =>
+            insertFieldAtLocation(unionSchema, location.tail, field)
+          }.getOrElse {
+            logger.warn(s"Could not find type ${location.headOption} on union $schema")
+            schema
+          }
+      case _ =>
+        schema
+    }
+
   }
 }

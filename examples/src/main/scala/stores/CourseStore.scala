@@ -29,7 +29,7 @@ class CourseStore {
         Map("firstModuleId" -> "wrh7vtpj").asJava),
         DataConversion.SetReadOnly),
       courseMetadata = CourseMetadata(
-        certificateInstructor = "andrew-ng")),
+        certificateInstructorId = "andrew-ng")),
     "lhtl" -> Course(
       instructorIds = List("barb-oakley"),
       partnerId = "ucsd",
@@ -40,7 +40,7 @@ class CourseStore {
         Map("recentEnrollments" -> new Integer(1000)).asJava),
         DataConversion.SetReadOnly),
       courseMetadata = CourseMetadata(
-        certificateInstructor = "andrew-ng")))
+        certificateInstructorId = "andrew-ng")))
 
   def get(id: String) = courseStore.get(id)
 
