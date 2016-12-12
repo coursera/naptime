@@ -1,6 +1,7 @@
 package org.coursera.naptime
 
 import com.google.inject.Guice
+import com.linkedin.data.DataMap
 import com.linkedin.data.schema.DataSchema
 import com.linkedin.data.schema.RecordDataSchema
 import org.coursera.naptime.NestedMacroCourierTests.CoursesResource
@@ -31,7 +32,11 @@ object NestedMacroCourierTests {
   class CoursesResource extends CourierCollectionResource[String, Course] {
     override def resourceName: String = CoursesResource.ID.topLevelName
 
-    override implicit lazy val Fields: Fields[Course] = BaseFields.withRelated("instructors" -> ResourceName("instructors", 1))
+    override implicit lazy val Fields: Fields[Course] = BaseFields
+      .withReverseRelations(
+        "instructors" -> MultiGetReverseRelation(
+          resourceName = ResourceName("instructors", 1),
+          idsString = "$instructorIds"))
 
     /**
      * This `var` can be overridden to help fake out the implementation in particular functions.
@@ -102,14 +107,17 @@ class NestedMacroCourierTests extends AssertionsForJUnit with ScalaFutures {
     assert(!mergedType.value.hasError)
     assert(mergedType.value.getType === DataSchema.Type.RECORD)
     val mergedValueRecord = mergedType.value.asInstanceOf[RecordDataSchema]
-    assert(4 === mergedValueRecord.getFields.size(), mergedValueRecord)
+    assert(5 === mergedValueRecord.getFields.size(), mergedValueRecord)
     val instructorsField = mergedValueRecord.getField("instructors")
     assert(null != instructorsField, instructorsField)
     assert(null != instructorsField.getProperties)
-    val typesProperty = instructorsField.getProperties.get(Types.Relations.PROPERTY_NAME)
+    val typesProperty = instructorsField.getProperties.get(Types.Relations.REVERSE_PROPERTY_NAME)
     assert(null != typesProperty)
-    assert(typesProperty.isInstanceOf[String])
-    assert(typesProperty === "instructors.v1")
+    assert(typesProperty.isInstanceOf[DataMap])
+    val annotation = typesProperty.asInstanceOf[DataMap]
+    assert(annotation.getString("resourceName") === "instructors.v1")
+    assert(annotation.getDataMap("arguments").getString("ids") === "$instructorIds")
+    assert(annotation.getString("relationType") === "MULTI_GET")
   }
 
   @Test
