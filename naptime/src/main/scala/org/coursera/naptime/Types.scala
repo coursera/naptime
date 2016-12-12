@@ -92,18 +92,6 @@ object Types extends StrictLogging {
       case unknown: DataSchema =>
         throw new RuntimeException(s"Cannot compute asymmetric type for key type: $unknown")
     }
-    for ((name, relation) <- fields.relations) {
-      Option(mergedSchema.getField(name)) match {
-        case None =>
-          logger.warn(s"Fields for resource $typeName mentions field name '$name' but this field " +
-            "is not found in the merged type schema.")
-        case Some(field) =>
-          val properties = field.getProperties.asScala
-          val relatedMap = Map[String, AnyRef](
-            Relations.PROPERTY_NAME -> relation.identifier)
-          field.setProperties((properties ++ relatedMap).asJava)
-      }
-    }
     for ((name, reverseRelation) <- fields.reverseRelations) {
       Option(mergedSchema.getField(name)) match {
         case Some(field) =>

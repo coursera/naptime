@@ -264,9 +264,10 @@ class EngineImpl @Inject() (
                 .getOrElse(List[AnyRef]())
 
               // MultiGets return a list of ids, and Gets return a single id (or null)
+              val intersection = responseIds.filter(id => ids.contains(id.toString))
               val filteredIds = reverse.relationType match {
-                case MULTI_GET => new DataList(ids.intersect(responseIds).asJava)
-                case GET => ids.intersect(responseIds).headOption.orNull
+                case MULTI_GET => new DataList(intersection.asJava)
+                case GET => intersection.headOption.orNull
                 case _ => throw new RuntimeException(s"Unhandled relation type")
               }
               element.get("id") -> filteredIds
