@@ -36,7 +36,7 @@ object NestedMacroCourierTests {
       .withReverseRelations(
         "instructors" -> MultiGetReverseRelation(
           resourceName = ResourceName("instructors", 1),
-          idsString = "$instructorIds"))
+          ids = "$instructorIds"))
 
     /**
      * This `var` can be overridden to help fake out the implementation in particular functions.
