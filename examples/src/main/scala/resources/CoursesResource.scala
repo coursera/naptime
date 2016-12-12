@@ -24,7 +24,7 @@ class CoursesResource @Inject() (
     .withReverseRelations(
       "instructors" -> MultiGetReverseRelation(
         resourceName = ResourceName("instructors", 1),
-        idsString = "$instructorIds"),
+        ids = "$instructorIds"),
       "partner" -> GetReverseRelation(
         resourceName = ResourceName("partners", 1),
         id = "$partnerId"),

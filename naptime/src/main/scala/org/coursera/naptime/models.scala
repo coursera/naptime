@@ -615,12 +615,12 @@ case class FinderReverseRelation(
 
 case class MultiGetReverseRelation(
     resourceName: ResourceName,
-    idsString: String,
+    ids: String,
     arguments: Map[String, String] = Map.empty)
   extends ReverseRelation {
 
   def toAnnotation: ReverseRelationAnnotation = {
-    val mergedArguments = arguments + ("ids" -> idsString)
+    val mergedArguments = arguments + ("ids" -> ids)
     ReverseRelationAnnotation(resourceName.identifier, mergedArguments, RelationType.MULTI_GET)
   }
 }
