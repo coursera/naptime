@@ -24,12 +24,14 @@ class CoursesResource @Inject() (
     .withReverseRelations(
       "instructors" -> MultiGetReverseRelation(
         resourceName = ResourceName("instructors", 1),
-        idsString = "$instructorIds",
-        arguments = Map.empty),
+        ids = "$instructorIds"),
       "partner" -> GetReverseRelation(
         resourceName = ResourceName("partners", 1),
-        id = "$partnerId",
-        arguments = Map.empty))
+        id = "$partnerId"),
+      "courseMetadata/org.coursera.example.CourseMetadata/certificateInstructor" ->
+        GetReverseRelation(
+          resourceName = ResourceName("instructors", 1),
+          id = "${courseMetadata/org.coursera.example.CourseMetadata/certificateInstructorId}"))
 
   def get(id: String = "v1-123") = Nap.get { context =>
     OkIfPresent(id, courseStore.get(id))

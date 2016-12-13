@@ -1,8 +1,5 @@
 namespace org.coursera.example
 
 record CourseMetadata {
-
-  @related = "instructors.v1"
-  certificateInstructor: InstructorId
-
+  certificateInstructorId: InstructorId
 }

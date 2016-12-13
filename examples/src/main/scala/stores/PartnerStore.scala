@@ -16,12 +16,12 @@ class PartnerStore {
   partnerStore = partnerStore + (
     "stanford" -> Partner(
       courses = List("ml"),
-      instructors = List("andrew-ng"),
+      instructorIds = List(1),
       name = "Stanford University",
       homepage = ""),
     "ucsd" -> Partner(
       courses = List("lhtl"),
-      instructors = List("barb-oakley"),
+      instructorIds = List(2),
       name = "UCSD",
       homepage = ""))
 

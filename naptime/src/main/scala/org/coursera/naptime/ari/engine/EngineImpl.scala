@@ -117,7 +117,7 @@ class EngineImpl @Inject() (
         .groupBy(relation => (relation.selection, relation.path, relation.annotation))
         .mapValues(_.map(_.element))
         .map { case ((selection, path, annotation), elements) =>
-          fetchReverseRelation(requestHeader, selection, elements, path, annotation)
+          fetchReverseRelation(requestHeader, selection, elements, mergedType, path, annotation)
         }
 
       val topLevelResponses = forwardRelationResponses ++ reverseRelationResponses
@@ -197,6 +197,12 @@ class EngineImpl @Inject() (
   }
 
   /**
+    * This regex is used to match both "$instructorIds" and "${instructorDetails/instructorIds}"
+    */
+  private[this] val InterpolationRegex =
+    new Regex("""\$(?:([a-zA-Z0-9_]+)|\{([^\}]+)\})""", "withoutBraces", "withBraces")
+
+  /**
     * Executes a series of topLevelRequests for a reverse relation
     * @param requestHeader incoming requestheader containing cookies, headers, etc.
     * @param requestField selection specifying arguments and nested selections on the relation
@@ -211,6 +217,7 @@ class EngineImpl @Inject() (
       requestHeader: RequestHeader,
       requestField: RequestField,
       data: Iterable[DataMap],
+      schema: RecordDataSchema,
       path: Seq[String],
       reverse: ReverseRelationAnnotation): Future[FieldRelationResponse] = {
     val resourceName = ResourceName.parse(reverse.resourceName).getOrElse {
@@ -218,13 +225,14 @@ class EngineImpl @Inject() (
         s"'${reverse.resourceName}''")
     }
     val argumentsByElement = data.map { topLevelElement =>
-      val InterpolationRegex = new Regex("""\$([a-zA-Z0-9_]+)""", "variableName")
       val arguments: Set[(String, JsValue)] = reverse.arguments
         .mapValues { value =>
           InterpolationRegex.replaceAllIn(
             value, { regexMatch =>
-              val variableName = regexMatch.group("variableName")
-              Option(topLevelElement.get(variableName)).map {
+              val withoutBraces = Option(regexMatch.group("withoutBraces"))
+              val withBraces = Option(regexMatch.group("withBraces"))
+              val variableName = withoutBraces.orElse(withBraces).getOrElse("")
+              EngineHelpers.getValueAtPath(topLevelElement, schema, variableName.split("/")).map {
                 case dataList: DataList => dataList.asScala.mkString(",")
                 case other: Any => other.toString
               }.getOrElse(variableName)
@@ -242,8 +250,8 @@ class EngineImpl @Inject() (
         val groupedRequests = argumentsByElement.groupBy(_._2.filterNot(_._1 == "ids"))
         groupedRequests.map { case (nonIdArguments, elementsAndArguments) =>
           val ids = elementsAndArguments
-            .flatMap(_._2.find(_._1 == "ids"))
-            .map(ids => EngineHelpers.stringifyArg(ids._2))
+            .flatMap(_._2.find(_._1 == "ids").map(_._2))
+            .map(ids => EngineHelpers.stringifyArg(ids))
             .mkString(",")
           val arguments = nonIdArguments + ("ids" -> JsString(ids))
           val relatedTopLevelRequest = TopLevelRequest(
@@ -261,9 +269,10 @@ class EngineImpl @Inject() (
                 .getOrElse(List[AnyRef]())
 
               // MultiGets return a list of ids, and Gets return a single id (or null)
+              val intersection = responseIds.filter(id => ids.contains(id.toString))
               val filteredIds = reverse.relationType match {
-                case MULTI_GET => new DataList(ids.intersect(responseIds).asJava)
-                case GET => ids.intersect(responseIds).headOption.orNull
+                case MULTI_GET => new DataList(intersection.asJava)
+                case GET => intersection.headOption.orNull
                 case _ => throw new RuntimeException(s"Unhandled relation type")
               }
               element.get("id") -> filteredIds

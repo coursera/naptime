@@ -15,22 +15,22 @@ import stores.InstructorStore
 @Singleton
 class InstructorsResource @Inject() (
     instructorStore: InstructorStore)
-  extends CourierCollectionResource[String, Instructor] {
+  extends CourierCollectionResource[Int, Instructor] {
 
   override def resourceName = "instructors"
   override def resourceVersion = 1
   override implicit lazy val Fields: Fields[Instructor] = BaseFields
     .withReverseRelations(
-      "courses" -> FinderReverseRelation[String](
+      "courses" -> FinderReverseRelation(
         resourceName = ResourceName("courses", 1),
         finderName = "byInstructor",
         arguments = Map("instructorId" -> "$id")))
 
-  def get(id: String) = Nap.get { context =>
+  def get(id: Int) = Nap.get { context =>
     OkIfPresent(id, instructorStore.get(id))
   }
 
-  def multiGet(ids: Set[String]) = Nap.multiGet { context =>
+  def multiGet(ids: Set[Int]) = Nap.multiGet { context =>
     Ok(instructorStore.all()
       .filter(instructor => ids.contains(instructor._1))
       .map { case (id, instructor) => Keyed(id, instructor) }.toList)

@@ -44,7 +44,6 @@ object NaptimePaginatedResourceField {
           resource.handlers.find(_.kind == HandlerKind.MULTI_GET)
         case (None, Some(ReverseRelation(annotation))) =>
           annotation.relationType match {
-
             case RelationType.FINDER =>
               val finderName = annotation.arguments.get("q").getOrElse {throw new IllegalStateException("Finder reverse relation on " +
                   s"${annotation.resourceName} does not have a q parameter specified")
@@ -54,7 +53,7 @@ object NaptimePaginatedResourceField {
             case RelationType.MULTI_GET =>
               resource.handlers.find(_.kind == HandlerKind.MULTI_GET)
 
-            case RelationType.$UNKNOWN =>
+            case RelationType.GET | RelationType.SINGLE_ELEMENT_FINDER | RelationType.$UNKNOWN =>
               None
           }
         case _ =>

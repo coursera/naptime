@@ -110,6 +110,27 @@ object EngineHelpers extends StrictLogging {
   }
 
   /**
+    * Iterates through a data map and returns the value stored at a particular path in the data map,
+    * or None if the path isn't found (or the data is null)
+    *
+    * @param element top-level element to be updated
+    * @param schema data schema defining the fields on the element
+    * @param path list of strings defining the path to the target element
+    */
+  private[engine] def getValueAtPath(
+      element: DataMap,
+      schema: RecordDataSchema,
+      path: Seq[String]): Option[Object] = {
+      val it = Builder.create(element, schema, IterationOrder.PRE_ORDER).dataIterator()
+      Iterator
+        .continually(it.next)
+        .takeWhile(_ != null)
+        .find(_.path.toSeq.map(_.toString) == path.dropRight(1))
+        .map(_.getValue.asInstanceOf[DataMap].get(path.last))
+        .flatMap(Option(_))
+  }
+
+  /**
     * Parses an element, using an associated schema and a list of selections from the request,
     * and returns a list of all forward and reverse relations requested from the model
     *
