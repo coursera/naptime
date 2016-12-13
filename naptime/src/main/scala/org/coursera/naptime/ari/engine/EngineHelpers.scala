@@ -125,10 +125,8 @@ object EngineHelpers extends StrictLogging {
       Iterator
         .continually(it.next)
         .takeWhile(_ != null)
-        .filter(_.path.toSeq.map(_.toString) == path.dropRight(1))
+        .find(_.path.toSeq.map(_.toString) == path.dropRight(1))
         .map(_.getValue.asInstanceOf[DataMap].get(path.last))
-        .toList
-        .headOption
         .flatMap(Option(_))
   }
 

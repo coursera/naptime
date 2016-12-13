@@ -197,6 +197,12 @@ class EngineImpl @Inject() (
   }
 
   /**
+    * This regex is used to match both "$instructorIds" and "${instructorDetails/instructorIds}"
+    */
+  private[this] val InterpolationRegex =
+    new Regex("""\$(?:([a-zA-Z0-9_]+)|\{([^\}]+)\})""", "withoutBraces", "withBraces")
+
+  /**
     * Executes a series of topLevelRequests for a reverse relation
     * @param requestHeader incoming requestheader containing cookies, headers, etc.
     * @param requestField selection specifying arguments and nested selections on the relation
@@ -219,7 +225,6 @@ class EngineImpl @Inject() (
         s"'${reverse.resourceName}''")
     }
     val argumentsByElement = data.map { topLevelElement =>
-      val InterpolationRegex = new Regex("""\$(?:([a-zA-Z0-9_]+)|\{([^\}]+)\})""", "withoutBraces", "withBraces")
       val arguments: Set[(String, JsValue)] = reverse.arguments
         .mapValues { value =>
           InterpolationRegex.replaceAllIn(

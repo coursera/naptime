@@ -201,6 +201,10 @@ object Types extends StrictLogging {
           val newFields = (existingFields.asScala ++ List(field)).asJava
           val errorMessageBuilder = new StringBuilder
           recordDataSchema.setFields(newFields, errorMessageBuilder)
+          val error = errorMessageBuilder.toString
+          if (error.nonEmpty) {
+            logger.warn("Error while inserting field", error)
+          }
           recordDataSchema
         } else {
           val fieldOption = Option(recordDataSchema.getField(location.head))
