@@ -60,7 +60,7 @@ class CoursesResource @Inject() (
 
   def byInstructor(instructorId: String) = Nap.finder { context =>
     val courses = courseStore.all()
-      .filter(course => course._2.instructorIds.contains(instructorId))
+      .filter(course => course._2.instructorIds.map(_.toString).contains(instructorId))
     Ok(courses.toList.map { case (id, course) => Keyed(id, course) })
   }
 
