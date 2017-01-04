@@ -81,5 +81,5 @@ class QueryComplexityFilter @Inject() (
 case class ComplexityFilterConfiguration(maxComplexity: Int)
 
 object ComplexityFilterConfiguration {
-  val DEFAULT = ComplexityFilterConfiguration(10000)
+  val DEFAULT = ComplexityFilterConfiguration(100000)
 }
