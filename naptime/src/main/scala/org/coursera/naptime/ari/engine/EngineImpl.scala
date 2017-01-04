@@ -238,6 +238,7 @@ class EngineImpl @Inject() (
               }.getOrElse(variableName)
             })
         }
+        .filterNot(_._2.isEmpty)
         .mapValues(value => JsString(value))
         .toSet
       topLevelElement -> arguments
