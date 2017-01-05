@@ -254,7 +254,7 @@ object EngineHelpers extends StrictLogging {
   private[engine] def stringifyArg(value: JsValue): String = {
     value match {
       case JsArray(arrayElements) =>
-        arrayElements.map(stringifyArg).mkString(",")
+        arrayElements.map(stringifyArg).filterNot(_.isEmpty).mkString(",")
       case stringValue: JsString =>
         stringValue.as[String]
       case number: JsNumber =>

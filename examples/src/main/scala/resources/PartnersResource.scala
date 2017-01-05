@@ -20,11 +20,13 @@ class PartnersResource @Inject() (
   override def resourceName = "partners"
   override def resourceVersion = 1
   override implicit lazy val Fields: Fields[Partner] = BaseFields
-    .withRelated("courses" -> ResourceName("courses", 1))
     .withReverseRelations(
       "instructors" -> MultiGetReverseRelation(
         resourceName = ResourceName("instructors", 1),
-        ids = "$instructorIds"))
+        ids = "$instructorIds"),
+      "courses" -> MultiGetReverseRelation(
+        resourceName = ResourceName("courses", 1),
+        ids = "$courseIds"))
 
   def get(id: String) = Nap.get { context =>
     OkIfPresent(id, partnerStore.get(id))
