@@ -12,7 +12,7 @@ class SchemaInferenceTest extends AssertionsForJUnit {
   import SchemaInference._
 
   @Test
-  def testCourierCLass(): Unit = {
+  def testCourierClass(): Unit = {
     val inferred = SchemaInference.inferSchema[MockRecord]
     val expected = Json.parse(MockRecord.SCHEMA_JSON)
     assert(inferred === expected)
@@ -217,6 +217,27 @@ class SchemaInferenceTest extends AssertionsForJUnit {
           |}
         """.stripMargin))
   }
+
+  @Test
+  def nestedCourierUnion(): Unit = {
+    assert(inferSchema[WithNestedUnion] ===
+      Json.parse(
+        """{
+          |  "fields": [
+          |    {
+          |      "name": "nestedUnion",
+          |      "type": [
+          |        "int",
+          |        "string"
+          |      ]
+          |    }
+          |  ],
+          |  "name": "WithNestedUnion",
+          |  "namespace": "org.coursera.naptime.courier",
+          |  "type": "record"
+          |}
+        """.stripMargin))
+  }
 }
 
 
@@ -230,6 +251,7 @@ case class WithRecord(record: Simple)
 case class WithArrays(ints: Seq[Int])
 case class WithMaps(ints: Map[String, Int])
 case class WithTypedKeyMaps(ints: Map[Int, Int])
+case class WithNestedUnion(nestedUnion: TestUnion)
 
 sealed trait TypedDefinition
 case class MemberOne() extends TypedDefinition
@@ -237,16 +259,16 @@ case class MemberTwo() extends TypedDefinition
 
 package object enums {
   object Enum1 extends Enumeration {
-    val SUMBOL_1 = Value("SYMBOL_1")
-    val SUMBOL_2 = Value("SYMBOL_2")
+    val SYMBOL_1 = Value("SYMBOL_1")
+    val SYMBOL_2 = Value("SYMBOL_2")
   }
 
   type Enum1 = Enum1.Value
 }
 
 object Enum2 extends Enumeration {
-  val SUMBOL_A = Value("SYMBOL_A")
-  val SUMBOL_B = Value("SYMBOL_B")
+  val SYMBOL_A = Value("SYMBOL_A")
+  val SYMBOL_B = Value("SYMBOL_B")
   type Enum2 = Enum2.Value
 }
 
@@ -262,7 +284,7 @@ object CourierEnum extends Enumeration {
       |""".stripMargin
   val SCHEMA = DataTemplateUtil.parseSchema(SCHEMA_JSON).asInstanceOf[EnumDataSchema]
 
-  val SUMBOL_X = Value("SYMBOL_X")
-  val SUMBOL_Y = Value("SYMBOL_Y")
+  val SYMBOL_X = Value("SYMBOL_X")
+  val SYMBOL_Y = Value("SYMBOL_Y")
   type CourierEnum = CourierEnum.Value
 }
