@@ -290,12 +290,16 @@ object CourierFormats extends StrictLogging {
 
       override def reads(key: StringKey): Option[T] = {
         val string = key.key
-        val dataMap = stringKeyCodec.bytesToMap(string.getBytes(StringKeyCodec.charset))
-        validateAndFixUp(dataMap, schema)
+        val bytes = string.getBytes(StringKeyCodec.charset)
         try {
+          val dataMap = stringKeyCodec.bytesToMap(bytes)
+          validateAndFixUp(dataMap, schema)
           dataMap.setReadOnly()
           Some(DataTemplateUtil.wrap(dataMap, clazz))
         } catch {
+          case parseException: IOException =>
+            logger.debug(s"${parseException.getMessage}", parseException)
+            None
           case castException: TemplateOutputCastException =>
             logger.debug(s"Template cast failed for stringKey: $string", castException)
             None
@@ -333,9 +337,10 @@ object CourierFormats extends StrictLogging {
 
       override def reads(key: StringKey): Option[T] = {
         val string = key.key
-        val dataList = stringKeyCodec.bytesToList(string.getBytes(StringKeyCodec.charset))
-        validateAndFixUp(dataList, schema)
+        val bytes = string.getBytes(StringKeyCodec.charset)
         try {
+          val dataList = stringKeyCodec.bytesToList(bytes)
+          validateAndFixUp(dataList, schema)
           dataList.setReadOnly()
           Some(DataTemplateUtil.wrap(dataList, clazz.getConstructor(classOf[DataList])))
         } catch {
