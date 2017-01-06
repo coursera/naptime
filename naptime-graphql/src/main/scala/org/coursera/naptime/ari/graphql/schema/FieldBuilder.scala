@@ -125,7 +125,8 @@ object FieldBuilder extends StrictLogging {
         Field.apply[SangriaGraphQlContext, DataMap, Any, Any](
           name = FieldBuilder.formatName(fieldName),
           fieldType = ListType(innerField.fieldType),
-          resolve = context => context.value.getDataList(fieldName).asScala)
+          resolve = context => Option(context.value.getDataList(fieldName))
+            .map(_.asScala).getOrElse(null))
 
       case (None, _: MapDataSchema) =>
         Field.apply[SangriaGraphQlContext, DataMap, Any, Any](

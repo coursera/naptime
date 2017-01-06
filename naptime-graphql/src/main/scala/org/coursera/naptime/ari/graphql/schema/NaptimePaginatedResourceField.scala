@@ -129,7 +129,9 @@ object NaptimePaginatedResourceField {
       val connection = context.ctx.response.data.get(parsedResourceName).map { objects =>
         val ids = Option(context.value.parentContext.value).map { parentElement =>
           // Nested Request
-          val allIds = parentElement.getDataList(fieldName).asScala
+          val allIds = Option(parentElement.getDataList(fieldName))
+            .map(_.asScala)
+            .getOrElse(List.empty)
           val startOption = context.value.parentContext.arg(NaptimePaginationField.startArgument)
           val limit = context.value.parentContext.arg(NaptimePaginationField.limitArgument)
           val idsWithStart = startOption
@@ -144,7 +146,7 @@ object NaptimePaginatedResourceField {
                 context.value.parentContext.astFields.headOption.flatMap(_.alias) &&
               context.value.parentContext.astFields.headOption.map(_.name)
                 .contains(topLevelRequest.selection.name)
-          }.map(_._2.ids.asScala).getOrElse(List.empty)
+          }.flatMap(r => Option(r._2.ids).map(_.asScala)).getOrElse(List.empty)
         }
         objects.collect {
           case (id, element) if ids.contains(id) => element

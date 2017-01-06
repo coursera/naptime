@@ -65,7 +65,9 @@ object NaptimePaginationField extends StrictLogging {
       val responsePagination = context.ctx.response.data.get(parsedResourceName).map { objects =>
         Option(context.value.parentContext.value).map { parentElement =>
           // Nested Request
-          val idsFromParent = parentElement.getDataList(fieldName).asScala
+          val idsFromParent = Option(parentElement.getDataList(fieldName))
+            .map(_.asScala)
+            .getOrElse(List.empty)
           val startOption = context.value.parentContext.arg(startArgument)
           val limit = context.value.parentContext.arg(limitArgument)
 
