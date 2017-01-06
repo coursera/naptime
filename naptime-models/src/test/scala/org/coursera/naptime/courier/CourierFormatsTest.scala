@@ -209,6 +209,17 @@ class CourierFormatsTest extends AssertionsForJUnit {
 
     val roundTripped = StringKey.unapply(stringKey).get
     assert(roundTripped === string)
+
+    val string2 = "nottwo"
+    val stringKey2 = StringKey(string2)
+    val mock2 = stringKey2.asOpt[MockRecord]
+
+    val string3 = "value~notnumeric"
+    val stringKey3 = StringKey(string3)
+    val mock3 = stringKey3.asOpt[MockRecord]
+
+    assert(mock2 === None) // IOException
+    assert(mock3 === None) // DataValidationException
   }
 
   @Test
@@ -226,6 +237,12 @@ class CourierFormatsTest extends AssertionsForJUnit {
 
     val roundTripped = StringKey.unapply(stringKey).get
     assert(roundTripped === string)
+
+
+    val string2 = "1,2,"
+    val stringKey2 = StringKey(string2)
+    val mock2 = stringKey2.asOpt[IntArray]
+    assert(mock2 === None) // DataValidationException
   }
 
   @Test
