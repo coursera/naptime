@@ -233,9 +233,11 @@ class EngineImpl @Inject() (
               val withBraces = Option(regexMatch.group("withBraces"))
               val variableName = withoutBraces.orElse(withBraces).getOrElse("")
               EngineHelpers.getValueAtPath(topLevelElement, schema, variableName.split("/")).map {
-                case dataList: DataList => dataList.asScala.mkString(",")
-                case other: Any => other.toString
-              }.getOrElse(variableName)
+                case dataList: DataList =>
+                  Option(dataList).map(_.asScala.mkString(",")).getOrElse("")
+                case other: Any =>
+                  other.toString
+              }.getOrElse("")
             })
         }
         .filterNot(_._2.isEmpty)
