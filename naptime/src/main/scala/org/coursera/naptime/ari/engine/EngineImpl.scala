@@ -235,7 +235,7 @@ class EngineImpl @Inject() (
               EngineHelpers.getValueAtPath(topLevelElement, schema, variableName.split("/")).map {
                 case dataList: DataList => dataList.asScala.mkString(",")
                 case other: Any => other.toString
-              }.getOrElse(variableName)
+              }.getOrElse("")
             })
         }
         .filterNot(_._2.isEmpty)
