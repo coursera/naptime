@@ -15,25 +15,28 @@ object NaptimeRecordField {
       schemaMetadata: SchemaMetadata,
       recordDataSchema: RecordDataSchema,
       fieldName: String,
-      namespace: Option[String]) = {
+      namespace: Option[String],
+      resourceName: String) = {
 
     Field.apply[SangriaGraphQlContext, DataMap, Any, Any](
       name = FieldBuilder.formatName(fieldName),
-      fieldType = getType(schemaMetadata, recordDataSchema, namespace),
+      fieldType = getType(schemaMetadata, recordDataSchema, namespace, resourceName),
       resolve = context => context.value.getDataMap(fieldName))
   }
 
   private[schema] def getType(
       schemaMetadata: SchemaMetadata,
       recordDataSchema: RecordDataSchema,
-      namespace: Option[String]): ObjectType[SangriaGraphQlContext, DataMap] = {
+      namespace: Option[String],
+      resourceName: String): ObjectType[SangriaGraphQlContext, DataMap] = {
 
     ObjectType[SangriaGraphQlContext, DataMap](
-      FieldBuilder.formatName(recordDataSchema.getFullName),
+      FieldBuilder.formatName(s"${resourceName}_${recordDataSchema.getFullName}"),
       recordDataSchema.getDoc,
       fieldsFn = () => {
-        val fields = recordDataSchema.getFields.asScala.map(field =>
-          FieldBuilder.buildField(schemaMetadata, field, namespace)).toList
+        val fields = recordDataSchema.getFields.asScala.map { field =>
+          FieldBuilder.buildField(schemaMetadata, field, namespace, resourceName = resourceName)
+        }.toList
         if (fields.isEmpty) {
           // TODO(bryan): Handle this case better
           EMPTY_FIELDS_FALLBACK

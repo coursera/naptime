@@ -17,10 +17,11 @@ object NaptimeUnionField {
       schemaMetadata: SchemaMetadata,
       unionDataSchema: UnionDataSchema,
       fieldName: String,
-      namespace: Option[String]): Field[SangriaGraphQlContext, DataMap] = {
+      namespace: Option[String],
+      resourceName: String): Field[SangriaGraphQlContext, DataMap] = {
     Field.apply[SangriaGraphQlContext, DataMap, Any, Any](
       name = fieldName,
-      fieldType = getType(schemaMetadata, unionDataSchema, fieldName, namespace),
+      fieldType = getType(schemaMetadata, unionDataSchema, fieldName, namespace, resourceName),
       resolve = context => context.value.getDataMap(fieldName))
   }
 
@@ -28,25 +29,27 @@ object NaptimeUnionField {
       schemaMetadata: SchemaMetadata,
       unionDataSchema: UnionDataSchema,
       fieldName: String,
-      namespace: Option[String]): UnionType[SangriaGraphQlContext] = {
+      namespace: Option[String],
+      resourceName: String): UnionType[SangriaGraphQlContext] = {
 
     val objects = unionDataSchema.getTypes.asScala.map { subType =>
-      val fieldName = FieldBuilder.formatName(subType.getUnionMemberKey)
+      val unionMemberFieldName = FieldBuilder.formatName(subType.getUnionMemberKey)
       val subTypeField = FieldBuilder.buildField(
         schemaMetadata,
         new RecordDataSchemaField(subType),
         namespace,
-        Some(subType.getUnionMemberKey))
+        Some(subType.getUnionMemberKey),
+        resourceName = resourceName)
 
       val field = Field.apply[SangriaGraphQlContext, DataMap, Any, Any](
-        fieldName,
+        unionMemberFieldName,
         subTypeField.fieldType,
         resolve = subTypeField.resolve)
       ObjectType[SangriaGraphQlContext, DataMap](
-        name = FieldBuilder.formatName(s"${subType.getUnionMemberKey}Member"),
+        name = FieldBuilder.formatName(s"$resourceName/${subType.getUnionMemberKey}Member"),
         fields = List(field))
     }.toList
-    val unionName = buildFullyQualifiedName(namespace.getOrElse(""), fieldName)
+    val unionName = buildFullyQualifiedName(resourceName, fieldName)
     new UnionType(unionName, None, objects) {
       // write a custom type mapper to use field names to determine the union member type
       override def typeOf[Ctx](value: Any, schema: Schema[Ctx, _]): Option[ObjectType[Ctx, _]] = {
