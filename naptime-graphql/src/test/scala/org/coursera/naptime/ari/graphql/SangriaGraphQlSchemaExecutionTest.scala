@@ -179,7 +179,7 @@ class SangriaGraphQlSchemaExecutionTest extends AssertionsForJUnit with ScalaFut
         CoursesV1Resource {
           get(id: "1") {
             platformSpecificData {
-              ... on org_coursera_naptime_ari_graphql_models_OldPlatformDataMember {
+              ... on CoursesV1_org_coursera_naptime_ari_graphql_models_OldPlatformDataMember {
                 org_coursera_naptime_ari_graphql_models_OldPlatformData {
                   notAvailableMessage
                 }

@@ -67,18 +67,17 @@ class SangriaGraphQlSchemaBuilderTest extends AssertionsForJUnit {
   @Test
   def parseUnionFields(): Unit = {
     val schema = Schema(builder.generateLookupTypeForResource("courses.v1").get)
-    val courseUnionType =
-      schema.unionTypes.get("org_coursera_naptime_ari_graphql_models_originalId").get
+    val courseUnionType = schema.unionTypes("CoursesV1_originalId")
     val courseUnionUnionType = courseUnionType.asInstanceOf[UnionType[Unit]]
     val unionObjects = courseUnionUnionType.types
-    assert(unionObjects.find(_.name == "intMember").get.fieldsByName.keySet.head === "int")
-    assert(unionObjects.find(_.name == "stringMember").get.fieldsByName.keySet.head === "string")
+    assert(unionObjects.find(_.name == "CoursesV1_intMember").get.fieldsByName.keySet.head === "int")
+    assert(unionObjects.find(_.name == "CoursesV1_stringMember").get.fieldsByName.keySet.head === "string")
   }
 
   @Test
   def parseUnionMemberFields(): Unit = {
     val schema = Schema(builder.generateLookupTypeForResource("courses.v1").get)
-    val (_, coursePlatformMemberType) = schema.types.get("intMember").get
+    val (_, coursePlatformMemberType) = schema.types("CoursesV1_intMember")
     val coursePlatformMemberObjectType =
       coursePlatformMemberType.asInstanceOf[ObjectType[Unit, ScalaRecordTemplate]]
     val fieldNames = coursePlatformMemberObjectType.fieldsByName.keySet

@@ -60,7 +60,8 @@ object NaptimeResourceField {
       description = schema.getDoc,
       fieldsFn = () => {
         Option(schema.getFields).map(_.asScala.map { field =>
-          FieldBuilder.buildField(schemaMetadata, field, Option(schema.getNamespace))
+          FieldBuilder.buildField(schemaMetadata, field, Option(schema.getNamespace),
+            resourceName = formatResourceName(resource))
         }.toList).getOrElse(List.empty)
       }))
     resourceObjectType

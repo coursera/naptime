@@ -54,7 +54,9 @@ object FieldBuilder extends StrictLogging {
       field: RecordDataSchemaField,
       namespace: Option[String],
       fieldNameOverride: Option[String] = None,
-      followRelations: Boolean = true): Field[SangriaGraphQlContext, DataMap] = {
+      followRelations: Boolean = true,
+      resourceName: String): Field[SangriaGraphQlContext, DataMap] = {
+
     type ResolverType = Context[SangriaGraphQlContext, DataMap] => Value[SangriaGraphQlContext, Any]
 
     val fieldProperties = field.getProperties.asScala
@@ -81,7 +83,8 @@ object FieldBuilder extends StrictLogging {
         NaptimePaginatedResourceField
           .build(schemaMetadata, relatedResourceName, fieldName, None, fieldRelation)
           .getOrElse {
-            buildField(schemaMetadata, field, namespace, fieldNameOverride, followRelations = false)
+            buildField(schemaMetadata, field, namespace, fieldNameOverride,
+              followRelations = false, resourceName = resourceName)
           }
 
       // Single related resource
@@ -89,7 +92,8 @@ object FieldBuilder extends StrictLogging {
         NaptimeResourceField
           .build(schemaMetadata, relatedResourceName, fieldName)
           .getOrElse {
-            buildField(schemaMetadata, field, namespace, fieldNameOverride, followRelations = false)
+            buildField(schemaMetadata, field, namespace, fieldNameOverride,
+              followRelations = false, resourceName = resourceName)
           }
 
       // Passthrough Exempt types (fallback to DataMap)
@@ -103,17 +107,18 @@ object FieldBuilder extends StrictLogging {
 
       // Complex types
       case (None, recordDataSchema: RecordDataSchema) =>
-        NaptimeRecordField.build(schemaMetadata, recordDataSchema, fieldName, namespace)
+        NaptimeRecordField.build(schemaMetadata, recordDataSchema, fieldName, namespace, resourceName)
 
       case (None, enumDataSchema: EnumDataSchema) =>
         NaptimeEnumField.build(enumDataSchema, fieldName)
 
       case (None, unionDataSchema: UnionDataSchema) =>
-        NaptimeUnionField.build(schemaMetadata, unionDataSchema, fieldName, namespace)
+        NaptimeUnionField.build(schemaMetadata, unionDataSchema, fieldName, namespace, resourceName)
 
       case (None, typerefDataSchema: TyperefDataSchema) =>
         val referencedType = new RecordDataSchemaField(typerefDataSchema.getDereferencedDataSchema)
-        val innerField = buildField(schemaMetadata, referencedType, namespace, Some(fieldName))
+        val innerField = buildField(schemaMetadata, referencedType, namespace, Some(fieldName),
+          resourceName = resourceName)
         Field.apply[SangriaGraphQlContext, DataMap, Any, Any](
           name = FieldBuilder.formatName(fieldName),
           fieldType = innerField.fieldType,
@@ -121,7 +126,8 @@ object FieldBuilder extends StrictLogging {
 
       case (None, arrayDataSchema: ArrayDataSchema) =>
         val subType = new RecordDataSchemaField(arrayDataSchema.getItems)
-        val innerField = buildField(schemaMetadata, subType, namespace, Some(fieldName))
+        val innerField = buildField(schemaMetadata, subType, namespace, Some(fieldName),
+          resourceName = resourceName)
         Field.apply[SangriaGraphQlContext, DataMap, Any, Any](
           name = FieldBuilder.formatName(fieldName),
           fieldType = ListType(innerField.fieldType),
@@ -204,7 +210,7 @@ object FieldBuilder extends StrictLogging {
     * @return GraphQL-safe field name
     */
   def formatName(name: String): String = {
-    name.replaceAll("\\.", "_")
+    name.replaceAll("\\.", "_").replaceAll("/", "_")
   }
 
 }
