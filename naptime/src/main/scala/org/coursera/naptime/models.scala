@@ -597,6 +597,7 @@ private[naptime] object QueryStringParser extends RegexParsers {
 trait ReverseRelation {
   val resourceName: ResourceName
   val arguments: Map[String, String]
+  val description: String
 
   def toAnnotation: ReverseRelationAnnotation
 }
@@ -604,43 +605,56 @@ trait ReverseRelation {
 case class FinderReverseRelation(
     resourceName: ResourceName,
     finderName: String,
-    arguments: Map[String, String] = Map.empty)
+    arguments: Map[String, String] = Map.empty,
+    description: String = "")
   extends ReverseRelation {
 
   def toAnnotation: ReverseRelationAnnotation = {
     val mergedArguments = arguments + ("q" -> finderName)
-    ReverseRelationAnnotation(resourceName.identifier, mergedArguments, RelationType.FINDER)
+    ReverseRelationAnnotation(
+      resourceName.identifier,
+      mergedArguments,
+      RelationType.FINDER)
   }
 }
 
 case class MultiGetReverseRelation(
     resourceName: ResourceName,
     ids: String,
-    arguments: Map[String, String] = Map.empty)
+    arguments: Map[String, String] = Map.empty,
+    description: String = "")
   extends ReverseRelation {
 
   def toAnnotation: ReverseRelationAnnotation = {
     val mergedArguments = arguments + ("ids" -> ids)
-    ReverseRelationAnnotation(resourceName.identifier, mergedArguments, RelationType.MULTI_GET)
+    ReverseRelationAnnotation(
+      resourceName.identifier,
+      mergedArguments,
+      RelationType.MULTI_GET)
   }
 }
 
 case class GetReverseRelation(
     resourceName: ResourceName,
     id: String,
-    arguments: Map[String, String] = Map.empty)
+    arguments: Map[String, String] = Map.empty,
+    description: String = "")
   extends ReverseRelation {
 
   def toAnnotation: ReverseRelationAnnotation = {
     val mergedArguments = arguments + ("ids" -> id)
-    ReverseRelationAnnotation(resourceName.identifier, mergedArguments, RelationType.GET)
+    ReverseRelationAnnotation(
+      resourceName.identifier,
+      mergedArguments,
+      RelationType.GET)
   }
 }
 
 case class SingleElementFinderReverseRelation(
     resourceName: ResourceName,
     finderName: String,
-    arguments: Map[String, String] = Map.empty)
+    arguments: Map[String, String] = Map.empty,
+    description: String = "")
   extends ReverseRelation {
 
   def toAnnotation: ReverseRelationAnnotation = {

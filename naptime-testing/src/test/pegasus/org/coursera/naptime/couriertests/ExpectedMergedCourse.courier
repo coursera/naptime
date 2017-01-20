@@ -11,6 +11,10 @@ record ExpectedMergedCourse {
 
   instructorIds: array[InstructorId]
 
+
+  /**
+   * Instructors for the course
+   */
   @relatedOn = {
     "resourceName": "instructors.v1",
     "arguments": {"ids": "$instructorIds"},

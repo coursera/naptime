@@ -115,6 +115,7 @@ object Types extends StrictLogging {
           val reverseRelatedMap = Map[String, AnyRef](
             Relations.REVERSE_PROPERTY_NAME -> reverseRelation.toAnnotation.data())
           newField.setProperties(reverseRelatedMap.asJava)
+          newField.setDoc(reverseRelation.description)
           newField.setName(name.split("/").last, errorMessageBuilder)
           insertFieldAtLocation(mergedSchema, name.split("/").dropRight(1).toList, newField)
       }
