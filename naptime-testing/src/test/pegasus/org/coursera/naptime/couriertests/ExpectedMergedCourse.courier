@@ -18,8 +18,7 @@ record ExpectedMergedCourse {
   @relatedOn = {
     "resourceName": "instructors.v1",
     "arguments": {"ids": "$instructorIds"},
-    "relationType": "MULTI_GET",
-    "description": "Instructors for the course"
+    "relationType": "MULTI_GET"
   }
   instructors: array[string]
 }

@@ -20,9 +20,4 @@ record ReverseRelationAnnotation {
    */
   relationType: enum RelationType { FINDER, MULTI_GET, GET, SINGLE_ELEMENT_FINDER }
 
-  /**
-   * Documentation for the relation edge (to be included in the GraphQL schema's documentation)
-   */
-  description: string = ""
-
 }

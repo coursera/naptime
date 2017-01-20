@@ -614,8 +614,7 @@ case class FinderReverseRelation(
     ReverseRelationAnnotation(
       resourceName.identifier,
       mergedArguments,
-      RelationType.FINDER,
-      description)
+      RelationType.FINDER)
   }
 }
 
@@ -631,8 +630,7 @@ case class MultiGetReverseRelation(
     ReverseRelationAnnotation(
       resourceName.identifier,
       mergedArguments,
-      RelationType.MULTI_GET,
-      description)
+      RelationType.MULTI_GET)
   }
 }
 
@@ -648,8 +646,7 @@ case class GetReverseRelation(
     ReverseRelationAnnotation(
       resourceName.identifier,
       mergedArguments,
-      RelationType.GET,
-      description)
+      RelationType.GET)
   }
 }
 
@@ -665,7 +662,6 @@ case class SingleElementFinderReverseRelation(
     ReverseRelationAnnotation(
       resourceName.identifier,
       mergedArguments,
-      RelationType.SINGLE_ELEMENT_FINDER,
-      description)
+      RelationType.SINGLE_ELEMENT_FINDER)
   }
 }
