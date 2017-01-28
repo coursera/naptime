@@ -254,7 +254,8 @@ class EngineImpl @Inject() (
             .flatMap(_._2.find(_._1 == "ids").map(_._2))
             .map(ids => EngineHelpers.stringifyArg(ids))
             .mkString(",")
-          val arguments = nonIdArguments + ("ids" -> JsString(ids))
+          val arguments = nonIdArguments
+            .filterNot(key => key._1 == "limit" || key._1 == "start") + ("ids" -> JsString(ids))
           val relatedTopLevelRequest = TopLevelRequest(
             resource = resourceName,
             selection = RequestField(
