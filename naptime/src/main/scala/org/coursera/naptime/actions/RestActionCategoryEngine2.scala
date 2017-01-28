@@ -303,7 +303,9 @@ trait RestActionCategoryEngine2Impls {
       if (ifNoneMatchHeader.contains(etag._2)) {
         Results.NotModified.withHeaders(etag)
       } else {
-        Results.Status(code)(codec.mapToBytes(response)).as(ContentTypes.JSON).withHeaders(etag)
+        Results.Status(code)(codec.mapToBytes(response))
+          .as(ContentTypes.JSON + "; charset=utf-8")
+          .withHeaders(etag)
       }
     }
   }
@@ -655,7 +657,7 @@ trait RestActionCategoryEngine2Impls {
       }
     }
   }
-  
+
   private[naptime] class FlattenedFilteringJacksonDataCodec(fields: RequestFields)
     extends JacksonDataCodec {
 

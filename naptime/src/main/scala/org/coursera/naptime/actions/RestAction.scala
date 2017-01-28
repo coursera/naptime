@@ -16,6 +16,9 @@
 
 package org.coursera.naptime.actions
 
+import akka.actor.ActorSystem
+import akka.stream.ActorMaterializer
+import akka.util.ByteString
 import org.coursera.naptime.model.KeyFormat
 import org.coursera.naptime.RestError
 import org.coursera.naptime.NaptimeActionException
@@ -30,9 +33,8 @@ import org.coursera.naptime.access.HeaderAccessControl
 import org.coursera.naptime.ari.Response
 import org.coursera.naptime.ari.TopLevelRequest
 import play.api.Play
-import play.api.libs.iteratee.Enumeratee
-import play.api.libs.iteratee.Iteratee
 import play.api.libs.json.OFormat
+import play.api.libs.streams.Accumulator
 import play.api.mvc.BodyParser
 import play.api.mvc.EssentialAction
 import play.api.mvc.Request
@@ -65,6 +67,7 @@ trait RestAction[RACType, AuthType, BodyType, KeyType, ResourceType, ResponseTyp
   extends EssentialAction with RequestTaggingHandler {
 
   import play.api.libs.concurrent.Execution.Implicits.defaultContext
+  import RestAction.materializer
 
   protected[actions] def restAuth: HeaderAccessControl[AuthType]
   protected def restBodyParser: BodyParser[BodyType]
@@ -94,7 +97,8 @@ trait RestAction[RACType, AuthType, BodyType, KeyType, ResourceType, ResponseTyp
       resourceName: ResourceName,
       topLevelRequest: TopLevelRequest): Future[Response] = {
     val authResult = restAuth.run(rh) // Kick off the authentication check in parallel
-    restBodyParser(rh).mapM[Response] {
+    val accumulator: Accumulator[ByteString, Either[Result, BodyType]] = restBodyParser(rh)
+    accumulator.mapFuture[Response] {
       case Left(bodyError) =>
         // If it was an auth error, override with that. Otherwise serve the body error.
         authResult.flatMap { authResult =>
@@ -102,11 +106,12 @@ trait RestAction[RACType, AuthType, BodyType, KeyType, ResourceType, ResponseTyp
             error => Future.failed(error),
             // TODO: keep as an exception.
             successAuth => {
-              val bodyAsBytesEventually = bodyError.body.run(Iteratee.fold(Array.empty[Byte]) { (memo, nextChunk) => memo ++ nextChunk })
-              val bodyAsStrEventually = bodyAsBytesEventually.map(bytes => new String(bytes))
+              val bodyAsBytesEventually = bodyError.body.consumeData(materializer)
+              val bodyAsStrEventually =
+                bodyAsBytesEventually.map(byteStr => new String(byteStr.toArray))
               import scala.concurrent.duration._
               val bodyAsStr = Await.result(bodyAsStrEventually, 5.seconds)
-              Future.failed(new IllegalArgumentException(s"Encountered body error: ${bodyError}"))
+              Future.failed(new IllegalArgumentException(s"Encountered body error: $bodyAsStr"))
             })
         }
       case Right(a) =>
@@ -152,15 +157,15 @@ trait RestAction[RACType, AuthType, BodyType, KeyType, ResourceType, ResponseTyp
               }.get
             })
         }
-    }.run
+    }.run()(materializer)
   }
 
   /**
    * Invoke the rest action in production.
    */
-  final override def apply(rh: RequestHeader): Iteratee[Array[Byte], Result] = {
+  final override def apply(rh: RequestHeader): Accumulator[ByteString, Result] = {
     val authResult = restAuth.run(rh) // Kick off the authentication check in parallel
-    restBodyParser(rh).mapM {
+    restBodyParser(rh).mapFuture {
       case Left(bodyError) =>
         // If it was an auth error, override with that. Otherwise serve the body error.
         authResult.map { authResult =>
@@ -247,4 +252,9 @@ trait RestAction[RACType, AuthType, BodyType, KeyType, ResourceType, ResponseTyp
     this.tags = Some(tags)
     this
   }
+}
+
+object RestAction {
+  implicit val system = ActorSystem("naptime")
+  val materializer = ActorMaterializer()
 }
