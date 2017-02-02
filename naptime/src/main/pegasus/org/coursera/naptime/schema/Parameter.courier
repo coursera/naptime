@@ -22,4 +22,10 @@ record Parameter {
    * purposes.
    */
   default: ArbitraryValue?
+
+  /**
+   * Flag whether the parameter is optional,
+   * either because it is an Option or provides a default value.
+   */
+  required: boolean = false
 }

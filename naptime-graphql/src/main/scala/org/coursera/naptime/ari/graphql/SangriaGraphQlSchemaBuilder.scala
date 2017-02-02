@@ -19,13 +19,12 @@ package org.coursera.naptime.ari.graphql
 import com.linkedin.data.DataMap
 import com.linkedin.data.schema.RecordDataSchema
 import com.typesafe.scalalogging.StrictLogging
-import org.coursera.naptime.PaginationConfiguration
 import org.coursera.naptime.ResourceName
 import org.coursera.naptime.ari.graphql.schema.NaptimePaginatedResourceField
 import org.coursera.naptime.ari.graphql.schema.NaptimePaginationField
 import org.coursera.naptime.ari.graphql.schema.NaptimeResourceField
-import org.coursera.naptime.ari.graphql.schema.SchemaGenerationException
 import org.coursera.naptime.ari.graphql.schema.SchemaMetadata
+import org.coursera.naptime.schema.ArbitraryValue
 import org.coursera.naptime.schema.Handler
 import org.coursera.naptime.schema.HandlerKind
 import org.coursera.naptime.schema.Resource
@@ -201,10 +200,16 @@ object SangriaGraphQlSchemaBuilder extends StrictLogging {
       .filterNot(parameter => PAGINATION_ARGUMENT_NAMES.contains(parameter.name))
       .map { parameter =>
         val tpe = parameter.`type`
-        // TODO(bryan): Use argument defaults here
+        val inputType = scalaTypeToSangria(tpe)
+        val fromInputType = scalaTypeToFromInput(tpe)
+        val (optionalInputType, optionalFromInputType: FromInput[Any]) = (inputType, parameter.required) match {
+          case (_: OptionInputType[Any], _) => (inputType, fromInputType)
+          case (_, false) => (OptionInputType(inputType), FromInput.optionInput(fromInputType))
+          case (_, true) => (inputType, fromInputType)
+        }
         Argument(
           name = parameter.name,
-          argumentType = scalaTypeToSangria(tpe))(scalaTypeToFromInput(tpe), implicitly).asInstanceOf[Argument[Any]]
+          argumentType = optionalInputType)(optionalFromInputType, implicitly).asInstanceOf[Argument[Any]]
       }.toList
     val paginationParameters = if (includePagination) {
       NaptimePaginationField.paginationArguments
@@ -225,8 +230,8 @@ object SangriaGraphQlSchemaBuilder extends StrictLogging {
     val optionPattern = "(Option)\\[(.*)\\]".r
     // TODO(bryan): Fill in the missing types here
     typeName match {
-      case listPattern(outerType, innerType) => ListInputType(scalaTypeToSangria(innerType))
-      case optionPattern(outerType, innerType) => OptionInputType(scalaTypeToSangria(innerType))
+      case listPattern(_, innerType) => ListInputType(scalaTypeToSangria(innerType))
+      case optionPattern(_, innerType) => OptionInputType(scalaTypeToSangria(innerType))
       case "string" | "String" => StringType
       case "int" | "Int" => IntType
       case "long" | "Long" => LongType
@@ -250,7 +255,8 @@ object SangriaGraphQlSchemaBuilder extends StrictLogging {
     // TODO(bryan): Fix all of this :)
     typeName.toLowerCase match {
       case listPattern(outerType, innerType) =>
-        sangria.marshalling.FromInput.seqInput.asInstanceOf[FromInput[Any]]
+        val listType = scalaTypeToFromInput(innerType)
+        sangria.marshalling.FromInput.seqInput(listType).asInstanceOf[FromInput[Any]]
       case "string" | "int" | "long" | "float" | "decimal" | "boolean" =>
         sangria.marshalling.FromInput.coercedScalaInput.asInstanceOf[FromInput[Any]]
       case _ =>

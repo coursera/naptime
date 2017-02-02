@@ -16,9 +16,6 @@
 
 package org.coursera.naptime.router2
 
-import com.linkedin.data.schema.IntegerDataSchema
-import com.linkedin.data.schema.LongDataSchema
-import com.linkedin.data.schema.StringDataSchema
 import com.linkedin.data.template.DataTemplate
 import org.coursera.common.stringkey.StringKey
 import org.coursera.common.stringkey.StringKeyFormat
@@ -255,8 +252,8 @@ class MacroImpls(val c: blackbox.Context) {
             import scala.collection.JavaConversions._
             val resolver = new com.linkedin.data.schema.resolver.DefaultDataSchemaResolver()
             val parser = new com.linkedin.data.schema.SchemaParser(resolver)
-            val schemaJson = org.coursera.naptime.courier.SchemaInference.inferSchema(
-              scala.reflect.runtime.universe.typeTag[$targetType])
+            val schemaJson = org.coursera.naptime.courier.SchemaInference.inferSchemaFromWeakTypeTag(
+              scala.reflect.runtime.universe.weakTypeTag[$targetType])
             parser.parse(schemaJson.toString)
             parser.topLevelDataSchemas.head.asInstanceOf[com.linkedin.data.schema.DataSchema]
           }.toOption"""
@@ -394,6 +391,7 @@ class MacroImpls(val c: blackbox.Context) {
         // TODO(saeta): handle path keys appropriately!
         val parameterModelName = TermName(c.freshName())
         // TODO(saeta): Handle attributes!
+        val isOptionalParam = Types.OptionalParam.unapply(param)
         val parameterDefinition = if (param.asTerm.isParamWithDefault) {
           val defaultFnName = TermName(s"${method.name}$$default$$" + (i + 1))
           val defaultValue = if (param.typeSignature <:< DATA_TEMPLATE) {
@@ -433,7 +431,8 @@ class MacroImpls(val c: blackbox.Context) {
               name = ${param.name.toString},
               `type` = ${param.typeSignature.toString},
               attributes = List.empty,
-              default = Some(defaultValue)
+              default = Some(defaultValue),
+              required = ${!isOptionalParam}
             )
           """
         } else {
@@ -442,13 +441,14 @@ class MacroImpls(val c: blackbox.Context) {
               name = ${param.name.toString},
               `type` = ${param.typeSignature.toString},
               attributes = List.empty,
-              default = None
+              default = None,
+              required = ${!isOptionalParam}
             )
           """
         }
         q"""
           val parameterWithoutTypeSchema = $parameterDefinition
-          val typeSchema = ${getDataSchemaDataMapForType(param.typeSignature)}
+          val typeSchema: Option[com.linkedin.data.DataMap] = ${getDataSchemaDataMapForType(param.typeSignature)}
           val updatedDataMap = parameterWithoutTypeSchema.data().clone()
           typeSchema.foreach(t => updatedDataMap.put("typeSchema", t))
           org.coursera.naptime.schema.Parameter(

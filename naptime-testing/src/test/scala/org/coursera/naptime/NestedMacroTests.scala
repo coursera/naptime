@@ -629,6 +629,8 @@ class NestedMacroTests extends AssertionsForJUnit with MockitoSugar {
     val multiGetSetParameter = multiGetSchema.parameters.head
     assert(multiGetSetParameter.name === "ids")
     assert(multiGetSetParameter.`type` === "Set[String]") // TODO(saeta): Use a courier type.
+    assert(multiGetSetParameter.typeSchema.get.data().getString("type") === "array")
+    assert(multiGetSetParameter.typeSchema.get.data().getString("items") === "string")
     assert(multiGetSetParameter.default === None)
 
     // TODO(saeta): verify more things (i.e. more handlers)
