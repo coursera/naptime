@@ -128,7 +128,13 @@ class SangriaGraphQlSchemaBuilder(
     val arguments = SangriaGraphQlSchemaBuilder.generateHandlerArguments(handler)
     val resourceName = ResourceName(resource.name, resource.version.getOrElse(0L).toInt)
 
-    val idExtractor = (context: Context[SangriaGraphQlContext, DataMap]) => context.arg[AnyRef]("id")
+    val idExtractor = (context: Context[SangriaGraphQlContext, DataMap]) => {
+      val id = context.arg[AnyRef]("id")
+      id match {
+        case idOpt: Option[Any] => idOpt.orNull
+        case _ => id
+      }
+    }
 
     NaptimeResourceField.build(
       schemaMetadata = schemaMetadata,

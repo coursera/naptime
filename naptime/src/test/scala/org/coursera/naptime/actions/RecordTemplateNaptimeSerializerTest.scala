@@ -36,6 +36,7 @@ class RecordTemplateNaptimeSerializerTest extends AssertionsForJUnit {
     expected.put("name", "parameterName")
     expected.put("type", "fakeType")
     expected.put("attributes", new DataList())
+    expected.put("required", Boolean.box(false))
 
     assert(expected === helper(parameter))
   }
