@@ -61,8 +61,9 @@ object FieldBuilder extends StrictLogging {
 
     val fieldProperties = field.getProperties.asScala
     val forwardRelationOption = fieldProperties.get(Relations.PROPERTY_NAME).map(_.toString)
-    val reverseRelationOption = fieldProperties.get(Relations.REVERSE_PROPERTY_NAME)
-      .map(d => ReverseRelationAnnotation(d.asInstanceOf[DataMap], DataConversion.SetReadOnly))
+    val reverseRelationOption = fieldProperties.get(Relations.REVERSE_PROPERTY_NAME).map { d =>
+      ReverseRelationAnnotation.build(d.asInstanceOf[DataMap], DataConversion.SetReadOnly)
+    }
 
     val relatedResourceOption = if (followRelations) {
       forwardRelationOption.orElse(reverseRelationOption.map(_.resourceName))

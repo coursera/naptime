@@ -68,7 +68,7 @@ class SangriaGraphQlSchemaExecutionTest extends AssertionsForJUnit with ScalaFut
     originalId = "",
     platformSpecificData = OldPlatformDataMember(OldPlatformData("Not Available.")),
     coursePlatform = List(CoursePlatform.NewPlatform),
-    arbitraryData = AnyData(new DataMap(
+    arbitraryData = AnyData.build(new DataMap(
       Map("moduleIds" ->
         new DataMap(Map("moduleOne" -> "abc", "moduleTwo" -> "defg").asJava))
         .asJava),
@@ -82,7 +82,7 @@ class SangriaGraphQlSchemaExecutionTest extends AssertionsForJUnit with ScalaFut
     originalId = "",
     platformSpecificData = OldPlatformDataMember(OldPlatformData("Not Available.")),
     coursePlatform = List(CoursePlatform.NewPlatform),
-    arbitraryData = AnyData(new DataMap(), DataConversion.SetReadOnly))
+    arbitraryData = AnyData.build(new DataMap(), DataConversion.SetReadOnly))
 
 
   @Test

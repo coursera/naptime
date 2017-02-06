@@ -208,7 +208,7 @@ object EngineHelpers extends StrictLogging {
   private[engine] def reverseRelationForField(
       field: RecordDataSchema.Field): Option[ReverseRelationAnnotation] = {
     Option(field.getProperties.get(Relations.REVERSE_PROPERTY_NAME)).map {
-      case dataMap: DataMap => ReverseRelationAnnotation(dataMap, DataConversion.SetReadOnly)
+      case dataMap: DataMap => ReverseRelationAnnotation.build(dataMap, DataConversion.SetReadOnly)
     }
   }
 

@@ -104,15 +104,15 @@ object CourierSerializer {
     private[this] val schema = getSchema(clazz)
     private[this] val annotationValidator = new DataSchemaAnnotationValidator(schema)
 
-    private[this] val applyMethod = {
+    private[this] val buildMethod = {
       companionInstance.getClass.getDeclaredMethod(
-        "apply",
+        "build",
         classOf[DataMap],
         classOf[DataConversion])
     }
 
     def build(dataMap: DataMap): T = {
-      applyMethod.invoke(companionInstance, dataMap, DataConversion.SetReadOnly).asInstanceOf[T]
+      buildMethod.invoke(companionInstance, dataMap, DataConversion.SetReadOnly).asInstanceOf[T]
     }
 
     def validateAndBuild(dataMap: DataMap): Either[ValidationResult, T] = {
@@ -123,7 +123,7 @@ object CourierSerializer {
         Left(validationResult)
       } else {
         Right(
-          applyMethod.invoke(
+          buildMethod.invoke(
             companionInstance, dataMap, DataConversion.SetReadOnly).asInstanceOf[T])
       }
     }

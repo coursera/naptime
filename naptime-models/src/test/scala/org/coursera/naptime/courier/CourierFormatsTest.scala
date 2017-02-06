@@ -278,7 +278,7 @@ object CourierFormatsTest {
   }
 
   private object MockRecord {
-    def apply(dataMap: DataMap, converter: DataConversion): MockRecord = {
+    def build(dataMap: DataMap, converter: DataConversion): MockRecord = {
       new MockRecord(dataMap)
     }
 
@@ -309,7 +309,7 @@ object CourierFormatsTest {
   }
 
   private object MockUnion {
-    def apply(dataMap: DataMap, converter: DataConversion): MockUnion = {
+    def build(dataMap: DataMap, converter: DataConversion): MockUnion = {
       new MockUnion(dataMap)
     }
 
@@ -328,7 +328,7 @@ object CourierFormatsTest {
   }
 
   private object MockWithFlatTypedDefinition {
-    def apply(dataMap: DataMap, converter: DataConversion): MockWithFlatTypedDefinition = {
+    def build(dataMap: DataMap, converter: DataConversion): MockWithFlatTypedDefinition = {
       new MockWithFlatTypedDefinition(dataMap)
     }
 
@@ -378,7 +378,7 @@ object CourierFormatsTest {
   }
 
   private object MockWithTypedDefinition {
-    def apply(dataMap: DataMap, converter: DataConversion): MockWithTypedDefinition = {
+    def build(dataMap: DataMap, converter: DataConversion): MockWithTypedDefinition = {
       new MockWithTypedDefinition(dataMap)
     }
 
@@ -428,7 +428,7 @@ object CourierFormatsTest {
   }
 
   private object MockTypedDefinition {
-    def apply(dataMap: DataMap, converter: DataConversion): MockTypedDefinition = {
+    def build(dataMap: DataMap, converter: DataConversion): MockTypedDefinition = {
       new MockTypedDefinition(dataMap)
     }
 
