@@ -2,7 +2,7 @@
 addSbtPlugin("com.typesafe.play" % "sbt-plugin" % "2.4.4")
 
 // Courier binding generator plugin
-addSbtPlugin("org.coursera.courier" % "courier-sbt-plugin" % "2.0.2")
+addSbtPlugin("org.coursera.courier" % "courier-sbt-plugin" % "2.0.8")
 
 addSbtPlugin("org.xerial.sbt" % "sbt-sonatype" % "1.1")
 

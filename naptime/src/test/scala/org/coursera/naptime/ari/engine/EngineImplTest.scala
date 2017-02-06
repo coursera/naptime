@@ -732,7 +732,7 @@ object EngineImplTest {
     originalId = "",
     platformSpecificData = OldPlatformDataMember(OldPlatformData("Not Available.")),
     coursePlatform = List(CoursePlatform.NewPlatform),
-    arbitraryData = AnyData(new DataMap(), DataConversion.SetReadOnly))
+    arbitraryData = AnyData.build(new DataMap(), DataConversion.SetReadOnly))
   val COURSE_B = MergedCourse(
     id = "courseBId",
     name = "Probabalistic Graphical Models",
@@ -743,7 +743,7 @@ object EngineImplTest {
     originalId = "",
     platformSpecificData = OldPlatformDataMember(OldPlatformData("Not Available.")),
     coursePlatform = List(CoursePlatform.NewPlatform),
-    arbitraryData = AnyData(new DataMap(), DataConversion.SetReadOnly))
+    arbitraryData = AnyData.build(new DataMap(), DataConversion.SetReadOnly))
 
   val INSTRUCTOR_1 = MergedInstructor(
     id = "instructor1Id",

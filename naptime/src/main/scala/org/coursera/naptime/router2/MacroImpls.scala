@@ -790,7 +790,7 @@ class MacroImpls(val c: blackbox.Context) {
            ${param.typeSignature.typeSymbol.companion}.SCHEMA,
            resourceInstance.getClass,
            requestHeader).right.map { dataMap =>
-             ${param.typeSignature.typeSymbol.companion}.apply(dataMap,
+             ${param.typeSignature.typeSymbol.companion}.build(dataMap,
                org.coursera.courier.templates.DataTemplates.DataConversion.SetReadOnly)
            }"""
       } else if (param.typeSignature <:< typeOf[Option[ScalaRecordTemplate]]) {
@@ -800,7 +800,7 @@ class MacroImpls(val c: blackbox.Context) {
            resourceInstance.getClass,
            requestHeader).right.map { dataMapOpt =>
              dataMapOpt.map { dataMap =>
-               ${param.typeSignature.typeSymbol.companion}.apply(dataMap,
+               ${param.typeSignature.typeSymbol.companion}.build(dataMap,
                  org.coursera.courier.templates.DataTemplates.DataConversion.SetReadOnly)
              }
            }"""

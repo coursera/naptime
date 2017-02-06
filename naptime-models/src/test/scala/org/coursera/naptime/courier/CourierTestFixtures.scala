@@ -161,7 +161,7 @@ private[courier] object CourierTestFixtures {
   object TypedDefinitionRecord {
     val SCHEMA = typedDefinitionSchema
 
-    def apply(dataMap: DataMap, dataConversion: DataConversion) = {
+    def build(dataMap: DataMap, dataConversion: DataConversion) = {
       new TypedDefinitionRecord(dataMap)
     }
   }
@@ -213,7 +213,7 @@ private[courier] object CourierTestFixtures {
   object FlatTypedDefinitionRecord {
     val SCHEMA = flatTypedDefinitionSchema
 
-    def apply(dataMap: DataMap, dataConversion: DataConversion) = {
+    def build(dataMap: DataMap, dataConversion: DataConversion) = {
       new FlatTypedDefinitionRecord(dataMap)
     }
   }
@@ -502,7 +502,7 @@ private[courier] object CourierTestFixtures {
 
     val SCHEMA = DataTemplateUtil.parseSchema(SCHEMA_JSON).asInstanceOf[RecordDataSchema]
 
-    def apply(dataMap: DataMap, dataConversion: DataConversion) = {
+    def build(dataMap: DataMap, dataConversion: DataConversion) = {
       new MockRecord(dataMap)
     }
   }
@@ -538,7 +538,7 @@ private[courier] object CourierTestFixtures {
     val TYPEREF_SCHEMA =
       DataTemplateUtil.parseSchema(TYPEREF_SCHEMA_JSON).asInstanceOf[TyperefDataSchema]
 
-    def apply(dataMap: DataMap, dataConversion: DataConversion) = {
+    def build(dataMap: DataMap, dataConversion: DataConversion) = {
       new MockTyperefUnion(dataMap)
     }
   }
