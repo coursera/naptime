@@ -67,7 +67,22 @@ object Models {
     keyType = "",
     valueType = "",
     mergedType = "org.coursera.naptime.ari.graphql.models.MergedPartner",
-    handlers = List.empty,
+    handlers = List(
+      Handler(
+        kind = HandlerKind.GET,
+        name = "get",
+        parameters = List(Parameter(name = "id", `type` = "Int", attributes = List.empty)),
+        attributes = List.empty),
+      Handler(
+        kind = HandlerKind.MULTI_GET,
+        name = "multiGet",
+        parameters = List(Parameter(name = "ids", `type` = "List[Int]", attributes = List.empty)),
+        attributes = List.empty),
+      Handler(
+        kind = HandlerKind.GET_ALL,
+        name = "getAll",
+        parameters = List.empty,
+        attributes = List.empty)),
     className = "",
     attributes = List.empty)
 

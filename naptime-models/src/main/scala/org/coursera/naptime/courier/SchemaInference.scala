@@ -48,6 +48,9 @@ object SchemaInference {
    */
   def inferSchema[T: ru.TypeTag]: JsObject = inferSchema(ru.typeOf[T])
 
+  def inferSchemaFromWeakTypeTag[T: ru.WeakTypeTag]: JsObject = inferSchema(ru.weakTypeOf[T])
+
+
   /**
    * Extracts schemas from Courier generated bindings.
    * Infers schemas from Play! JSON style classes that use `Format` and `OFormat`.
