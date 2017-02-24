@@ -451,7 +451,7 @@ class MacroImpls(val c: blackbox.Context) {
           val typeSchema: Option[com.linkedin.data.DataMap] = ${getDataSchemaDataMapForType(param.typeSignature)}
           val updatedDataMap = parameterWithoutTypeSchema.data().clone()
           typeSchema.foreach(t => updatedDataMap.put("typeSchema", t))
-          org.coursera.naptime.schema.Parameter(
+          org.coursera.naptime.schema.Parameter.build(
             updatedDataMap,
             org.coursera.courier.templates.DataTemplates.DataConversion.SetReadOnly)
         """
