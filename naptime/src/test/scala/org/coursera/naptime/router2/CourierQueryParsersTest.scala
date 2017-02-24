@@ -34,7 +34,7 @@ class CourierQueryParsersTest extends AssertionsForJUnit {
     val parsedDataMap =
       CourierQueryParsers.strictParse("sort", SortOrder.SCHEMA, getClass, fakeRequest)
     assert(parsedDataMap.isRight)
-    val parsedSortOrder = SortOrder(parsedDataMap.right.get, DataConversion.SetReadOnly)
+    val parsedSortOrder = SortOrder.build(parsedDataMap.right.get, DataConversion.SetReadOnly)
     assert(sortOrder === parsedSortOrder)
   }
 
@@ -61,7 +61,7 @@ class CourierQueryParsersTest extends AssertionsForJUnit {
     val parsedDataMap =
       CourierQueryParsers.strictParse("sort", SortOrder.SCHEMA, getClass, fakeRequest)
     assert(parsedDataMap.isRight)
-    val parsedSortOrder = SortOrder(parsedDataMap.right.get, DataConversion.SetReadOnly)
+    val parsedSortOrder = SortOrder.build(parsedDataMap.right.get, DataConversion.SetReadOnly)
     assert(sortOrder === parsedSortOrder)
   }
 
@@ -74,7 +74,7 @@ class CourierQueryParsersTest extends AssertionsForJUnit {
     val parsedDataMap =
       CourierQueryParsers.strictParse("sort", SortOrder.SCHEMA, getClass, fakeRequest)
     assert(parsedDataMap.isRight)
-    val parsedSortOrder = SortOrder(parsedDataMap.right.get, DataConversion.SetReadOnly)
+    val parsedSortOrder = SortOrder.build(parsedDataMap.right.get, DataConversion.SetReadOnly)
     assert(sortOrder === parsedSortOrder)
   }
 
@@ -87,7 +87,7 @@ class CourierQueryParsersTest extends AssertionsForJUnit {
       CourierQueryParsers.optParse("sort", SortOrder.SCHEMA, getClass, fakeRequest)
     assert(parsedDataMap.isRight)
     assert(parsedDataMap.right.get.isDefined)
-    val parsedSortOrder = SortOrder(parsedDataMap.right.get.get, DataConversion.SetReadOnly)
+    val parsedSortOrder = SortOrder.build(parsedDataMap.right.get.get, DataConversion.SetReadOnly)
     assert(sortOrder === parsedSortOrder)
   }
 
@@ -124,7 +124,7 @@ class CourierQueryParsersTest extends AssertionsForJUnit {
       CourierQueryParsers.optParse("sort", SortOrder.SCHEMA, getClass, fakeRequest)
     assert(parsedDataMap.isRight)
     assert(parsedDataMap.right.get.isDefined)
-    val parsedSortOrder = SortOrder(parsedDataMap.right.get.get, DataConversion.SetReadOnly)
+    val parsedSortOrder = SortOrder.build(parsedDataMap.right.get.get, DataConversion.SetReadOnly)
     assert(sortOrder === parsedSortOrder)
   }
 
@@ -138,7 +138,7 @@ class CourierQueryParsersTest extends AssertionsForJUnit {
       CourierQueryParsers.optParse("sort", SortOrder.SCHEMA, getClass, fakeRequest)
     assert(parsedDataMap.isRight)
     assert(parsedDataMap.right.get.isDefined)
-    val parsedSortOrder = SortOrder(parsedDataMap.right.get.get, DataConversion.SetReadOnly)
+    val parsedSortOrder = SortOrder.build(parsedDataMap.right.get.get, DataConversion.SetReadOnly)
     assert(sortOrder === parsedSortOrder)
   }
 }
