@@ -229,13 +229,13 @@ class MacroImpls(val c: blackbox.Context) {
       } else {
         q"""
           scala.util.Try {
-            import scala.collection.JavaConversions._
+            import scala.collection.JavaConverters._
             val resolver = new com.linkedin.data.schema.resolver.DefaultDataSchemaResolver()
             val parser = new com.linkedin.data.schema.SchemaParser(resolver)
             val schemaJson = org.coursera.naptime.courier.SchemaInference.inferSchema(
               scala.reflect.runtime.universe.typeTag[$targetType])
             parser.parse(schemaJson.toString)
-            parser.topLevelDataSchemas.head.asInstanceOf[com.linkedin.data.schema.RecordDataSchema]
+            parser.topLevelDataSchemas.asScala.head.asInstanceOf[com.linkedin.data.schema.RecordDataSchema]
           }.toOption"""
       }
     }
@@ -249,13 +249,13 @@ class MacroImpls(val c: blackbox.Context) {
       } else {
         q"""
           scala.util.Try {
-            import scala.collection.JavaConversions._
+            import scala.collection.JavaConverters._
             val resolver = new com.linkedin.data.schema.resolver.DefaultDataSchemaResolver()
             val parser = new com.linkedin.data.schema.SchemaParser(resolver)
             val schemaJson = org.coursera.naptime.courier.SchemaInference.inferSchemaFromWeakTypeTag(
               scala.reflect.runtime.universe.weakTypeTag[$targetType])
             parser.parse(schemaJson.toString)
-            parser.topLevelDataSchemas.head.asInstanceOf[com.linkedin.data.schema.DataSchema]
+            parser.topLevelDataSchemas.asScala.head.asInstanceOf[com.linkedin.data.schema.DataSchema]
           }.toOption"""
       }
       q"""
