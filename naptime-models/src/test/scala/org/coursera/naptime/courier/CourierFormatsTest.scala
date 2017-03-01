@@ -269,12 +269,12 @@ class CourierFormatsTest extends AssertionsForJUnit {
     val string2 = "-1!~2~3!~4,5!~6"
     val stringKey2 = StringKey(string2)
     val recordOption2 = stringKey2.asOpt[TestPositiveIntComplex]
-    assert(recordOption2 === None) // IllegalArgumentException
+    assert(recordOption2 === None) // TemplateOutputCastException
 
     val string3 = "1!~2~3!~4,5!~-6"
     val stringKey3 = StringKey(string3)
     val recordOption3 = stringKey3.asOpt[TestPositiveIntComplex]
-    assert(recordOption3 === None) // IllegalArgumentException
+    assert(recordOption3 === None) // TemplateOutputCastException
   }
 
   @Test
@@ -296,7 +296,7 @@ class CourierFormatsTest extends AssertionsForJUnit {
     val string2 = "3~4,5~-6"
     val stringKey2 = StringKey(string2)
     val recordOption2 = stringKey2.asOpt[TestPositiveIntPairArray]
-    assert(recordOption2 === None) // IllegalArgumentException
+    assert(recordOption2 === None) // TemplateOutputCastException
   }
 
   @Test
