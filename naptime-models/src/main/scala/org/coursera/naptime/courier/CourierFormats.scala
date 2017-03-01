@@ -71,7 +71,6 @@ import scala.reflect.ClassTag
 import scala.util.Failure
 import scala.util.Success
 import scala.util.Try
-import scala.util.control.NonFatal
 
 /**
  * Provides utilities for converting between courier and Play JSON.
