@@ -32,6 +32,7 @@ import com.linkedin.data.schema.validation.ValidateDataAgainstSchema
 import com.linkedin.data.schema.validation.ValidationOptions
 import com.linkedin.data.schema.validator.DataSchemaAnnotationValidator
 import com.linkedin.data.template.DataTemplate
+import com.linkedin.data.template.DataTemplate
 import com.linkedin.data.template.DataTemplateUtil
 import com.linkedin.data.template.RecordTemplate
 import com.linkedin.data.template.TemplateOutputCastException
@@ -41,8 +42,11 @@ import org.coursera.common.jsonformat.JsonFormats
 import org.coursera.common.stringkey.StringKey
 import org.coursera.common.stringkey.StringKeyFormat
 import org.coursera.courier.templates.DataValidationException
+import org.coursera.courier.templates.ScalaArrayTemplate
 import org.coursera.courier.templates.ScalaEnumTemplate
 import org.coursera.courier.templates.ScalaEnumTemplateSymbol
+import org.coursera.courier.templates.ScalaRecordTemplate
+import org.coursera.courier.templates.ScalaTemplate
 import org.coursera.pegasus.TypedDefinitionDataCoercer
 import play.api.data.validation.ValidationError
 import play.api.libs.json.Format
@@ -67,6 +71,7 @@ import scala.reflect.ClassTag
 import scala.util.Failure
 import scala.util.Success
 import scala.util.Try
+import scala.util.control.NonFatal
 
 /**
  * Provides utilities for converting between courier and Play JSON.
@@ -295,6 +300,11 @@ object CourierFormats extends StrictLogging {
           val dataMap = stringKeyCodec.bytesToMap(bytes)
           validateAndFixUp(dataMap, schema)
           dataMap.setReadOnly()
+          val wrapped = DataTemplateUtil.wrap(dataMap, clazz)
+          wrapped match {
+            case scalaTemplate: ScalaTemplate => materialize(scalaTemplate)
+            case _ =>
+          }
           Some(DataTemplateUtil.wrap(dataMap, clazz))
         } catch {
           case parseException: IOException =>
@@ -342,8 +352,16 @@ object CourierFormats extends StrictLogging {
           val dataList = stringKeyCodec.bytesToList(bytes)
           validateAndFixUp(dataList, schema)
           dataList.setReadOnly()
-          Some(DataTemplateUtil.wrap(dataList, clazz.getConstructor(classOf[DataList])))
+          val wrapped = DataTemplateUtil.wrap(dataList, clazz.getConstructor(classOf[DataList]))
+          wrapped match {
+            case scalaTemplate: ScalaTemplate => materialize(scalaTemplate)
+            case _ =>
+          }
+          Some(wrapped)
         } catch {
+          case parseException: IOException =>
+            logger.debug(s"${parseException.getMessage}", parseException)
+            None
           case castException: TemplateOutputCastException =>
             logger.debug(s"Template cast failed for stringKey: $string", castException)
             None
@@ -368,6 +386,41 @@ object CourierFormats extends StrictLogging {
     val result = ValidateDataAgainstSchema.validate(data, schema, validationOptions)
     if (!result.isValid) {
       throw new DataValidationException(result)
+    }
+  }
+
+  /**
+   * Recursively force materialization of lazy vals that are typerefs.
+   * This forces any validation logic in the typeref's custom Scala constructor or coercer to run.
+   */
+  private[this] def materialize(dataTemplate: ScalaTemplate): Unit = {
+    try {
+      // Materialize the entire tree recursively.
+      // Only record, array, union and map can contain typerefs.
+      // Since union and map are not allowed in keys, we only need to traverse record and array.
+      dataTemplate match {
+        case recordTemplate: ScalaRecordTemplate =>
+          recordTemplate
+            .asInstanceOf[Product]
+            .productIterator
+            .foreach {
+              case scalaTemplate: ScalaTemplate =>
+                materialize(scalaTemplate)
+              case _ =>
+            }
+        case arrayTemplate: ScalaArrayTemplate =>
+          arrayTemplate
+            .asInstanceOf[Traversable[_]]
+            .foreach {
+              case scalaTemplate: ScalaTemplate =>
+                materialize(scalaTemplate)
+              case _ =>
+            }
+        case _ =>
+      }
+    } catch {
+      case e: Exception =>
+        throw new TemplateOutputCastException("Could not materialize fields", e)
     }
   }
 }

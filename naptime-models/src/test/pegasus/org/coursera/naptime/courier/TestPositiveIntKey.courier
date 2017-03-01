@@ -1,0 +1,7 @@
+namespace org.coursera.naptime.courier
+
+import org.coursera.naptime.courier.TestPositiveInt
+
+record TestPositiveIntKey {
+  value: TestPositiveInt
+}
