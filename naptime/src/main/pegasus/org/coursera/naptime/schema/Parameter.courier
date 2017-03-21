@@ -11,6 +11,11 @@ record Parameter {
 
   type: TypeName
 
+  /**
+   * Data schema that describes the format of the parameter
+   */
+  typeSchema: ParameterDataSchema?
+
   attributes: array[Attribute]
 
   /**
@@ -20,13 +25,6 @@ record Parameter {
    * purposes.
    */
   default: ArbitraryValue?
-
-
-  /**
-   * Data schema that describes the format of the parameter
-   */
-  typeSchema: ParameterDataSchema?
-
 
   /**
    * Flag whether the parameter is optional,
