@@ -36,6 +36,7 @@ import org.coursera.naptime.schema.RelationType.GET
 import org.coursera.naptime.schema.RelationType.MULTI_GET
 import org.coursera.naptime.schema.RelationType.SINGLE_ELEMENT_FINDER
 import org.coursera.naptime.schema.ReverseRelationAnnotation
+import play.api.libs.json.JsNull
 import play.api.libs.json.JsString
 import play.api.libs.json.JsValue
 import play.api.mvc.RequestHeader
@@ -256,12 +257,21 @@ class EngineImpl @Inject() (
             .mkString(",")
           val arguments = nonIdArguments
             .filterNot(key => key._1 == "limit" || key._1 == "start") + ("ids" -> JsString(ids))
+
+          // Remove null and empty arguments from the request
+          val fieldArguments = requestField.args.filter { case (key, value) =>
+            value match {
+              case JsString(stringValue) => stringValue.nonEmpty
+              case JsNull => false
+              case _ => true
+            }
+          }
           val relatedTopLevelRequest = TopLevelRequest(
             resource = resourceName,
             selection = RequestField(
               name = "reverseRelation",
               alias = None,
-              args = arguments ++ requestField.args,
+              args = arguments ++ fieldArguments,
               selections = requestField.selections))
           executeTopLevelRequest(requestHeader, relatedTopLevelRequest).map { response =>
             val responseIds = response.data.headOption.map(_._2.keys.toList).getOrElse(List.empty)

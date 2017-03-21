@@ -62,7 +62,7 @@ object NaptimePaginationField extends StrictLogging {
       val parsedResourceName = ResourceName.parse(resourceName).getOrElse {
         throw new SchemaExecutionException(s"Cannot parse resource name from $resourceName")
       }
-      val responsePagination = context.ctx.response.data.get(parsedResourceName).map { objects =>
+      val responsePagination = context.ctx.response.data.get(parsedResourceName).map { _ =>
         Option(context.value.parentContext.value).map { parentElement =>
           // Nested Request
           val idsFromParent = Option(parentElement.getDataList(fieldName))

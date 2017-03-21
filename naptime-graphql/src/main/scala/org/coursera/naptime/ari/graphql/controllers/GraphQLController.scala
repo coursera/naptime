@@ -146,12 +146,12 @@ class GraphQLController @Inject() (
                   }
               }.recover {
                 case error: QueryAnalysisError =>
-                  OutgoingQuery(Json.obj("error" -> error.resolveError), None)
+                  OutgoingQuery(error.resolveError.as[JsObject], None)
                 case error: ErrorWithResolver =>
-                  OutgoingQuery(Json.obj("error" -> error.resolveError), None)
+                  OutgoingQuery(error.resolveError.as[JsObject], None)
                 case error: Exception =>
                   logger.error("GraphQL execution error", error)
-                  OutgoingQuery(Json.obj("error" -> error.getMessage), None)
+                  OutgoingQuery(Json.obj("errors" -> Json.arr(error.getMessage)), None)
               }
             }.getOrElse {
               val result = Json.obj("syntaxError" -> "Could not parse document")
