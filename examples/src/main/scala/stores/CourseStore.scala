@@ -25,7 +25,7 @@ class CourseStore {
       slug = "machine-learning",
       name = "Machine Learning",
       description = Some("Machine learning is the science of getting computers to act without being explicitly programmed."),
-      extraData = AnyData(new DataMap(
+      extraData = AnyData.build(new DataMap(
         Map("firstModuleId" -> "wrh7vtpj").asJava),
         DataConversion.SetReadOnly),
       courseMetadata = CourseMetadata(
@@ -36,7 +36,7 @@ class CourseStore {
       slug = "learning-how-to-learn",
       name = "Learning How to Learn",
       description = None,
-      extraData = AnyData(new DataMap(
+      extraData = AnyData.build(new DataMap(
         Map("recentEnrollments" -> new Integer(1000)).asJava),
         DataConversion.SetReadOnly),
       courseMetadata = CourseMetadata(

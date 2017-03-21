@@ -11,6 +11,9 @@ record Parameter {
 
   type: TypeName
 
+  /**
+   * Data schema that describes the format of the parameter
+   */
   typeSchema: ParameterDataSchema?
 
   attributes: array[Attribute]
