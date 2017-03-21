@@ -1,0 +1,6 @@
+namespace org.coursera.naptime.courier
+
+@scala.class = "org.coursera.naptime.courier.TestPositiveInt"
+@scala.coercerClass = "org.coursera.naptime.courier.TestPositiveInt.Coercer"
+
+typeref TestPositiveInt = int
