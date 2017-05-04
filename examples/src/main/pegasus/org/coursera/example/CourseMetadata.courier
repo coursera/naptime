@@ -1,5 +1,7 @@
 namespace org.coursera.example
 
-record CourseMetadata {
-  certificateInstructorId: InstructorId
+@typedDefinition = {
+  "org.coursera.example.CertificateCourseMetadata": "certificate",
+  "org.coursera.example.DegreeCourseMetadata": "degree"
 }
+typeref CourseMetadata = union[CertificateCourseMetadata, DegreeCourseMetadata]

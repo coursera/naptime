@@ -13,6 +13,8 @@ import scala.collection.JavaConverters._
 
 object NaptimeUnionField {
 
+  val TYPED_DEFINITION_KEY = "typedDefinition"
+
   private[schema] def build(
       schemaMetadata: SchemaMetadata,
       unionDataSchema: UnionDataSchema,
@@ -22,7 +24,15 @@ object NaptimeUnionField {
     Field.apply[SangriaGraphQlContext, DataMap, Any, Any](
       name = fieldName,
       fieldType = getType(schemaMetadata, unionDataSchema, fieldName, namespace, resourceName),
-      resolve = context => context.value.getDataMap(fieldName))
+      resolve = context => {
+        if (unionDataSchema.getProperties.containsKey(TYPED_DEFINITION_KEY)) {
+          val definition = context.value.getDataMap(fieldName).getDataMap("definition")
+          val typeName = context.value.getDataMap(fieldName).getString("typeName")
+          new DataMap(Map(typeName -> definition).asJava)
+        } else {
+          context.value.getDataMap(fieldName)
+        }
+      })
   }
 
   private[schema] def getType(
@@ -33,20 +43,29 @@ object NaptimeUnionField {
       resourceName: String): UnionType[SangriaGraphQlContext] = {
 
     val objects = unionDataSchema.getTypes.asScala.map { subType =>
-      val unionMemberFieldName = FieldBuilder.formatName(subType.getUnionMemberKey)
+
+      val typedDefinitions = Option(unionDataSchema.getProperties.get(TYPED_DEFINITION_KEY)).collect {
+        case definitions: java.util.Map[String @unchecked, String @unchecked] => definitions.asScala
+      }.getOrElse(Map[String, String]())
+
+      val unionMemberKey = typedDefinitions
+        .getOrElse(subType.getUnionMemberKey, subType.getUnionMemberKey)
+
+      val unionMemberFieldName = FieldBuilder.formatName(unionMemberKey)
       val subTypeField = FieldBuilder.buildField(
         schemaMetadata,
         new RecordDataSchemaField(subType),
         namespace,
-        Some(subType.getUnionMemberKey),
+        Some(unionMemberKey),
         resourceName = resourceName)
 
       val field = Field.apply[SangriaGraphQlContext, DataMap, Any, Any](
         unionMemberFieldName,
         subTypeField.fieldType,
         resolve = subTypeField.resolve)
+
       ObjectType[SangriaGraphQlContext, DataMap](
-        name = FieldBuilder.formatName(s"$resourceName/${subType.getUnionMemberKey}Member"),
+        name = FieldBuilder.formatName(s"$resourceName/${unionMemberKey}Member"),
         fields = List(field))
     }.toList
     val unionName = buildFullyQualifiedName(resourceName, fieldName)
@@ -56,7 +75,8 @@ object NaptimeUnionField {
         val typedValue = value.asInstanceOf[DataMap]
         objects.find { obj =>
           val formattedMemberNames = typedValue.keySet.asScala
-            .flatMap(key => Option(key).map(FieldBuilder.formatName))
+            .flatMap(key => Option(key))
+            .map(FieldBuilder.formatName)
           obj.fieldsByName.keySet.intersect(formattedMemberNames).nonEmpty
         }.map(_.asInstanceOf[ObjectType[Ctx, DataMap]])
       }

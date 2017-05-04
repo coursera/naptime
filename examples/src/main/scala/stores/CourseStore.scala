@@ -6,8 +6,9 @@ import javax.inject.Singleton
 import com.linkedin.data.DataMap
 import org.coursera.courier.templates.DataTemplates.DataConversion
 import org.coursera.example.AnyData
+import org.coursera.example.CertificateCourseMetadata
 import org.coursera.example.Course
-import org.coursera.example.CourseMetadata
+import org.coursera.example.DegreeCourseMetadata
 import org.coursera.naptime.model.Keyed
 
 import scala.collection.JavaConverters._
@@ -28,7 +29,7 @@ class CourseStore {
       extraData = AnyData.build(new DataMap(
         Map("firstModuleId" -> "wrh7vtpj").asJava),
         DataConversion.SetReadOnly),
-      courseMetadata = CourseMetadata(
+      courseMetadata = CertificateCourseMetadata(
         certificateInstructorId = 1)),
     "lhtl" -> Course(
       instructorIds = List(2),
@@ -39,8 +40,8 @@ class CourseStore {
       extraData = AnyData.build(new DataMap(
         Map("recentEnrollments" -> new Integer(1000)).asJava),
         DataConversion.SetReadOnly),
-      courseMetadata = CourseMetadata(
-        certificateInstructorId = 1)))
+      courseMetadata = DegreeCourseMetadata(
+        degreeCertificateName = "iMBA")))
 
   def get(id: String) = courseStore.get(id)
 
