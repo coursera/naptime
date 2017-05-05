@@ -4,6 +4,7 @@ import com.linkedin.data.DataMap
 import com.linkedin.data.schema.ArrayDataSchema
 import com.linkedin.data.schema.BooleanDataSchema
 import com.linkedin.data.schema.BytesDataSchema
+import com.linkedin.data.schema.ComplexDataSchema
 import com.linkedin.data.schema.DataSchema
 import com.linkedin.data.schema.DoubleDataSchema
 import com.linkedin.data.schema.EnumDataSchema
@@ -117,7 +118,16 @@ object FieldBuilder extends StrictLogging {
         NaptimeUnionField.build(schemaMetadata, unionDataSchema, fieldName, namespace, resourceName)
 
       case (None, typerefDataSchema: TyperefDataSchema) =>
-        val referencedType = new RecordDataSchemaField(typerefDataSchema.getDereferencedDataSchema)
+        val dereferencedSchema = typerefDataSchema.getDereferencedDataSchema
+        val dereferencedSchemaWithProperties = dereferencedSchema match {
+          case complex: ComplexDataSchema =>
+            complex.setProperties(typerefDataSchema.getProperties)
+            complex
+          case _ => dereferencedSchema
+        }
+
+        val referencedType = new RecordDataSchemaField(dereferencedSchemaWithProperties)
+
         val innerField = buildField(schemaMetadata, referencedType, namespace, Some(fieldName),
           resourceName = resourceName)
         Field.apply[SangriaGraphQlContext, DataMap, Any, Any](
