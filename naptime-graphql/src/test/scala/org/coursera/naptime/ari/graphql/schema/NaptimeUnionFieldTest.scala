@@ -105,8 +105,6 @@ class NaptimeUnionFieldTest extends AssertionsForJUnit with MockitoSugar {
           Some("org.coursera.naptime"),
           resourceName))))
     val expectedField = UnionType("courses_v1_typedDefinitionTestField", None, expectedUnionTypes)
-    println(field.fieldType.toString)
-    println(expectedField.toString)
     assert(field.fieldType.toString === expectedField.toString)
   }
 
