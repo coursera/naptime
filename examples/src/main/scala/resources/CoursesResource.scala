@@ -29,10 +29,10 @@ class CoursesResource @Inject() (
         resourceName = ResourceName("partners", 1),
         id = "$partnerId",
         description = "Partner who produces this course."),
-      "courseMetadata/org.coursera.example.CourseMetadata/certificateInstructor" ->
+      "courseMetadata/org.coursera.example.CertificateCourseMetadata/certificateInstructor" ->
         GetReverseRelation(
           resourceName = ResourceName("instructors", 1),
-          id = "${courseMetadata/org.coursera.example.CourseMetadata/certificateInstructorId}",
+          id = "${courseMetadata/org.coursera.example.CertificateCourseMetadata/certificateInstructorId}",
           description = "Instructor who's name and signature appears on the course certificate."))
 
   def get(id: String = "v1-123") = Nap.get { context =>

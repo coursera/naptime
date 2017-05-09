@@ -10,5 +10,5 @@ record Course {
 
   extraData: AnyData
 
-  courseMetadata: union[CourseMetadata]
+  courseMetadata: CourseMetadata
 }

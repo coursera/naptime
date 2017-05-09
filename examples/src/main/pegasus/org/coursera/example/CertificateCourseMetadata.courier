@@ -1,0 +1,5 @@
+namespace org.coursera.example
+
+record CertificateCourseMetadata {
+  certificateInstructorId: InstructorId
+}
