@@ -719,6 +719,113 @@ class EngineImplTest extends AssertionsForJUnit with ScalaFutures with MockitoSu
 
     verify(fetcherApi, times(3)).data(any())
   }
+
+  /**
+    * Tests that multiple selections on the same resource will be merged
+    */
+  @Test
+  def mergedSelections(): Unit = {
+    val request = Request(
+      requestHeader = FakeRequest(),
+      topLevelRequests = List(
+        TopLevelRequest(
+          resource = COURSES_RESOURCE_ID,
+          selection = RequestField(
+            name = "get",
+            alias = None,
+            args = Set("id" -> JsString(COURSE_A.id)),
+            selections = List(
+              RequestField("id", None, Set.empty, List.empty),
+              RequestField("slug", None, Set.empty, List.empty),
+              RequestField("name", None, Set.empty, List.empty),
+              RequestField("partner", None, Set.empty, List(
+                RequestField("id", None, Set.empty, List.empty))),
+              RequestField("partner", None, Set.empty, List(
+                RequestField("name", None, Set.empty, List.empty)))))),
+        TopLevelRequest(
+          resource = INSTRUCTORS_RESOURCE_ID,
+          selection = RequestField(
+            name = "InstructorsV1",
+            alias = None,
+            args = Set("id" -> JsString(INSTRUCTOR_1.id)),
+            selections = List(
+              RequestField("id", None, Set.empty, List.empty),
+              RequestField("name", None, Set.empty, List.empty),
+              RequestField("title", None, Set.empty, List.empty))))))
+
+    val topLevelDataListCourse = new DataList(List(COURSE_A.id).asJava)
+    val fetcherResponseCourse = Response(
+      topLevelResponses = Map(request.topLevelRequests.head ->
+        TopLevelResponse(topLevelDataListCourse, ResponsePagination.empty)),
+      data = Map(COURSES_RESOURCE_ID -> Map(
+        COURSE_A.id -> COURSE_A.data())))
+
+    val topLevelDataListInstructor = new DataList()
+    topLevelDataListInstructor.add(INSTRUCTOR_1.id)
+    val fetcherResponseInstructors = Response(
+      topLevelResponses = Map(request.topLevelRequests.tail.head ->
+        TopLevelResponse(topLevelDataListInstructor, ResponsePagination.empty)),
+      data = Map(INSTRUCTORS_RESOURCE_ID -> Map(
+        INSTRUCTOR_1.id -> INSTRUCTOR_1.data())))
+
+    val expectedPartnersRequest = TopLevelRequest(
+      resource = PARTNERS_RESOURCE_ID,
+      selection = RequestField(
+        name = "multiGet",
+        alias = None,
+        args = Set("ids" -> JsString(s"${PARTNER_123.id}")),
+        selections = request.topLevelRequests
+          .head.selection.selections
+          .head.selections))
+    val fetcherResponsePartners = Response(
+      topLevelResponses = Map(expectedPartnersRequest ->
+        TopLevelResponse(new DataList(List(new Integer(PARTNER_123.id)).asJava), ResponsePagination.empty)),
+      data = Map(PARTNERS_RESOURCE_ID -> Map(new Integer(PARTNER_123.id) -> PARTNER_123.data())))
+
+    when(fetcherApi.data(argThat(MatchesResourceType(COURSES_RESOURCE_ID)))).thenReturn(
+      Future.successful(fetcherResponseCourse))
+    when(fetcherApi.data(argThat(MatchesResourceType(INSTRUCTORS_RESOURCE_ID)))).thenReturn(
+      Future.successful(fetcherResponseInstructors))
+    when(fetcherApi.data(argThat(MatchesResourceType(PARTNERS_RESOURCE_ID)))).thenReturn(
+      Future.successful(fetcherResponsePartners))
+
+    val result = engine.execute(request).futureValue
+
+    assert(result.topLevelResponses.contains(request.topLevelRequests.head))
+    assert(1 === result.topLevelResponses(request.topLevelRequests.head).ids.size())
+    assert(COURSE_A.id === result.topLevelResponses(request.topLevelRequests.head).ids.get(0))
+    assert(result.data.contains(COURSES_RESOURCE_ID))
+    val coursesData = result.data(COURSES_RESOURCE_ID)
+    assert(1 === coursesData.size)
+    assert(coursesData.contains(COURSE_A.id))
+    val courseAResponse = coursesData(COURSE_A.id)
+    assert(COURSE_A.id === courseAResponse.getString("id"))
+    assert(COURSE_A.name === courseAResponse.getString("name"))
+    assert(COURSE_A.slug === courseAResponse.getString("slug"))
+
+    assert(result.topLevelResponses.contains(request.topLevelRequests.head))
+    assert(1 === result.topLevelResponses(request.topLevelRequests.head).ids.size())
+    assert(INSTRUCTOR_1.id === result.topLevelResponses(request.topLevelRequests.tail.head).ids.get(0))
+    assert(result.data.contains(INSTRUCTORS_RESOURCE_ID))
+    val instructorsData = result.data(INSTRUCTORS_RESOURCE_ID)
+    assert(1 === instructorsData.size)
+    assert(instructorsData.contains(INSTRUCTOR_1.id))
+    val instructor1Response = instructorsData(INSTRUCTOR_1.id)
+    assert(INSTRUCTOR_1.id === instructor1Response.getString("id"))
+    assert(INSTRUCTOR_1.name === instructor1Response.getString("name"))
+    assert(INSTRUCTOR_1.title === instructor1Response.getString("title"))
+
+    assert(result.data.contains(PARTNERS_RESOURCE_ID))
+    val partnersData = result.data(PARTNERS_RESOURCE_ID)
+    assert(1 === partnersData.size)
+    assert(partnersData.contains(new Integer(PARTNER_123.id)))
+    val partner123Response = partnersData(new Integer(PARTNER_123.id))
+    assert(PARTNER_123.id === partner123Response.getInteger("id"))
+    assert(PARTNER_123.name === partner123Response.getString("name"))
+
+    // We want to confirm that both partner requests were merged into one request
+    verify(fetcherApi, times(3)).data(any())
+  }
 }
 
 object EngineImplTest {

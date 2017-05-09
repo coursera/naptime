@@ -161,7 +161,7 @@ object EngineHelpers extends StrictLogging {
               case record: RecordDataSchema => record.getFields.asScala
               case _ => List.empty
             }
-            fieldSelection <- getSelections(selection).find(_.name == recordField.getName)
+            fieldSelection <- mergeSelections(getSelections(selection).filter(_.name == recordField.getName))
           } yield {
             forwardRelationForField(recordField).foreach { forwardRelation =>
               val forwardIds = getFieldValues(recordField, dataElement.getValue.asInstanceOf[DataMap])
@@ -268,4 +268,14 @@ object EngineHelpers extends StrictLogging {
     }
   }
 
+  /**
+    * Merges all sub-selections of a request into a single selection
+    * @param fields list of selections to merge
+    * @return list of merged selections
+    */
+  private[engine] def mergeSelections(fields: List[RequestField]): List[RequestField] = {
+    fields.groupBy(f => (f.name, f.args, f.alias)).values.map { l =>
+      l.head.copy(selections = l.flatMap(_.selections))
+    }.toList
+  }
 }
