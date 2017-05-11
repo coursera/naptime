@@ -108,4 +108,38 @@ class NaptimeUnionFieldTest extends AssertionsForJUnit with MockitoSugar {
     assert(field.fieldType.toString === expectedField.toString)
   }
 
+  @Test
+  def build_ShorthandTypedDefinitionUnion() = {
+    val integerField = new Field(new IntegerDataSchema())
+    integerField.setName("integerField", new java.lang.StringBuilder())
+    val simpleFieldDataSchema = buildRecordField("simpleField", List(integerField))
+    val complexFieldDataSchema = buildRecordField("complexField", List(integerField))
+
+    val values = List(simpleFieldDataSchema, complexFieldDataSchema)
+    val union = buildUnionDataSchema(values, Some(Map(
+      "simpleField" -> "easy",
+      "complexField" -> "hard")))
+
+    val fieldName = "typedDefinitionTestField"
+    val field = NaptimeUnionField.build(schemaMetadata, union, fieldName, None, resourceName)
+
+    val expectedUnionTypes = List(
+      ObjectType("courses_v1_easyMember", List(
+        NaptimeRecordField.build(
+          schemaMetadata,
+          simpleFieldDataSchema,
+          "easy",
+          Some("org.coursera.naptime"),
+          resourceName))),
+      ObjectType("courses_v1_hardMember", List(
+        NaptimeRecordField.build(
+          schemaMetadata,
+          complexFieldDataSchema,
+          "hard",
+          Some("org.coursera.naptime"),
+          resourceName))))
+    val expectedField = UnionType("courses_v1_typedDefinitionTestField", None, expectedUnionTypes)
+    assert(field.fieldType.toString === expectedField.toString)
+  }
+
 }

@@ -1,6 +1,7 @@
 package org.coursera.naptime.ari.graphql.schema
 
 import com.linkedin.data.DataMap
+import com.linkedin.data.schema.RecordDataSchema
 import com.linkedin.data.schema.RecordDataSchema.{Field => RecordDataSchemaField}
 import com.linkedin.data.schema.UnionDataSchema
 import org.coursera.naptime.ari.graphql.SangriaGraphQlContext
@@ -48,8 +49,13 @@ object NaptimeUnionField {
         case definitions: java.util.Map[String @unchecked, String @unchecked] => definitions.asScala
       }.getOrElse(Map[String, String]())
 
-      val unionMemberKey = typedDefinitions
-        .getOrElse(subType.getUnionMemberKey, subType.getUnionMemberKey)
+      val unionMemberKey = (subType, typedDefinitions) match {
+        case (x,y) if y.contains(x.getUnionMemberKey) =>
+          typedDefinitions(x.getUnionMemberKey)
+        case (x: RecordDataSchema, y) if y.contains(x.asInstanceOf[RecordDataSchema].getName) =>
+          y(x.asInstanceOf[RecordDataSchema].getName)
+        case (x,_) => x.getUnionMemberKey
+      }
 
       val unionMemberFieldName = FieldBuilder.formatName(unionMemberKey)
       val subTypeField = FieldBuilder.buildField(
