@@ -18,13 +18,15 @@ package org.coursera.naptime.ari.graphql
 
 import javax.inject.Inject
 
+import com.linkedin.data.DataMap
 import com.linkedin.data.schema.RecordDataSchema
 import com.typesafe.scalalogging.StrictLogging
 import org.coursera.naptime.ari.FullSchema
 import org.coursera.naptime.ari.SchemaProvider
+import sangria.schema.Field
 import sangria.schema.ObjectType
 import sangria.schema.Schema
-import sangria.schema.SchemaValidationException
+import sangria.schema.StringType
 
 import scala.util.control.NonFatal
 
@@ -99,5 +101,10 @@ class DefaultGraphqlSchemaProvider @Inject() (schemaProvider: SchemaProvider)
 }
 
 object DefaultGraphqlSchemaProvider {
-  val EMPTY_SCHEMA = Schema(query = ObjectType[SangriaGraphQlContext, Any](name = "root", fields = List.empty))
+  val EMPTY_FIELDS = List(
+    Field.apply[SangriaGraphQlContext, Any, Any, Any](
+      "ArbitraryField",
+      StringType,
+      resolve = context => null))
+  val EMPTY_SCHEMA = Schema[SangriaGraphQlContext, Any](query = ObjectType[SangriaGraphQlContext, Any](name = "root", fields = EMPTY_FIELDS))
 }
