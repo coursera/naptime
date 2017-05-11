@@ -97,7 +97,7 @@ object SangriaGraphQlParser extends GraphQlParser {
       case inlineFragment: InlineFragment =>
         inlineFragment.selections.flatMap { selection =>
           parseSelection(selection, document, inlineFragment.typeCondition.map(_.name))
-        }
+        }.toList
       case fragmentSpread: FragmentSpread =>
         (for {
           fragment <- document.fragments.get(fragmentSpread.name).toList
@@ -122,7 +122,7 @@ object SangriaGraphQlParser extends GraphQlParser {
       typedField.field.name,
       typedField.field.alias,
       typedField.field.arguments.map(argument => (argument.name, parseValue(argument.value, variables))).toSet,
-      parsedFields,
+      parsedFields.toList,
       typedField.typeCondition)
 
   }
