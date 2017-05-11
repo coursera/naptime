@@ -93,7 +93,7 @@ class NaptimePlayRouterTest extends AssertionsForJUnit with MockitoSugar {
   def generateDocumentation(): Unit = {
     val documentation = router.documentation
     assert(1 === documentation.length)
-    assert(("GET --- GET", "/fakeResource/$id", "[NAPTIME] org.coursera.naptime.FakeResource.get(id: String)") ===
+    assert(("GET --- GET", "/fakeResource.v1/$id", "[NAPTIME] org.coursera.naptime.FakeResource.get(id: String)") ===
       documentation.head)
   }
 }
