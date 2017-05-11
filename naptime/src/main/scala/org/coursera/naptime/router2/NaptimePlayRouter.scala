@@ -146,8 +146,9 @@ case class NaptimePlayRouter (
      * @return (PathWithoutKeys, PathWithKeySuffix)
      */
     def computeFullPath(resourceSchema: schema.Resource): (String, String) = {
-      val previous = if (resourceSchema.parentClass.isDefined &&
-          !resourceSchema.parentClass.contains("org.coursera.naptime.resources.RootResource")) {
+      val hasNonRootParent = resourceSchema.parentClass.isDefined &&
+          !resourceSchema.parentClass.contains("org.coursera.naptime.resources.RootResource") 
+      val previous = if (hasNonRootParent) {
         try {
           computeFullPath(naptimeRoutes.schemaMap(resourceSchema.parentClass.get))._2
         } catch {
@@ -160,7 +161,7 @@ case class NaptimePlayRouter (
       } else {
         prefix
       }
-      val resourceName = if (resourceSchema.parentClass.isDefined) {
+      val resourceName = if (hasNonRootParent) {
         s"${resourceSchema.name}"
       } else {
         s"${resourceSchema.name}.v${resourceSchema.version.getOrElse("???")}"
