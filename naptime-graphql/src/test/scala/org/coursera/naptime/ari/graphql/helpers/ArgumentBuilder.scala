@@ -1,11 +1,8 @@
 package org.coursera.naptime.ari.graphql.helpers
 
-import org.coursera.naptime.PaginationConfiguration
+import org.coursera.naptime.ari.graphql.schema.NaptimePaginationField
 import sangria.schema.Args
 import sangria.schema.Argument
-import sangria.schema.IntType
-import sangria.schema.OptionInputType
-import sangria.schema.StringType
 
 import scala.collection.concurrent.TrieMap
 
@@ -18,26 +15,16 @@ object ArgumentBuilder {
       .filterNot(optionalArgs.contains)
       .filterNot(argumentInputs.contains)
       .toSet
-    val defaultInfo = argumentDefinitions
-      .filter(x => argsWithDefault.contains(x.name)).map(x => x.name -> x.defaultValue.get._1)
-    val builder = TrieMap.newBuilder[String, Any]
-    defaultInfo.foreach(builder += _)
+    val defaultInfo = argumentDefinitions.collectFirst {
+      case definition if argsWithDefault.contains(definition.name) =>
+        definition.name -> definition.defaultValue.get._1
+    }
+    val defaultMap = TrieMap() ++= defaultInfo
 
-    Args(argumentInputs, argsWithDefault, optionalArgs, undefinedArgs, builder.result())
+    Args(argumentInputs, argsWithDefault, optionalArgs, undefinedArgs, defaultMap)
   }
 
-  private[this] val limitArgument = Argument(
-    name = "limit",
-    argumentType = OptionInputType(IntType),
-    defaultValue = PaginationConfiguration().defaultLimit,
-    description = "Maximum number of results to include in response")
-
-  private[this] val startArgument = Argument(
-    name = "start",
-    argumentType = OptionInputType(StringType),
-    description = "Cursor to start pagination at")
-
   def getPaginationArgs(): List[Argument[_]] = {
-    List(limitArgument, startArgument)
+    List(NaptimePaginationField.limitArgument, NaptimePaginationField.startArgument)
   }
 }
