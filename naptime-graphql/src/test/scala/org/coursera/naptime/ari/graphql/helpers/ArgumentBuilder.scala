@@ -15,7 +15,7 @@ object ArgumentBuilder {
       .filterNot(optionalArgs.contains)
       .filterNot(argumentInputs.contains)
       .toSet
-    val defaultInfo = argumentDefinitions.collectFirst {
+    val defaultInfo = argumentDefinitions.collect {
       case definition if argsWithDefault.contains(definition.name) =>
         definition.name -> definition.defaultValue.get._1
     }
