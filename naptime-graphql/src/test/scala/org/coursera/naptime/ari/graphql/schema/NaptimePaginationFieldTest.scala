@@ -49,7 +49,7 @@ class NaptimePaginationFieldTest extends AssertionsForJUnit with MockitoSugar {
     Context[Ctx, Val](
       value = value,
       ctx = ctx,
-      args = ArgumentBuilder.buildArgs(args),
+      args = ArgumentBuilder.buildArgs(ArgumentBuilder.getPaginationArgs(), args),
       schema = mock[Schema[Ctx, Val]],
       field = mock[Field[Ctx, Val]],
       parentType = mock[ObjectType[Ctx, Any]],

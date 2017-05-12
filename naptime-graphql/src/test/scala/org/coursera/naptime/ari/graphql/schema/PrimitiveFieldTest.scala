@@ -43,7 +43,6 @@ import sangria.schema.StringType
 import sangria.schema.Value
 
 import scala.collection.JavaConverters._
-import scala.collection.concurrent.TrieMap
 
 class PrimitiveFieldTest extends AssertionsForJUnit with MockitoSugar {
 
@@ -55,7 +54,7 @@ class PrimitiveFieldTest extends AssertionsForJUnit with MockitoSugar {
     Context[Ctx, Val](
       value = value,
       ctx = ctx,
-      args = Args(args, Set.empty, Set.empty, Set.empty, TrieMap.empty),
+      args = ArgumentBuilder.buildArgs(ArgumentBuilder.getPaginationArgs(), args),
       schema = mock[Schema[Ctx, Val]],
       field = mock[Field[Ctx, Val]],
       parentType = mock[ObjectType[Ctx, Any]],

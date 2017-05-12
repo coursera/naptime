@@ -41,16 +41,18 @@ class NaptimePaginatedResourceFieldTest extends AssertionsForJUnit with MockitoS
     val field = NaptimePaginatedResourceField.build(
       schemaMetadata, resourceName, fieldName, None, None)
 
-    val limitTen = field.get.complexity.get.apply(context, ArgumentBuilder.buildArgs(limit = 10), 1)
+    val argDefinitions = ArgumentBuilder.getPaginationArgs()
+
+    val limitTen = field.get.complexity.get.apply(context, ArgumentBuilder.buildArgs(argDefinitions, Map("limit" -> Some(10))), 1)
     assert(limitTen === 1 * NaptimePaginatedResourceField.COMPLEXITY_COST * 1)
 
-    val limitFifty = field.get.complexity.get.apply(context, ArgumentBuilder.buildArgs(limit = 50), 1)
+    val limitFifty = field.get.complexity.get.apply(context, ArgumentBuilder.buildArgs(argDefinitions, Map("limit" -> Some(50))), 1)
     assert(limitFifty === 5 * NaptimePaginatedResourceField.COMPLEXITY_COST * 1)
 
-    val limitZero = field.get.complexity.get.apply(context, ArgumentBuilder.buildArgs(limit = 1), 1)
+    val limitZero = field.get.complexity.get.apply(context, ArgumentBuilder.buildArgs(argDefinitions, Map("limit" -> Some(1))), 1)
     assert(limitZero === 1 * NaptimePaginatedResourceField.COMPLEXITY_COST * 1)
 
-    val childScoreFive = field.get.complexity.get.apply(context, ArgumentBuilder.buildArgs(limit = 1), 5)
+    val childScoreFive = field.get.complexity.get.apply(context, ArgumentBuilder.buildArgs(argDefinitions, Map("limit" -> Some(1))), 5)
     assert(childScoreFive === 1 * NaptimePaginatedResourceField.COMPLEXITY_COST * 5)
 
   }
