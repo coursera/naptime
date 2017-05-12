@@ -2,7 +2,6 @@ package org.coursera.naptime.ari.graphql.schema
 
 import com.linkedin.data.DataMap
 import com.linkedin.data.schema.NamedDataSchema
-import com.linkedin.data.schema.RecordDataSchema
 import com.linkedin.data.schema.RecordDataSchema.{Field => RecordDataSchemaField}
 import com.linkedin.data.schema.UnionDataSchema
 import org.coursera.naptime.ari.graphql.SangriaGraphQlContext
@@ -16,6 +15,7 @@ import scala.collection.JavaConverters._
 object NaptimeUnionField {
 
   val TYPED_DEFINITION_KEY = "typedDefinition"
+  val NAMESPACE_KEY = "namespace"
 
   private[schema] def build(
       schemaMetadata: SchemaMetadata,
@@ -51,11 +51,13 @@ object NaptimeUnionField {
       }.getOrElse(Map[String, String]())
 
       val unionMemberKey = subType match {
-        case sType if typedDefinitions.contains(sType.getUnionMemberKey) =>
-          typedDefinitions(sType.getUnionMemberKey)
-        case sType: NamedDataSchema if typedDefinitions.contains(sType.getName) =>
-          typedDefinitions(sType.getName)
-        case sType => sType.getUnionMemberKey
+        case _ if typedDefinitions.contains(subType.getUnionMemberKey) =>
+          typedDefinitions(subType.getUnionMemberKey)
+        case namedType: NamedDataSchema
+          if typedDefinitions.contains(namedType.getName)
+            && unionDataSchema.getProperties.get(NAMESPACE_KEY) == namedType.getNamespace =>
+          typedDefinitions(namedType.getName)
+        case _ => subType.getUnionMemberKey
       }
 
       val unionMemberFieldName = FieldBuilder.formatName(unionMemberKey)
