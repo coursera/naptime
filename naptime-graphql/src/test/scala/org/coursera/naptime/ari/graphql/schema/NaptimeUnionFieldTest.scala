@@ -49,10 +49,8 @@ class NaptimeUnionFieldTest extends AssertionsForJUnit with MockitoSugar {
     val union = new UnionDataSchema()
     val stringBuilder = new java.lang.StringBuilder()
     union.setTypes(types.asJava, stringBuilder)
-    val modifiableMap = collection.mutable.Map[String, AnyRef]()
-    modifiableMap.getOrElseUpdate("typedDefinition", typedDefinitions.asJava.asInstanceOf[AnyRef])
-    properties.foreach { case (key, value) => modifiableMap.getOrElseUpdate(key, value.asInstanceOf[AnyRef]) }
-    union.setProperties(modifiableMap.asJava)
+    val unionProperties = Map("typedDefinition" -> typedDefinitions.asJava.asInstanceOf[AnyRef]) ++ properties
+    union.setProperties(unionProperties.asJava)
     union
   }
 
