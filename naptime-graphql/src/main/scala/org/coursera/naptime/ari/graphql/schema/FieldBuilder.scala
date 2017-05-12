@@ -120,9 +120,13 @@ object FieldBuilder extends StrictLogging {
       case (None, typerefDataSchema: TyperefDataSchema) =>
         val dereferencedSchema = typerefDataSchema.getDereferencedDataSchema
         val dereferencedSchemaWithProperties = dereferencedSchema match {
-          case complex: ComplexDataSchema =>
-            complex.setProperties(typerefDataSchema.getProperties)
+          case complex: ComplexDataSchema => {
+            val properties =
+              (typerefDataSchema.getProperties.asScala ++ Map("namespace" -> typerefDataSchema.getNamespace))
+                .asJava
+            complex.setProperties(properties)
             complex
+          }
           case _ => dereferencedSchema
         }
 
