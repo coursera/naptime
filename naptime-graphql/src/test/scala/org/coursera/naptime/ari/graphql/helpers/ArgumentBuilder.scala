@@ -1,6 +1,5 @@
 package org.coursera.naptime.ari.graphql.helpers
 
-import org.coursera.naptime.ari.graphql.schema.NaptimePaginationField
 import sangria.schema.Args
 import sangria.schema.Argument
 
@@ -22,9 +21,5 @@ object ArgumentBuilder {
     val defaultMap = TrieMap() ++= defaultInfo
 
     Args(argumentInputs, argsWithDefault, optionalArgs, undefinedArgs, defaultMap)
-  }
-
-  def getPaginationArgs(): List[Argument[_]] = {
-    List(NaptimePaginationField.limitArgument, NaptimePaginationField.startArgument)
   }
 }

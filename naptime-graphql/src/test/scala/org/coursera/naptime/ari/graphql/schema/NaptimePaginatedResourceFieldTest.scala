@@ -41,7 +41,7 @@ class NaptimePaginatedResourceFieldTest extends AssertionsForJUnit with MockitoS
     val field = NaptimePaginatedResourceField.build(
       schemaMetadata, resourceName, fieldName, None, None)
 
-    val argDefinitions = ArgumentBuilder.getPaginationArgs()
+    val argDefinitions = NaptimePaginationField.paginationArguments
 
     val limitTen = field.get.complexity.get.apply(context, ArgumentBuilder.buildArgs(argDefinitions, Map("limit" -> Some(10))), 1)
     assert(limitTen === 1 * NaptimePaginatedResourceField.COMPLEXITY_COST * 1)
