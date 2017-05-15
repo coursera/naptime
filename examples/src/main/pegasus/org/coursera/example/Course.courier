@@ -11,4 +11,6 @@ record Course {
   extraData: AnyData
 
   courseMetadata: CourseMetadata
+
+  __all: string = "ALL"
 }

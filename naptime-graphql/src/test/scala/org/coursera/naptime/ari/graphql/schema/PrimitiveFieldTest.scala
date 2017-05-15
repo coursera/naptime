@@ -67,6 +67,8 @@ class PrimitiveFieldTest extends AssertionsForJUnit with MockitoSugar {
   }
 
   val fieldName = "relatedIds"
+  val invalidFieldName = "__invalidFieldName"
+  val validDoubleUnderscoreName = "valid__fieldName"
   val resourceName = "courses.v1"
   val resourceContext = SangriaGraphQlContext(Response(
     Map(TopLevelRequest(
@@ -117,6 +119,20 @@ class PrimitiveFieldTest extends AssertionsForJUnit with MockitoSugar {
     val context = createContext(graphqlContext, new DataMap(Map.empty.asJava))
     val result = field.resolve(context).asInstanceOf[Value[SangriaGraphQlContext, Any]]
     assert(result.value === null)
+  }
+
+  @Test
+  def fieldBeginningWithDoubleUnderscore(): Unit = {
+    val longDataSchema = new LongDataSchema()
+    val field = FieldBuilder.buildPrimitiveField[Long](invalidFieldName, longDataSchema, LongType)
+    assert(field.name === "_invalidFieldName")
+  }
+
+  @Test
+  def fieldWithInnerDoubleUnderscore(): Unit = {
+    val longDataSchema = new LongDataSchema()
+    val field = FieldBuilder.buildPrimitiveField[Long](validDoubleUnderscoreName, longDataSchema, LongType)
+    assert(field.name === validDoubleUnderscoreName)
   }
 
 }
