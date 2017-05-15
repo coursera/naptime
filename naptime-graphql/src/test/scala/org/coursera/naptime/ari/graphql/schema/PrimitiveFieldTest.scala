@@ -27,13 +27,13 @@ import org.coursera.naptime.ari.Response
 import org.coursera.naptime.ari.TopLevelRequest
 import org.coursera.naptime.ari.TopLevelResponse
 import org.coursera.naptime.ari.graphql.SangriaGraphQlContext
+import org.coursera.naptime.ari.graphql.helpers.ArgumentBuilder
 import org.junit.Test
 import org.scalatest.junit.AssertionsForJUnit
 import org.scalatest.mock.MockitoSugar
 import sangria.execution.DeprecationTracker
 import sangria.execution.ExecutionPath
 import sangria.marshalling.ResultMarshaller
-import sangria.schema.Args
 import sangria.schema.Context
 import sangria.schema.Field
 import sangria.schema.LongType
@@ -54,7 +54,7 @@ class PrimitiveFieldTest extends AssertionsForJUnit with MockitoSugar {
     Context[Ctx, Val](
       value = value,
       ctx = ctx,
-      args = Args(args),
+      args = ArgumentBuilder.buildArgs(NaptimePaginationField.paginationArguments, args),
       schema = mock[Schema[Ctx, Val]],
       field = mock[Field[Ctx, Val]],
       parentType = mock[ObjectType[Ctx, Any]],
@@ -62,7 +62,8 @@ class PrimitiveFieldTest extends AssertionsForJUnit with MockitoSugar {
       sourceMapper = None,
       deprecationTracker = DeprecationTracker.empty,
       astFields = Vector.empty,
-      path = ExecutionPath.empty)
+      path = ExecutionPath.empty,
+      deferredResolverState = None)
   }
 
   val fieldName = "relatedIds"

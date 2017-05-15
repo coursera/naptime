@@ -35,7 +35,7 @@ trait NamedDependencies { this: PluginVersionProvider =>
   val playJson = "com.typesafe.play" %% "play-json" % playVersion
   val playTestCompile = ("com.typesafe.play" %% "play-test" % playVersion)
     .excludeAll(new ExclusionRule(organization="org.specs2"))
-  val sangria = "org.sangria-graphql" %% "sangria" % "0.7.1"
+  val sangria = "org.sangria-graphql" %% "sangria" % "1.2.0"
   val scalaGuice = "net.codingwell" %% "scala-guice" % "4.0.0"
   val scalaLogging = "com.typesafe.scala-logging" %% "scala-logging" % "3.1.0"
 

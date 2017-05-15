@@ -41,13 +41,13 @@ object NaptimePaginationField extends StrictLogging {
           resolve = totalResolver)))
   }
 
-  private[schema] val limitArgument = Argument(
+  private[graphql] val limitArgument = Argument(
     name = "limit",
     argumentType = OptionInputType(IntType),
     defaultValue = PaginationConfiguration().defaultLimit,
     description = "Maximum number of results to include in response")
 
-  private[schema] val startArgument = Argument(
+  private[graphql] val startArgument = Argument(
     name = "start",
     argumentType = OptionInputType(StringType),
     description = "Cursor to start pagination at")

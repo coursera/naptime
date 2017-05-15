@@ -45,6 +45,7 @@ import sangria.marshalling.FromInput._
 import sangria.schema.Field
 import sangria.schema.ObjectType
 import sangria.schema.OptionInputType
+import sangria.schema.OptionType
 
 class SangriaGraphQlSchemaBuilder(
     resources: Set[Resource],
@@ -74,7 +75,7 @@ class SangriaGraphQlSchemaBuilder(
         formatResourceTopLevelName(resource),
         resourceObject,
         resolve = (context: Context[SangriaGraphQlContext, DataMap]) => {
-          Value(null)
+          Value(new DataMap())
         })
     }
 

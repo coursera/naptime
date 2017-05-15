@@ -19,11 +19,11 @@ package org.coursera.naptime.ari.graphql.schema
 import org.coursera.naptime.ari.Response
 import org.coursera.naptime.ari.graphql.Models
 import org.coursera.naptime.ari.graphql.SangriaGraphQlContext
+import org.coursera.naptime.ari.graphql.helpers.ArgumentBuilder
 import org.junit.Test
 import org.mockito.Mockito.when
 import org.scalatest.junit.AssertionsForJUnit
 import org.scalatest.mock.MockitoSugar
-import sangria.schema.Args
 
 class NaptimePaginatedResourceFieldTest extends AssertionsForJUnit with MockitoSugar {
 
@@ -41,16 +41,18 @@ class NaptimePaginatedResourceFieldTest extends AssertionsForJUnit with MockitoS
     val field = NaptimePaginatedResourceField.build(
       schemaMetadata, resourceName, fieldName, None, None)
 
-    val limitTen = field.get.complexity.get.apply(context, Args(Map("limit" -> 10)), 1)
+    val argDefinitions = NaptimePaginationField.paginationArguments
+
+    val limitTen = field.get.complexity.get.apply(context, ArgumentBuilder.buildArgs(argDefinitions, Map("limit" -> Some(10))), 1)
     assert(limitTen === 1 * NaptimePaginatedResourceField.COMPLEXITY_COST * 1)
 
-    val limitFifty = field.get.complexity.get.apply(context, Args(Map("limit" -> 50)), 1)
+    val limitFifty = field.get.complexity.get.apply(context, ArgumentBuilder.buildArgs(argDefinitions, Map("limit" -> Some(50))), 1)
     assert(limitFifty === 5 * NaptimePaginatedResourceField.COMPLEXITY_COST * 1)
 
-    val limitZero = field.get.complexity.get.apply(context, Args(Map("limit" -> 0)), 1)
+    val limitZero = field.get.complexity.get.apply(context, ArgumentBuilder.buildArgs(argDefinitions, Map("limit" -> Some(1))), 1)
     assert(limitZero === 1 * NaptimePaginatedResourceField.COMPLEXITY_COST * 1)
 
-    val childScoreFive = field.get.complexity.get.apply(context, Args(Map("limit" -> 1)), 5)
+    val childScoreFive = field.get.complexity.get.apply(context, ArgumentBuilder.buildArgs(argDefinitions, Map("limit" -> Some(1))), 5)
     assert(childScoreFive === 1 * NaptimePaginatedResourceField.COMPLEXITY_COST * 5)
 
   }

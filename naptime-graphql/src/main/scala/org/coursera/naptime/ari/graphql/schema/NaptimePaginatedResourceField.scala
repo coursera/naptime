@@ -127,18 +127,7 @@ object NaptimePaginatedResourceField {
         throw SchemaExecutionException(s"Cannot parse resource name from $resourceName")
       }
       val connection = context.ctx.response.data.get(parsedResourceName).map { objects =>
-        val ids = Option(context.value.parentContext.value).map { parentElement =>
-          // Nested Request
-          val allIds = Option(parentElement.getDataList(fieldName))
-            .map(_.asScala)
-            .getOrElse(List.empty)
-          val startOption = context.value.parentContext.arg(NaptimePaginationField.startArgument)
-          val limit = context.value.parentContext.arg(NaptimePaginationField.limitArgument)
-          val idsWithStart = startOption
-            .map(s => allIds.dropWhile(_.toString != s))
-            .getOrElse(allIds)
-          idsWithStart.take(limit)
-        }.getOrElse {
+        val ids = if (context.value.parentContext.value.isEmpty) {
           // Top-Level Request
           context.ctx.response.topLevelResponses.find { case (topLevelRequest, _) =>
             topLevelRequest.resource.identifier == resourceName &&
@@ -147,6 +136,19 @@ object NaptimePaginatedResourceField {
               context.value.parentContext.astFields.headOption.map(_.name)
                 .contains(topLevelRequest.selection.name)
           }.flatMap(r => Option(r._2.ids).map(_.asScala)).getOrElse(List.empty)
+        } else {
+          Option(context.value.parentContext.value).map { parentElement =>
+            // Nested Request
+            val allIds = Option(parentElement.getDataList(fieldName))
+              .map(_.asScala)
+              .getOrElse(List.empty)
+            val startOption = context.value.parentContext.arg(NaptimePaginationField.startArgument)
+            val limit = context.value.parentContext.arg(NaptimePaginationField.limitArgument)
+            val idsWithStart = startOption
+              .map(s => allIds.dropWhile(_.toString != s))
+              .getOrElse(allIds)
+            idsWithStart.take(limit)
+          }.getOrElse(List.empty)
         }
         objects.collect {
           case (id, element) if ids.contains(id) => element
