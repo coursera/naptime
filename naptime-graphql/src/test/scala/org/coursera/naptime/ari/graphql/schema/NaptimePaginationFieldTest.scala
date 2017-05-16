@@ -131,10 +131,9 @@ class NaptimePaginationFieldTest extends AssertionsForJUnit with MockitoSugar {
   def resolveTopLevel(): Unit = {
     val context = createContext(
       resourceContext,
-      ParentContext(createContext(resourceContext, null, Map("limit" -> Some(1), "start" -> Some("4")))))
+      ParentContext(createContext(resourceContext, new DataMap(), Map("limit" -> Some(1), "start" -> Some("4")))))
     val resolver = NaptimePaginationField.getResolver(resourceName, fieldName)
     val paginationData = resolver(context).value
     assert(paginationData === resourceContext.response.topLevelResponses.values.head.pagination)
   }
-
 }
