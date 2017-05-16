@@ -219,13 +219,19 @@ object FieldBuilder extends StrictLogging {
   }
 
   /**
-    * Converts a field or namespace name to a GraphQL compatible name, replacing '.' with '_'
+    * Converts a field or namespace name to a GraphQL compatible name, replacing '.' with '_',
+    * '/' with '_', and fields starting with '__' to '_'
     *
     * @param name Original field name
     * @return GraphQL-safe field name
     */
   def formatName(name: String): String = {
-    name.replaceAll("\\.", "_").replaceAll("/", "_")
+    val replacedName = name.replaceAll("\\.", "_").replaceAll("/", "_")
+    if (replacedName.startsWith("__")) {
+      replacedName.replaceFirst("__", "_")
+    } else {
+      replacedName
+    }
   }
 
 }
