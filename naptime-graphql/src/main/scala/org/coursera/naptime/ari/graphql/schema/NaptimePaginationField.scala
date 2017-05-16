@@ -63,27 +63,28 @@ object NaptimePaginationField extends StrictLogging {
         throw new SchemaExecutionException(s"Cannot parse resource name from $resourceName")
       }
       val responsePagination = context.ctx.response.data.get(parsedResourceName).map { _ =>
-        Option(context.value.parentContext.value).map { parentElement =>
-          // Nested Request
-          val idsFromParent = Option(parentElement.getDataList(fieldName))
-            .map(_.asScala)
-            .getOrElse(List.empty)
-          val startOption = context.value.parentContext.arg(startArgument)
-          val limit = context.value.parentContext.arg(limitArgument)
-
-          val idsAfterStart = startOption
-            .map(start => idsFromParent.dropWhile(_.toString != start))
-            .getOrElse(idsFromParent)
-          val next = idsAfterStart.drop(limit).headOption.map(_.toString)
-          val total = idsFromParent.size
-          ResponsePagination(next, Some(total.toLong))
-
-        }.getOrElse {
+        if (context.value.parentContext.value.isEmpty) {
           // Top-Level Request
           context.ctx.response.topLevelResponses.find { case (topLevelRequest, _) =>
             topLevelRequest.resource.identifier == resourceName &&
               topLevelRequest.selection.alias == context.astFields.headOption.flatMap(_.alias)
           }.map(_._2.pagination).getOrElse(ResponsePagination.empty)
+        } else {
+          Option(context.value.parentContext.value).map { parentElement =>
+            // Nested Request
+            val idsFromParent = Option(parentElement.getDataList(fieldName))
+              .map(_.asScala)
+              .getOrElse(List.empty)
+            val startOption = context.value.parentContext.arg(startArgument)
+            val limit = context.value.parentContext.arg(limitArgument)
+
+            val idsAfterStart = startOption
+              .map(start => idsFromParent.dropWhile(_.toString != start))
+              .getOrElse(idsFromParent)
+            val next = idsAfterStart.drop(limit).headOption.map(_.toString)
+            val total = idsFromParent.size
+            ResponsePagination(next, Some(total.toLong))
+          }.getOrElse(ResponsePagination.empty)
         }
       }.getOrElse(ResponsePagination.empty)
 
