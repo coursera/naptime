@@ -35,7 +35,7 @@ class DefaultGraphqlSchemaProviderTest extends AssertionsForJUnit {
     val simpleSchema = new DefaultGraphqlSchemaProvider(simpleSchemaProvider())
 
     val nonMetadataTypes = simpleSchema.schema.allTypes.filterNot(_._1.startsWith("__"))
-    assert(nonMetadataTypes.keySet === DEFAULT_TYPES ++ COMPUTED_TYPES,
+    assert(nonMetadataTypes.keySet === DEFAULT_TYPES ++ COMPUTED_TYPES -- FILTERED_TYPES,
       s"${nonMetadataTypes.keySet}")
   }
 
@@ -60,7 +60,7 @@ class DefaultGraphqlSchemaProviderTest extends AssertionsForJUnit {
     val regenerating = new DefaultGraphqlSchemaProvider(regeneratingProvider)
 
     val nonMetadataTypes = regenerating.schema.allTypes.filterNot(_._1.startsWith("__"))
-    assert(nonMetadataTypes.keySet === DEFAULT_TYPES ++ COMPUTED_TYPES,
+    assert(nonMetadataTypes.keySet === DEFAULT_TYPES ++ COMPUTED_TYPES -- FILTERED_TYPES,
       s"${nonMetadataTypes.keySet}")
   }
 
@@ -101,6 +101,10 @@ object DefaultGraphqlSchemaProviderTest extends MockitoSugar {
     "ResponsePagination",
     "CoursesV1_stringMember",
     "DataMap")
+
+  val FILTERED_TYPES = Set(
+    "PartnersV1",
+    "PartnersV1_org_coursera_naptime_ari_graphql_models_Coordinates")
 
   val extraTypes = TYPE_SCHEMAS.map { case (key, value) => Keyed(key, value) }.toList
 

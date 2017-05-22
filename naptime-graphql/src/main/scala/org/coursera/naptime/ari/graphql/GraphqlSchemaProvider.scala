@@ -23,6 +23,7 @@ import com.linkedin.data.schema.RecordDataSchema
 import com.typesafe.scalalogging.StrictLogging
 import org.coursera.naptime.ari.FullSchema
 import org.coursera.naptime.ari.SchemaProvider
+import org.coursera.naptime.schema.HandlerKind
 import sangria.schema.Field
 import sangria.schema.ObjectType
 import sangria.schema.Schema
@@ -73,7 +74,10 @@ class DefaultGraphqlSchemaProvider @Inject() (schemaProvider: SchemaProvider)
       }
     }.toMap
     try {
-      val builder = new SangriaGraphQlSchemaBuilder(latestSchema.resources, types)
+      val resources = latestSchema.resources.filter { resource =>
+        resource.handlers.map(_.kind).contains(HandlerKind.MULTI_GET)
+      }
+      val builder = new SangriaGraphQlSchemaBuilder(resources, types)
       val graphQlSchema =
         builder.generateSchema().asInstanceOf[Schema[SangriaGraphQlContext, Any]]
       fullSchema = latestSchema
