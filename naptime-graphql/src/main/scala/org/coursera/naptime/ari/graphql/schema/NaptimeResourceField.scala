@@ -68,10 +68,10 @@ object NaptimeResourceField extends StrictLogging {
   }
 
   private[schema] def generateField(
-    field: RecordDataSchema.Field,
-    schemaMetadata: SchemaMetadata,
-    resource: Resource,
-    schema: RecordDataSchema): Option[Field[SangriaGraphQlContext, DataMap]] = {
+      field: RecordDataSchema.Field,
+      schemaMetadata: SchemaMetadata,
+      resource: Resource,
+      schema: RecordDataSchema): Option[Field[SangriaGraphQlContext, DataMap]] = {
     val forwardRelationOption = field.getProperties.asScala.get(Relations.PROPERTY_NAME).map(_.toString)
     if (forwardRelationOption.isDefined) {
       val relatedResource = schemaMetadata.getResource(forwardRelationOption.get)

@@ -24,6 +24,7 @@ import org.coursera.naptime.ari.graphql.schema.NaptimePaginatedResourceField
 import org.coursera.naptime.ari.graphql.schema.NaptimePaginationField
 import org.coursera.naptime.ari.graphql.schema.NaptimeResourceField
 import org.coursera.naptime.ari.graphql.schema.SchemaMetadata
+import org.coursera.naptime.schema.ArbitraryValue
 import org.coursera.naptime.schema.Handler
 import org.coursera.naptime.schema.HandlerKind
 import org.coursera.naptime.schema.Resource
@@ -32,17 +33,19 @@ import sangria.schema.Argument
 import sangria.schema.BigDecimalType
 import sangria.schema.BooleanType
 import sangria.schema.Context
-import sangria.schema.Field
 import sangria.schema.FloatType
 import sangria.schema.InputType
 import sangria.schema.IntType
 import sangria.schema.ListInputType
 import sangria.schema.LongType
-import sangria.schema.ObjectType
-import sangria.schema.OptionInputType
 import sangria.schema.Schema
 import sangria.schema.StringType
 import sangria.schema.Value
+import sangria.marshalling.FromInput._
+import sangria.schema.Field
+import sangria.schema.ObjectType
+import sangria.schema.OptionInputType
+import sangria.schema.OptionType
 
 class SangriaGraphQlSchemaBuilder(
     resources: Set[Resource],
@@ -63,12 +66,13 @@ class SangriaGraphQlSchemaBuilder(
       resourceObject <- (try {
         val resourceName = ResourceName(
           resource.name, resource.version.getOrElse(0L).toInt).identifier
-        if (!resource.handlers.exists(_.kind == HandlerKind.GET) ||
-          resource.handlers.exists(_.kind == HandlerKind.MULTI_GET)) {
-          generateLookupTypeForResource(resourceName)
-        } else {
+        // We want to make sure that if a resource has a GET handler, it also has a MULTI_GET handler
+        if (resource.handlers.exists(_.kind == HandlerKind.GET) &&
+          !resource.handlers.exists(_.kind == HandlerKind.MULTI_GET)) {
           logger.warn(s"Unable to generate top level resource $resourceName due to the lack of a MULTI_GET handler")
           None
+        } else {
+          generateLookupTypeForResource(resourceName)
         }
       } catch {
         case e: Throwable => None
@@ -233,6 +237,8 @@ object SangriaGraphQlSchemaBuilder extends StrictLogging {
   }
 
   def scalaTypeToSangria(typeName: String): InputType[Any] = {
+    import sangria.marshalling.FromInput.seqInput
+    import sangria.marshalling.FromInput.coercedScalaInput
 
     val listPattern = "(Set|List|Seq|immutable.Seq)\\[(.*)\\]".r
     val optionPattern = "(Option)\\[(.*)\\]".r
@@ -254,6 +260,8 @@ object SangriaGraphQlSchemaBuilder extends StrictLogging {
   }
 
   def scalaTypeToFromInput(typeName: String): FromInput[Any] = {
+    import sangria.marshalling.FromInput.seqInput
+    import sangria.marshalling.FromInput.coercedScalaInput
 
     val listPattern = "(set|list|seq|immutable.Seq)\\[(.*)\\]".r
     val optionPattern = "(Option)\\[(.*)\\]".r
