@@ -1,0 +1,7 @@
+namespace org.coursera.naptime.ari.graphql.models
+
+record MergedPointerEntity {
+  id: string
+
+  field: MergedMultigetFreeEntity
+}

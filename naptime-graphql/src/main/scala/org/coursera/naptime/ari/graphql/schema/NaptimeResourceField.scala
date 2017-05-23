@@ -1,12 +1,14 @@
 package org.coursera.naptime.ari.graphql.schema
 
 import com.linkedin.data.DataMap
+import com.linkedin.data.schema.RecordDataSchema
+import com.typesafe.scalalogging.StrictLogging
 import org.coursera.naptime.ResourceName
+import org.coursera.naptime.Types.Relations
 import org.coursera.naptime.ari.graphql.SangriaGraphQlContext
 import org.coursera.naptime.ari.graphql.SangriaGraphQlSchemaBuilder
 import org.coursera.naptime.schema.HandlerKind
 import org.coursera.naptime.schema.Resource
-import sangria.execution.ExecutionError
 import sangria.schema.Context
 import sangria.schema.Field
 import sangria.schema.ObjectType
@@ -15,7 +17,7 @@ import sangria.schema.Value
 
 import scala.collection.JavaConverters._
 
-object NaptimeResourceField {
+object NaptimeResourceField extends StrictLogging {
 
   type IdExtractor = (Context[SangriaGraphQlContext, DataMap]) => Any
 
@@ -46,7 +48,6 @@ object NaptimeResourceField {
     }
   }
 
-
   private[schema] def getType(
       schemaMetadata: SchemaMetadata,
       resourceName: String): OptionType[DataMap] = {
@@ -60,11 +61,32 @@ object NaptimeResourceField {
       description = schema.getDoc,
       fieldsFn = () => {
         Option(schema.getFields).map(_.asScala.map { field =>
-          FieldBuilder.buildField(schemaMetadata, field, Option(schema.getNamespace),
-            resourceName = formatResourceName(resource))
-        }.toList).getOrElse(List.empty)
+          generateField(field, schemaMetadata, resource, schema)
+        }.toList).getOrElse(List.empty).flatten
       }))
     resourceObjectType
+  }
+
+  private[schema] def generateField(
+      field: RecordDataSchema.Field,
+      schemaMetadata: SchemaMetadata,
+      resource: Resource,
+      schema: RecordDataSchema): Option[Field[SangriaGraphQlContext, DataMap]] = {
+    val forwardRelationOption = field.getProperties.asScala.get(Relations.PROPERTY_NAME).map(_.toString)
+    if (forwardRelationOption.isDefined) {
+      val relatedResource = schemaMetadata.getResource(forwardRelationOption.get)
+      if (relatedResource.handlers.exists(_.kind == HandlerKind.MULTI_GET)) {
+        Some(FieldBuilder.buildField(schemaMetadata, field, Option(schema.getNamespace),
+          resourceName = formatResourceName(resource)))
+      } else {
+        logger.warn(s"Unable to build field for forward relation from " +
+          s"${resource.name} -> ${forwardRelationOption.get} due to the lack of a MULTI_GET handler")
+        None
+      }
+    } else {
+      Some(FieldBuilder.buildField(schemaMetadata, field, Option(schema.getNamespace),
+        resourceName = formatResourceName(resource)))
+    }
   }
 
   private[this] def getResolver(

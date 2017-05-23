@@ -66,7 +66,14 @@ class SangriaGraphQlSchemaBuilder(
       resourceObject <- (try {
         val resourceName = ResourceName(
           resource.name, resource.version.getOrElse(0L).toInt).identifier
-        generateLookupTypeForResource(resourceName)
+        // We want to make sure that if a resource has a GET handler, it also has a MULTI_GET handler
+        if (resource.handlers.exists(_.kind == HandlerKind.GET) &&
+          !resource.handlers.exists(_.kind == HandlerKind.MULTI_GET)) {
+          logger.warn(s"Unable to generate top level resource $resourceName due to the lack of a MULTI_GET handler")
+          None
+        } else {
+          generateLookupTypeForResource(resourceName)
+        }
       } catch {
         case e: Throwable => None
       }).toList if resourceObject.fields.nonEmpty

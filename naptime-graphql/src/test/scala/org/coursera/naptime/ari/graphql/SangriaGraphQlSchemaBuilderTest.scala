@@ -19,6 +19,7 @@ package org.coursera.naptime.ari.graphql
 import org.coursera.courier.templates.ScalaRecordTemplate
 import org.coursera.naptime.ari.graphql.models.MergedCourse
 import org.coursera.naptime.ari.graphql.models.MergedInstructor
+import org.coursera.naptime.ari.graphql.models.MergedMultigetFreeEntity
 import org.coursera.naptime.ari.graphql.models.MergedPartner
 import org.coursera.naptime.schema.Handler
 import org.coursera.naptime.schema.HandlerKind
@@ -34,12 +35,14 @@ import sangria.schema.UnionType
 
 class SangriaGraphQlSchemaBuilderTest extends AssertionsForJUnit {
 
-  val allResources = Set(Models.courseResource, Models.instructorResource, Models.partnersResource)
+  val allResources = Set(Models.courseResource, Models.instructorResource,
+    Models.partnersResource, Models.multigetFreeEntity)
 
   val schemaTypes = Map(
     "org.coursera.naptime.ari.graphql.models.MergedCourse" -> MergedCourse.SCHEMA,
     "org.coursera.naptime.ari.graphql.models.MergedInstructor" -> MergedInstructor.SCHEMA,
-    "org.coursera.naptime.ari.graphql.models.MergedPartner" -> MergedPartner.SCHEMA)
+    "org.coursera.naptime.ari.graphql.models.MergedPartner" -> MergedPartner.SCHEMA,
+    "org.coursera.naptime.ari.graphql.models.MergedMultigetFreeEntity" -> MergedMultigetFreeEntity.SCHEMA)
 
   val builder = new SangriaGraphQlSchemaBuilder(allResources, schemaTypes)
 
@@ -83,6 +86,17 @@ class SangriaGraphQlSchemaBuilderTest extends AssertionsForJUnit {
     val fieldNames = coursePlatformMemberObjectType.fieldsByName.keySet
     val expectedFieldNames = Set("int")
     assert(fieldNames === expectedFieldNames)
+  }
+
+  @Test
+  def filtersTopLevelFieldsWithoutMultiget(): Unit = {
+    val schema = builder.generateSchema()
+    val types = schema.types.keys.toSet
+
+    assert(types.contains("CoursesV1Resource"))
+    assert(types.contains("InstructorsV1Resource"))
+    assert(types.contains("PartnersV1Resource"))
+    assert(!types.contains("MultigetFreeEntityV1Resource"))
   }
 
 }

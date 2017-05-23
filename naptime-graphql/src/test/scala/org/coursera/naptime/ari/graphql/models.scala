@@ -86,4 +86,52 @@ object Models {
     className = "",
     attributes = List.empty)
 
+  val multigetFreeEntity = Resource(
+    kind = ResourceKind.COLLECTION,
+    name = "multigetFreeEntity",
+    version = Some(1),
+    keyType = "",
+    valueType = "",
+    mergedType = "org.coursera.naptime.ari.graphql.models.MergedMultigetFreeResource",
+    handlers = List(
+      Handler(
+        kind = HandlerKind.GET,
+        name = "get",
+        parameters = List(Parameter(name = "id", `type` = "String", attributes = List.empty)),
+        attributes = List.empty),
+      Handler(
+        kind = HandlerKind.GET_ALL,
+        name = "getAll",
+        parameters = List.empty,
+        attributes = List.empty)),
+    className = "",
+    attributes = List.empty)
+
+
+  val pointerEntity = Resource(
+    kind = ResourceKind.COLLECTION,
+    name = "pointerEntity",
+    version = Some(1),
+    keyType = "",
+    valueType = "",
+    mergedType = "org.coursera.naptime.ari.graphql.models.MergedPointerEntity",
+    handlers = List(
+      Handler(
+        kind = HandlerKind.GET,
+        name = "get",
+        parameters = List(Parameter(name = "id", `type` = "String", attributes = List.empty)),
+        attributes = List.empty),
+      Handler(
+        kind = HandlerKind.MULTI_GET,
+        name = "multiGet",
+        parameters = List(Parameter(name = "ids", `type` = "List[Int]", attributes = List.empty)),
+        attributes = List.empty),
+      Handler(
+        kind = HandlerKind.GET_ALL,
+        name = "getAll",
+        parameters = List.empty,
+        attributes = List.empty)),
+    className = "",
+    attributes = List.empty)
+
 }

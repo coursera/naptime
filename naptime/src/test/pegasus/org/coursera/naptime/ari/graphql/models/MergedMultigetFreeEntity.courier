@@ -1,0 +1,10 @@
+namespace org.coursera.naptime.ari.graphql.models
+
+record MergedMultigetFreeEntity {
+  id: string
+
+  name: string
+
+  testField: string
+
+}

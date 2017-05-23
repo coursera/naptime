@@ -18,7 +18,6 @@ package org.coursera.naptime.ari.graphql
 
 import javax.inject.Inject
 
-import com.linkedin.data.DataMap
 import com.linkedin.data.schema.RecordDataSchema
 import com.typesafe.scalalogging.StrictLogging
 import org.coursera.naptime.ari.FullSchema
