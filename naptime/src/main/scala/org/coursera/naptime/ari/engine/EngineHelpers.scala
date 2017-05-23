@@ -171,7 +171,7 @@ object EngineHelpers extends StrictLogging {
             reverseRelationForField(recordField).foreach { reverseRelation =>
               reverseRelations += ReverseRelatedField(
                 selection = fieldSelection,
-                path = path :+ recordField.getName,
+                path = path :+ fieldSelection.alias.getOrElse(fieldSelection.name),
                 element = element,
                 annotation = reverseRelation)
             }

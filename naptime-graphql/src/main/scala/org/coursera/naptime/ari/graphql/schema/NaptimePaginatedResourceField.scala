@@ -139,7 +139,9 @@ object NaptimePaginatedResourceField {
         } else {
           Option(context.value.parentContext.value).map { parentElement =>
             // Nested Request
-            val allIds = Option(parentElement.getDataList(fieldName))
+            val alias = context.value.parentContext.astFields.headOption.flatMap(_.alias)
+            val aliasedFieldName = alias.getOrElse(fieldName)
+            val allIds = Option(parentElement.getDataList(aliasedFieldName))
               .map(_.asScala)
               .getOrElse(List.empty)
             val startOption = context.value.parentContext.arg(NaptimePaginationField.startArgument)
