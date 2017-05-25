@@ -96,7 +96,12 @@ class SangriaGraphQlSchemaBuilderTest extends AssertionsForJUnit {
     assert(types.contains("CoursesV1Resource"))
     assert(types.contains("InstructorsV1Resource"))
     assert(types.contains("PartnersV1Resource"))
-    assert(!types.contains("MultigetFreeEntityV1Resource"))
+    assert(types.contains("MultigetFreeEntityV1Resource"))
+
+    val multigetFreeResource = schema.types.get("MultigetFreeEntityV1Resource")
+    val objType = multigetFreeResource.get._2.asInstanceOf[ObjectType[Unit, ScalaRecordTemplate]]
+
+    assert(objType.fieldsFn().map(_.name).toSet === Set("finder", "getAll"))
   }
 
 }
