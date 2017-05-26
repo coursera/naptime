@@ -1,6 +1,7 @@
 package org.coursera.naptime.ari.graphql.schema
 
 import com.linkedin.data.schema.RecordDataSchema
+import org.coursera.naptime.ResourceName
 import org.coursera.naptime.ari.graphql.Models
 import org.coursera.naptime.ari.graphql.models.MergedMultigetFreeEntity
 import org.coursera.naptime.ari.graphql.models.MergedPartner
@@ -21,7 +22,7 @@ class NaptimeResourceFieldTest extends AssertionsForJUnit with MockitoSugar {
   val pointerSchema = MergedPointerEntity.SCHEMA
   val filteredResource = Models.multigetFreeEntity
   val filteredSchema = MergedMultigetFreeEntity.SCHEMA
-  val resourceName = "myTestResource"
+  val resourceName = ResourceName("testResource", 1)
   val field = mock[RecordDataSchema.Field]
 
 
@@ -33,7 +34,8 @@ class NaptimeResourceFieldTest extends AssertionsForJUnit with MockitoSugar {
     when(schemaMetadata.getSchema(partnerResource)).thenReturn(Some(partnerSchema))
     when(field.getDoc).thenReturn("")
     when(field.getName).thenReturn(testFieldName)
-    val generatedFieldOpt = NaptimeResourceField.generateField(field, schemaMetadata, partnerResource, partnerSchema)
+    val generatedFieldOpt = NaptimeResourceField
+      .generateField(field, schemaMetadata, partnerResource, partnerSchema)
     assert(generatedFieldOpt.isDefined)
     val generatedField = generatedFieldOpt.get
     assert(generatedField.name === testFieldName)
@@ -45,9 +47,11 @@ class NaptimeResourceFieldTest extends AssertionsForJUnit with MockitoSugar {
 
     when(field.getDoc).thenReturn("")
     when(field.getName).thenReturn("testName")
-    when(field.getProperties).thenReturn(Map("related" -> testFieldName .asInstanceOf[AnyRef]).asJava)
-    when(schemaMetadata.getResource(testFieldName)).thenReturn(filteredResource)
-    val generatedField = NaptimeResourceField.generateField(field, schemaMetadata, pointerResource, pointerSchema)
+    when(field.getProperties)
+      .thenReturn(Map("related" -> testFieldName.asInstanceOf[AnyRef]).asJava)
+    when(schemaMetadata.getResource(resourceName)).thenReturn(filteredResource)
+    val generatedField = NaptimeResourceField
+      .generateField(field, schemaMetadata, pointerResource, pointerSchema)
     assert(generatedField.isEmpty)
   }
 }

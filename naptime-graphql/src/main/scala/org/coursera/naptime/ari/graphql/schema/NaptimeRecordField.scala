@@ -2,6 +2,7 @@ package org.coursera.naptime.ari.graphql.schema
 
 import com.linkedin.data.DataMap
 import com.linkedin.data.schema.RecordDataSchema
+import org.coursera.naptime.ResourceName
 import org.coursera.naptime.ari.graphql.SangriaGraphQlContext
 import sangria.schema.Field
 import sangria.schema.ObjectType
@@ -16,7 +17,7 @@ object NaptimeRecordField {
       recordDataSchema: RecordDataSchema,
       fieldName: String,
       namespace: Option[String],
-      resourceName: String) = {
+      resourceName: ResourceName) = {
 
     Field.apply[SangriaGraphQlContext, DataMap, Any, Any](
       name = FieldBuilder.formatName(fieldName),
@@ -28,10 +29,11 @@ object NaptimeRecordField {
       schemaMetadata: SchemaMetadata,
       recordDataSchema: RecordDataSchema,
       namespace: Option[String],
-      resourceName: String): ObjectType[SangriaGraphQlContext, DataMap] = {
+      resourceName: ResourceName): ObjectType[SangriaGraphQlContext, DataMap] = {
 
+    val formattedResourceName = NaptimeResourceUtils.formatResourceName(resourceName)
     ObjectType[SangriaGraphQlContext, DataMap](
-      FieldBuilder.formatName(s"${resourceName}_${recordDataSchema.getFullName}"),
+      FieldBuilder.formatName(s"${formattedResourceName}_${recordDataSchema.getFullName}"),
       recordDataSchema.getDoc,
       fieldsFn = () => {
         val fields = recordDataSchema.getFields.asScala.map { field =>

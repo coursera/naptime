@@ -1,9 +1,24 @@
+/*
+ * Copyright 2016 Coursera Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package org.coursera.naptime.ari.graphql.schema
 
 import com.linkedin.data.DataMap
 import org.coursera.naptime.ResourceName
 import org.coursera.naptime.ari.graphql.SangriaGraphQlContext
-import org.coursera.naptime.ari.graphql.SangriaGraphQlSchemaBuilder
 import org.coursera.naptime.schema.Handler
 import org.coursera.naptime.schema.HandlerKind
 import org.coursera.naptime.schema.RelationType
@@ -28,46 +43,54 @@ object NaptimePaginatedResourceField {
 
   def build(
       schemaMetadata: SchemaMetadata,
-      resourceName: String,
+      resourceName: ResourceName,
       fieldName: String,
       handlerOverride: Option[Handler] = None,
-      fieldRelation: Option[FieldRelation]): Option[Field[SangriaGraphQlContext, DataMap]] = {
+      fieldRelation: Option[FieldRelation]): Either[SchemaError, Field[SangriaGraphQlContext, DataMap]] = {
 
     (for {
       resource <- schemaMetadata.getResourceOpt(resourceName)
-      schema <- schemaMetadata.getSchema(resource)
+      _ <- schemaMetadata.getSchema(resource)
     } yield {
       val handlerOpt = (handlerOverride, fieldRelation) match {
         case (Some(handler), _) =>
-          Some(handler)
+          Right(handler)
         case (None, Some(ForwardRelation(_))) =>
-          resource.handlers.find(_.kind == HandlerKind.MULTI_GET)
+          resource.handlers.find(_.kind == HandlerKind.MULTI_GET).toRight {
+            HasForwardRelationButMissingMultiGet(resourceName, fieldName)
+          }
         case (None, Some(ReverseRelation(annotation))) =>
           annotation.relationType match {
             case RelationType.FINDER =>
-              val finderName = annotation.arguments.get("q").getOrElse {throw new IllegalStateException("Finder reverse relation on " +
-                  s"${annotation.resourceName} does not have a q parameter specified")
+              annotation.arguments.get("q").flatMap { finderName =>
+                resource.handlers.find(_.name == finderName)
+              }.toRight {
+                MissingQParameterOnFinderRelation(resourceName, fieldName)
               }
-              resource.handlers.find(_.name == finderName)
 
             case RelationType.MULTI_GET =>
-              resource.handlers.find(_.kind == HandlerKind.MULTI_GET)
+              resource.handlers.find(_.kind == HandlerKind.MULTI_GET).toRight {
+                HasForwardRelationButMissingMultiGet(resourceName, fieldName)
+              }
 
             case RelationType.GET | RelationType.SINGLE_ELEMENT_FINDER | RelationType.$UNKNOWN =>
-              None
+              Left(UnhandledSchemaError(resourceName,
+                s"Cannot use a paginated field for a single-element relationship: $fieldName"))
           }
         case _ =>
-          resource.handlers.find(_.kind == HandlerKind.MULTI_GET)
+          resource.handlers.find(_.kind == HandlerKind.MULTI_GET).toRight {
+            HasForwardRelationButMissingMultiGet(resourceName, fieldName)
+          }
       }
 
-      handlerOpt.map { handler =>
+      handlerOpt.right.map { handler =>
 
         val reverseRelationSpecifiedArguments = fieldRelation match {
           case Some(ReverseRelation(annotation)) => annotation.arguments.keySet
           case _ => Set[String]()
         }
 
-        val arguments = SangriaGraphQlSchemaBuilder
+        val arguments = NaptimeResourceUtils
           .generateHandlerArguments(handler, includePagination = true)
           .filterNot(_.name == "ids")
           .filterNot(arg => reverseRelationSpecifiedArguments.contains(arg.name))
@@ -84,13 +107,13 @@ object NaptimePaginatedResourceField {
             }),
           arguments = arguments)
       }
-    }).flatten
+    }).getOrElse(Left(SchemaNotFound(resourceName)))
   }
 
   //TODO(bryan): add arguments for pagination in here
   private[this] def getType(
       schemaMetadata: SchemaMetadata,
-      resourceName: String,
+      resourceName: ResourceName,
       fieldName: String): ObjectType[SangriaGraphQlContext, ParentContext] = {
 
     val resource = schemaMetadata.getResourceOpt(resourceName).getOrElse {
@@ -103,34 +126,32 @@ object NaptimePaginatedResourceField {
     ObjectType[SangriaGraphQlContext, ParentContext](
       name = formatPaginatedResourceName(resource),
       fieldsFn = () => {
-        val elementType = NaptimeResourceField.getType(schemaMetadata, resourceName)
-        val listType = ListType(elementType)
-        List(
-          Field.apply[SangriaGraphQlContext, ParentContext, Any, Any](
-            name = "elements",
-            fieldType = listType,
-            resolve = getResolver(resourceName, fieldName)),
-          Field.apply[SangriaGraphQlContext, ParentContext, Any, Any](
-            name = "paging",
-            fieldType = NaptimePaginationField.getField(resourceName, fieldName),
-            resolve = context => context.value
-          ))
+        NaptimeResourceField.getType(schemaMetadata, resourceName).right.toOption.map { elementType =>
+          val listType = ListType(elementType)
+          List(
+            Field.apply[SangriaGraphQlContext, ParentContext, Any, Any](
+              name = "elements",
+              fieldType = listType,
+              resolve = getResolver(resourceName, fieldName)),
+            Field.apply[SangriaGraphQlContext, ParentContext, Any, Any](
+              name = "paging",
+              fieldType = NaptimePaginationField.getField(resourceName, fieldName),
+              resolve = context => context.value
+            ))
+        }.getOrElse(List.empty)
       })
   }
 
   private[this] def getResolver(
-      resourceName: String,
+      resourceName: ResourceName,
       fieldName: String): Context[SangriaGraphQlContext, ParentContext] => Value[SangriaGraphQlContext, Any] = {
     (context: Context[SangriaGraphQlContext, ParentContext]) => {
 
-      val parsedResourceName = ResourceName.parse(resourceName).getOrElse {
-        throw SchemaExecutionException(s"Cannot parse resource name from $resourceName")
-      }
-      val connection = context.ctx.response.data.get(parsedResourceName).map { objects =>
+      val connection = context.ctx.response.data.get(resourceName).map { objects =>
         val ids = if (context.value.parentContext.value.isEmpty) {
           // Top-Level Request
           context.ctx.response.topLevelResponses.find { case (topLevelRequest, _) =>
-            topLevelRequest.resource.identifier == resourceName &&
+            topLevelRequest.resource == resourceName &&
               topLevelRequest.selection.alias ==
                 context.value.parentContext.astFields.headOption.flatMap(_.alias) &&
               context.value.parentContext.astFields.headOption.map(_.name)

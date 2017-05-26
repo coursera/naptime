@@ -16,6 +16,7 @@
 
 package org.coursera.naptime.ari.graphql.schema
 
+import org.coursera.naptime.ResourceName
 import org.coursera.naptime.ari.Response
 import org.coursera.naptime.ari.graphql.Models
 import org.coursera.naptime.ari.graphql.SangriaGraphQlContext
@@ -28,11 +29,11 @@ import org.scalatest.mock.MockitoSugar
 class NaptimePaginatedResourceFieldTest extends AssertionsForJUnit with MockitoSugar {
 
   val fieldName = "relatedIds"
-  val resourceName = "courses.v1"
+  val resourceName = ResourceName("courses", 1)
   val context = SangriaGraphQlContext(Response.empty)
 
-  val schemaMetadata = mock[SchemaMetadata]
-  val resource = Models.courseResource
+  private[this] val schemaMetadata = mock[SchemaMetadata]
+  private[this] val resource = Models.courseResource
   when(schemaMetadata.getResourceOpt(resourceName)).thenReturn(Some(resource))
   when(schemaMetadata.getSchema(resource)).thenReturn(Some(null))
 
@@ -43,16 +44,20 @@ class NaptimePaginatedResourceFieldTest extends AssertionsForJUnit with MockitoS
 
     val argDefinitions = NaptimePaginationField.paginationArguments
 
-    val limitTen = field.get.complexity.get.apply(context, ArgumentBuilder.buildArgs(argDefinitions, Map("limit" -> Some(10))), 1)
+    val limitTen = field.right.get.complexity.get.apply(context,
+      ArgumentBuilder.buildArgs(argDefinitions, Map("limit" -> Some(10))), 1)
     assert(limitTen === 1 * NaptimePaginatedResourceField.COMPLEXITY_COST * 1)
 
-    val limitFifty = field.get.complexity.get.apply(context, ArgumentBuilder.buildArgs(argDefinitions, Map("limit" -> Some(50))), 1)
+    val limitFifty = field.right.get.complexity.get.apply(context,
+      ArgumentBuilder.buildArgs(argDefinitions, Map("limit" -> Some(50))), 1)
     assert(limitFifty === 5 * NaptimePaginatedResourceField.COMPLEXITY_COST * 1)
 
-    val limitZero = field.get.complexity.get.apply(context, ArgumentBuilder.buildArgs(argDefinitions, Map("limit" -> Some(1))), 1)
+    val limitZero = field.right.get.complexity.get.apply(context,
+      ArgumentBuilder.buildArgs(argDefinitions, Map("limit" -> Some(1))), 1)
     assert(limitZero === 1 * NaptimePaginatedResourceField.COMPLEXITY_COST * 1)
 
-    val childScoreFive = field.get.complexity.get.apply(context, ArgumentBuilder.buildArgs(argDefinitions, Map("limit" -> Some(1))), 5)
+    val childScoreFive = field.right.get.complexity.get.apply(context,
+      ArgumentBuilder.buildArgs(argDefinitions, Map("limit" -> Some(1))), 5)
     assert(childScoreFive === 1 * NaptimePaginatedResourceField.COMPLEXITY_COST * 5)
 
   }

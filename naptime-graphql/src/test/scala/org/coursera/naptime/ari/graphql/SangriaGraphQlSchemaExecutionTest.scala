@@ -87,7 +87,7 @@ class SangriaGraphQlSchemaExecutionTest extends AssertionsForJUnit with ScalaFut
 
   @Test
   def parseComplexLists(): Unit = {
-    val schema = builder.generateSchema().asInstanceOf[Schema[SangriaGraphQlContext, Any]]
+    val schema = builder.generateSchema().data.asInstanceOf[Schema[SangriaGraphQlContext, Any]]
     val query =
       """
       query {
@@ -125,7 +125,7 @@ class SangriaGraphQlSchemaExecutionTest extends AssertionsForJUnit with ScalaFut
 
   @Test
   def parseAliases(): Unit = {
-    val schema = builder.generateSchema().asInstanceOf[Schema[SangriaGraphQlContext, Any]]
+    val schema = builder.generateSchema().data.asInstanceOf[Schema[SangriaGraphQlContext, Any]]
     val query =
       """
       query {
@@ -172,7 +172,7 @@ class SangriaGraphQlSchemaExecutionTest extends AssertionsForJUnit with ScalaFut
 
   @Test
   def parseUnions(): Unit = {
-    val schema = builder.generateSchema().asInstanceOf[Schema[SangriaGraphQlContext, Any]]
+    val schema = builder.generateSchema().data.asInstanceOf[Schema[SangriaGraphQlContext, Any]]
     val query =
       """
       query {
@@ -213,7 +213,7 @@ class SangriaGraphQlSchemaExecutionTest extends AssertionsForJUnit with ScalaFut
 
   @Test
   def parseDataMapTypes(): Unit = {
-    val schema = builder.generateSchema().asInstanceOf[Schema[SangriaGraphQlContext, Any]]
+    val schema = builder.generateSchema().data.asInstanceOf[Schema[SangriaGraphQlContext, Any]]
     val query =
       """
       query {
@@ -251,7 +251,7 @@ class SangriaGraphQlSchemaExecutionTest extends AssertionsForJUnit with ScalaFut
 
   @Test
   def errorHandling_get_404(): Unit = {
-    val schema = builder.generateSchema().asInstanceOf[Schema[SangriaGraphQlContext, Any]]
+    val schema = builder.generateSchema().data.asInstanceOf[Schema[SangriaGraphQlContext, Any]]
     val query =
       """
       query {
@@ -295,7 +295,7 @@ class SangriaGraphQlSchemaExecutionTest extends AssertionsForJUnit with ScalaFut
 
   @Test
   def complexityCalculation(): Unit = {
-    val schema = builder.generateSchema().asInstanceOf[Schema[SangriaGraphQlContext, Any]]
+    val schema = builder.generateSchema().data.asInstanceOf[Schema[SangriaGraphQlContext, Any]]
     val query =
       """
       query {

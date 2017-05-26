@@ -60,7 +60,7 @@ trait FilterTest
   val builder = new SangriaGraphQlSchemaBuilder(allResources, schemaTypes)
 
 
-  val schema = builder.generateSchema().asInstanceOf[Schema[SangriaGraphQlContext, Any]]
+  val schema = builder.generateSchema().data.asInstanceOf[Schema[SangriaGraphQlContext, Any]]
   when(graphqlSchemaProvider.schema).thenReturn(schema)
 
   def generateIncomingQuery(query: String = defaultQuery) = {

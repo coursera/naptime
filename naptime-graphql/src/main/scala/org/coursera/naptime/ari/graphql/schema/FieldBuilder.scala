@@ -1,3 +1,19 @@
+/*
+ * Copyright 2016 Coursera Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package org.coursera.naptime.ari.graphql.schema
 
 import com.linkedin.data.DataMap
@@ -24,6 +40,7 @@ import com.linkedin.data.schema.validation.ValidateDataAgainstSchema
 import com.linkedin.data.schema.validation.ValidationOptions
 import com.typesafe.scalalogging.StrictLogging
 import org.coursera.courier.templates.DataTemplates.DataConversion
+import org.coursera.naptime.ResourceName
 import org.coursera.naptime.Types.Relations
 import org.coursera.naptime.ari.graphql.SangriaGraphQlContext
 import org.coursera.naptime.ari.graphql.schema.NaptimePaginatedResourceField.ForwardRelation
@@ -56,7 +73,7 @@ object FieldBuilder extends StrictLogging {
       namespace: Option[String],
       fieldNameOverride: Option[String] = None,
       followRelations: Boolean = true,
-      resourceName: String): Field[SangriaGraphQlContext, DataMap] = {
+      resourceName: ResourceName): Field[SangriaGraphQlContext, DataMap] = {
 
     type ResolverType = Context[SangriaGraphQlContext, DataMap] => Value[SangriaGraphQlContext, Any]
 
@@ -67,7 +84,9 @@ object FieldBuilder extends StrictLogging {
     }
 
     val relatedResourceOption = if (followRelations) {
-      forwardRelationOption.orElse(reverseRelationOption.map(_.resourceName))
+      forwardRelationOption
+        .orElse(reverseRelationOption.map(_.resourceName))
+        .flatMap(ResourceName.parse)
     } else {
       None
     }
@@ -82,8 +101,10 @@ object FieldBuilder extends StrictLogging {
       case (Some(relatedResourceName), _: ArrayDataSchema) =>
         val fieldRelation = forwardRelationOption.map(ForwardRelation)
           .orElse(reverseRelationOption.map(ReverseRelation))
+        // TODO(bryan): don't throw away errors from the left here
         NaptimePaginatedResourceField
           .build(schemaMetadata, relatedResourceName, fieldName, None, fieldRelation)
+          .right
           .getOrElse {
             buildField(schemaMetadata, field, namespace, fieldNameOverride,
               followRelations = false, resourceName = resourceName)
@@ -91,8 +112,10 @@ object FieldBuilder extends StrictLogging {
 
       // Single related resource
       case (Some(relatedResourceName), _) =>
+        // TODO(bryan): don't throw away errors from the left here
         NaptimeResourceField
           .build(schemaMetadata, relatedResourceName, fieldName)
+          .right
           .getOrElse {
             buildField(schemaMetadata, field, namespace, fieldNameOverride,
               followRelations = false, resourceName = resourceName)
