@@ -19,6 +19,7 @@ package org.coursera.naptime
 import com.linkedin.data.DataMap
 import org.coursera.naptime.QueryStringParser.NaptimeParseError
 import org.coursera.naptime.schema.RelationType
+import org.coursera.naptime.schema.Resource
 import org.coursera.naptime.schema.ReverseRelationAnnotation
 import play.api.http.Status
 import play.api.i18n.Lang
@@ -437,6 +438,10 @@ object ResourceName {
         }.toOption
       case _ => None
     }
+  }
+
+  def fromResource(resource: Resource): ResourceName = {
+    ResourceName(resource.name, resource.version.getOrElse(0L).toInt)
   }
 }
 

@@ -1,3 +1,19 @@
+/*
+ * Copyright 2016 Coursera Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package org.coursera.naptime.ari.graphql.schema
 
 import com.linkedin.data.schema.RecordDataSchema
@@ -9,17 +25,17 @@ case class SchemaMetadata(
     resources: Set[Resource],
     schemas: Map[String, RecordDataSchema]) {
 
-  def getResource(resourceName: String): Resource = {
+  def getResource(resourceName: ResourceName): Resource = {
     resources.find { resource =>
-      ResourceName(resource.name, resource.version.getOrElse(0L).toInt).identifier == resourceName
+      ResourceName.fromResource(resource) == resourceName
     }.getOrElse {
       throw new RuntimeException(s"Cannot find resource with name $resourceName")
     }
   }
 
-  def getResourceOpt(resourceName: String): Option[Resource] = {
+  def getResourceOpt(resourceName: ResourceName): Option[Resource] = {
     resources.find { resource =>
-      ResourceName(resource.name, resource.version.getOrElse(0L).toInt).identifier == resourceName
+      ResourceName.fromResource(resource) == resourceName
     }
   }
 

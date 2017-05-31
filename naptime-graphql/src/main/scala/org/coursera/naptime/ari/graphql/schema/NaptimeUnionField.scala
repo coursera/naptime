@@ -4,6 +4,7 @@ import com.linkedin.data.DataMap
 import com.linkedin.data.schema.NamedDataSchema
 import com.linkedin.data.schema.RecordDataSchema.{Field => RecordDataSchemaField}
 import com.linkedin.data.schema.UnionDataSchema
+import org.coursera.naptime.ResourceName
 import org.coursera.naptime.ari.graphql.SangriaGraphQlContext
 import sangria.schema.Field
 import sangria.schema.ObjectType
@@ -22,7 +23,7 @@ object NaptimeUnionField {
       unionDataSchema: UnionDataSchema,
       fieldName: String,
       namespace: Option[String],
-      resourceName: String): Field[SangriaGraphQlContext, DataMap] = {
+      resourceName: ResourceName): Field[SangriaGraphQlContext, DataMap] = {
     Field.apply[SangriaGraphQlContext, DataMap, Any, Any](
       name = fieldName,
       fieldType = getType(schemaMetadata, unionDataSchema, fieldName, namespace, resourceName),
@@ -42,7 +43,7 @@ object NaptimeUnionField {
       unionDataSchema: UnionDataSchema,
       fieldName: String,
       namespace: Option[String],
-      resourceName: String): UnionType[SangriaGraphQlContext] = {
+      resourceName: ResourceName): UnionType[SangriaGraphQlContext] = {
 
     val objects = unionDataSchema.getTypes.asScala.map { subType =>
 
@@ -72,9 +73,10 @@ object NaptimeUnionField {
         unionMemberFieldName,
         subTypeField.fieldType,
         resolve = subTypeField.resolve)
+      val formattedResourceName = NaptimeResourceUtils.formatResourceName(resourceName)
 
       ObjectType[SangriaGraphQlContext, DataMap](
-        name = FieldBuilder.formatName(s"$resourceName/${unionMemberKey}Member"),
+        name = FieldBuilder.formatName(s"$formattedResourceName/${unionMemberKey}Member"),
         fields = List(field))
     }.toList
     val unionName = buildFullyQualifiedName(resourceName, fieldName)
@@ -92,8 +94,8 @@ object NaptimeUnionField {
     }
   }
 
-  def buildFullyQualifiedName(namespace: String, fieldName: String): String = {
-    FieldBuilder.formatName(s"$namespace.$fieldName")
+  def buildFullyQualifiedName(resourceName: ResourceName, fieldName: String): String = {
+    FieldBuilder.formatName(s"${NaptimeResourceUtils.formatResourceName(resourceName)}.$fieldName")
   }
 
 

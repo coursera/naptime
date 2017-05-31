@@ -21,7 +21,7 @@ import scala.collection.JavaConverters._
 object NaptimePaginationField extends StrictLogging {
 
   def getField(
-      resourceName: String,
+      resourceName: ResourceName,
       fieldName: String): ObjectType[SangriaGraphQlContext, ParentContext] = {
     val nextResolver = getResolver(resourceName, fieldName)
       .andThen(c => Value[SangriaGraphQlContext, Any](c.value.next))
@@ -56,17 +56,14 @@ object NaptimePaginationField extends StrictLogging {
 
 
   private[schema] def getResolver(
-      resourceName: String,
+      resourceName: ResourceName,
       fieldName: String): Context[SangriaGraphQlContext, ParentContext] => Value[SangriaGraphQlContext, ResponsePagination] = {
     (context: Context[SangriaGraphQlContext, ParentContext]) => {
-      val parsedResourceName = ResourceName.parse(resourceName).getOrElse {
-        throw new SchemaExecutionException(s"Cannot parse resource name from $resourceName")
-      }
-      val responsePagination = context.ctx.response.data.get(parsedResourceName).map { _ =>
+      val responsePagination = context.ctx.response.data.get(resourceName).map { _ =>
         if (context.value.parentContext.value.isEmpty) {
           // Top-Level Request
           context.ctx.response.topLevelResponses.find { case (topLevelRequest, _) =>
-            topLevelRequest.resource.identifier == resourceName &&
+            topLevelRequest.resource == resourceName &&
               topLevelRequest.selection.alias == context.astFields.headOption.flatMap(_.alias)
           }.map(_._2.pagination).getOrElse(ResponsePagination.empty)
         } else {

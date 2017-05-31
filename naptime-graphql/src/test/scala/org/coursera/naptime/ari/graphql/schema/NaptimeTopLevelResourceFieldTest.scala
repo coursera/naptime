@@ -14,26 +14,22 @@
  * limitations under the License.
  */
 
-package org.coursera.naptime.ari.graphql
+package org.coursera.naptime.ari.graphql.schema
 
 import org.coursera.courier.templates.ScalaRecordTemplate
+import org.coursera.naptime.ResourceName
+import org.coursera.naptime.ari.graphql.Models
 import org.coursera.naptime.ari.graphql.models.MergedCourse
 import org.coursera.naptime.ari.graphql.models.MergedInstructor
 import org.coursera.naptime.ari.graphql.models.MergedMultigetFreeEntity
 import org.coursera.naptime.ari.graphql.models.MergedPartner
-import org.coursera.naptime.schema.Handler
-import org.coursera.naptime.schema.HandlerKind
-import org.coursera.naptime.schema.Parameter
-import org.coursera.naptime.schema.Resource
-import org.coursera.naptime.schema.ResourceKind
 import org.junit.Test
 import org.scalatest.junit.AssertionsForJUnit
-import sangria.schema.EnumType
 import sangria.schema.ObjectType
 import sangria.schema.Schema
 import sangria.schema.UnionType
 
-class SangriaGraphQlSchemaBuilderTest extends AssertionsForJUnit {
+class NaptimeTopLevelResourceFieldTest extends AssertionsForJUnit {
 
   val allResources = Set(Models.courseResource, Models.instructorResource,
     Models.partnersResource, Models.multigetFreeEntity)
@@ -44,12 +40,16 @@ class SangriaGraphQlSchemaBuilderTest extends AssertionsForJUnit {
     "org.coursera.naptime.ari.graphql.models.MergedPartner" -> MergedPartner.SCHEMA,
     "org.coursera.naptime.ari.graphql.models.MergedMultigetFreeEntity" -> MergedMultigetFreeEntity.SCHEMA)
 
-  val builder = new SangriaGraphQlSchemaBuilder(allResources, schemaTypes)
+  val schemaMetadata = SchemaMetadata(allResources, schemaTypes)
 
   @Test
   def parseTopLevelFields(): Unit = {
-    val schema = Schema(builder.generateLookupTypeForResource("courses.v1").get)
-    val (_, courseResourceType) = schema.types.get("CoursesV1").get
+    val courseResourceField = NaptimeTopLevelResourceField
+      .generateLookupTypeForResource(Models.courseResource, schemaMetadata)
+      .data
+      .get
+    val schema = Schema(courseResourceField)
+    val (_, courseResourceType) = schema.types("CoursesV1")
     val courseResourceObjectType =
       courseResourceType.asInstanceOf[ObjectType[Unit, ScalaRecordTemplate]]
     val fieldNames = courseResourceObjectType.fieldsByName.keySet
@@ -69,7 +69,11 @@ class SangriaGraphQlSchemaBuilderTest extends AssertionsForJUnit {
 
   @Test
   def parseUnionFields(): Unit = {
-    val schema = Schema(builder.generateLookupTypeForResource("courses.v1").get)
+    val courseResourceField = NaptimeTopLevelResourceField
+      .generateLookupTypeForResource(Models.courseResource, schemaMetadata)
+      .data
+      .get
+    val schema = Schema(courseResourceField)
     val courseUnionType = schema.unionTypes("CoursesV1_originalId")
     val courseUnionUnionType = courseUnionType.asInstanceOf[UnionType[Unit]]
     val unionObjects = courseUnionUnionType.types
@@ -79,7 +83,11 @@ class SangriaGraphQlSchemaBuilderTest extends AssertionsForJUnit {
 
   @Test
   def parseUnionMemberFields(): Unit = {
-    val schema = Schema(builder.generateLookupTypeForResource("courses.v1").get)
+    val courseResourceField = NaptimeTopLevelResourceField
+      .generateLookupTypeForResource(Models.courseResource, schemaMetadata)
+      .data
+      .get
+    val schema = Schema(courseResourceField)
     val (_, coursePlatformMemberType) = schema.types("CoursesV1_intMember")
     val coursePlatformMemberObjectType =
       coursePlatformMemberType.asInstanceOf[ObjectType[Unit, ScalaRecordTemplate]]
@@ -90,18 +98,14 @@ class SangriaGraphQlSchemaBuilderTest extends AssertionsForJUnit {
 
   @Test
   def filtersTopLevelFieldsWithoutMultiget(): Unit = {
-    val schema = builder.generateSchema()
-    val types = schema.types.keys.toSet
+    val multigetFreeFieldAndErrors = NaptimeTopLevelResourceField
+      .generateLookupTypeForResource(Models.multigetFreeEntity, schemaMetadata)
 
-    assert(types.contains("CoursesV1Resource"))
-    assert(types.contains("InstructorsV1Resource"))
-    assert(types.contains("PartnersV1Resource"))
-    assert(types.contains("MultigetFreeEntityV1Resource"))
+    val multigetFreeField = multigetFreeFieldAndErrors.data.get
+    val resourceName = ResourceName.fromResource(Models.multigetFreeEntity)
 
-    val multigetFreeResource = schema.types.get("MultigetFreeEntityV1Resource")
-    val objType = multigetFreeResource.get._2.asInstanceOf[ObjectType[Unit, ScalaRecordTemplate]]
-
-    assert(objType.fieldsFn().map(_.name).toSet === Set("finder", "getAll"))
+    assert(multigetFreeField.fields.map(_.name).toSet === Set("finder", "getAll"))
+    assert(multigetFreeFieldAndErrors.errors.errors.head === HasGetButMissingMultiGet(resourceName))
   }
 
 }

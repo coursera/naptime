@@ -62,15 +62,15 @@ class NaptimePaginationFieldTest extends AssertionsForJUnit with MockitoSugar {
   }
 
   val fieldName = "relatedIds"
-  val resourceName = "courses.v1"
+  val resourceName = ResourceName("courses", 1)
   val resourceContext = SangriaGraphQlContext(Response(
     Map(TopLevelRequest(
-      ResourceName.parse(resourceName).get,
+      resourceName,
       RequestField("", None, Set.empty, List.empty)) ->
     TopLevelResponse(
       ids = new DataList(List("1").asJava),
       pagination = ResponsePagination(None))),
-    Map(ResourceName.parse(resourceName).get -> Map("1" -> new DataMap()))))
+    Map(resourceName -> Map("1" -> new DataMap()))))
 
   @Test
   def resolveNestedEmptyList(): Unit = {
