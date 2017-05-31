@@ -97,6 +97,7 @@ object NaptimeResourceField extends StrictLogging {
       .get(Relations.PROPERTY_NAME)
       .map(_.toString)
 
+    // TODO(bryan): Remove all references to forward relations once fully deprecated
     if (forwardRelationOption.isDefined) {
       (for {
         resourceName <- ResourceName.parse(forwardRelationOption.get)

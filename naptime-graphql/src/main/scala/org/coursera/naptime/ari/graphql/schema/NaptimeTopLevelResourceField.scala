@@ -56,7 +56,6 @@ object NaptimeTopLevelResourceField extends StrictLogging {
       .filterNot(handler => MUTATION_HANDLERS.contains(handler.kind))
       .map { handler =>
         handler.kind match {
-          // We want to make sure that if a resource has a GET handler, it also has a MULTI_GET
           case HandlerKind.GET =>
             generateGetHandler(resource, handler, schemaMetadata)
           case HandlerKind.GET_ALL | HandlerKind.MULTI_GET | HandlerKind.FINDER =>
