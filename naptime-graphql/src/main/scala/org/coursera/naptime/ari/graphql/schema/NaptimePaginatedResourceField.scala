@@ -173,8 +173,7 @@ object NaptimePaginatedResourceField {
             idsWithStart.take(limit)
           }.getOrElse(List.empty)
         }
-        val objectMap = objects.map { case (id, element) => id -> element }.toMap
-        ids.map(id => objectMap(id))
+        ids.flatMap(id => objects.get(id))
       }.getOrElse(List.empty)
 
       Value[SangriaGraphQlContext, Any](connection)

@@ -283,7 +283,7 @@ class EngineImpl @Inject() (
               // MultiGets return a list of ids, and Gets return a single id (or null)
               val intersection = responseIds.filter(id => ids.contains(id.toString))
               val indexedIds = ids.zipWithIndex.toMap
-              val sortedIntersection = intersection.sortBy(id => indexedIds(id.toString))
+              val sortedIntersection = intersection.sortBy(id => indexedIds.get(id.toString).getOrElse(-1))
               val filteredIds = reverse.relationType match {
                 case MULTI_GET => new DataList(sortedIntersection.asJava)
                 case GET => intersection.headOption.orNull
