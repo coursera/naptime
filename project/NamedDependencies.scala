@@ -42,7 +42,7 @@ trait NamedDependencies { this: PluginVersionProvider =>
   val junitInterface = "com.novocode" % "junit-interface" % "0.11" % "test"
   val mockitoCompile = "org.mockito" % "mockito-all" % "1.9.5"
   val mockito = mockitoCompile % "test"
-  val scalatestCompile = "org.scalatest" %% "scalatest" % "2.2.3"
+  val scalatestCompile = "org.scalatest" %% "scalatest" % "3.0.1"
   val scalatest = scalatestCompile % "test"
 
 }
