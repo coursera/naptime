@@ -69,7 +69,7 @@ class NaptimeUnionFieldTest extends AssertionsForJUnit with MockitoSugar {
   }
 
   @Test
-  def build_SingleElementUnion() = {
+  def build_SingleElementUnion(): Unit = {
     val values = List(new IntegerDataSchema())
     val union = buildUnionDataSchema(values)
     val fieldName = "intOnlyUnion"
@@ -83,7 +83,7 @@ class NaptimeUnionFieldTest extends AssertionsForJUnit with MockitoSugar {
   }
 
   @Test
-  def build_TypedDefinitionUnion() = {
+  def build_TypedDefinitionUnion(): Unit = {
     val integerField = new Field(new IntegerDataSchema())
     integerField.setName("integerField", new java.lang.StringBuilder())
     val simpleFieldDataSchema = buildRecordField("simpleField", List(integerField))
@@ -117,7 +117,7 @@ class NaptimeUnionFieldTest extends AssertionsForJUnit with MockitoSugar {
   }
 
   @Test
-  def build_ShorthandTypedDefinitionUnion_InSameNamespace() = {
+  def build_ShorthandTypedDefinitionUnion_InSameNamespace(): Unit = {
     val integerField = new Field(new IntegerDataSchema())
     integerField.setName("integerField", new java.lang.StringBuilder())
     val simpleFieldDataSchema = buildRecordField("simpleField", List(integerField))
@@ -152,7 +152,7 @@ class NaptimeUnionFieldTest extends AssertionsForJUnit with MockitoSugar {
   }
 
   @Test
-  def build_ShorthandTypedDefinitionUnion_InDifferentNamespace() = {
+  def build_ShorthandTypedDefinitionUnion_InDifferentNamespace(): Unit = {
     val integerField = new Field(new IntegerDataSchema())
     integerField.setName("integerField", new java.lang.StringBuilder())
     val simpleFieldDataSchema = buildRecordField("simpleField", List(integerField), "org.coursera.awaketime")

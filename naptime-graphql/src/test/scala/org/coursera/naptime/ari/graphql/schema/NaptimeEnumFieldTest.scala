@@ -35,7 +35,7 @@ class NaptimeEnumFieldTest extends AssertionsForJUnit with MockitoSugar {
   }
 
   @Test
-  def build_RegularEnum() = {
+  def build_RegularEnum(): Unit = {
     val values = List("valueOne", "valueTwo")
     val enum = buildEnumDataSchema(values)
     val field = NaptimeEnumField.build(enum, "myField")
@@ -43,7 +43,7 @@ class NaptimeEnumFieldTest extends AssertionsForJUnit with MockitoSugar {
   }
 
   @Test
-  def build_EmptyEnum() = {
+  def build_EmptyEnum(): Unit = {
     val values = List()
     val expectedValues = List("UNKNOWN")
     val enum = buildEnumDataSchema(values)
