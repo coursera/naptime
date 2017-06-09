@@ -22,6 +22,7 @@ import org.coursera.common.stringkey.StringKeyFormat
 import org.coursera.courier.templates.ScalaRecordTemplate
 import org.coursera.naptime.actions._
 import org.coursera.naptime.resources.CollectionResource
+import org.coursera.naptime.resources.CourierCollectionResource
 import org.coursera.naptime.resources.TopLevelCollectionResource
 import play.api.mvc.RequestHeader
 
@@ -67,6 +68,7 @@ class MacroImpls(val c: blackbox.Context) {
   val STRING_KEY = typeOf[StringKey]
   val COLLECTION_RESOURCE_TYPE = typeOf[CollectionResource[_, _, _]]
   val TOP_LEVEL_COLLECTION = typeOf[TopLevelCollectionResource[_, _]]
+  val TOP_LEVEL_COURIER_COLLECTION = typeOf[CourierCollectionResource[_, _]]
   val STRING_KEY_FORMAT_TYPE_CONSTRUCTOR = weakTypeOf[StringKeyFormat[_]].typeConstructor
 
   val ANY_VAL = typeOf[AnyVal] // Primitive types.
@@ -158,12 +160,14 @@ class MacroImpls(val c: blackbox.Context) {
       val resourceRouterBuilderType = weakTypeOf[ResourceRouterBuilder]
       debug(s"TREES ARE: $trees")
 
-      val parentResourceName = if (resourceType <:< TOP_LEVEL_COLLECTION) {
-        q"None"
-      } else {
-        val collectionTypeView = resourceType.baseType(COLLECTION_RESOURCE_TYPE.typeSymbol)
-        q"Some(${collectionTypeView.typeArgs.head.toString})"
-      }
+      val parentResourceName =
+        if (resourceType <:< TOP_LEVEL_COLLECTION ||
+          resourceType <:< TOP_LEVEL_COURIER_COLLECTION) {
+          q"None"
+        } else {
+          val collectionTypeView = resourceType.baseType(COLLECTION_RESOURCE_TYPE.typeSymbol)
+          q"Some(${collectionTypeView.typeArgs.head.toString})"
+        }
 
       val finalResource = q"""
       new $resourceRouterBuilderType {
