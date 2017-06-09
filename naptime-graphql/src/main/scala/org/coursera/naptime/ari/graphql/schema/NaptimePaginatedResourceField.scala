@@ -173,9 +173,8 @@ object NaptimePaginatedResourceField {
             idsWithStart.take(limit)
           }.getOrElse(List.empty)
         }
-        objects.collect {
-          case (id, element) if ids.contains(id) => element
-        }.toSeq
+        val objectMap = objects.map { case (id, element) => id -> element }.toMap
+        ids.map(id => objectMap(id))
       }.getOrElse(List.empty)
 
       Value[SangriaGraphQlContext, Any](connection)
