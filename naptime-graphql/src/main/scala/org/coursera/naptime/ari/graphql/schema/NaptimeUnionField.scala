@@ -28,13 +28,7 @@ object NaptimeUnionField {
       name = fieldName,
       fieldType = getType(schemaMetadata, unionDataSchema, fieldName, namespace, resourceName),
       resolve = context => {
-        if (unionDataSchema.getProperties.containsKey(TYPED_DEFINITION_KEY)) {
-          val definition = context.value.getDataMap(fieldName).getDataMap("definition")
-          val typeName = context.value.getDataMap(fieldName).getString("typeName")
-          new DataMap(Map(typeName -> definition).asJava)
-        } else {
-          context.value.getDataMap(fieldName)
-        }
+        context.value.getDataMap(fieldName)
       })
   }
 
@@ -72,7 +66,13 @@ object NaptimeUnionField {
       val field = Field.apply[SangriaGraphQlContext, DataMap, Any, Any](
         unionMemberFieldName,
         subTypeField.fieldType,
-        resolve = subTypeField.resolve)
+        resolve = context => {
+          if (unionDataSchema.getProperties.containsKey(TYPED_DEFINITION_KEY)) {
+            Option(context.value.getDataMap("definition")).getOrElse(subTypeField.resolve(context))
+          } else {
+            subTypeField.resolve(context)
+          }
+        })
       val formattedResourceName = NaptimeResourceUtils.formatResourceName(resourceName)
 
       ObjectType[SangriaGraphQlContext, DataMap](
@@ -83,13 +83,18 @@ object NaptimeUnionField {
     new UnionType(unionName, None, objects) {
       // write a custom type mapper to use field names to determine the union member type
       override def typeOf[Ctx](value: Any, schema: Schema[Ctx, _]): Option[ObjectType[Ctx, _]] = {
-        val typedValue = value.asInstanceOf[DataMap]
-        objects.find { obj =>
-          val formattedMemberNames = typedValue.keySet.asScala
-            .flatMap(key => Option(key))
-            .map(FieldBuilder.formatName)
-          obj.fieldsByName.keySet.intersect(formattedMemberNames).nonEmpty
-        }.map(_.asInstanceOf[ObjectType[Ctx, DataMap]])
+        (if (unionDataSchema.getProperties.containsKey(TYPED_DEFINITION_KEY)) {
+          val typeName = value.asInstanceOf[DataMap].getString("typeName")
+          objects.find(_.fieldsByName.keySet.contains(typeName))
+        } else {
+          val typedValue = value.asInstanceOf[DataMap]
+          objects.find { obj =>
+            val formattedMemberNames = typedValue.keySet.asScala
+              .flatMap(key => Option(key))
+              .map(FieldBuilder.formatName)
+            obj.fieldsByName.keySet.intersect(formattedMemberNames).nonEmpty
+          }
+        }).map(_.asInstanceOf[ObjectType[Ctx, DataMap]])
       }
     }
   }
