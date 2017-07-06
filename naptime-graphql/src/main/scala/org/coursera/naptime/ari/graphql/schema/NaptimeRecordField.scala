@@ -17,27 +17,29 @@ object NaptimeRecordField {
       recordDataSchema: RecordDataSchema,
       fieldName: String,
       namespace: Option[String],
-      resourceName: ResourceName) = {
+      resourceName: ResourceName,
+      currentPath: List[String]) = {
 
-    Field.apply[SangriaGraphQlContext, DataMap, Any, Any](
+    Field.apply[SangriaGraphQlContext, DataMapWithParent, Any, Any](
       name = FieldBuilder.formatName(fieldName),
-      fieldType = getType(schemaMetadata, recordDataSchema, namespace, resourceName),
-      resolve = context => context.value.getDataMap(fieldName))
+      fieldType = getType(schemaMetadata, recordDataSchema, namespace, resourceName, currentPath :+ fieldName),
+      resolve = context => context.value.copy(element = context.value.element.getDataMap(fieldName)))
   }
 
   private[schema] def getType(
       schemaMetadata: SchemaMetadata,
       recordDataSchema: RecordDataSchema,
       namespace: Option[String],
-      resourceName: ResourceName): ObjectType[SangriaGraphQlContext, DataMap] = {
+      resourceName: ResourceName,
+      currentPath: List[String]): ObjectType[SangriaGraphQlContext, DataMapWithParent] = {
 
     val formattedResourceName = NaptimeResourceUtils.formatResourceName(resourceName)
-    ObjectType[SangriaGraphQlContext, DataMap](
+    ObjectType[SangriaGraphQlContext, DataMapWithParent](
       FieldBuilder.formatName(s"${formattedResourceName}_${recordDataSchema.getFullName}"),
       recordDataSchema.getDoc,
       fieldsFn = () => {
         val fields = recordDataSchema.getFields.asScala.map { field =>
-          FieldBuilder.buildField(schemaMetadata, field, namespace, resourceName = resourceName)
+          FieldBuilder.buildField(schemaMetadata, field, namespace, resourceName = resourceName, currentPath = currentPath)
         }.toList
         if (fields.isEmpty) {
           // TODO(bryan): Handle this case better
@@ -49,7 +51,7 @@ object NaptimeRecordField {
   }
 
   val EMPTY_FIELDS_FALLBACK = List(
-    Field.apply[SangriaGraphQlContext, DataMap, Any, Any](
+    Field.apply[SangriaGraphQlContext, DataMapWithParent, Any, Any](
       "ArbitraryField",
       StringType,
       resolve = context => null))

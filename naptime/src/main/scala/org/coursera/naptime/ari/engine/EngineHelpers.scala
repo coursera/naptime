@@ -21,7 +21,10 @@ import com.linkedin.data.element.DataElement
 import com.linkedin.data.it.Builder
 import com.linkedin.data.it.IterationOrder
 import com.linkedin.data.schema.ArrayDataSchema
+import com.linkedin.data.schema.DataSchema
+import com.linkedin.data.schema.NamedDataSchema
 import com.linkedin.data.schema.RecordDataSchema
+import com.linkedin.data.schema.UnionDataSchema
 import com.typesafe.scalalogging.StrictLogging
 import org.coursera.courier.templates.DataTemplates.DataConversion
 import org.coursera.naptime.ResourceName
@@ -109,6 +112,31 @@ object EngineHelpers extends StrictLogging {
     }
   }
 
+  // TODO(bryan): Dedupe this from NaptimeUnionField
+  val TYPED_DEFINITION_KEY = "typedDefinition"
+  def getTypedDefinition(dataSchema: DataSchema): Option[Map[String, String]] = {
+    Option(dataSchema).flatMap(schema => Option(schema.getProperties.get(TYPED_DEFINITION_KEY)).collect {
+      case definitions: java.util.Map[String @unchecked, String @unchecked] => definitions.asScala.toMap
+    })
+  }
+
+  private[this] def replaceTypedDefinitionNames(dataElement: DataElement): List[String] = {
+    val thisName = (for {
+      parent <- Option(dataElement.getParent)
+      schema <- Option(parent.getSchema)
+      _ <- getTypedDefinition(schema)
+        if dataElement.getName.toString == "definition"
+      typeName <- Option(dataElement.getParent.getValue).flatMap {
+        case dataMap: DataMap => Option(dataMap.getString("typeName"))
+        case _ => None
+      }
+    } yield {
+      typeName
+    }).getOrElse(dataElement.getName.toString)
+    val parentNames = Option(dataElement.getParent).map(replaceTypedDefinitionNames)
+    (parentNames.getOrElse(List.empty) :+ thisName).filterNot(_.isEmpty)
+  }
+
   /**
     * Iterates through a data map and returns the value stored at a particular path in the data map,
     * or None if the path isn't found (or the data is null)
@@ -117,17 +145,18 @@ object EngineHelpers extends StrictLogging {
     * @param schema data schema defining the fields on the element
     * @param path list of strings defining the path to the target element
     */
-  private[engine] def getValueAtPath(
+  private[naptime] def getValueAtPath(
       element: DataMap,
       schema: RecordDataSchema,
       path: Seq[String]): Option[Object] = {
-      val it = Builder.create(element, schema, IterationOrder.PRE_ORDER).dataIterator()
-      Iterator
-        .continually(it.next)
-        .takeWhile(_ != null)
-        .find(_.path.toSeq.map(_.toString) == path.dropRight(1))
-        .map(_.getValue.asInstanceOf[DataMap].get(path.last))
-        .flatMap(Option(_))
+    println(s"element: $element")
+    val it = Builder.create(element, schema, IterationOrder.PRE_ORDER).dataIterator()
+    Iterator
+      .continually(it.next)
+      .takeWhile(_ != null)
+      .find(dataElement => replaceTypedDefinitionNames(dataElement) == path.dropRight(1))
+      .map(_.getValue.asInstanceOf[DataMap].get(path.last))
+      .flatMap(Option(_))
   }
 
   /**

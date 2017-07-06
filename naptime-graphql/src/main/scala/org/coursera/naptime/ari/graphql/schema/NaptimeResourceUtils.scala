@@ -16,9 +16,17 @@
 
 package org.coursera.naptime.ari.graphql.schema
 
+import com.linkedin.data.DataList
 import com.typesafe.scalalogging.StrictLogging
 import org.coursera.naptime.ResourceName
+import org.coursera.naptime.ari.engine.EngineHelpers
 import org.coursera.naptime.schema.Handler
+import org.coursera.naptime.schema.ReverseRelationAnnotation
+import play.api.libs.json.JsArray
+import play.api.libs.json.JsNull
+import play.api.libs.json.JsNumber
+import play.api.libs.json.JsString
+import play.api.libs.json.JsValue
 import sangria.marshalling.FromInput
 import sangria.schema.Argument
 import sangria.schema.BigDecimalType
@@ -30,6 +38,10 @@ import sangria.schema.ListInputType
 import sangria.schema.LongType
 import sangria.schema.OptionInputType
 import sangria.schema.StringType
+
+import scala.collection.JavaConverters._
+import scala.util.Try
+import scala.util.matching.Regex
 
 object NaptimeResourceUtils extends StrictLogging {
   private[this] val PAGINATION_ARGUMENT_NAMES: List[String] =
@@ -116,4 +128,60 @@ object NaptimeResourceUtils extends StrictLogging {
   def formatResourceName(resourceName: ResourceName): String = {
     s"${resourceName.topLevelName.capitalize}V${resourceName.version}"
   }
+
+
+  /**
+    * This regex is used to match both "$instructorIds" and "${instructorDetails/instructorIds}"
+    */
+  val InterpolationRegex =
+    new Regex("""\$(?:([a-zA-Z0-9_]+)|\{([^\}]+)\})""", "withoutBraces", "withBraces")
+
+
+  // TODO(bryan): Fix the number parsing here
+  def parseToJson(value: Any): JsValue = {
+    value match {
+      case None => JsNull
+      case Some(someValue) => parseToJson(someValue)
+      case str: String => Try(JsNumber(str.toInt)).toOption.getOrElse(JsString(str))
+      case traversable: Traversable[Any] => JsArray(traversable.map(parseToJson).toSeq)
+      case int: Int => JsNumber(int)
+      case long: Long => JsNumber(long)
+      case float: Float => JsNumber(float.toLong)
+      case double: Double => JsNumber(double)
+      case _ => JsString(value.toString)
+    }
+  }
+
+  def interpolateArguments(
+      data: DataMapWithParent,
+      relation: ReverseRelationAnnotation): Set[(String, JsValue)] = {
+
+    relation.arguments
+      .mapValues { value =>
+        InterpolationRegex.replaceAllIn(
+          value, { regexMatch =>
+            val withoutBraces = Option(regexMatch.group("withoutBraces"))
+            val withBraces = Option(regexMatch.group("withBraces"))
+            val variableName = withoutBraces.orElse(withBraces).getOrElse("")
+            val fieldName = variableName.split("/").last
+            EngineHelpers.getValueAtPath(
+              data.parentModel.value,
+              data.parentModel.schema,
+              variableName.split("/")).map {
+              case dataList: DataList => dataList.asScala.mkString(",")
+              case other: Any => other.toString
+            }.getOrElse("")
+          })
+      }
+      .filterNot(_._2.isEmpty)
+      .mapValues { value =>
+        val values = value.split(",").map(NaptimeResourceUtils.parseToJson)
+        if (values.length > 1) {
+          JsArray(values)
+        } else {
+          values.headOption.getOrElse(JsNull)
+        }
+      }
+      .toSet
+    }
 }

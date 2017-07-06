@@ -8,5 +8,5 @@ class DefaultFilters @Inject() (
     queryComplexityFilter: QueryComplexityFilter,
     engineMetricsFilter: EngineMetricsFilter)
   extends FilterList(List(
-    queryComplexityFilter,
+//    queryComplexityFilter,
     engineMetricsFilter))

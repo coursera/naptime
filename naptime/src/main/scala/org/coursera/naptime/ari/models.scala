@@ -29,24 +29,6 @@ import play.api.mvc.RequestHeader
 import scala.concurrent.Future
 import scala.concurrent.duration.FiniteDuration
 
-/**
- * The engine layer presents this EngineAPI to the presentation layer. The engine layer handles query validation,
- * execution planning & optimization, and finally orchestrates the fetching of data by leveraging the [[FetcherApi]].
- *
- * Engine's must be threadsafe as they are called from multiple threads simultaneously.
- */
-trait EngineApi {
-  /**
-   * Fetches all data needed to formulate a response to the query.
-   *
-   * TODO: Consider returning an `Either[Set[Errors], Future[Response]]` instead for more structured validation errors
-   *
-   * @param request The resource request to execute.
-   * @return A future of all available data needed to construct a response to the query. It is up to the presentation
-   *         layer to turn that into the response format as required.
-   */
-  def execute(request: Request): Future[Response]
-}
 
 /**
  * The fetcher calls the Naptime APIs (either local or remote) to acquire all of the data necessary.

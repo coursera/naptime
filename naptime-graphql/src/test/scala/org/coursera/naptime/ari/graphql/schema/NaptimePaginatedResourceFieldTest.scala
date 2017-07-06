@@ -30,7 +30,7 @@ class NaptimePaginatedResourceFieldTest extends AssertionsForJUnit with MockitoS
 
   val fieldName = "relatedIds"
   val resourceName = ResourceName("courses", 1)
-  val context = SangriaGraphQlContext(Response.empty)
+  val context = SangriaGraphQlContext(Response.empty, null, null)
 
   private[this] val schemaMetadata = mock[SchemaMetadata]
   private[this] val resource = Models.courseResource

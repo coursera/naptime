@@ -29,11 +29,16 @@ class CoursesResource @Inject() (
         resourceName = ResourceName("partners", 1),
         id = "$partnerId",
         description = "Partner who produces this course."),
-      "courseMetadata/org.coursera.example.CertificateCourseMetadata/certificateInstructor" ->
-        GetReverseRelation(
+      "courseMetadata/org.coursera.example.CertificateCourseMetadata/certificateInstructors" ->
+        MultiGetReverseRelation(
           resourceName = ResourceName("instructors", 1),
-          id = "${courseMetadata/org.coursera.example.CertificateCourseMetadata/certificateInstructorId}",
-          description = "Instructor who's name and signature appears on the course certificate."))
+          ids = "${courseMetadata/certificate/certificateInstructorIds}",
+          description = "Instructor who's name and signature appears on the course certificate."),
+      "courseMetadata/org.coursera.example.DegreeCourseMetadata/degreeInstructors" ->
+        MultiGetReverseRelation(
+          resourceName = ResourceName("instructors", 1),
+          ids = "${courseMetadata/degree/degreeInstructorIds}",
+          description = "Instructor who's name and signature appears on the degree certificate."))
 
   def get(id: String = "v1-123") = Nap.get { context =>
     OkIfPresent(id, courseStore.get(id))
@@ -64,6 +69,7 @@ class CoursesResource @Inject() (
     val courses = courseStore.all()
       .filter(course => course._2.instructorIds.map(_.toString).contains(instructorId))
     Ok(courses.toList.map { case (id, course) => Keyed(id, course) })
+      .withPagination(next = "testNext")
   }
 
 }

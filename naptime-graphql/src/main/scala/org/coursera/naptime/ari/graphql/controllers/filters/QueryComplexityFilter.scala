@@ -9,6 +9,7 @@ import org.coursera.naptime.ari.graphql.GraphqlSchemaProvider
 import org.coursera.naptime.ari.graphql.SangriaGraphQlContext
 import org.coursera.naptime.ari.graphql.controllers.GraphQLController
 import org.coursera.naptime.ari.graphql.marshaller.NaptimeMarshaller._
+import org.coursera.naptime.ari.graphql.resolvers.NaptimeResolver
 import play.api.libs.json.JsObject
 import play.api.libs.json.Json
 import play.api.mvc.Results
@@ -66,10 +67,11 @@ class QueryComplexityFilter @Inject() (
     val executorFut = Executor.execute(
       graphqlSchemaProvider.schema,
       queryAst,
-      SangriaGraphQlContext(Response.empty),
+      SangriaGraphQlContext(Response.empty, null, null),
       variables = variables,
       exceptionHandler = GraphQLController.exceptionHandler(logger),
-      queryReducers = List(complReducer))
+      queryReducers = List(complReducer),
+      deferredResolver = new NaptimeResolver())
 
     executorFut.map { _ =>
       complexity

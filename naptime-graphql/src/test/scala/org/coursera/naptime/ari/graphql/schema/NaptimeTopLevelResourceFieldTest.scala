@@ -58,10 +58,10 @@ class NaptimeTopLevelResourceFieldTest extends AssertionsForJUnit {
       "name",
       "description",
       "slug",
-      "instructors",
+      "instructorIds",
       "originalId",
       "platformSpecificData",
-      "partner",
+      "partnerId",
       "coursePlatform",
       "arbitraryData")
     assert(fieldNames === expectedFieldNames)

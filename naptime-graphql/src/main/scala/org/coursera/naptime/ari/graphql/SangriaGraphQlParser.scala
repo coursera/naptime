@@ -127,7 +127,7 @@ object SangriaGraphQlParser extends GraphQlParser {
 
   }
 
-  private[this] def parseValue(
+  def parseValue(
       sangriaValue: Value,
       variables: JsObject): JsValue = {
     sangriaValue match {
