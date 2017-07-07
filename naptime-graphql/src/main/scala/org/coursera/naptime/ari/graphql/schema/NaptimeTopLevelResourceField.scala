@@ -18,10 +18,12 @@ package org.coursera.naptime.ari.graphql.schema
 
 import com.linkedin.data.DataMap
 import com.typesafe.scalalogging.StrictLogging
+import org.coursera.courier.templates.DataTemplates.DataConversion
 import org.coursera.naptime.ResourceName
 import org.coursera.naptime.ari.graphql.SangriaGraphQlContext
 import org.coursera.naptime.schema.Handler
 import org.coursera.naptime.schema.HandlerKind
+import org.coursera.naptime.schema.JsValue
 import org.coursera.naptime.schema.Resource
 import sangria.schema.Argument
 import sangria.schema.Context
@@ -31,6 +33,8 @@ import sangria.schema.ObjectType
 import collection.JavaConverters._
 
 object NaptimeTopLevelResourceField extends StrictLogging {
+
+  private[this] val EMPTY_JS_VALUE = JsValue.build(new DataMap(), DataConversion.SetReadOnly)
 
   val MUTATION_HANDLERS: Set[HandlerKind] = Set(
     HandlerKind.ACTION,
@@ -73,13 +77,12 @@ object NaptimeTopLevelResourceField extends StrictLogging {
     val description = resource.attributes
       .find(_.name == "doc")
       .map { attribute =>
-        val data = attribute.data()
+        val data = attribute.value.getOrElse(EMPTY_JS_VALUE).data()
         data.keySet.asScala.map { key =>
           val valueStr = Option(data.get(key)).map(_.toString).getOrElse("???")
           s"$key -> $valueStr"
-        }
-      }
-    .mkString("Attributes:\n", "\n", "")
+        }.mkString("Attributes:\n", "\n", "")
+      }.getOrElse("???")
 
     if (fields.nonEmpty) {
       val resourceObjectType = ObjectType[SangriaGraphQlContext, DataMap](
