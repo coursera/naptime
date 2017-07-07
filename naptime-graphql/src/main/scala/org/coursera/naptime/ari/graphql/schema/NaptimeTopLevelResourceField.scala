@@ -68,10 +68,16 @@ object NaptimeTopLevelResourceField extends StrictLogging {
     val fields = fieldsAndErrors.flatMap(_.right.toOption)
     val errors = SchemaErrors(fieldsAndErrors.flatMap(_.left.toOption))
 
+    val resourceService = resource.attributes
+      .find(attribute => attribute.name == "doc")
+      .map(attribute => attribute.value.get.data().getString("service"))
+      .getOrElse("")
+
     if (fields.nonEmpty) {
       val resourceObjectType = ObjectType[SangriaGraphQlContext, DataMap](
         name = formatResourceTopLevelName(resource),
-        fieldsFn = () => fields)
+        fieldsFn = () => fields,
+        description = resourceService)
       WithSchemaErrors(Some(resourceObjectType), errors)
     } else {
       WithSchemaErrors(None, errors + NoHandlersAvailable(resourceName))
