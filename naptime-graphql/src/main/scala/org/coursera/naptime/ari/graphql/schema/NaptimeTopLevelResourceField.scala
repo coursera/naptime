@@ -28,6 +28,8 @@ import sangria.schema.Context
 import sangria.schema.Field
 import sangria.schema.ObjectType
 
+import collection.JavaConverters._
+
 object NaptimeTopLevelResourceField extends StrictLogging {
 
   val MUTATION_HANDLERS: Set[HandlerKind] = Set(
@@ -68,16 +70,22 @@ object NaptimeTopLevelResourceField extends StrictLogging {
     val fields = fieldsAndErrors.flatMap(_.right.toOption)
     val errors = SchemaErrors(fieldsAndErrors.flatMap(_.left.toOption))
 
-    val resourceService = resource.attributes
-      .find(attribute => attribute.name == "doc")
-      .map(attribute => attribute.value.get.data().getString("service"))
-      .getOrElse("")
+    val description = resource.attributes
+      .find(_.name == "doc")
+      .map { attribute =>
+        val data = attribute.data()
+        data.keySet.asScala.map { key =>
+          val valueStr = Option(data.get(key)).map(_.toString).getOrElse("???")
+          s"$key -> $valueStr"
+        }
+      }
+    .mkString("Attributes:\n", "\n", "")
 
     if (fields.nonEmpty) {
       val resourceObjectType = ObjectType[SangriaGraphQlContext, DataMap](
         name = formatResourceTopLevelName(resource),
         fieldsFn = () => fields,
-        description = resourceService)
+        description = description)
       WithSchemaErrors(Some(resourceObjectType), errors)
     } else {
       WithSchemaErrors(None, errors + NoHandlersAvailable(resourceName))
