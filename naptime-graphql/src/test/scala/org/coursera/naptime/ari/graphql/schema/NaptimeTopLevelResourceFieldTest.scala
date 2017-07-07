@@ -64,7 +64,10 @@ class NaptimeTopLevelResourceFieldTest extends AssertionsForJUnit {
       "partner",
       "coursePlatform",
       "arbitraryData")
+    val expectedServiceName = "myService"
+
     assert(fieldNames === expectedFieldNames)
+    assert(courseResourceField.description === Some(expectedServiceName))
   }
 
   @Test
