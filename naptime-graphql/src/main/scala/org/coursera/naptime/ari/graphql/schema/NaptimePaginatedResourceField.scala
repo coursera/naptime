@@ -16,10 +16,8 @@
 
 package org.coursera.naptime.ari.graphql.schema
 
-import com.linkedin.data.DataList
 import org.coursera.naptime.ResourceName
 import org.coursera.naptime.ResponsePagination
-import org.coursera.naptime.ari.engine.EngineHelpers
 import org.coursera.naptime.ari.graphql.SangriaGraphQlContext
 import org.coursera.naptime.ari.graphql.resolvers.DeferredNaptimeRequest
 import org.coursera.naptime.ari.graphql.resolvers.NaptimeResponse
@@ -29,13 +27,12 @@ import org.coursera.naptime.schema.RelationType
 import org.coursera.naptime.schema.Resource
 import org.coursera.naptime.schema.ReverseRelationAnnotation
 import play.api.libs.json.JsArray
-import play.api.libs.json.JsNull
 import play.api.libs.json.JsValue
+import sangria.schema.DeferredValue
 import sangria.schema.Field
 import sangria.schema.ListType
 import sangria.schema.ObjectType
-
-import scala.collection.JavaConverters._
+import sangria.schema.OptionType
 
 object NaptimePaginatedResourceField {
 
@@ -49,7 +46,6 @@ object NaptimePaginatedResourceField {
       fieldRelationOpt: Option[ReverseRelationAnnotation],
       currentPath: List[String]):
     Either[SchemaError, Field[SangriaGraphQlContext, DataMapWithParent]] = {
-
     (for {
       resource <- schemaMetadata.getResourceOpt(resourceName)
       resourceMergedType <- schemaMetadata.getSchema(resource)
@@ -91,7 +87,7 @@ object NaptimePaginatedResourceField {
           .filterNot(arg => providedArguments.contains(arg.name))
         Field.apply[SangriaGraphQlContext, DataMapWithParent, NaptimeResponse, Any](
           name = fieldName,
-          fieldType = getType(schemaMetadata, resourceName, fieldName),
+          fieldType = OptionType(getType(schemaMetadata, resourceName, fieldName)),
           resolve = context => {
 
             val extraArguments = fieldRelationOpt.map { fieldRelation =>
@@ -130,7 +126,17 @@ object NaptimePaginatedResourceField {
               (args, None)
             }
 
-            DeferredNaptimeRequest(resourceName, updatedArgs, resourceMergedType, paginationOverride)
+            DeferredValue(DeferredNaptimeRequest(
+              resourceName, updatedArgs, resourceMergedType, paginationOverride))
+              .map {
+                case Left(error) =>
+                  throw HttpException(error.toString)
+                case Right(response) => {
+                  val limit = context.arg(NaptimePaginationField.limitArgument)
+                  // If more results are returned than requested, only take up to the limit
+                  response.copy(elements = response.elements.take(limit))
+                }
+              }(context.ctx.executionContext)
           },
           complexity = Some(
             (ctx, args, childScore) => {

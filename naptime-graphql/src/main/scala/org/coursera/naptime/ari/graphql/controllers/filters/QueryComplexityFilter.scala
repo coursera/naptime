@@ -67,7 +67,7 @@ class QueryComplexityFilter @Inject() (
     val executorFut = Executor.execute(
       graphqlSchemaProvider.schema,
       queryAst,
-      SangriaGraphQlContext(Response.empty, null, null),
+      SangriaGraphQlContext(Response.empty, null, null, null),
       variables = variables,
       exceptionHandler = GraphQLController.exceptionHandler(logger),
       queryReducers = List(complReducer),

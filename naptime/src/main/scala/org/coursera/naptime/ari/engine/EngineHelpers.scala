@@ -149,7 +149,6 @@ object EngineHelpers extends StrictLogging {
       element: DataMap,
       schema: RecordDataSchema,
       path: Seq[String]): Option[Object] = {
-    println(s"element: $element")
     val it = Builder.create(element, schema, IterationOrder.PRE_ORDER).dataIterator()
     Iterator
       .continually(it.next)

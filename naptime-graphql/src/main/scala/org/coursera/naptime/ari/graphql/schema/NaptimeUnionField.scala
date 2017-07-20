@@ -62,7 +62,6 @@ object NaptimeUnionField {
       }
 
       val unionMemberFieldName = FieldBuilder.formatName(unionMemberKey)
-      println(s"unionMemberKey: $unionMemberKey")
       val subTypeField = FieldBuilder.buildField(
         schemaMetadata,
         new RecordDataSchemaField(subType),

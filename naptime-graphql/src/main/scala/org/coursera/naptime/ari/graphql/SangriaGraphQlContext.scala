@@ -20,9 +20,12 @@ import org.coursera.naptime.ari.FetcherApi
 import org.coursera.naptime.ari.Response
 import play.api.mvc.RequestHeader
 
+import scala.concurrent.ExecutionContext
+
 // TODO(bryan): Fix these null values
 // TODO(bryan): Remove `response`
 case class SangriaGraphQlContext(
     response: Response,
     fetcher: FetcherApi = null,
-    requestHeader: RequestHeader = null)
+    requestHeader: RequestHeader = null,
+    executionContext: ExecutionContext = null)

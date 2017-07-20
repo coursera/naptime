@@ -21,11 +21,13 @@ import com.typesafe.scalalogging.StrictLogging
 import org.coursera.naptime.ResourceName
 import org.coursera.naptime.ari.graphql.SangriaGraphQlContext
 import org.coursera.naptime.ari.graphql.resolvers.DeferredNaptimeElement
+import org.coursera.naptime.ari.graphql.resolvers.DeferredNaptimeRequest
 import org.coursera.naptime.schema.HandlerKind
 import org.coursera.naptime.schema.Resource
 import org.coursera.naptime.schema.ReverseRelationAnnotation
 import play.api.libs.json.JsNull
 import sangria.schema.Context
+import sangria.schema.DeferredValue
 import sangria.schema.Field
 import sangria.schema.ObjectType
 import sangria.schema.OptionType
@@ -57,7 +59,7 @@ object NaptimeResourceField extends StrictLogging {
       getType(schemaMetadata, resourceName).right.map { fieldType =>
         Field.apply[SangriaGraphQlContext, DataMapWithParent, Any, Any](
           name = fieldName,
-          fieldType = fieldType,
+          fieldType = OptionType(fieldType),
           resolve = getResolver(resourceName, fieldName, fieldRelation, resourceMergedType),
           arguments = arguments,
           complexity = Some(
@@ -99,17 +101,24 @@ object NaptimeResourceField extends StrictLogging {
       fieldRelationOpt: Option[ReverseRelationAnnotation],
       resourceMergedType: RecordDataSchema): FieldBuilder.ResolverType = {
     (context: Context[SangriaGraphQlContext, DataMapWithParent]) => {
+
       // TODO(bryan): refactor all of this
       val extraArguments = fieldRelationOpt.map { fieldRelation =>
         NaptimeResourceUtils.interpolateArguments(context.value, fieldRelation)
       }.getOrElse {
-        Set("ids" -> context.arg("id"))
+        Set("ids" -> NaptimeResourceUtils.parseToJson(context.arg("id")))
       }
       val args = context.args.raw.mapValues(NaptimeResourceUtils.parseToJson).toSet ++ extraArguments
       val idArg = args.find(_._1 == "ids").map(_._2).getOrElse(JsNull)
       val nonIdArgs = args.filter(_._1 != "ids")
 
-      DeferredNaptimeElement(resourceName, idArg, nonIdArgs, resourceMergedType)
+      DeferredValue(DeferredNaptimeElement(resourceName, idArg, nonIdArgs, resourceMergedType))
+        .map {
+          case Left(error) =>
+            throw HttpException(error.toString)
+          case Right(response) =>
+            response.elements.headOption
+        }(context.ctx.executionContext)
     }
   }
 

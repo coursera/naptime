@@ -26,11 +26,13 @@ import org.mockito.Mockito.when
 import org.scalatest.junit.AssertionsForJUnit
 import org.scalatest.mock.MockitoSugar
 
+import scala.concurrent.ExecutionContext
+
 class NaptimePaginatedResourceFieldTest extends AssertionsForJUnit with MockitoSugar {
 
   val fieldName = "relatedIds"
   val resourceName = ResourceName("courses", 1)
-  val context = SangriaGraphQlContext(Response.empty, null, null)
+  val context = SangriaGraphQlContext(Response.empty, null, null, ExecutionContext.global)
 
   private[this] val schemaMetadata = mock[SchemaMetadata]
   private[this] val resource = Models.courseResource
@@ -40,7 +42,7 @@ class NaptimePaginatedResourceFieldTest extends AssertionsForJUnit with MockitoS
   @Test
   def computeComplexity(): Unit = {
     val field = NaptimePaginatedResourceField.build(
-      schemaMetadata, resourceName, fieldName, None, None)
+      schemaMetadata, resourceName, fieldName, None, None, List.empty)
 
     val argDefinitions = NaptimePaginationField.paginationArguments
 

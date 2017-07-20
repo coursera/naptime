@@ -115,7 +115,7 @@ class GraphQLController @Inject() (
       QueryParser.parse(query) match {
         case Success(queryAst) =>
           val baseFilter: IncomingQuery => Future[OutgoingQuery] = (incoming: IncomingQuery) => {
-            val context = SangriaGraphQlContext(Response.empty, fetcher, requestHeader)
+            val context = SangriaGraphQlContext(Response.empty, fetcher, requestHeader, ec)
             Executor.execute(
               graphqlSchemaProvider.schema,
               queryAst,
