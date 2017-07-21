@@ -1,11 +1,16 @@
 package org.coursera.naptime.ari.graphql
 
-import org.coursera.naptime.schema.Handler
+import com.linkedin.data.DataMap
+import org.coursera.courier.templates.DataTemplates.DataConversion
+import org.coursera.naptime.schema.Attribute
 import org.coursera.naptime.schema.Handler
 import org.coursera.naptime.schema.HandlerKind
+import org.coursera.naptime.schema.JsValue
 import org.coursera.naptime.schema.Parameter
 import org.coursera.naptime.schema.Resource
 import org.coursera.naptime.schema.ResourceKind
+
+import scala.collection.JavaConverters._
 
 object Models {
 
@@ -33,7 +38,9 @@ object Models {
         parameters = List.empty,
         attributes = List.empty)),
     className = "",
-    attributes = List.empty)
+    attributes = List(Attribute("doc", Some(JsValue.build(
+      new DataMap(Map("service" -> "myService").asJava),
+      DataConversion.SetReadOnly)))))
 
   val instructorResource = Resource(
     kind = ResourceKind.COLLECTION,
