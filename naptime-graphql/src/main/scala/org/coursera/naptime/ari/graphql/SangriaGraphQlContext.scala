@@ -22,10 +22,7 @@ import play.api.mvc.RequestHeader
 
 import scala.concurrent.ExecutionContext
 
-// TODO(bryan): Fix these null values
-// TODO(bryan): Remove `response`
 case class SangriaGraphQlContext(
-    response: Response,
-    fetcher: FetcherApi = null,
-    requestHeader: RequestHeader = null,
-    executionContext: ExecutionContext = null)
+    fetcher: FetcherApi,
+    requestHeader: RequestHeader,
+    executionContext: ExecutionContext)

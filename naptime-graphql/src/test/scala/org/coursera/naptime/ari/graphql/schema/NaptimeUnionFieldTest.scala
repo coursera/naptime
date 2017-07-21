@@ -24,7 +24,7 @@ import com.linkedin.data.schema.RecordDataSchema.Field
 import com.linkedin.data.schema.RecordDataSchema.RecordType
 import org.junit.Test
 import org.scalatest.junit.AssertionsForJUnit
-import org.scalatest.mock.MockitoSugar
+import org.scalatest.mockito.MockitoSugar
 import com.linkedin.data.schema.UnionDataSchema
 import org.coursera.naptime.ResourceName
 import org.coursera.naptime.ari.graphql.Models
@@ -73,7 +73,7 @@ class NaptimeUnionFieldTest extends AssertionsForJUnit with MockitoSugar {
     val values = List(new IntegerDataSchema())
     val union = buildUnionDataSchema(values)
     val fieldName = "intOnlyUnion"
-    val field = NaptimeUnionField.build(schemaMetadata, union, fieldName, None, resourceName)
+    val field = NaptimeUnionField.build(schemaMetadata, union, fieldName, None, resourceName, List.empty)
 
     val expectedUnionTypes = List(
       ObjectType("CoursesV1_intMember", List(
@@ -95,7 +95,7 @@ class NaptimeUnionFieldTest extends AssertionsForJUnit with MockitoSugar {
       "org.coursera.naptime.complexField" -> "hard"))
 
     val fieldName = "typedDefinitionTestField"
-    val field = NaptimeUnionField.build(schemaMetadata, union, fieldName, None, resourceName)
+    val field = NaptimeUnionField.build(schemaMetadata, union, fieldName, None, resourceName, List.empty)
 
     val expectedUnionTypes = List(
       ObjectType("CoursesV1_easyMember", List(
@@ -104,14 +104,16 @@ class NaptimeUnionFieldTest extends AssertionsForJUnit with MockitoSugar {
           simpleFieldDataSchema,
           "easy",
           Some("org.coursera.naptime"),
-          resourceName))),
+          resourceName,
+          List.empty))),
       ObjectType("CoursesV1_hardMember", List(
         NaptimeRecordField.build(
           schemaMetadata,
           complexFieldDataSchema,
           "hard",
           Some("org.coursera.naptime"),
-          resourceName))))
+          resourceName,
+          List.empty))))
     val expectedField = UnionType("CoursesV1_typedDefinitionTestField", None, expectedUnionTypes)
     assert(field.fieldType.toString === expectedField.toString)
   }
@@ -130,7 +132,7 @@ class NaptimeUnionFieldTest extends AssertionsForJUnit with MockitoSugar {
       Map("namespace" -> "org.coursera.naptime"))
 
     val fieldName = "typedDefinitionTestField"
-    val field = NaptimeUnionField.build(schemaMetadata, union, fieldName, None, resourceName)
+    val field = NaptimeUnionField.build(schemaMetadata, union, fieldName, None, resourceName, List.empty)
 
     val expectedUnionTypes = List(
       ObjectType("CoursesV1_easyMember", List(
@@ -139,14 +141,16 @@ class NaptimeUnionFieldTest extends AssertionsForJUnit with MockitoSugar {
           simpleFieldDataSchema,
           "easy",
           Some("org.coursera.naptime"),
-          resourceName))),
+          resourceName,
+          List.empty))),
       ObjectType("CoursesV1_hardMember", List(
         NaptimeRecordField.build(
           schemaMetadata,
           complexFieldDataSchema,
           "hard",
           Some("org.coursera.naptime"),
-          resourceName))))
+          resourceName,
+          List.empty))))
     val expectedField = UnionType("CoursesV1_typedDefinitionTestField", None, expectedUnionTypes)
     assert(field.fieldType.toString === expectedField.toString)
   }
@@ -165,7 +169,7 @@ class NaptimeUnionFieldTest extends AssertionsForJUnit with MockitoSugar {
       Map("namespace" -> "org.coursera.naptime"))
 
     val fieldName = "typedDefinitionTestField"
-    val field = NaptimeUnionField.build(schemaMetadata, union, fieldName, None, resourceName)
+    val field = NaptimeUnionField.build(schemaMetadata, union, fieldName, None, resourceName, List.empty)
 
     val expectedUnionTypes = List(
       ObjectType("CoursesV1_org_coursera_awaketime_simpleFieldMember", List(
@@ -174,14 +178,16 @@ class NaptimeUnionFieldTest extends AssertionsForJUnit with MockitoSugar {
           simpleFieldDataSchema,
           "easy",
           Some("org.coursera.awaketime"),
-          resourceName))),
+          resourceName,
+          List.empty))),
       ObjectType("CoursesV1_hardMember", List(
         NaptimeRecordField.build(
           schemaMetadata,
           complexFieldDataSchema,
           "hard",
           Some("org.coursera.naptime"),
-          resourceName))))
+          resourceName,
+          List.empty))))
     val expectedField = UnionType("CoursesV1_typedDefinitionTestField", None, expectedUnionTypes)
 
     assert(field.fieldType.toString === expectedField.toString)

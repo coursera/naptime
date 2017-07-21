@@ -20,7 +20,7 @@ import com.linkedin.data.schema.EnumDataSchema
 import com.linkedin.data.schema.Name
 import org.junit.Test
 import org.scalatest.junit.AssertionsForJUnit
-import org.scalatest.mock.MockitoSugar
+import org.scalatest.mockito.MockitoSugar
 import sangria.schema.EnumType
 
 import scala.collection.JavaConverters._

@@ -44,7 +44,7 @@ import scala.collection.JavaConverters._
 import scala.collection.mutable
 
 
-object EngineHelpers extends StrictLogging {
+object Utilities extends StrictLogging {
 
   /**
     * Defines a field and selection used in a forward relation

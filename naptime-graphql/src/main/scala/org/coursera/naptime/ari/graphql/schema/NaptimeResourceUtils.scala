@@ -19,7 +19,7 @@ package org.coursera.naptime.ari.graphql.schema
 import com.linkedin.data.DataList
 import com.typesafe.scalalogging.StrictLogging
 import org.coursera.naptime.ResourceName
-import org.coursera.naptime.ari.engine.EngineHelpers
+import org.coursera.naptime.ari.engine.Utilities
 import org.coursera.naptime.schema.Handler
 import org.coursera.naptime.schema.ReverseRelationAnnotation
 import play.api.libs.json.JsArray
@@ -133,7 +133,7 @@ object NaptimeResourceUtils extends StrictLogging {
   /**
     * This regex is used to match both "$instructorIds" and "${instructorDetails/instructorIds}"
     */
-  val InterpolationRegex =
+  private[this] val InterpolationRegex =
     new Regex("""\$(?:([a-zA-Z0-9_]+)|\{([^\}]+)\})""", "withoutBraces", "withBraces")
 
 
@@ -164,7 +164,7 @@ object NaptimeResourceUtils extends StrictLogging {
             val withBraces = Option(regexMatch.group("withBraces"))
             val variableName = withoutBraces.orElse(withBraces).getOrElse("")
             val fieldName = variableName.split("/").last
-            EngineHelpers.getValueAtPath(
+            Utilities.getValueAtPath(
               data.parentModel.value,
               data.parentModel.schema,
               variableName.split("/")).map {

@@ -24,7 +24,7 @@ import org.coursera.naptime.ari.graphql.helpers.ArgumentBuilder
 import org.junit.Test
 import org.mockito.Mockito.when
 import org.scalatest.junit.AssertionsForJUnit
-import org.scalatest.mock.MockitoSugar
+import org.scalatest.mockito.MockitoSugar
 
 import scala.concurrent.ExecutionContext
 
@@ -32,7 +32,7 @@ class NaptimePaginatedResourceFieldTest extends AssertionsForJUnit with MockitoS
 
   val fieldName = "relatedIds"
   val resourceName = ResourceName("courses", 1)
-  val context = SangriaGraphQlContext(Response.empty, null, null, ExecutionContext.global)
+  val context = SangriaGraphQlContext(null, null, ExecutionContext.global)
 
   private[this] val schemaMetadata = mock[SchemaMetadata]
   private[this] val resource = Models.courseResource
