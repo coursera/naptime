@@ -27,6 +27,7 @@ import org.coursera.naptime.schema.RelationType
 import org.coursera.naptime.schema.Resource
 import org.coursera.naptime.schema.ReverseRelationAnnotation
 import play.api.libs.json.JsArray
+import play.api.libs.json.JsString
 import play.api.libs.json.JsValue
 import sangria.schema.DeferredValue
 import sangria.schema.Field
@@ -92,7 +93,12 @@ object NaptimePaginatedResourceField {
 
             val extraArguments = fieldRelationOpt.map { fieldRelation =>
               NaptimeResourceUtils.interpolateArguments(context.value, fieldRelation)
-            }.getOrElse(Set.empty)
+            }.getOrElse{
+              handler.kind match {
+                case HandlerKind.FINDER => Set(("q", JsString(handler.name)))
+                case _ => Set.empty
+              }
+            }
 
             val args = context.args.raw.mapValues(NaptimeResourceUtils.parseToJson).toSet ++
               extraArguments

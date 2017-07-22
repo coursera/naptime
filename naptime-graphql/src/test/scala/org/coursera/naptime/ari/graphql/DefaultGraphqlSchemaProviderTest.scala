@@ -1,21 +1,14 @@
 package org.coursera.naptime.ari.graphql
 
 import com.google.inject.Injector
-import com.linkedin.data.DataMap
 import com.linkedin.data.schema.RecordDataSchema
-import org.coursera.courier.templates.DataTemplates.DataConversion
 import org.coursera.naptime.ResourceName
 import org.coursera.naptime.ari.FullSchema
 import org.coursera.naptime.ari.LocalSchemaProvider
 import org.coursera.naptime.ari.SchemaProvider
-import org.coursera.naptime.ari.graphql.models.AnyData
-import org.coursera.naptime.ari.graphql.models.Coordinates
-import org.coursera.naptime.ari.graphql.models.CoursePlatform
 import org.coursera.naptime.ari.graphql.models.MergedCourse
-import org.coursera.naptime.ari.graphql.models.MergedCourse.PlatformSpecificData.OldPlatformDataMember
 import org.coursera.naptime.ari.graphql.models.MergedInstructor
 import org.coursera.naptime.ari.graphql.models.MergedPartner
-import org.coursera.naptime.ari.graphql.models.OldPlatformData
 import org.coursera.naptime.model.Keyed
 import org.coursera.naptime.router2.NaptimeRoutes
 import org.coursera.naptime.router2.ResourceRouterBuilder
@@ -82,50 +75,7 @@ class InstructorsResource
 class PartnersResource
 
 object DefaultGraphqlSchemaProviderTest extends MockitoSugar {
-  val COURSE_A = MergedCourse(
-    id = "courseAId",
-    name = "Machine Learning",
-    slug = "machine-learning",
-    description = Some("An awesome course on machine learning."),
-    instructorIds = List("instructor1Id"),
-    partnerId = 123,
-    originalId = "",
-    platformSpecificData = OldPlatformDataMember(OldPlatformData("Not Available.")),
-    coursePlatform = List(CoursePlatform.NewPlatform),
-    arbitraryData = AnyData.build(new DataMap(), DataConversion.SetReadOnly))
-  val COURSE_B = MergedCourse(
-    id = "courseBId",
-    name = "Probabalistic Graphical Models",
-    slug = "pgm",
-    description = Some("An awesome course on pgm's."),
-    instructorIds = List("instructor2Id"),
-    partnerId = 123,
-    originalId = "",
-    platformSpecificData = OldPlatformDataMember(OldPlatformData("Not Available.")),
-    coursePlatform = List(CoursePlatform.NewPlatform),
-    arbitraryData = AnyData.build(new DataMap(), DataConversion.SetReadOnly))
 
-  val INSTRUCTOR_1 = MergedInstructor(
-    id = "instructor1Id",
-    name = "Professor X",
-    title = "Chair",
-    bio = "Professor X's bio",
-    courseIds = List(COURSE_A.id),
-    partnerId = 123)
-
-  val INSTRUCTOR_2 = MergedInstructor(
-    id = "instructor2Id",
-    name = "Professor Y",
-    title = "Table",
-    bio = "Professor Y's bio",
-    courseIds = List(COURSE_B.id),
-    partnerId = 123)
-
-  val PARTNER_123 = MergedPartner(
-    id = 123,
-    name = "University X",
-    slug = "x-university",
-    geolocation = Coordinates(37.386824, -122.061005))
 
   val GET_HANDLER = Handler(
     kind = HandlerKind.GET,
