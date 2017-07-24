@@ -109,7 +109,7 @@ object NaptimeResourceField extends StrictLogging {
         Set("ids" -> NaptimeResourceUtils.parseToJson(context.arg("id")))
       }
       val args = context.args.raw.mapValues(NaptimeResourceUtils.parseToJson).toSet ++ extraArguments
-      val idArg = args.find(_._1 == "ids").map(_._2).getOrElse(JsNull)
+      val idArg = args.find(_._1 == "ids").map(_._2)
       val nonIdArgs = args.filter(_._1 != "ids")
 
       DeferredValue(DeferredNaptimeElement(resourceName, idArg, nonIdArgs, resourceMergedType))

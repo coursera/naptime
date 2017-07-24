@@ -167,7 +167,7 @@ object FieldBuilder extends StrictLogging {
         Field.apply[SangriaGraphQlContext, DataMapWithParent, Any, Any](
           name = FieldBuilder.formatName(fieldName),
           fieldType = NaptimeTypes.DataMapType,
-          resolve = context => context.value.copy(element = context.value.element.getDataMap(fieldName)))
+          resolve = context => context.value.element.getDataMap(fieldName))
 
       // Primitives
       case (None, ds: StringDataSchema) => buildPrimitiveField[String](fieldName, ds, StringType)

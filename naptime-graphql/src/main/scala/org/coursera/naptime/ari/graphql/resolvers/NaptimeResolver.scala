@@ -57,7 +57,7 @@ case class DeferredNaptimeRequest(
 
 case class DeferredNaptimeElement(
     resourceName: ResourceName,
-    id: JsValue,
+    idOpt: Option[JsValue],
     arguments: Set[(String, JsValue)],
     resourceSchema: RecordDataSchema)
   extends Deferred[Either[NaptimeError, NaptimeResponse]] with DeferredNaptime {
@@ -66,7 +66,7 @@ case class DeferredNaptimeElement(
     NaptimeRequest(
       RequestId(idx),
       resourceName,
-      arguments + ("ids" -> JsArray(List(id))),
+      arguments ++ idOpt.map(id => List("ids" -> JsArray(List(id)))).getOrElse(List.empty),
       resourceSchema)
   }
 }
