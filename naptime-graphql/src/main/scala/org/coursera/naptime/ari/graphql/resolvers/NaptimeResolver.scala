@@ -13,10 +13,12 @@ import org.coursera.naptime.ari.graphql.schema.DataMapWithParent
 import org.coursera.naptime.ari.graphql.schema.NaptimeResourceUtils
 import org.coursera.naptime.ari.graphql.schema.ParentModel
 import play.api.libs.json.JsArray
+import play.api.libs.json.JsNull
 import play.api.libs.json.JsValue
 import sangria.execution.deferred.Deferred
 import sangria.execution.deferred.DeferredResolver
 
+import scala.collection.JavaConverters._
 import scala.concurrent.ExecutionContext
 import scala.concurrent.Future
 
@@ -30,10 +32,12 @@ case class NaptimeRequest(
 
 case class NaptimeResponse(
     elements: List[DataMapWithParent],
-    pagination: Option[ResponsePagination])
+    pagination: Option[ResponsePagination],
+    url: String)
 
 case class NaptimeError(
-    response: Response)
+    url: String,
+    error: String)
 
 sealed trait DeferredNaptime {
   def toNaptimeRequest(idx: Int): NaptimeRequest
@@ -130,6 +134,12 @@ class NaptimeResolver extends DeferredResolver[SangriaGraphQlContext] with Stric
         context.fetcher.data(request).map { response =>
           // TODO(bryan): Fix this `.head`
           val parsedElements = parseElements(response, requests.head.resourceSchema)
+          val parsedElementsMap = parsedElements.map { element =>
+            val id = Option(element.element.get("id"))
+              .map(NaptimeResourceUtils.parseToJson)
+              .getOrElse(JsNull)
+            id -> element
+          }.toMap
           sourceRequests.map { sourceRequest =>
             // TODO(bryan): Clean this up
             val ids = sourceRequest.arguments
@@ -141,10 +151,11 @@ class NaptimeResolver extends DeferredResolver[SangriaGraphQlContext] with Stric
               }
               .getOrElse(List.empty)
 
-            val elements = ids.flatMap(parsedElements.get).toList
+            val elements = ids.flatMap(parsedElementsMap.get).toList
+            val url = response.topLevelResponses.headOption.flatMap(_._2.url).getOrElse("???")
             sourceRequest.idx ->
               Right[NaptimeError, NaptimeResponse](
-                NaptimeResponse(elements, sourceRequest.paginationOverride))
+                NaptimeResponse(elements, sourceRequest.paginationOverride, url))
           }.toMap
         }
       }
@@ -213,10 +224,14 @@ class NaptimeResolver extends DeferredResolver[SangriaGraphQlContext] with Stric
           (for {
             (_, topLevelResponse) <- response.topLevelResponses.headOption
           } yield {
-            val elements = parseElements(response, requests.head.resourceSchema).values.toList
-            Right(NaptimeResponse(elements, Some(topLevelResponse.pagination)))
+            val elements = parseElements(response, requests.head.resourceSchema)
+            Right(NaptimeResponse(
+              elements,
+              Some(topLevelResponse.pagination),
+              topLevelResponse.url.getOrElse("???")))
           }).getOrElse {
-            Left(NaptimeError(response))
+            val url = response.topLevelResponses.headOption.flatMap(_._2.url).getOrElse("???")
+            Left(NaptimeError(url, "Unknown error while fetching data."))
           }
         }.map(res => Map(request.idx -> res))
       }
@@ -231,17 +246,17 @@ class NaptimeResolver extends DeferredResolver[SangriaGraphQlContext] with Stric
     */
   def parseElements(
       response: Response,
-      resourceSchema: RecordDataSchema): Map[JsValue, DataMapWithParent] = {
-    (for {
+      resourceSchema: RecordDataSchema): List[DataMapWithParent] = {
+    for {
+      (_, topLevelResponse) <- response.topLevelResponses.headOption.toList
       (resourceName, data) <- response.data.toList // Should only be one resource, ideally
-      (id, element) <- data.toList
+      id <- topLevelResponse.ids.asScala
+      element <- data.get(id).toList
     } yield {
-      val parsedId = NaptimeResourceUtils.parseToJson(id)
-      val data = DataMapWithParent(
+      DataMapWithParent(
         element,
         ParentModel(resourceName, element, resourceSchema))
-      parsedId -> data
-    }).toMap
+    }
   }
 
   /**

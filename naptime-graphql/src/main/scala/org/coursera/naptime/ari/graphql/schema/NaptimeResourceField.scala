@@ -21,7 +21,7 @@ import com.typesafe.scalalogging.StrictLogging
 import org.coursera.naptime.ResourceName
 import org.coursera.naptime.ari.graphql.SangriaGraphQlContext
 import org.coursera.naptime.ari.graphql.resolvers.DeferredNaptimeElement
-import org.coursera.naptime.ari.graphql.resolvers.DeferredNaptimeRequest
+import org.coursera.naptime.ari.graphql.resolvers.NaptimeError
 import org.coursera.naptime.schema.HandlerKind
 import org.coursera.naptime.schema.Resource
 import org.coursera.naptime.schema.ReverseRelationAnnotation
@@ -115,9 +115,13 @@ object NaptimeResourceField extends StrictLogging {
       DeferredValue(DeferredNaptimeElement(resourceName, idArg, nonIdArgs, resourceMergedType))
         .map {
           case Left(error) =>
-            throw HttpException(error.toString)
+            throw NaptimeResolveException(error)
           case Right(response) =>
-            response.elements.headOption
+            response.elements.headOption.map { dataMapWithParent =>
+              dataMapWithParent.copy(sourceUrl = Some(response.url))
+            }.getOrElse {
+              throw NaptimeResolveException(NaptimeError(response.url, "Not found."))
+            }
         }(context.ctx.executionContext)
     }
   }

@@ -13,11 +13,7 @@ case class ParentModel(
     value: DataMap,
     schema: RecordDataSchema)
 
-trait ElementWithParent[T] {
-  val element: T
-  val parentModel: ParentModel
-}
-
-case class DataMapWithParent(element: DataMap, parentModel: ParentModel) extends ElementWithParent[DataMap]
-
-case class AnyWithParent(element: Any, parentModel: ParentModel) extends ElementWithParent[Any]
+case class DataMapWithParent(
+    element: DataMap,
+    parentModel: ParentModel,
+    sourceUrl: Option[String] = None)

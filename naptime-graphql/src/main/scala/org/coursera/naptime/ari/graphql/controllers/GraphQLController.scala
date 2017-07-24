@@ -27,6 +27,7 @@ import org.coursera.naptime.ari.graphql.SangriaGraphQlContext
 import org.coursera.naptime.ari.graphql.controllers.filters.FilterList
 import org.coursera.naptime.ari.graphql.controllers.filters.IncomingQuery
 import org.coursera.naptime.ari.graphql.controllers.filters.OutgoingQuery
+import org.coursera.naptime.ari.graphql.controllers.middleware.UrlLoggingMiddleware
 import org.coursera.naptime.ari.graphql.marshaller.NaptimeMarshaller._
 import org.coursera.naptime.ari.graphql.resolvers.NaptimeResolver
 import play.api.libs.json.JsObject
@@ -121,6 +122,7 @@ class GraphQLController @Inject() (
               queryAst,
               context,
               variables = variables,
+              middleware = List(new UrlLoggingMiddleware()),
               exceptionHandler = GraphQLController.exceptionHandler(logger),
               deferredResolver = new NaptimeResolver())
               .map { executionResponse =>

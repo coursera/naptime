@@ -26,6 +26,7 @@ import org.coursera.naptime.schema.Resource
 import play.api.libs.json.JsValue
 import play.api.mvc.RequestHeader
 
+import scala.concurrent.ExecutionContext
 import scala.concurrent.Future
 import scala.concurrent.duration.FiniteDuration
 
@@ -34,7 +35,7 @@ import scala.concurrent.duration.FiniteDuration
  * The fetcher calls the Naptime APIs (either local or remote) to acquire all of the data necessary.
  */
 trait FetcherApi {
-  def data(request: Request): Future[Response]
+  def data(request: Request)(implicit executionContext: ExecutionContext): Future[Response]
 }
 
 /**
@@ -171,5 +172,6 @@ object Response {
   * @param ids a list of IDs returned by the top level request.
   *            (i.e. ids 5, 6, and 7 were returned by the bySlug finder)
   * @param pagination pagination info from the top level request, including total and next cursor
+  * @param url the downstream url used to fetch the data
   */
-case class TopLevelResponse(ids: DataList, pagination: ResponsePagination)
+case class TopLevelResponse(ids: DataList, pagination: ResponsePagination, url: Option[String] = None)

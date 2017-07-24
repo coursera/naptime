@@ -5,8 +5,7 @@ import javax.inject.Singleton
 
 @Singleton
 class DefaultFilters @Inject() (
-    queryComplexityFilter: QueryComplexityFilter,
-    engineMetricsFilter: EngineMetricsFilter)
+    queryComplexityFilter: QueryComplexityFilter)
   extends FilterList(List(
-    queryComplexityFilter,
-    engineMetricsFilter))
+//    queryComplexityFilter
+  ))
