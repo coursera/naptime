@@ -279,7 +279,7 @@ object Utilities extends StrictLogging {
     }
   }
 
-  private[engine] def stringifyArg(value: JsValue): String = {
+  def stringifyArg(value: JsValue): String = {
     value match {
       case JsArray(arrayElements) =>
         arrayElements.map(stringifyArg).filterNot(_.isEmpty).mkString(",")

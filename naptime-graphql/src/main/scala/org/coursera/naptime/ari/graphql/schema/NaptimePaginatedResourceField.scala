@@ -18,6 +18,7 @@ package org.coursera.naptime.ari.graphql.schema
 
 import org.coursera.naptime.ResourceName
 import org.coursera.naptime.ResponsePagination
+import org.coursera.naptime.ari.engine.Utilities
 import org.coursera.naptime.ari.graphql.SangriaGraphQlContext
 import org.coursera.naptime.ari.graphql.resolvers.DeferredNaptimeRequest
 import org.coursera.naptime.ari.graphql.resolvers.NaptimeResponse
@@ -123,7 +124,7 @@ object NaptimePaginatedResourceField {
               val idsAfterStart = startOption
                 .map(s => ids.dropWhile(_ != NaptimeResourceUtils.parseToJson(s)))
                 .getOrElse(ids)
-              val next = idsAfterStart.drop(limit).headOption.map(_.toString)
+              val next = idsAfterStart.drop(limit).headOption.map(Utilities.stringifyArg)
 
               val paginationResponse = ResponsePagination(next, Some(ids.size.toLong))
 
