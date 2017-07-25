@@ -137,7 +137,8 @@ object NaptimePaginatedResourceField {
               resourceName, updatedArgs, resourceMergedType, paginationOverride))
               .map {
                 case Left(error) =>
-                  throw NaptimeResolveException(error)
+                  // TODO(bryan): Replace this with an exception once clients can handle it
+                  NaptimeResponse(List.empty, None, error.url)
                 case Right(response) => {
                   val limit = context.arg(NaptimePaginationField.limitArgument)
                   // If more results are returned than requested, only take up to the limit
