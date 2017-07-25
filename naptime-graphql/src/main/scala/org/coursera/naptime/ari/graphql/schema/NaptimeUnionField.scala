@@ -96,9 +96,9 @@ object NaptimeUnionField {
           val typeName = value.asInstanceOf[DataMapWithParent].element.getString("typeName")
           objects.find(_.fieldsByName.keySet.contains(typeName))
         } else {
-          val typedValue = value.asInstanceOf[DataMap]
+          val typedValue = value.asInstanceOf[DataMapWithParent]
           objects.find { obj =>
-            val formattedMemberNames = typedValue.keySet.asScala
+            val formattedMemberNames = typedValue.element.keySet.asScala
               .flatMap(key => Option(key))
               .map(FieldBuilder.formatName)
             obj.fieldsByName.keySet.intersect(formattedMemberNames).nonEmpty

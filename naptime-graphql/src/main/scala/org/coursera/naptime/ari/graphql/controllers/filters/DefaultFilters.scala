@@ -7,5 +7,5 @@ import javax.inject.Singleton
 class DefaultFilters @Inject() (
     queryComplexityFilter: QueryComplexityFilter)
   extends FilterList(List(
-//    queryComplexityFilter
+    queryComplexityFilter
   ))

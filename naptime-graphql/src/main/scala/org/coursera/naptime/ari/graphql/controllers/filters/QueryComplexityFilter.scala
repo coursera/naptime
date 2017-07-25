@@ -10,6 +10,7 @@ import org.coursera.naptime.ari.graphql.SangriaGraphQlContext
 import org.coursera.naptime.ari.graphql.controllers.GraphQLController
 import org.coursera.naptime.ari.graphql.marshaller.NaptimeMarshaller._
 import org.coursera.naptime.ari.graphql.resolvers.NaptimeResolver
+import org.coursera.naptime.ari.graphql.resolvers.NoopResolver
 import play.api.libs.json.JsObject
 import play.api.libs.json.Json
 import play.api.mvc.Results
@@ -71,7 +72,7 @@ class QueryComplexityFilter @Inject() (
       variables = variables,
       exceptionHandler = GraphQLController.exceptionHandler(logger),
       queryReducers = List(complReducer),
-      deferredResolver = new NaptimeResolver())
+      deferredResolver = new NoopResolver())
 
     executorFut.map { _ =>
       complexity
