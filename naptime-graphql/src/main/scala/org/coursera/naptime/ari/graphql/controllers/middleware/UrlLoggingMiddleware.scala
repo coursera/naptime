@@ -1,5 +1,7 @@
 package org.coursera.naptime.ari.graphql.controllers.middleware
 
+import java.util.concurrent.ConcurrentHashMap
+
 import org.coursera.naptime.ari.graphql.SangriaGraphQlContext
 import org.coursera.naptime.ari.graphql.resolvers.NaptimeResponse
 import sangria.execution.Extension
@@ -11,10 +13,7 @@ import sangria.schema.Context
 import org.coursera.naptime.ari.graphql.schema.DataMapWithParent
 import org.coursera.naptime.ari.graphql.schema.NaptimeResolveException
 import sangria.execution.MiddlewareErrorField
-
-import scala.collection.mutable
-
-case class RequestUrl(url: String)
+import scala.collection.JavaConverters._
 
 class UrlLoggingMiddleware
   extends MiddlewareExtension[SangriaGraphQlContext]
@@ -24,7 +23,7 @@ class UrlLoggingMiddleware
   override type QueryVal = Unit
   override type FieldVal = Unit
 
-  private[this] val urlsLoaded = mutable.Map[String, String]()
+  private[this] val urlsLoaded = new ConcurrentHashMap[String, String]().asScala
 
   override def beforeQuery(
       context: MiddlewareQueryContext[SangriaGraphQlContext, _, _]): QueryVal = ()
@@ -47,16 +46,16 @@ class UrlLoggingMiddleware
       ctx: Context[SangriaGraphQlContext, _]): Option[Any] = {
     value match {
       case NaptimeResponse(_, _, url) =>
-        urlsLoaded.put(ctx.path.toString(), url)
+        urlsLoaded.putIfAbsent(ctx.path.toString(), url)
         None
       case Some(DataMapWithParent(_, _, sourceUrl)) =>
         sourceUrl.foreach { url =>
-          urlsLoaded.put(ctx.path.toString(), url)
+          urlsLoaded.putIfAbsent(ctx.path.toString(), url)
         }
         None
       case DataMapWithParent(_, _, sourceUrl) =>
         sourceUrl.foreach { url =>
-          urlsLoaded.put(ctx.path.toString(), url)
+          urlsLoaded.putIfAbsent(ctx.path.toString(), url)
         }
         None
       case _ =>
@@ -72,7 +71,7 @@ class UrlLoggingMiddleware
       ctx: Context[SangriaGraphQlContext, _]): Unit = {
     error match {
       case NaptimeResolveException(naptimeError) =>
-        urlsLoaded.put(ctx.path.toString(), naptimeError.url)
+        urlsLoaded.putIfAbsent(ctx.path.toString(), naptimeError.url)
       case _ =>
         ()
     }

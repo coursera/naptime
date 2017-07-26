@@ -192,15 +192,31 @@ object FieldBuilder extends StrictLogging {
           resolve = context => context.value)
     }
 
-    val fieldTypeWithOptionality = if (field.getOptional) {
-      OptionType(sangriaField.fieldType)
+    val (fieldTypeWithOptionality, resolverWithOptionality) = if (field.getOptional) {
+      val updatedFieldType = OptionType(sangriaField.fieldType)
+      val updatedResolver = (context: Context[SangriaGraphQlContext, DataMapWithParent]) => {
+        sangriaField.resolve(context).map {
+          case null =>
+            None
+          case value: DataMapWithParent =>
+            if (value.element == null) {
+              None
+            } else {
+              value
+            }
+          case value: Any =>
+            Option(value)
+        }(context.ctx.executionContext)
+      }
+      (updatedFieldType, updatedResolver)
     } else {
-      sangriaField.fieldType
+      (sangriaField.fieldType, sangriaField.resolve)
     }
 
     sangriaField.copy(
       description = fieldDoc,
-      fieldType = fieldTypeWithOptionality)
+      fieldType = fieldTypeWithOptionality,
+      resolve = resolverWithOptionality)
   }
 
   private[this] val validationOptions = new ValidationOptions(
