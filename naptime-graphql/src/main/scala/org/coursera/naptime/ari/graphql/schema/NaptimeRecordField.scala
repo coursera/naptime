@@ -2,6 +2,7 @@ package org.coursera.naptime.ari.graphql.schema
 
 import com.linkedin.data.DataMap
 import com.linkedin.data.schema.RecordDataSchema
+import com.typesafe.scalalogging.StrictLogging
 import org.coursera.naptime.ResourceName
 import org.coursera.naptime.ari.graphql.SangriaGraphQlContext
 import sangria.schema.Field
@@ -10,7 +11,7 @@ import sangria.schema.StringType
 
 import scala.collection.JavaConverters._
 
-object NaptimeRecordField {
+object NaptimeRecordField extends StrictLogging {
 
   private[schema] def build(
       schemaMetadata: SchemaMetadata,
@@ -23,7 +24,16 @@ object NaptimeRecordField {
     Field.apply[SangriaGraphQlContext, DataMapWithParent, Any, Any](
       name = FieldBuilder.formatName(fieldName),
       fieldType = getType(schemaMetadata, recordDataSchema, namespace, resourceName, currentPath :+ fieldName),
-      resolve = context => context.value.copy(element = context.value.element.getDataMap(fieldName)))
+      resolve = context => {
+        context.value.element.get(fieldName) match {
+          case dataMap: DataMap =>
+            context.value.copy(element = dataMap)
+          case other: Any =>
+            logger.warn(s"Expected DataMap but got $other")
+            null
+        }
+
+      })
   }
 
   private[schema] def getType(

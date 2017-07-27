@@ -30,7 +30,15 @@ object NaptimePaginationField extends StrictLogging {
         Field.apply[SangriaGraphQlContext, ResponsePagination, Any, Any](
           name = "total",
           fieldType = OptionType(LongType),
-          resolve = _.value.total)))
+          resolve = context => {
+            context.value match {
+              case responsePagination: ResponsePagination =>
+                responsePagination.total
+              case other: Any =>
+                logger.error(s"Expected ResponsePagination but got $other")
+                None
+            }
+          })))
   }
 
   private[graphql] val limitArgument = Argument(

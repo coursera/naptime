@@ -78,7 +78,7 @@ class NaptimeResolver extends DeferredResolver[SangriaGraphQlContext] with Stric
       deferred: Vector[Deferred[Any]],
       ctx: SangriaGraphQlContext,
       queryState: Any)
-    (implicit ec: ExecutionContext): Vector[Future[Any]] = {
+      (implicit ec: ExecutionContext): Vector[Future[Any]] = {
 
     val naptimeRequests = deferred.zipWithIndex.collect {
       case (d: DeferredNaptime, idx: Int) => d.toNaptimeRequest(idx)

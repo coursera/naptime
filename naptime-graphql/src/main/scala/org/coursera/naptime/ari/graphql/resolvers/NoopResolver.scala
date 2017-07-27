@@ -14,6 +14,6 @@ class NoopResolver extends DeferredResolver[SangriaGraphQlContext] with StrictLo
       ctx: SangriaGraphQlContext,
       queryState: Any)
     (implicit ec: ExecutionContext): Vector[Future[Any]] = {
-    Vector(Future.successful(Right(NaptimeResponse(List.empty, None, ""))))
+    deferred.map(_ => Future.successful(Right(NaptimeResponse(List.empty, None, ""))))
   }
 }
