@@ -8,6 +8,7 @@ import org.coursera.naptime.ari.graphql.SangriaGraphQlContext
 import sangria.schema.Field
 import sangria.schema.ObjectType
 import sangria.schema.StringType
+import sangria.schema.Value
 
 import scala.collection.JavaConverters._
 
@@ -30,7 +31,9 @@ object NaptimeRecordField extends StrictLogging {
             context.value.copy(element = dataMap)
           case other: Any =>
             logger.warn(s"Expected DataMap but got $other")
-            null
+            Value(null)
+          case null =>
+            Value(null)
         }
 
       })

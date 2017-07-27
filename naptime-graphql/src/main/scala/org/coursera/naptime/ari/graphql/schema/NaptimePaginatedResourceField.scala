@@ -16,6 +16,7 @@
 
 package org.coursera.naptime.ari.graphql.schema
 
+import com.typesafe.scalalogging.StrictLogging
 import org.coursera.naptime.ResourceName
 import org.coursera.naptime.ResponsePagination
 import org.coursera.naptime.ari.engine.Utilities
@@ -36,7 +37,7 @@ import sangria.schema.ListType
 import sangria.schema.ObjectType
 import sangria.schema.OptionType
 
-object NaptimePaginatedResourceField {
+object NaptimePaginatedResourceField extends StrictLogging {
 
   val COMPLEXITY_COST = 10.0D
 
@@ -183,7 +184,16 @@ object NaptimePaginatedResourceField {
             Field.apply[SangriaGraphQlContext, NaptimeResponse, Any, Any](
               name = "paging",
               fieldType = NaptimePaginationField.getField(resourceName, fieldName),
-              resolve = _.value.pagination.getOrElse(ResponsePagination.empty)))
+              resolve = _.value.pagination.map {
+                case rp: ResponsePagination =>
+                  rp
+                case other: Any =>
+                  logger.error(s"Expected ResponsePagination but got $other")
+                  None
+                case null =>
+                  logger.error("Expected ResponsePagination but got null")
+                  None
+              }.getOrElse(ResponsePagination.empty)))
         }.getOrElse(List.empty)
       })
   }

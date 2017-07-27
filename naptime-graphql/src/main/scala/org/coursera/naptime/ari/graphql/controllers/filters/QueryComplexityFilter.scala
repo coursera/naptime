@@ -58,7 +58,8 @@ class QueryComplexityFilter @Inject() (
 
   private[graphql] def computeComplexity(
       queryAst: Document,
-      variables: JsObject): Future[Double] = {
+      variables: JsObject)
+      (implicit executionContext: ExecutionContext): Future[Double] = {
     // TODO(bryan): is there a way around this var?
     var complexity = 0D
     val complReducer = QueryReducer.measureComplexity[SangriaGraphQlContext] { (c, ctx) =>
@@ -68,7 +69,7 @@ class QueryComplexityFilter @Inject() (
     val executorFut = Executor.execute(
       graphqlSchemaProvider.schema,
       queryAst,
-      SangriaGraphQlContext(null, null, null),
+      SangriaGraphQlContext(null, null, executionContext),
       variables = variables,
       exceptionHandler = GraphQLController.exceptionHandler(logger),
       queryReducers = List(complReducer),
