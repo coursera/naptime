@@ -36,6 +36,7 @@ import sangria.schema.Field
 import sangria.schema.ListType
 import sangria.schema.ObjectType
 import sangria.schema.OptionType
+import sangria.schema.Value
 
 object NaptimePaginatedResourceField extends StrictLogging {
 
@@ -107,7 +108,7 @@ object NaptimePaginatedResourceField extends StrictLogging {
 
             val hasIds = fieldRelationOpt.exists(_.relationType == RelationType.MULTI_GET) ||
               fieldRelationOpt.exists(_.relationType == RelationType.GET)
-            val (updatedArgs, paginationOverride) = if (hasIds) {
+            val (updatedArgs, paginationOverride, isEmpty) = if (hasIds) {
               val startOption = context.arg(NaptimePaginationField.startArgument)
               val limit = context.arg(NaptimePaginationField.limitArgument)
               val ids = args.find(_._1 == "ids").map(_._2).collect {
@@ -129,23 +130,32 @@ object NaptimePaginatedResourceField extends StrictLogging {
 
               val paginationResponse = ResponsePagination(next, Some(ids.size.toLong))
 
-              (args.filterNot(_._1 == "ids") + ("ids" -> paginatedIds), Some(paginationResponse))
+              if (paginatedIds.value.isEmpty || Utilities.jsValueIsEmpty(paginatedIds)) {
+                (args, Some(paginationResponse), true)
+              } else {
+                (args.filterNot(_._1 == "ids") + ("ids" -> paginatedIds), Some(paginationResponse), false)
+              }
             } else {
-              (args, None)
+              (args, None, false)
             }
 
-            DeferredValue(DeferredNaptimeRequest(
-              resourceName, updatedArgs, resourceMergedType, paginationOverride))
-              .map {
-                case Left(error) =>
-                  // TODO(bryan): Replace this with an exception once clients can handle it
-                  NaptimeResponse(List.empty, None, error.url)
-                case Right(response) => {
-                  val limit = context.arg(NaptimePaginationField.limitArgument)
-                  // If more results are returned than requested, only take up to the limit
-                  response.copy(elements = response.elements.take(limit))
-                }
-              }(context.ctx.executionContext)
+            if (isEmpty) {
+              Value(NaptimeResponse(List.empty, None, "No ids found."))
+            } else {
+              DeferredValue(
+                DeferredNaptimeRequest(
+                  resourceName, updatedArgs, resourceMergedType, paginationOverride))
+                .map {
+                  case Left(error) =>
+                    // TODO(bryan): Replace this with an exception once clients can handle it
+                    NaptimeResponse(List.empty, None, error.url)
+                  case Right(response) => {
+                    val limit = context.arg(NaptimePaginationField.limitArgument)
+                    // If more results are returned than requested, only take up to the limit
+                    response.copy(elements = response.elements.take(limit))
+                  }
+                }(context.ctx.executionContext)
+            }
           },
           complexity = Some(
             (ctx, args, childScore) => {

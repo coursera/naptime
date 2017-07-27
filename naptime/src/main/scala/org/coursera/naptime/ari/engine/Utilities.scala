@@ -296,6 +296,23 @@ object Utilities extends StrictLogging {
     }
   }
 
+  def jsValueIsEmpty(value: JsValue): Boolean = {
+    value match {
+      case JsArray(arrayElements) =>
+        arrayElements.isEmpty || arrayElements.forall(jsValueIsEmpty)
+      case stringValue: JsString =>
+        stringValue.value.isEmpty
+      case _: JsNumber =>
+        false
+      case _: JsBoolean =>
+        false
+      case _: JsObject =>
+        false
+      case JsNull =>
+        true
+    }
+  }
+
   /**
     * Merges all sub-selections of a request into a single selection
     * @param fields list of selections to merge
