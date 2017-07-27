@@ -54,7 +54,7 @@ object NaptimeTopLevelResourceField extends StrictLogging {
   def generateLookupTypeForResource(
       resource: Resource,
       schemaMetadata: SchemaMetadata):
-    WithSchemaErrors[Option[ObjectType[SangriaGraphQlContext, DataMap]]] = {
+    WithSchemaErrors[Option[ObjectType[SangriaGraphQlContext, DataMapWithParent]]] = {
 
     val resourceName = ResourceName.fromResource(resource)
 
@@ -85,7 +85,7 @@ object NaptimeTopLevelResourceField extends StrictLogging {
       }.getOrElse("???")
 
     if (fields.nonEmpty) {
-      val resourceObjectType = ObjectType[SangriaGraphQlContext, DataMap](
+      val resourceObjectType = ObjectType[SangriaGraphQlContext, DataMapWithParent](
         name = formatResourceTopLevelName(resource),
         fieldsFn = () => fields,
         description = description)
@@ -99,7 +99,7 @@ object NaptimeTopLevelResourceField extends StrictLogging {
       resource: Resource,
       handler: Handler,
       schemaMetadata: SchemaMetadata):
-    Either[SchemaError, Field[SangriaGraphQlContext, DataMap]] = {
+    Either[SchemaError, Field[SangriaGraphQlContext, DataMapWithParent]] = {
 
     // We use MultiGets under the hood for all Gets,
     // so only add a Get handler if there's also a MultiGet available
@@ -107,19 +107,12 @@ object NaptimeTopLevelResourceField extends StrictLogging {
       val arguments = NaptimeResourceUtils.generateHandlerArguments(handler)
       val resourceName = ResourceName.fromResource(resource)
 
-      val idExtractor = (context: Context[SangriaGraphQlContext, DataMap]) => {
-        val id = context.arg[AnyRef]("id")
-        id match {
-          case idOpt: Option[Any] => idOpt.orNull
-          case _ => id
-        }
-      }
-
       NaptimeResourceField.build(
         schemaMetadata = schemaMetadata,
         resourceName = resourceName,
         fieldName = "get",
-        idExtractor = Some(idExtractor))
+        fieldRelation = None,
+        currentPath = List.empty)
         .right
         .map { field =>
           field.copy(arguments = arguments ++ field.arguments)
@@ -133,7 +126,7 @@ object NaptimeTopLevelResourceField extends StrictLogging {
       resource: Resource,
       handler: Handler,
       schemaMetadata: SchemaMetadata):
-    Either[SchemaError, Field[SangriaGraphQlContext, DataMap]] = {
+    Either[SchemaError, Field[SangriaGraphQlContext, DataMapWithParent]] = {
 
     val resourceName = ResourceName(resource.name, resource.version.getOrElse(0L).toInt)
     val arguments = NaptimeResourceUtils.generateHandlerArguments(handler)
@@ -150,7 +143,8 @@ object NaptimeTopLevelResourceField extends StrictLogging {
       resourceName = resourceName,
       fieldName = fieldName,
       handlerOverride = Some(handler),
-      fieldRelation = None).right.map { field =>
+      fieldRelationOpt = None,
+      currentPath = List.empty).right.map { field =>
 
       val mergedArguments = (field.arguments ++ arguments)
         .groupBy(_.name)

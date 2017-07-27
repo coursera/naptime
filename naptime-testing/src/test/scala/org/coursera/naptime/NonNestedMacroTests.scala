@@ -29,7 +29,7 @@ import org.coursera.naptime.resources.TopLevelCollectionResource
 import org.coursera.naptime.router2._
 import org.junit.Test
 import org.scalatest.junit.AssertionsForJUnit
-import org.scalatest.mock.MockitoSugar
+import org.scalatest.mockito.MockitoSugar
 import play.api.libs.json.Json
 import play.api.libs.json.OFormat
 import play.api.mvc.AnyContent

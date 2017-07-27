@@ -6,7 +6,6 @@ import org.coursera.naptime.ResourceName
 import org.coursera.naptime.ResponsePagination
 import org.coursera.naptime.ari.graphql.SangriaGraphQlContext
 import sangria.schema.Argument
-import sangria.schema.Context
 import sangria.schema.Field
 import sangria.schema.IntType
 import sangria.schema.LongType
@@ -14,31 +13,35 @@ import sangria.schema.ObjectType
 import sangria.schema.OptionInputType
 import sangria.schema.OptionType
 import sangria.schema.StringType
-import sangria.schema.Value
-
-import scala.collection.JavaConverters._
 
 object NaptimePaginationField extends StrictLogging {
 
   def getField(
       resourceName: ResourceName,
-      fieldName: String): ObjectType[SangriaGraphQlContext, ParentContext] = {
-    val nextResolver = getResolver(resourceName, fieldName)
-      .andThen(c => Value[SangriaGraphQlContext, Any](c.value.next))
-    val totalResolver = getResolver(resourceName, fieldName)
-      .andThen(c => Value[SangriaGraphQlContext, Any](c.value.total))
+      fieldName: String): ObjectType[SangriaGraphQlContext, ResponsePagination] = {
 
-    ObjectType[SangriaGraphQlContext, ParentContext](
+    ObjectType[SangriaGraphQlContext, ResponsePagination](
       name = "ResponsePagination",
       fields = List(
-        Field.apply[SangriaGraphQlContext, ParentContext, Any, Any](
+        Field.apply[SangriaGraphQlContext, ResponsePagination, Any, Any](
           name = "next",
           fieldType = OptionType(StringType),
-          resolve = nextResolver),
-        Field.apply[SangriaGraphQlContext, ParentContext, Any, Any](
+          resolve = _.value.next),
+        Field.apply[SangriaGraphQlContext, ResponsePagination, Any, Any](
           name = "total",
           fieldType = OptionType(LongType),
-          resolve = totalResolver)))
+          resolve = context => {
+            context.value match {
+              case responsePagination: ResponsePagination =>
+                responsePagination.total
+              case other: Any =>
+                logger.error(s"Expected ResponsePagination but got $other")
+                None
+              case null =>
+                logger.error("Expected ResponsePagination but got null")
+                None
+            }
+          })))
   }
 
   private[graphql] val limitArgument = Argument(
@@ -54,39 +57,5 @@ object NaptimePaginationField extends StrictLogging {
 
   val paginationArguments = List(limitArgument, startArgument)
 
-
-  private[schema] def getResolver(
-      resourceName: ResourceName,
-      fieldName: String): Context[SangriaGraphQlContext, ParentContext] => Value[SangriaGraphQlContext, ResponsePagination] = {
-    (context: Context[SangriaGraphQlContext, ParentContext]) => {
-      val responsePagination = context.ctx.response.data.get(resourceName).map { _ =>
-        if (context.value.parentContext.value.isEmpty) {
-          // Top-Level Request
-          context.ctx.response.topLevelResponses.find { case (topLevelRequest, _) =>
-            topLevelRequest.resource == resourceName &&
-              topLevelRequest.selection.alias == context.astFields.headOption.flatMap(_.alias)
-          }.map(_._2.pagination).getOrElse(ResponsePagination.empty)
-        } else {
-          Option(context.value.parentContext.value).map { parentElement =>
-            // Nested Request
-            val idsFromParent = Option(parentElement.getDataList(fieldName))
-              .map(_.asScala)
-              .getOrElse(List.empty)
-            val startOption = context.value.parentContext.arg(startArgument)
-            val limit = context.value.parentContext.arg(limitArgument)
-
-            val idsAfterStart = startOption
-              .map(start => idsFromParent.dropWhile(_.toString != start))
-              .getOrElse(idsFromParent)
-            val next = idsAfterStart.drop(limit).headOption.map(_.toString)
-            val total = idsFromParent.size
-            ResponsePagination(next, Some(total.toLong))
-          }.getOrElse(ResponsePagination.empty)
-        }
-      }.getOrElse(ResponsePagination.empty)
-
-      Value[SangriaGraphQlContext, ResponsePagination](responsePagination)
-    }
-  }
 
 }

@@ -36,6 +36,7 @@ import play.api.libs.json.JsString
 import play.api.libs.json.JsValue
 import play.api.libs.json.Json
 
+import scala.concurrent.ExecutionContext
 import scala.concurrent.Future
 
 /**
@@ -54,7 +55,7 @@ class LocalFetcher @Inject() (
     naptimeRoutes.className(builder) -> router
   }
 
-  override def data(request: Request): Future[Response] = {
+  override def data(request: Request)(implicit executionContext: ExecutionContext): Future[Response] = {
     if (request.topLevelRequests.length != 1) {
       val msg = s"Too many top level requests passed to LocalFetcher: $request"
       logger.error(msg)
@@ -86,6 +87,14 @@ class LocalFetcher @Inject() (
             naptimeAction.localRun(fakePlayRequest,
               ResourceName(resourceSchema.name, resourceSchema.version.map(_.toInt).getOrElse(0)),
               topLevelRequest)
+              .map(request => request
+                .copy(topLevelResponses = request.topLevelResponses.mapValues(_.copy(
+                  url =
+                    Some(s"/api/${topLevelRequest.resource.identifier}" +
+                    "?" +
+                      queryString.map { case (key, value) =>
+                        key + "=" + value.mkString(",")
+                      }.mkString("&"))))))
           case _ =>
             val msg = "Handler was not a RestAction, or Get attempted"
             logger.error(msg)

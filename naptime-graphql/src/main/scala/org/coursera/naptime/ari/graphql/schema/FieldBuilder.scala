@@ -39,14 +39,10 @@ import com.linkedin.data.schema.validation.RequiredMode
 import com.linkedin.data.schema.validation.ValidateDataAgainstSchema
 import com.linkedin.data.schema.validation.ValidationOptions
 import com.typesafe.scalalogging.StrictLogging
-import org.coursera.courier.templates.DataTemplates.DataConversion
 import org.coursera.naptime.ResourceName
-import org.coursera.naptime.Types.Relations
 import org.coursera.naptime.ari.graphql.SangriaGraphQlContext
-import org.coursera.naptime.ari.graphql.schema.NaptimePaginatedResourceField.ForwardRelation
-import org.coursera.naptime.ari.graphql.schema.NaptimePaginatedResourceField.ReverseRelation
 import org.coursera.naptime.ari.graphql.types.NaptimeTypes
-import org.coursera.naptime.schema.ReverseRelationAnnotation
+import sangria.schema.Action
 import sangria.schema.BooleanType
 import sangria.schema.Context
 import sangria.schema.Field
@@ -65,7 +61,7 @@ import scala.reflect.ClassTag
 
 object FieldBuilder extends StrictLogging {
 
-  type ResolverType = Context[SangriaGraphQlContext, DataMap] => Value[SangriaGraphQlContext, Any]
+  type ResolverType = Context[SangriaGraphQlContext, DataMapWithParent] => Action[SangriaGraphQlContext, Any]
 
   def buildField(
       schemaMetadata: SchemaMetadata,
@@ -73,20 +69,13 @@ object FieldBuilder extends StrictLogging {
       namespace: Option[String],
       fieldNameOverride: Option[String] = None,
       followRelations: Boolean = true,
-      resourceName: ResourceName): Field[SangriaGraphQlContext, DataMap] = {
+      resourceName: ResourceName,
+      currentPath: List[String] = List.empty): Field[SangriaGraphQlContext, DataMapWithParent] = {
 
-    type ResolverType = Context[SangriaGraphQlContext, DataMap] => Value[SangriaGraphQlContext, Any]
-
-    val fieldProperties = field.getProperties.asScala
-    val forwardRelationOption = fieldProperties.get(Relations.PROPERTY_NAME).map(_.toString)
-    val reverseRelationOption = fieldProperties.get(Relations.REVERSE_PROPERTY_NAME).map { d =>
-      ReverseRelationAnnotation.build(d.asInstanceOf[DataMap], DataConversion.SetReadOnly)
-    }
+    type ResolverType = Context[SangriaGraphQlContext, DataMapWithParent] => Value[SangriaGraphQlContext, Any]
 
     val relatedResourceOption = if (followRelations) {
-      forwardRelationOption
-        .orElse(reverseRelationOption.map(_.resourceName))
-        .flatMap(ResourceName.parse)
+      ReverseRelation.parse(field).map(_.resourceName).flatMap(ResourceName.parse)
     } else {
       None
     }
@@ -99,46 +88,44 @@ object FieldBuilder extends StrictLogging {
 
       // Related resource in a list
       case (Some(relatedResourceName), _: ArrayDataSchema) =>
-        val fieldRelation = forwardRelationOption.map(ForwardRelation)
-          .orElse(reverseRelationOption.map(ReverseRelation))
         // TODO(bryan): don't throw away errors from the left here
         NaptimePaginatedResourceField
-          .build(schemaMetadata, relatedResourceName, fieldName, None, fieldRelation)
+          .build(schemaMetadata, relatedResourceName, fieldName, None, ReverseRelation.parse(field), currentPath)
           .right
           .getOrElse {
             buildField(schemaMetadata, field, namespace, fieldNameOverride,
-              followRelations = false, resourceName = resourceName)
+              followRelations = false, resourceName = resourceName, currentPath = currentPath)
           }
 
       // Single related resource
       case (Some(relatedResourceName), _) =>
         // TODO(bryan): don't throw away errors from the left here
         NaptimeResourceField
-          .build(schemaMetadata, relatedResourceName, fieldName)
+          .build(schemaMetadata, relatedResourceName, fieldName, ReverseRelation.parse(field), currentPath)
           .right
           .getOrElse {
             buildField(schemaMetadata, field, namespace, fieldNameOverride,
-              followRelations = false, resourceName = resourceName)
+              followRelations = false, resourceName = resourceName, currentPath = currentPath)
           }
 
       // Passthrough Exempt types (fallback to DataMap)
       case (None, recordDataSchema: RecordDataSchema)
         if recordDataSchema.getProperties.asScala.get("passthroughExempt").contains(true) =>
 
-        Field.apply[SangriaGraphQlContext, DataMap, Any, Any](
+        Field.apply[SangriaGraphQlContext, DataMapWithParent, Any, Any](
           name = FieldBuilder.formatName(fieldName),
           fieldType = NaptimeTypes.DataMapType,
-          resolve = context => context.value.getDataMap(fieldName))
+          resolve = context => context.value.copy(element = context.value.element.getDataMap(fieldName)))
 
       // Complex types
       case (None, recordDataSchema: RecordDataSchema) =>
-        NaptimeRecordField.build(schemaMetadata, recordDataSchema, fieldName, namespace, resourceName)
+        NaptimeRecordField.build(schemaMetadata, recordDataSchema, fieldName, namespace, resourceName, currentPath)
 
       case (None, enumDataSchema: EnumDataSchema) =>
         NaptimeEnumField.build(enumDataSchema, fieldName)
 
       case (None, unionDataSchema: UnionDataSchema) =>
-        NaptimeUnionField.build(schemaMetadata, unionDataSchema, fieldName, namespace, resourceName)
+        NaptimeUnionField.build(schemaMetadata, unionDataSchema, fieldName, namespace, resourceName, currentPath)
 
       case (None, typerefDataSchema: TyperefDataSchema) =>
         val dereferencedSchema = typerefDataSchema.getDereferencedDataSchema
@@ -156,8 +143,8 @@ object FieldBuilder extends StrictLogging {
         val referencedType = new RecordDataSchemaField(dereferencedSchemaWithProperties)
 
         val innerField = buildField(schemaMetadata, referencedType, namespace, Some(fieldName),
-          resourceName = resourceName)
-        Field.apply[SangriaGraphQlContext, DataMap, Any, Any](
+          resourceName = resourceName, currentPath = currentPath)
+        Field.apply[SangriaGraphQlContext, DataMapWithParent, Any, Any](
           name = FieldBuilder.formatName(fieldName),
           fieldType = innerField.fieldType,
           resolve = innerField.resolve)
@@ -165,19 +152,22 @@ object FieldBuilder extends StrictLogging {
       case (None, arrayDataSchema: ArrayDataSchema) =>
         val subType = new RecordDataSchemaField(arrayDataSchema.getItems)
         val innerField = buildField(schemaMetadata, subType, namespace, Some(fieldName),
-          resourceName = resourceName)
-        Field.apply[SangriaGraphQlContext, DataMap, Any, Any](
+          resourceName = resourceName, currentPath = currentPath)
+        Field.apply[SangriaGraphQlContext, DataMapWithParent, Any, Any](
           name = FieldBuilder.formatName(fieldName),
           fieldType = ListType(innerField.fieldType),
-          resolve = context => Option(context.value.getDataList(fieldName))
-            .map(_.asScala)
+          resolve = context => Option(context.value.element.getDataList(fieldName))
+            .map(_.asScala.map {
+              case dataMap: DataMap => context.value.copy(element = dataMap)
+              case element: Any => element
+            })
             .getOrElse(null))
 
       case (None, _: MapDataSchema) =>
-        Field.apply[SangriaGraphQlContext, DataMap, Any, Any](
+        Field.apply[SangriaGraphQlContext, DataMapWithParent, Any, Any](
           name = FieldBuilder.formatName(fieldName),
           fieldType = NaptimeTypes.DataMapType,
-          resolve = context => context.value.getDataMap(fieldName))
+          resolve = context => context.value.element.getDataMap(fieldName))
 
       // Primitives
       case (None, ds: StringDataSchema) => buildPrimitiveField[String](fieldName, ds, StringType)
@@ -189,28 +179,44 @@ object FieldBuilder extends StrictLogging {
       case (None, ds: FloatDataSchema) => buildPrimitiveField[Float](fieldName, ds, FloatType)
 
       case (None, _: NullDataSchema) =>
-        Field.apply[SangriaGraphQlContext, DataMap, Any, Any](
+        Field.apply[SangriaGraphQlContext, DataMapWithParent, Any, Any](
           name = FieldBuilder.formatName(fieldName),
           fieldType = NaptimeTypes.DataMapType,
           resolve = context => null)
 
       case (None, _) =>
         logger.error(s"Constructing field for unknown type ${field.getType} [$fieldName]")
-        Field.apply[SangriaGraphQlContext, DataMap, Any, Any](
+        Field.apply[SangriaGraphQlContext, DataMapWithParent, Any, Any](
           name = FieldBuilder.formatName(fieldName),
           fieldType = NaptimeTypes.DataMapType,
           resolve = context => context.value)
     }
 
-    val fieldTypeWithOptionality = if (field.getOptional) {
-      OptionType(sangriaField.fieldType)
+    val (fieldTypeWithOptionality, resolverWithOptionality) = if (field.getOptional) {
+      val updatedFieldType = OptionType(sangriaField.fieldType)
+      val updatedResolver = (context: Context[SangriaGraphQlContext, DataMapWithParent]) => {
+        sangriaField.resolve(context).map {
+          case null =>
+            None
+          case value: DataMapWithParent =>
+            if (value.element == null) {
+              None
+            } else {
+              value
+            }
+          case value: Any =>
+            Option(value)
+        }(context.ctx.executionContext)
+      }
+      (updatedFieldType, updatedResolver)
     } else {
-      sangriaField.fieldType
+      (sangriaField.fieldType, sangriaField.resolve)
     }
 
     sangriaField.copy(
       description = fieldDoc,
-      fieldType = fieldTypeWithOptionality)
+      fieldType = fieldTypeWithOptionality,
+      resolve = resolverWithOptionality)
   }
 
   private[this] val validationOptions = new ValidationOptions(
@@ -222,11 +228,11 @@ object FieldBuilder extends StrictLogging {
       dataSchema: DataSchema,
       sangriaScalarType: ScalarType[_])
       (implicit tag: ClassTag[ParseType]) = {
-    Field.apply[SangriaGraphQlContext, DataMap, Any, Any](
+    Field.apply[SangriaGraphQlContext, DataMapWithParent, Any, Any](
       name = FieldBuilder.formatName(fieldName),
       fieldType = sangriaScalarType,
       resolve = context => {
-        Option(context.value.get(fieldName)).map { rawValue =>
+        Option(context.value.element.get(fieldName)).map { rawValue =>
           val result = ValidateDataAgainstSchema.validate(rawValue, dataSchema, validationOptions)
 
           if (result.isValid) {

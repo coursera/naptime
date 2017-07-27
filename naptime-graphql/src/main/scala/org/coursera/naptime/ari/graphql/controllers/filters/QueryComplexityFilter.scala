@@ -9,6 +9,8 @@ import org.coursera.naptime.ari.graphql.GraphqlSchemaProvider
 import org.coursera.naptime.ari.graphql.SangriaGraphQlContext
 import org.coursera.naptime.ari.graphql.controllers.GraphQLController
 import org.coursera.naptime.ari.graphql.marshaller.NaptimeMarshaller._
+import org.coursera.naptime.ari.graphql.resolvers.NaptimeResolver
+import org.coursera.naptime.ari.graphql.resolvers.NoopResolver
 import play.api.libs.json.JsObject
 import play.api.libs.json.Json
 import play.api.mvc.Results
@@ -56,7 +58,8 @@ class QueryComplexityFilter @Inject() (
 
   private[graphql] def computeComplexity(
       queryAst: Document,
-      variables: JsObject): Future[Double] = {
+      variables: JsObject)
+      (implicit executionContext: ExecutionContext): Future[Double] = {
     // TODO(bryan): is there a way around this var?
     var complexity = 0D
     val complReducer = QueryReducer.measureComplexity[SangriaGraphQlContext] { (c, ctx) =>
@@ -66,10 +69,11 @@ class QueryComplexityFilter @Inject() (
     val executorFut = Executor.execute(
       graphqlSchemaProvider.schema,
       queryAst,
-      SangriaGraphQlContext(Response.empty),
+      SangriaGraphQlContext(null, null, executionContext),
       variables = variables,
       exceptionHandler = GraphQLController.exceptionHandler(logger),
-      queryReducers = List(complReducer))
+      queryReducers = List(complReducer),
+      deferredResolver = new NoopResolver())
 
     executorFut.map { _ =>
       complexity

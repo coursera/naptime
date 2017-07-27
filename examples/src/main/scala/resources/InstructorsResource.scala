@@ -6,6 +6,7 @@ import javax.inject.Singleton
 import org.coursera.example.Instructor
 import org.coursera.naptime.Fields
 import org.coursera.naptime.FinderReverseRelation
+import org.coursera.naptime.GetReverseRelation
 import org.coursera.naptime.Ok
 import org.coursera.naptime.ResourceName
 import org.coursera.naptime.model.Keyed
@@ -24,7 +25,10 @@ class InstructorsResource @Inject() (
       "courses" -> FinderReverseRelation(
         resourceName = ResourceName("courses", 1),
         finderName = "byInstructor",
-        arguments = Map("instructorId" -> "$id")))
+        arguments = Map("instructorId" -> "$id")),
+      "partner" -> GetReverseRelation(
+        resourceName = ResourceName("partners", 1),
+        id = "$partnerId"))
 
   def get(id: Int) = Nap.get { context =>
     OkIfPresent(id, instructorStore.get(id))

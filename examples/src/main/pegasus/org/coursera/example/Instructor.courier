@@ -1,9 +1,7 @@
 namespace org.coursera.example
 
 record Instructor {
-  @related = "partners.v1"
-  partner: PartnerId
-
+  partnerId: PartnerId
   name: string
   photoUrl: string
 }

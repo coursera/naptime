@@ -20,6 +20,7 @@ import org.scalatest.exceptions.TestFailedException
 import org.scalatest.junit.AssertionsForJUnit
 import play.api.libs.json.JsString
 import play.api.test.FakeRequest
+import scala.concurrent.ExecutionContext.Implicits.global
 
 /**
  * This test suite uses Courier to exercise advanced use cases for Naptime.
