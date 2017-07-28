@@ -19,18 +19,20 @@ package org.coursera.naptime.ari.graphql.schema
 import com.linkedin.data.schema.RecordDataSchema
 import com.typesafe.scalalogging.StrictLogging
 import org.coursera.naptime.ResourceName
+import org.coursera.naptime.ari.engine.Utilities
 import org.coursera.naptime.ari.graphql.SangriaGraphQlContext
 import org.coursera.naptime.ari.graphql.resolvers.DeferredNaptimeElement
 import org.coursera.naptime.ari.graphql.resolvers.NaptimeError
 import org.coursera.naptime.schema.HandlerKind
+import org.coursera.naptime.schema.RelationType
 import org.coursera.naptime.schema.Resource
 import org.coursera.naptime.schema.ReverseRelationAnnotation
-import play.api.libs.json.JsNull
 import sangria.schema.Context
 import sangria.schema.DeferredValue
 import sangria.schema.Field
 import sangria.schema.ObjectType
 import sangria.schema.OptionType
+import sangria.schema.Value
 
 import scala.collection.JavaConverters._
 
@@ -112,17 +114,26 @@ object NaptimeResourceField extends StrictLogging {
       val idArg = args.find(_._1 == "ids").map(_._2)
       val nonIdArgs = args.filter(_._1 != "ids")
 
-      DeferredValue(DeferredNaptimeElement(resourceName, idArg, nonIdArgs, resourceMergedType))
-        .map {
-          case Left(error) =>
-            throw NaptimeResolveException(error)
-          case Right(response) =>
-            response.elements.headOption.map { dataMapWithParent =>
-              dataMapWithParent.copy(sourceUrl = Some(response.url))
-            }.getOrElse {
-              throw NaptimeResolveException(NaptimeError(response.url, "Not found."))
-            }
-        }(context.ctx.executionContext)
+      val isForwardRelationButMissingId =
+        fieldRelationOpt.exists(_.relationType == RelationType.GET) &&
+          idArg.forall(Utilities.jsValueIsEmpty)
+
+
+      if (isForwardRelationButMissingId) {
+        Value(null)
+      } else {
+        DeferredValue(DeferredNaptimeElement(resourceName, idArg, nonIdArgs, resourceMergedType))
+          .map {
+            case Left(error) =>
+              throw NaptimeResolveException(error)
+            case Right(response) =>
+              response.elements.headOption.map { dataMapWithParent =>
+                dataMapWithParent.copy(sourceUrl = Some(response.url))
+              }.getOrElse {
+                throw NaptimeResolveException(NaptimeError(response.url, "Not found."))
+              }
+          }(context.ctx.executionContext)
+      }
     }
   }
 
