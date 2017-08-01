@@ -11,7 +11,8 @@ case class IncomingQuery(
     document: Document,
     requestHeader: RequestHeader,
     variables: JsObject,
-    operation: Option[String])
+    operation: Option[String],
+    debugMode: Boolean)
 
 case class OutgoingQuery(response: JsObject, ariResponse: Option[Response])
 

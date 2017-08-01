@@ -25,4 +25,5 @@ import scala.concurrent.ExecutionContext
 case class SangriaGraphQlContext(
     fetcher: FetcherApi,
     requestHeader: RequestHeader,
-    executionContext: ExecutionContext)
+    executionContext: ExecutionContext,
+    debugMode: Boolean)
