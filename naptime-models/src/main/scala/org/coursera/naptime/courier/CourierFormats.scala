@@ -328,7 +328,7 @@ object CourierFormats extends StrictLogging {
     observedSchema: DataSchema)(implicit tag: ClassTag[ExpectedSchemaType]): Unit = {
     val expectedSchemaClass = tag.runtimeClass.asInstanceOf[Class[ExpectedSchemaType]]
     val observedSchemaClass = observedSchema.getClass
-    if (observedSchemaClass != expectedSchemaClass && rateLimiter.isAllowed) {
+    if (observedSchemaClass != expectedSchemaClass) {
       val schemaInfo = schemaPath.last
         .map { schema =>
           s" in ${schema.getFullName}"
@@ -338,33 +338,6 @@ object CourierFormats extends StrictLogging {
         s"Schema mismatch in NewCourierFormats when $context$schemaInfo: " +
           s"expected schema of type ${expectedSchemaClass.getName}, " +
           s"but got ${observedSchemaClass.getName}")
-    }
-  }
-
-  private[this] val rateLimiter = new LeakyBucketRateLimiter(100, 1.0, Clock.systemUTC)
-
-  /**
-   * Thread-safe implementation of the leaky bucket rate limiting algorithm
-   */
-  class LeakyBucketRateLimiter(capacity: Long, leakPerSecond: Double, clock: Clock) {
-    private[this] var amount: Double = 0
-    private[this] var lastTimeMilliseconds: Long = clock.millis
-
-    def isAllowed: Boolean = {
-      this.synchronized {
-        // decrease the volume based on how much time passed since the last invocation
-        val currentTimeMilliseconds: Long = clock.millis
-        val secondsSinceLast: Double = (currentTimeMilliseconds - lastTimeMilliseconds) / 1000.0
-        lastTimeMilliseconds = currentTimeMilliseconds
-        amount = Math.max(0, amount - leakPerSecond * secondsSinceLast)
-        // if there's capacity for more, allow it, otherwise prohibit it
-        if (amount + 1 <= capacity) {
-          amount += 1
-          true
-        } else {
-          false
-        }
-      }
     }
   }
 
