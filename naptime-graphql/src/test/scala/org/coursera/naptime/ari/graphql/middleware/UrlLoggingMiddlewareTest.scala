@@ -76,21 +76,6 @@ class UrlLoggingMiddlewareTest extends AssertionsForJUnit with MockitoSugar {
     arguments = List.empty,
     resolve = _ => null)
 
-  private[this] val instructorField = Field[SangriaGraphQlContext, Any, Any, Any](
-    name = "instructor",
-    fieldType = mockSchema.outputTypes("Instructor"),
-    description = None,
-    arguments = List.empty,
-    resolve = _ => null)
-
-  val query = gql"""
-      query {
-        course {
-          slug
-        }
-      }
-    """
-
   def buildContext(
       ctx: SangriaGraphQlContext,
       executionPath: ExecutionPath): Context[SangriaGraphQlContext, _] = {
