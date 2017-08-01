@@ -116,7 +116,7 @@ class GraphQLController @Inject() (
       QueryParser.parse(query) match {
         case Success(queryAst) =>
           val baseFilter: IncomingQuery => Future[OutgoingQuery] = (incoming: IncomingQuery) => {
-            val context = SangriaGraphQlContext(fetcher, requestHeader, ec)
+            val context = SangriaGraphQlContext(fetcher, requestHeader, ec, incoming.debugMode)
             Executor.execute(
               graphqlSchemaProvider.schema,
               queryAst,
@@ -137,7 +137,8 @@ class GraphQLController @Inject() (
               logger.error("GraphQL execution error", error)
               OutgoingQuery(Json.obj("errors" -> Json.arr(error.getMessage)), None)
           }
-          val incomingQuery = IncomingQuery(queryAst, requestHeader, variables, operation)
+          val incomingQuery = IncomingQuery(
+            queryAst, requestHeader, variables, operation, debugMode = false)
 
           val filterFn = filterList.filters.reverse.foldLeft(baseFilter) {
             case (accumulatedFilters, filter) =>

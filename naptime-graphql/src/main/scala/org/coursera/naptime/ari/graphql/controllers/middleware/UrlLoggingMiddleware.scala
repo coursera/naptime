@@ -44,22 +44,26 @@ class UrlLoggingMiddleware
       value: Any,
       mctx: MiddlewareQueryContext[SangriaGraphQlContext, _, _],
       ctx: Context[SangriaGraphQlContext, _]): Option[Any] = {
-    value match {
-      case NaptimeResponse(_, _, url) =>
-        urlsLoaded.putIfAbsent(ctx.path.toString(), url)
-        None
-      case Some(DataMapWithParent(_, _, sourceUrl)) =>
-        sourceUrl.foreach { url =>
+    if (ctx.ctx.debugMode) {
+      value match {
+        case NaptimeResponse(_, _, url) =>
           urlsLoaded.putIfAbsent(ctx.path.toString(), url)
-        }
-        None
-      case DataMapWithParent(_, _, sourceUrl) =>
-        sourceUrl.foreach { url =>
-          urlsLoaded.putIfAbsent(ctx.path.toString(), url)
-        }
-        None
-      case _ =>
-        None
+          None
+        case Some(DataMapWithParent(_, _, sourceUrl)) =>
+          sourceUrl.foreach { url =>
+            urlsLoaded.putIfAbsent(ctx.path.toString(), url)
+          }
+          None
+        case DataMapWithParent(_, _, sourceUrl) =>
+          sourceUrl.foreach { url =>
+            urlsLoaded.putIfAbsent(ctx.path.toString(), url)
+          }
+          None
+        case _ =>
+          None
+      }
+    } else {
+      None
     }
   }
 
@@ -69,11 +73,13 @@ class UrlLoggingMiddleware
       error: Throwable,
       mctx: MiddlewareQueryContext[SangriaGraphQlContext, _, _],
       ctx: Context[SangriaGraphQlContext, _]): Unit = {
-    error match {
-      case NaptimeResolveException(naptimeError) =>
-        urlsLoaded.putIfAbsent(ctx.path.toString(), naptimeError.url)
-      case _ =>
-        ()
+    if (ctx.ctx.debugMode) {
+      error match {
+        case NaptimeResolveException(naptimeError) =>
+          urlsLoaded.putIfAbsent(ctx.path.toString(), naptimeError.url)
+        case _ =>
+          ()
+      }
     }
   }
 
@@ -83,16 +89,21 @@ class UrlLoggingMiddleware
 
     import sangria.marshalling.queryAst._
 
-    // TODO(bryan): handle auths here
-    val objectFields = urlsLoaded.map { case (path, url) =>
-      sangria.ast.ObjectField(path, sangria.ast.StringValue(url))
-    }.toVector
-    Vector(
-      Extension(sangria.ast.ObjectValue(
-        Vector(sangria.ast.ObjectField(
-          "sourceUrls",
-          sangria.ast.ObjectValue(objectFields)))).asInstanceOf[sangria.ast.Value])
-    )
+    if (context.ctx.debugMode) {
+      val objectFields = urlsLoaded.map { case (path, url) =>
+        sangria.ast.ObjectField(path, sangria.ast.StringValue(url))
+      }.toVector
+      Vector(
+        Extension(
+          sangria.ast.ObjectValue(
+            Vector(
+              sangria.ast.ObjectField(
+                "sourceUrls",
+                sangria.ast.ObjectValue(objectFields)))).asInstanceOf[sangria.ast.Value])
+      )
+    } else {
+      Vector.empty
+    }
   }
 
 }

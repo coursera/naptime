@@ -68,7 +68,7 @@ trait FilterTest
     val header = FakeRequest("POST", s"/graphql").withBody(query)
     val variables = Json.obj()
     val operation = None
-    IncomingQuery(document, header, variables, operation)
+    IncomingQuery(document, header, variables, operation, debugMode = false)
   }
 
   def run(incomingQuery: IncomingQuery): Future[OutgoingQuery] = {

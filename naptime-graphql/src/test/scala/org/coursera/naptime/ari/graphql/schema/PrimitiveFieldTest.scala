@@ -46,7 +46,7 @@ class PrimitiveFieldTest extends AssertionsForJUnit with MockitoSugar {
       (implicit ctxManifest: Manifest[SangriaGraphQlContext], valManifest: Manifest[Val]) = {
     Context[SangriaGraphQlContext, Val](
       value = value,
-      ctx = SangriaGraphQlContext(null, null, ExecutionContext.global),
+      ctx = SangriaGraphQlContext(null, null, ExecutionContext.global, debugMode = false),
       args = ArgumentBuilder.buildArgs(NaptimePaginationField.paginationArguments, args),
       schema = mock[Schema[SangriaGraphQlContext, Val]],
       field = mock[Field[SangriaGraphQlContext, Val]],
