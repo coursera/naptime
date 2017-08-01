@@ -29,7 +29,9 @@ object NaptimeUnionField {
       name = fieldName,
       fieldType = getType(schemaMetadata, unionDataSchema, fieldName, namespace, resourceName, currentPath),
       resolve = context => {
-        context.value.copy(element = context.value.element.getDataMap(fieldName))
+        Option(context.value.element.getDataMap(fieldName)).map { nestedDataMap =>
+          context.value.copy(element = nestedDataMap)
+        }.orNull[DataMapWithParent]
       })
   }
 
@@ -93,8 +95,13 @@ object NaptimeUnionField {
       // write a custom type mapper to use field names to determine the union member type
       override def typeOf[Ctx](value: Any, schema: Schema[Ctx, _]): Option[ObjectType[Ctx, _]] = {
         (if (unionDataSchema.getProperties.containsKey(TYPED_DEFINITION_KEY)) {
-          val typeName = value.asInstanceOf[DataMapWithParent].element.getString("typeName")
-          objects.find(_.fieldsByName.keySet.contains(typeName))
+          for {
+            element <- Option(value.asInstanceOf[DataMapWithParent].element)
+            typeName <- Option(element.getString("typeName"))
+            matchingObject <- objects.find(_.fieldsByName.keySet.contains(typeName))
+          } yield {
+            matchingObject
+          }
         } else {
           val typedValue = value.asInstanceOf[DataMapWithParent]
           objects.find { obj =>
