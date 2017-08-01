@@ -27,7 +27,7 @@ import org.junit.Test
 import org.mockito.Mockito.when
 import org.mockito.Matchers.any
 import org.scalatest.junit.AssertionsForJUnit
-import org.scalatest.mock.MockitoSugar
+import org.scalatest.mockito.MockitoSugar
 import play.api.libs.iteratee.Iteratee
 import play.api.mvc.EssentialAction
 import play.api.mvc.RequestHeader

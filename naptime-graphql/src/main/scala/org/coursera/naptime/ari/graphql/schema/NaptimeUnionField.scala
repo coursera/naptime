@@ -23,13 +23,22 @@ object NaptimeUnionField {
       unionDataSchema: UnionDataSchema,
       fieldName: String,
       namespace: Option[String],
-      resourceName: ResourceName): Field[SangriaGraphQlContext, DataMap] = {
-    Field.apply[SangriaGraphQlContext, DataMap, Any, Any](
+      resourceName: ResourceName,
+      currentPath: List[String]): Field[SangriaGraphQlContext, DataMapWithParent] = {
+    Field.apply[SangriaGraphQlContext, DataMapWithParent, Any, Any](
       name = fieldName,
-      fieldType = getType(schemaMetadata, unionDataSchema, fieldName, namespace, resourceName),
+      fieldType = getType(schemaMetadata, unionDataSchema, fieldName, namespace, resourceName, currentPath),
       resolve = context => {
-        context.value.getDataMap(fieldName)
+        Option(context.value.element.getDataMap(fieldName)).map { nestedDataMap =>
+          context.value.copy(element = nestedDataMap)
+        }.orNull[DataMapWithParent]
       })
+  }
+
+  def getTypedDefinition(unionDataSchema: UnionDataSchema): Option[Map[String, String]] = {
+    Option(unionDataSchema.getProperties.get(TYPED_DEFINITION_KEY)).collect {
+      case definitions: java.util.Map[String @unchecked, String @unchecked] => definitions.asScala.toMap
+    }
   }
 
   private[schema] def getType(
@@ -37,13 +46,12 @@ object NaptimeUnionField {
       unionDataSchema: UnionDataSchema,
       fieldName: String,
       namespace: Option[String],
-      resourceName: ResourceName): UnionType[SangriaGraphQlContext] = {
+      resourceName: ResourceName,
+      currentPath: List[String]): UnionType[SangriaGraphQlContext] = {
 
     val objects = unionDataSchema.getTypes.asScala.map { subType =>
 
-      val typedDefinitions = Option(unionDataSchema.getProperties.get(TYPED_DEFINITION_KEY)).collect {
-        case definitions: java.util.Map[String @unchecked, String @unchecked] => definitions.asScala
-      }.getOrElse(Map[String, String]())
+      val typedDefinitions = getTypedDefinition(unionDataSchema).getOrElse(Map[String, String]())
 
       val unionMemberKey = subType match {
         case _ if typedDefinitions.contains(subType.getUnionMemberKey) =>
@@ -61,21 +69,24 @@ object NaptimeUnionField {
         new RecordDataSchemaField(subType),
         namespace,
         Some(unionMemberKey),
-        resourceName = resourceName)
+        resourceName = resourceName,
+        currentPath = currentPath)
 
-      val field = Field.apply[SangriaGraphQlContext, DataMap, Any, Any](
+      val field = Field.apply[SangriaGraphQlContext, DataMapWithParent, Any, Any](
         unionMemberFieldName,
         subTypeField.fieldType,
         resolve = context => {
           if (unionDataSchema.getProperties.containsKey(TYPED_DEFINITION_KEY)) {
-            Option(context.value.getDataMap("definition")).getOrElse(subTypeField.resolve(context))
+            Option(context.value.element.getDataMap("definition"))
+              .map(element => context.value.copy(element = element))
+              .getOrElse(subTypeField.resolve(context))
           } else {
             subTypeField.resolve(context)
           }
         })
       val formattedResourceName = NaptimeResourceUtils.formatResourceName(resourceName)
 
-      ObjectType[SangriaGraphQlContext, DataMap](
+      ObjectType[SangriaGraphQlContext, DataMapWithParent](
         name = FieldBuilder.formatName(s"$formattedResourceName/${unionMemberKey}Member"),
         fields = List(field))
     }.toList
@@ -84,17 +95,22 @@ object NaptimeUnionField {
       // write a custom type mapper to use field names to determine the union member type
       override def typeOf[Ctx](value: Any, schema: Schema[Ctx, _]): Option[ObjectType[Ctx, _]] = {
         (if (unionDataSchema.getProperties.containsKey(TYPED_DEFINITION_KEY)) {
-          val typeName = value.asInstanceOf[DataMap].getString("typeName")
-          objects.find(_.fieldsByName.keySet.contains(typeName))
+          for {
+            element <- Option(value.asInstanceOf[DataMapWithParent].element)
+            typeName <- Option(element.getString("typeName"))
+            matchingObject <- objects.find(_.fieldsByName.keySet.contains(typeName))
+          } yield {
+            matchingObject
+          }
         } else {
-          val typedValue = value.asInstanceOf[DataMap]
+          val typedValue = value.asInstanceOf[DataMapWithParent]
           objects.find { obj =>
-            val formattedMemberNames = typedValue.keySet.asScala
+            val formattedMemberNames = typedValue.element.keySet.asScala
               .flatMap(key => Option(key))
               .map(FieldBuilder.formatName)
             obj.fieldsByName.keySet.intersect(formattedMemberNames).nonEmpty
           }
-        }).map(_.asInstanceOf[ObjectType[Ctx, DataMap]])
+        }).map(_.asInstanceOf[ObjectType[Ctx, DataMapWithParent]])
       }
     }
   }

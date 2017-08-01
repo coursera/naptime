@@ -41,7 +41,7 @@ import org.mockito.Mockito._
 import org.mockito.Matchers.any
 import org.mockito.Matchers.{eq => e}
 import org.scalatest.junit.AssertionsForJUnit
-import org.scalatest.mock.MockitoSugar
+import org.scalatest.mockito.MockitoSugar
 import play.api.libs.json.Json
 import play.api.libs.json.OFormat
 import play.api.mvc.AnyContent

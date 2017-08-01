@@ -13,12 +13,12 @@ object NaptimeEnumField {
 
   private[schema] def build(
       enumDataSchema: EnumDataSchema,
-      fieldName: String): Field[SangriaGraphQlContext, DataMap] = {
+      fieldName: String): Field[SangriaGraphQlContext, DataMapWithParent] = {
 
-    Field.apply[SangriaGraphQlContext, DataMap, Any, Any](
+    Field.apply[SangriaGraphQlContext, DataMapWithParent, Any, Any](
       name = FieldBuilder.formatName(fieldName),
       fieldType = getType(enumDataSchema),
-      resolve = context => context.value.getString(fieldName))
+      resolve = context => context.value.element.getString(fieldName))
   }
 
   private[schema] def getType(enumDataSchema: EnumDataSchema): EnumType[String] = {

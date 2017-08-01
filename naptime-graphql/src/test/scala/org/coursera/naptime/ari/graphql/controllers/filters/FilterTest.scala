@@ -11,7 +11,7 @@ import org.mockito.Mockito.when
 import org.scalatest.concurrent.IntegrationPatience
 import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.junit.AssertionsForJUnit
-import org.scalatest.mock.MockitoSugar
+import org.scalatest.mockito.MockitoSugar
 import play.api.libs.json.Json
 import play.api.test.FakeRequest
 import sangria.parser.QueryParser
@@ -68,7 +68,7 @@ trait FilterTest
     val header = FakeRequest("POST", s"/graphql").withBody(query)
     val variables = Json.obj()
     val operation = None
-    IncomingQuery(document, header, variables, operation)
+    IncomingQuery(document, header, variables, operation, debugMode = false)
   }
 
   def run(incomingQuery: IncomingQuery): Future[OutgoingQuery] = {

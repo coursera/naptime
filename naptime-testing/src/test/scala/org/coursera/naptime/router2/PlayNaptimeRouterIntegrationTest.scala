@@ -34,7 +34,7 @@ import org.junit.Test
 import org.mockito.Matchers._
 import org.mockito.Mockito._
 import org.scalatest.junit.AssertionsForJUnit
-import org.scalatest.mock.MockitoSugar
+import org.scalatest.mockito.MockitoSugar
 import play.api.libs.json.Json
 import play.api.libs.json.OFormat
 import play.api.mvc.AnyContentAsEmpty

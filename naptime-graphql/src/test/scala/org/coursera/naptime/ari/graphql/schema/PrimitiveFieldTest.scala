@@ -16,21 +16,14 @@
 
 package org.coursera.naptime.ari.graphql.schema
 
-import com.linkedin.data.DataList
 import com.linkedin.data.DataMap
 import com.linkedin.data.schema.LongDataSchema
 import com.linkedin.data.schema.StringDataSchema
-import org.coursera.naptime.ResourceName
-import org.coursera.naptime.ResponsePagination
-import org.coursera.naptime.ari.RequestField
-import org.coursera.naptime.ari.Response
-import org.coursera.naptime.ari.TopLevelRequest
-import org.coursera.naptime.ari.TopLevelResponse
 import org.coursera.naptime.ari.graphql.SangriaGraphQlContext
 import org.coursera.naptime.ari.graphql.helpers.ArgumentBuilder
 import org.junit.Test
 import org.scalatest.junit.AssertionsForJUnit
-import org.scalatest.mock.MockitoSugar
+import org.scalatest.mockito.MockitoSugar
 import sangria.execution.DeprecationTracker
 import sangria.execution.ExecutionPath
 import sangria.marshalling.ResultMarshaller
@@ -43,21 +36,21 @@ import sangria.schema.StringType
 import sangria.schema.Value
 
 import scala.collection.JavaConverters._
+import scala.concurrent.ExecutionContext
 
 class PrimitiveFieldTest extends AssertionsForJUnit with MockitoSugar {
 
-  def createContext[Ctx, Val](
-      ctx: Ctx,
+  private[this] def createContext[Val](
       value: Val,
       args: Map[String, Any] = Map("limit" -> 100))
-      (implicit ctxManifest: Manifest[Ctx], valManifest: Manifest[Val]) = {
-    Context[Ctx, Val](
+      (implicit ctxManifest: Manifest[SangriaGraphQlContext], valManifest: Manifest[Val]) = {
+    Context[SangriaGraphQlContext, Val](
       value = value,
-      ctx = ctx,
+      ctx = SangriaGraphQlContext(null, null, ExecutionContext.global, debugMode = false),
       args = ArgumentBuilder.buildArgs(NaptimePaginationField.paginationArguments, args),
-      schema = mock[Schema[Ctx, Val]],
-      field = mock[Field[Ctx, Val]],
-      parentType = mock[ObjectType[Ctx, Any]],
+      schema = mock[Schema[SangriaGraphQlContext, Val]],
+      field = mock[Field[SangriaGraphQlContext, Val]],
+      parentType = mock[ObjectType[SangriaGraphQlContext, Any]],
       marshaller = mock[ResultMarshaller],
       sourceMapper = None,
       deprecationTracker = DeprecationTracker.empty,
@@ -70,21 +63,14 @@ class PrimitiveFieldTest extends AssertionsForJUnit with MockitoSugar {
   val invalidFieldName = "__invalidFieldName"
   val validDoubleUnderscoreName = "valid__fieldName"
   val resourceName = "courses.v1"
-  val resourceContext = SangriaGraphQlContext(Response(
-    Map(TopLevelRequest(
-      ResourceName.parse(resourceName).get,
-      RequestField("", None, Set.empty, List.empty)) ->
-    TopLevelResponse(
-      ids = new DataList(List("1").asJava),
-      pagination = ResponsePagination(None))),
-    Map(ResourceName.parse(resourceName).get -> Map("1" -> new DataMap()))))
 
   @Test
   def basicParse(): Unit = {
     val stringDataSchema = new StringDataSchema()
     val field = FieldBuilder.buildPrimitiveField[String](fieldName, stringDataSchema, StringType)
-    val graphqlContext = SangriaGraphQlContext(Response.empty)
-    val context = createContext(graphqlContext, new DataMap(Map(fieldName -> "testString").asJava))
+
+    val context = createContext(
+      DataMapWithParent(new DataMap(Map(fieldName -> "testString").asJava), null))
     val result = field.resolve(context).asInstanceOf[Value[SangriaGraphQlContext, String]]
     assert(result.value === "testString")
   }
@@ -93,8 +79,8 @@ class PrimitiveFieldTest extends AssertionsForJUnit with MockitoSugar {
   def numberFixUp(): Unit = {
     val longDataSchema = new LongDataSchema()
     val field = FieldBuilder.buildPrimitiveField[Long](fieldName, longDataSchema, LongType)
-    val graphqlContext = SangriaGraphQlContext(Response.empty)
-    val context = createContext(graphqlContext, new DataMap(Map(fieldName -> new Integer(1234)).asJava))
+    val context = createContext(
+      DataMapWithParent(new DataMap(Map(fieldName -> new Integer(1234)).asJava), null))
     val result = field.resolve(context).asInstanceOf[Value[SangriaGraphQlContext, Long]]
     assert(result.value === 1234L)
   }
@@ -103,8 +89,8 @@ class PrimitiveFieldTest extends AssertionsForJUnit with MockitoSugar {
   def invalidTypes(): Unit = {
     val longDataSchema = new LongDataSchema()
     val field = FieldBuilder.buildPrimitiveField[Long](fieldName, longDataSchema, LongType)
-    val graphqlContext = SangriaGraphQlContext(Response.empty)
-    val context = createContext(graphqlContext, new DataMap(Map(fieldName -> "badType").asJava))
+    val context = createContext(
+      DataMapWithParent(new DataMap(Map(fieldName -> "badType").asJava), null))
     val caughtException = intercept[ResponseFormatException] {
       field.resolve(context)
     }
@@ -115,8 +101,7 @@ class PrimitiveFieldTest extends AssertionsForJUnit with MockitoSugar {
   def optionalField(): Unit = {
     val longDataSchema = new LongDataSchema()
     val field = FieldBuilder.buildPrimitiveField[Long](fieldName, longDataSchema, LongType)
-    val graphqlContext = SangriaGraphQlContext(Response.empty)
-    val context = createContext(graphqlContext, new DataMap(Map.empty.asJava))
+    val context = createContext(DataMapWithParent(new DataMap(Map.empty.asJava), null))
     val result = field.resolve(context).asInstanceOf[Value[SangriaGraphQlContext, Any]]
     assert(result.value === null)
   }

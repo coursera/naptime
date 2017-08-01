@@ -14,11 +14,11 @@ class InstructorStore {
 
   instructorStore = instructorStore + (
     1 -> Instructor(
-      partner = "stanford",
+      partnerId = "stanford",
       name = "Andrew Ng",
       photoUrl = ""),
     2 -> Instructor(
-      partner = "ucsd",
+      partnerId = "ucsd",
       name = "Barb Oakley",
       photoUrl = ""))
 
