@@ -194,16 +194,10 @@ object NaptimePaginatedResourceField extends StrictLogging {
             Field.apply[SangriaGraphQlContext, NaptimeResponse, Any, Any](
               name = "paging",
               fieldType = NaptimePaginationField.getField(resourceName, fieldName),
-              resolve = _.value.pagination.map {
-                case rp: ResponsePagination =>
-                  rp
-                case other: Any =>
-                  logger.error(s"Expected ResponsePagination but got $other")
-                  None
-                case null =>
-                  logger.error("Expected ResponsePagination but got null")
-                  None
-              }.getOrElse(ResponsePagination.empty)))
+              resolve = (ctx) => {
+                val pagination = ctx.value.pagination.getOrElse(ResponsePagination.empty)
+                Value(pagination)
+              }))
         }.getOrElse(List.empty)
       })
   }
