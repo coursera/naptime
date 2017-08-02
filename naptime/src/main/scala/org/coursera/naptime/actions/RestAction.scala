@@ -16,6 +16,9 @@
 
 package org.coursera.naptime.actions
 
+
+import com.typesafe.scalalogging.StrictLogging
+import java.nio.charset.StandardCharsets
 import org.coursera.naptime.model.KeyFormat
 import org.coursera.naptime.RestError
 import org.coursera.naptime.NaptimeActionException
@@ -60,7 +63,7 @@ import scala.util.control.NonFatal
  * TODO(saeta): Enforce RACType extends from RestActionCategory.
  */
 trait RestAction[RACType, AuthType, BodyType, KeyType, ResourceType, ResponseType]
-  extends EssentialAction with RequestTaggingHandler {
+  extends EssentialAction with RequestTaggingHandler with StrictLogging {
 
   import play.api.libs.concurrent.Execution.Implicits.defaultContext
 
@@ -162,8 +165,14 @@ trait RestAction[RACType, AuthType, BodyType, KeyType, ResourceType, ResponseTyp
         // If it was an auth error, override with that. Otherwise serve the body error.
         authResult.map { authResult =>
           authResult.fold(
-            error => error.result, // TODO: log?
-            successAuth => bodyError) // TODO: log?
+            authError => authError.result,
+            _ => {
+              bodyError.body.run(Iteratee.consume[Array[Byte]]()).map { bytes =>
+                logger.warn(
+                  s"${new String(bytes, StandardCharsets.UTF_8)} on request ${rh.uri}")
+              }
+              bodyError
+            })
         }
       case Right(a) =>
         authResult.flatMap { authResult =>
