@@ -33,6 +33,5 @@ class ResourceModule extends NaptimeModule {
     bind[GraphqlSchemaProvider].to[DefaultGraphqlSchemaProvider]
     bind[FilterList].to[DefaultFilters]
     bind[ComplexityFilterConfiguration].toInstance(ComplexityFilterConfiguration.DEFAULT)
-    bind[GraphQlControllerMetricsCollector].to[LoggingGraphQlControllerMetricsCollector]
   }
 }
