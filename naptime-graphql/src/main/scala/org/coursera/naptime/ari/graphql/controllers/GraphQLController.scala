@@ -53,8 +53,7 @@ class GraphQLController @Inject() (
     graphqlSchemaProvider: GraphqlSchemaProvider,
     schemaProvider: GraphqlSchemaProvider,
     fetcher: FetcherApi,
-    filterList: FilterList,
-    metricsCollector: GraphQlControllerMetricsCollector)
+    filterList: FilterList)
     (implicit ec: ExecutionContext)
   extends Controller
   with StrictLogging {
