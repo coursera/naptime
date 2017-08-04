@@ -45,7 +45,8 @@ import scala.concurrent.Future
  * @param naptimeRoutes The routing data structures required for handling requests.
  */
 class LocalFetcher @Inject() (
-    naptimeRoutes: NaptimeRoutes)
+    naptimeRoutes: NaptimeRoutes,
+    isDebugMode: Boolean)
   extends FetcherApi with StrictLogging {
 
   private[this] val schemas = naptimeRoutes.routerBuilders.map(_.schema)

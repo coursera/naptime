@@ -27,6 +27,8 @@ import org.coursera.naptime.ari.graphql.SangriaGraphQlContext
 import org.coursera.naptime.ari.graphql.controllers.filters.FilterList
 import org.coursera.naptime.ari.graphql.controllers.filters.IncomingQuery
 import org.coursera.naptime.ari.graphql.controllers.filters.OutgoingQuery
+import org.coursera.naptime.ari.graphql.controllers.middleware.GraphQLMetricsCollector
+import org.coursera.naptime.ari.graphql.controllers.middleware.MetricsCollectionMiddleware
 import org.coursera.naptime.ari.graphql.controllers.middleware.UrlLoggingMiddleware
 import org.coursera.naptime.ari.graphql.marshaller.NaptimeMarshaller._
 import org.coursera.naptime.ari.graphql.resolvers.NaptimeResolver
@@ -53,7 +55,8 @@ class GraphQLController @Inject() (
     graphqlSchemaProvider: GraphqlSchemaProvider,
     schemaProvider: GraphqlSchemaProvider,
     fetcher: FetcherApi,
-    filterList: FilterList)
+    filterList: FilterList,
+    metricsCollector: GraphQLMetricsCollector)
     (implicit ec: ExecutionContext)
   extends Controller
   with StrictLogging {
@@ -106,6 +109,9 @@ class GraphQLController @Inject() (
     }
   }
 
+  val naptimeResolver = new NaptimeResolver()
+  val metricsCollectionMiddleware = new MetricsCollectionMiddleware(metricsCollector)
+
   private def executeQuery(
       query: String,
       requestHeader: RequestHeader,
@@ -121,9 +127,9 @@ class GraphQLController @Inject() (
               queryAst,
               context,
               variables = variables,
-              middleware = List(new UrlLoggingMiddleware()),
+              middleware = List(new UrlLoggingMiddleware(), metricsCollectionMiddleware),
               exceptionHandler = GraphQLController.exceptionHandler(logger),
-              deferredResolver = new NaptimeResolver())
+              deferredResolver = naptimeResolver)
               .map { executionResponse =>
                 OutgoingQuery(executionResponse.as[JsObject], Some(Response.empty))
               }

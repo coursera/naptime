@@ -22,7 +22,6 @@ import org.coursera.naptime.ResourceName
 import org.coursera.naptime.ari.engine.Utilities
 import org.coursera.naptime.ari.graphql.SangriaGraphQlContext
 import org.coursera.naptime.ari.graphql.resolvers.DeferredNaptimeElement
-import org.coursera.naptime.ari.graphql.resolvers.NaptimeError
 import org.coursera.naptime.schema.HandlerKind
 import org.coursera.naptime.schema.RelationType
 import org.coursera.naptime.schema.Resource
@@ -54,7 +53,7 @@ object NaptimeResourceField extends StrictLogging {
     } yield {
       val arguments = resource.handlers.find(_.kind == HandlerKind.MULTI_GET).map { handler =>
         NaptimeResourceUtils
-          .generateHandlerArguments(handler, includePagination = false)
+          .generateHandlerArguments(handler)
           .filterNot(_.name == "ids")
       }.getOrElse(List.empty)
 
@@ -65,7 +64,7 @@ object NaptimeResourceField extends StrictLogging {
           resolve = getResolver(resourceName, fieldName, fieldRelation, resourceMergedType),
           arguments = arguments,
           complexity = Some(
-            (ctx, args, childScore) => {
+            (_, _, childScore) => {
               COMPLEXITY_COST * childScore
             }))
       }
@@ -129,9 +128,7 @@ object NaptimeResourceField extends StrictLogging {
             case Right(response) =>
               response.elements.headOption.map { dataMapWithParent =>
                 dataMapWithParent.copy(sourceUrl = Some(response.url))
-              }.getOrElse {
-                throw NaptimeResolveException(NaptimeError(response.url, "Not found."))
-              }
+              }.orNull[DataMapWithParent]
           }(context.ctx.executionContext)
       }
     }
