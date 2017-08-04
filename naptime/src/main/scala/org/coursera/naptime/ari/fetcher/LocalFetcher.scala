@@ -44,9 +44,7 @@ import scala.concurrent.Future
  *
  * @param naptimeRoutes The routing data structures required for handling requests.
  */
-class LocalFetcher @Inject() (
-    naptimeRoutes: NaptimeRoutes,
-    isDebugMode: Boolean)
+class LocalFetcher @Inject() (naptimeRoutes: NaptimeRoutes)
   extends FetcherApi with StrictLogging {
 
   private[this] val schemas = naptimeRoutes.routerBuilders.map(_.schema)
@@ -56,7 +54,7 @@ class LocalFetcher @Inject() (
     naptimeRoutes.className(builder) -> router
   }
 
-  override def data(request: Request)(implicit executionContext: ExecutionContext): Future[Response] = {
+  override def data(request: Request, isDebugMode: Boolean)(implicit executionContext: ExecutionContext): Future[Response] = {
     if (request.topLevelRequests.length != 1) {
       val msg = s"Too many top level requests passed to LocalFetcher: $request"
       logger.error(msg)
