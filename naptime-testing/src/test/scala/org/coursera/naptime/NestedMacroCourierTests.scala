@@ -150,7 +150,7 @@ class NestedMacroCourierTests extends AssertionsForJUnit with ScalaFutures {
               RequestField("name", None, Set.empty, List.empty))))))
 
     val interceptedException = intercept[TestFailedException] {
-      val response = fetcher.data(request).futureValue
+      val response = fetcher.data(request, isDebugMode = false).futureValue
     }
 
     assert(interceptedException.getMessage.contains("Get attempted"))
@@ -176,7 +176,7 @@ class NestedMacroCourierTests extends AssertionsForJUnit with ScalaFutures {
               RequestField("id", None, Set.empty, List.empty),
               RequestField("name", None, Set.empty, List.empty))))))
 
-    val response = fetcher.data(request).futureValue
+    val response = fetcher.data(request, isDebugMode = false).futureValue
 
 
     assert(1 === response.topLevelResponses.size)
@@ -210,7 +210,7 @@ class NestedMacroCourierTests extends AssertionsForJUnit with ScalaFutures {
               RequestField("id", None, Set.empty, List.empty),
               RequestField("name", None, Set.empty, List.empty))))))
 
-    val response = fetcher.data(request).futureValue
+    val response = fetcher.data(request, isDebugMode = false).futureValue
 
     assert(1 === response.topLevelResponses.size)
     assert(1 === response.data.size)
