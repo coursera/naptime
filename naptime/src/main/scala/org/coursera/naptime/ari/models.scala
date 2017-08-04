@@ -35,7 +35,7 @@ import scala.concurrent.duration.FiniteDuration
  * The fetcher calls the Naptime APIs (either local or remote) to acquire all of the data necessary.
  */
 trait FetcherApi {
-  def data(request: Request)(implicit executionContext: ExecutionContext): Future[Response]
+  def data(request: Request, isDebugMode: Boolean)(implicit executionContext: ExecutionContext): Future[Response]
 }
 
 /**

@@ -131,7 +131,7 @@ class NaptimeResolver extends DeferredResolver[SangriaGraphQlContext] with Stric
     Future.sequence {
       mergeMultigetRequests(requests, resourceName).map { case (topLevelRequest, sourceRequests) =>
         val request = Request(context.requestHeader, List(topLevelRequest))
-        context.fetcher.data(request).map { response =>
+        context.fetcher.data(request, context.debugMode).map { response =>
           // TODO(bryan): Fix this `.head`
           val parsedElements = parseElements(response, requests.head.resourceSchema)
           val parsedElementsMap = parsedElements.map { element =>
@@ -220,7 +220,7 @@ class NaptimeResolver extends DeferredResolver[SangriaGraphQlContext] with Stric
             args = request.arguments,
             selections = List.empty))
         val fetcherRequest = Request(context.requestHeader, List(topLevelRequest))
-        context.fetcher.data(fetcherRequest).map { response =>
+        context.fetcher.data(fetcherRequest, context.debugMode).map { response =>
           (for {
             (_, topLevelResponse) <- response.topLevelResponses.headOption
           } yield {

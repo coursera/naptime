@@ -8,7 +8,7 @@ import sangria.schema.Action
 import sangria.schema.Context
 
 class MetricsCollectionMiddleware(
-    metricsCollector: GraphQLMetricsCollector = new LoggingEngineMetricsCollector())
+    metricsCollector: GraphQLMetricsCollector)
   extends MiddlewareErrorField[SangriaGraphQlContext] {
 
   override type QueryVal = Unit
@@ -41,12 +41,12 @@ trait GraphQLMetricsCollector {
   def markFieldError(fieldName: String): Unit
 }
 
-class LoggingEngineMetricsCollector extends GraphQLMetricsCollector with StrictLogging {
+class LoggingMetricsCollector extends GraphQLMetricsCollector with StrictLogging {
   def markFieldError(fieldName: String): Unit = {
     logger.info(s"Error when loading field $fieldName")
   }
 }
 
-class NoopEngineMetricsCollector extends GraphQLMetricsCollector with StrictLogging {
+class NoopMetricsCollector extends GraphQLMetricsCollector with StrictLogging {
   def markFieldError(fieldName: String): Unit = ()
 }
