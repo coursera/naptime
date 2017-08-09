@@ -20,14 +20,12 @@ import java.lang.Iterable
 import java.util.Map.Entry
 
 import com.fasterxml.jackson.core.JsonGenerator
-import com.fasterxml.jackson.core.util.DefaultPrettyPrinter
 import com.linkedin.data.Data
 import com.linkedin.data.DataList
 import com.linkedin.data.DataMap
 import com.linkedin.data.codec.JacksonDataCodec
 import com.linkedin.data.codec.JacksonDataCodec.JsonTraverseCallback
 import org.coursera.pegasus.TypedDefinitionDataCoercer
-import org.coursera.naptime.AllFields
 import org.coursera.naptime.DelegateFields
 import org.coursera.naptime.RestError
 import org.coursera.naptime.FacetField
@@ -52,8 +50,6 @@ import org.coursera.naptime.actions.util.DataMapUtils
 import org.coursera.common.stringkey.StringKey
 import org.coursera.naptime.ETag
 import org.coursera.naptime.ResponsePagination
-import org.coursera.naptime.ari.TopLevelRequest
-import org.coursera.naptime.ari.TopLevelResponse
 import org.coursera.naptime.ari.{Response => AriResponse}
 import org.coursera.naptime.model.KeyFormat
 import org.coursera.naptime.model.Keyed
@@ -76,8 +72,7 @@ trait RestActionCategoryEngine2[Category, Key, Resource, Response]
     requestIncludes: QueryIncludes,
     pagination: RequestPagination,
     response: RestResponse[Response],
-    resourceName: ResourceName,
-    topLevelRequest: TopLevelRequest): Future[AriResponse]
+    resourceName: ResourceName): Future[AriResponse]
 }
 
 /**
@@ -114,7 +109,6 @@ trait RestActionCategoryEngine2Impls {
       fields: Fields[V],
       pagination: RequestPagination,
       resourceName: ResourceName,
-      topLevelRequest: TopLevelRequest,
       uri: String): Future[AriResponse] = {
     val schemaOpt = for {
       headElem <- things.headOption
@@ -123,21 +117,16 @@ trait RestActionCategoryEngine2Impls {
 
     schemaOpt.map { schema =>
       val wireConverter = Some(new TypedDefinitionDataCoercer(schema))
-      val topLevelDataList = new DataList()
-      val serialized = for (elem <- things) yield {
+      val data = things.map { elem =>
         val dataMap = new DataMap()
         serializeItem(dataMap, elem, keyFormat, serializer, wireConverter)
-        topLevelDataList.add(dataMap.get("id"))
         dataMap
-      }
-      val resourceMap = serialized.map { dataMap =>
-        dataMap.get("id") -> dataMap
-      }.toMap
-      // TODO: serialized related ones too!
-      val topLevelResponseMap = Map(topLevelRequest ->
-        TopLevelResponse(topLevelDataList, ok.pagination.getOrElse(ResponsePagination.empty)))
-      val responseDataMap = Map(resourceName -> resourceMap)
-      Future.successful(AriResponse(topLevelResponseMap, responseDataMap))
+      }.toList
+      val response = AriResponse(
+        data,
+        ok.pagination.getOrElse(ResponsePagination.empty),
+        None)
+      Future.successful(response)
     }.getOrElse {
       if (things.isEmpty) {
         Future.successful(AriResponse.empty)
@@ -408,11 +397,10 @@ trait RestActionCategoryEngine2Impls {
           requestIncludes: QueryIncludes,
           pagination: RequestPagination,
           response: RestResponse[Keyed[Key, Resource]],
-          resourceName: ResourceName,
-          topLevelRequest: TopLevelRequest): Future[AriResponse] = {
+          resourceName: ResourceName): Future[AriResponse] = {
         mkOkResponse(response) { ok =>
           buildOkResponse(List(ok.content), ok, keyFormat, naptimeSerializer, requestFields,
-            requestIncludes, resourceFields, pagination, resourceName, topLevelRequest, request.uri)
+            requestIncludes, resourceFields, pagination, resourceName, request.uri)
         }
       }
     }
@@ -549,11 +537,10 @@ trait RestActionCategoryEngine2Impls {
           requestIncludes: QueryIncludes,
           pagination: RequestPagination,
           response: RestResponse[Seq[Keyed[Key, Resource]]],
-          resourceName: ResourceName,
-          topLevelRequest: TopLevelRequest): Future[AriResponse] = {
+          resourceName: ResourceName): Future[AriResponse] = {
         mkOkResponse(response) { ok =>
           buildOkResponse(ok.content, ok, keyFormat, naptimeSerializer, requestFields,
-            requestIncludes, resourceFields, pagination, resourceName, topLevelRequest, request.uri)
+            requestIncludes, resourceFields, pagination, resourceName, request.uri)
         }
       }
     }
@@ -586,11 +573,10 @@ trait RestActionCategoryEngine2Impls {
           requestIncludes: QueryIncludes,
           pagination: RequestPagination,
           response: RestResponse[Seq[Keyed[Key, Resource]]],
-          resourceName: ResourceName,
-          topLevelRequest: TopLevelRequest): Future[AriResponse] = {
+          resourceName: ResourceName): Future[AriResponse] = {
         mkOkResponse(response) { ok =>
           buildOkResponse(ok.content, ok, keyFormat, naptimeSerializer, requestFields,
-            requestIncludes, resourceFields, pagination, resourceName, topLevelRequest, request.uri)
+            requestIncludes, resourceFields, pagination, resourceName, request.uri)
         }
       }
     }
@@ -622,11 +608,10 @@ trait RestActionCategoryEngine2Impls {
           requestIncludes: QueryIncludes,
           pagination: RequestPagination,
           response: RestResponse[Seq[Keyed[Key, Resource]]],
-          resourceName: ResourceName,
-          topLevelRequest: TopLevelRequest): Future[AriResponse] = {
+          resourceName: ResourceName): Future[AriResponse] = {
         mkOkResponse(response) { ok =>
           buildOkResponse(ok.content, ok, keyFormat, naptimeSerializer, requestFields,
-            requestIncludes, resourceFields, pagination, resourceName, topLevelRequest, request.uri)
+            requestIncludes, resourceFields, pagination, resourceName, request.uri)
         }
       }
     }

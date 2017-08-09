@@ -17,7 +17,7 @@
 package org.coursera.naptime.ari.graphql.middleware
 
 import org.coursera.naptime.ari.graphql.SangriaGraphQlContext
-import org.coursera.naptime.ari.graphql.controllers.middleware.UrlLoggingMiddleware
+import org.coursera.naptime.ari.graphql.controllers.middleware.ResponseMetadataMiddleware
 import org.coursera.naptime.ari.graphql.marshaller.NaptimeMarshaller._
 import org.coursera.naptime.ari.graphql.resolvers.NaptimeResponse
 import org.junit.Test
@@ -110,7 +110,7 @@ class UrlLoggingMiddlewareTest extends AssertionsForJUnit with MockitoSugar {
 
   @Test
   def urlsNotRecordWhenNotDebugging(): Unit = {
-    val middleware = new UrlLoggingMiddleware()
+    val middleware = new ResponseMetadataMiddleware()
     val request = FakeRequest(method = "GET", uri = "/graphql", headers = Headers(), body = "")
     val ctx = SangriaGraphQlContext(null, request, ExecutionContext.global, debugMode = false)
     val middlewareQueryContext = buildMiddlewareQueryContext(ctx)
@@ -129,7 +129,7 @@ class UrlLoggingMiddlewareTest extends AssertionsForJUnit with MockitoSugar {
 
   @Test
   def urlsRecordedAfterEachField(): Unit = {
-    val middleware = new UrlLoggingMiddleware()
+    val middleware = new ResponseMetadataMiddleware()
     val request = FakeRequest(method = "GET", uri = "/graphql", headers = Headers(), body = "")
     val ctx = SangriaGraphQlContext(null, request, ExecutionContext.global, debugMode = true)
     val middlewareQueryContext = buildMiddlewareQueryContext(ctx)
@@ -145,9 +145,13 @@ class UrlLoggingMiddlewareTest extends AssertionsForJUnit with MockitoSugar {
     val extensions = middleware.afterQueryExtensions((), middlewareQueryContext)
     val marshalled =
       ResultResolver.marshalExtensions(PlayJsonMarshallerForType.marshaller, extensions).get
-    val expected = Json.obj("sourceUrls" -> Json.obj("course" -> "test url"))
+    val expected =
+      Json.obj(
+        "responseMetadata" -> Json.obj(
+          "course" -> Json.obj(
+            "sourceUrl" -> "test url",
+            "statusCode" -> 200)))
     assert(marshalled === expected)
 
   }
-
 }

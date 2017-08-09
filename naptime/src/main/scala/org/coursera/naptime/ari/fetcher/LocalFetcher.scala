@@ -19,14 +19,12 @@ package org.coursera.naptime.ari.fetcher
 import javax.inject.Inject
 
 import com.typesafe.scalalogging.StrictLogging
-import org.coursera.naptime.ResourceName
+import org.coursera.naptime.NaptimeActionException
 import org.coursera.naptime.actions.RestAction
 import org.coursera.naptime.ari.FetcherApi
+import org.coursera.naptime.ari.FetcherError
 import org.coursera.naptime.ari.Request
-import org.coursera.naptime.ari.Response
-import org.coursera.naptime.ari.TopLevelRequest
 import org.coursera.naptime.router2.NaptimeRoutes
-import org.coursera.naptime.schema.Resource
 import play.api.libs.json.JsArray
 import play.api.libs.json.JsBoolean
 import play.api.libs.json.JsNull
@@ -54,56 +52,51 @@ class LocalFetcher @Inject() (naptimeRoutes: NaptimeRoutes)
     naptimeRoutes.className(builder) -> router
   }
 
-  override def data(request: Request, isDebugMode: Boolean)(implicit executionContext: ExecutionContext): Future[Response] = {
-    if (request.topLevelRequests.length != 1) {
-      val msg = s"Too many top level requests passed to LocalFetcher: $request"
-      logger.error(msg)
-      Future.failed(new IllegalArgumentException(msg))
-    } else {
-      val topLevelRequest = request.topLevelRequests.head
-      val resourceSchemaOpt = schemas.find { resourceSchema =>
-        // TODO: Handle nested resources.
-        resourceSchema.name == topLevelRequest.resource.topLevelName &&
-          resourceSchema.version.contains(topLevelRequest.resource.version)
+  override def data(
+      request: Request,
+      isDebugMode: Boolean)
+      (implicit executionContext: ExecutionContext): Future[FetcherResponse] = {
+    val resourceSchemaOpt = schemas.find { resourceSchema =>
+      // TODO: Handle nested resources.
+      resourceSchema.name == request.resource.topLevelName &&
+        resourceSchema.version.contains(request.resource.version)
+    }
+    val queryString = request.arguments.toMap.mapValues(arg => List(stringifyArg(arg)))
+    val url = s"/api/${request.resource.identifier}?" +
+      queryString.map { case (key, value) => key + "=" + value.mkString(",") }.mkString("&")
+    (for {
+      resourceSchema <- resourceSchemaOpt
+      router <- routers.get(resourceSchema.className)
+
+      path = s"/${request.resource.identifier}"
+      fakePlayRequest = request.requestHeader.copy(
+        method = "GET", // TODO: handle non-read-only request types.
+        uri = request.resource.identifier, // Warning: uri is not consistent with queryString
+        queryString = queryString,
+        headers = request.requestHeader.headers.remove("content-type")) // TODO: handle header filtering more properly
+      handler <- router.routeRequest(path, fakePlayRequest)
+    } yield {
+      logger.info(s"Making local request to ${request.resource.identifier} / ${fakePlayRequest.queryString}")
+      val taggedRequest = handler.tagRequest(fakePlayRequest)
+      handler match {
+        case naptimeAction: RestAction[_, _, _, _, _, _] =>
+          naptimeAction.localRun(fakePlayRequest, request.resource)
+            .map(response => Right(response.copy(url = Some(url))))
+            .recoverWith {
+              case actionException: NaptimeActionException =>
+                Future.successful(
+                  Left(FetcherError(actionException.httpCode, actionException.toString, Some(url))))
+              case e: Throwable => throw e
+            }
+        case _ =>
+          val msg = "Handler was not a RestAction, or Get attempted"
+          logger.error(msg)
+          Future.successful(Left(FetcherError(404, msg, Some(url))))
       }
-      (for {
-        resourceSchema <- resourceSchemaOpt
-        router <- routers.get(resourceSchema.className)
-        argMap = topLevelRequest.selection.args.toMap
-        queryString = argMap.mapValues(arg => List(stringifyArg(arg)))
-        path = s"/${topLevelRequest.resource.identifier}"
-        fakePlayRequest = request.requestHeader.copy(
-          method = "GET", // TODO: handle non-read-only request types.
-          uri = topLevelRequest.resource.identifier, // Warning: uri is not consistent with queryString
-          queryString = queryString,
-          headers = request.requestHeader.headers.remove("content-type")) // TODO: handle header filtering more properly
-        handler <- router.routeRequest(path, fakePlayRequest)
-      } yield {
-        logger.info(s"Making local request to ${topLevelRequest.resource.identifier} / ${fakePlayRequest.queryString}")
-        val taggedRequest = handler.tagRequest(fakePlayRequest)
-        handler match {
-          case naptimeAction: RestAction[_, _, _, _, _, _] =>
-            naptimeAction.localRun(fakePlayRequest,
-              ResourceName(resourceSchema.name, resourceSchema.version.map(_.toInt).getOrElse(0)),
-              topLevelRequest)
-              .map(request => request
-                .copy(topLevelResponses = request.topLevelResponses.mapValues(_.copy(
-                  url =
-                    Some(s"/api/${topLevelRequest.resource.identifier}" +
-                    "?" +
-                      queryString.map { case (key, value) =>
-                        key + "=" + value.mkString(",")
-                      }.mkString("&"))))))
-          case _ =>
-            val msg = "Handler was not a RestAction, or Get attempted"
-            logger.error(msg)
-            Future.failed(new IllegalArgumentException(msg))
-        }
-      }).getOrElse {
-        val msg = s"Unknown resource: ${topLevelRequest.resource}"
-        logger.warn(msg)
-        Future.failed(new IllegalArgumentException(msg))
-      }
+    }).getOrElse {
+      val msg = s"Unknown resource: ${request.resource}"
+      logger.warn(msg)
+      Future.successful(Left(FetcherError(404, msg, Some(url))))
     }
   }
 

@@ -16,7 +16,6 @@
 
 package org.coursera.naptime.ari
 
-import com.linkedin.data.DataList
 import com.linkedin.data.DataMap
 import com.linkedin.data.schema.DataSchema
 import com.linkedin.data.schema.RecordDataSchema
@@ -28,15 +27,19 @@ import play.api.mvc.RequestHeader
 
 import scala.concurrent.ExecutionContext
 import scala.concurrent.Future
-import scala.concurrent.duration.FiniteDuration
-
 
 /**
  * The fetcher calls the Naptime APIs (either local or remote) to acquire all of the data necessary.
  */
 trait FetcherApi {
-  def data(request: Request, isDebugMode: Boolean)(implicit executionContext: ExecutionContext): Future[Response]
+  type FetcherResponse = Either[FetcherError, Response]
+  def data(
+      request: Request,
+      isDebugMode: Boolean)
+      (implicit executionContext: ExecutionContext): Future[FetcherResponse]
 }
+
+case class FetcherError(code: Int, message: String, url: Option[String])
 
 /**
  * Provides the metadata required to power the engine.
@@ -76,102 +79,28 @@ object FullSchema {
  * @param requestHeader The request header is used for authentication parsing in the underlying requests made. Path
  *                      and query parameters included in the request header are ignored in favor of the data within the
  *                      topLevelRequests fields.
- * @param topLevelRequests A non-empty list of "roots" used to begin queries. Every query begins with a "base" resource
- *                         and related models are joined upon it from there.
+ * @param resource The name and version of the resource that this request is hitting
+ * @param arguments A list of query parameters to be used on the request. These are used to
+ *                  differentiate between various endpoints (i.e. multiget, finder, etc.).
  */
 case class Request(
   requestHeader: RequestHeader,
-  topLevelRequests: Seq[TopLevelRequest])
+  resource: ResourceName,
+  arguments: Set[(String, JsValue)])
 
 /**
- * Encapsulates the starting root of a query into the naptime resource tree.
+ * This model represents a response from a [[Request]], including elements and pagination
  *
- * @param resource The name of the resource that forms the root of the request.
- * @param selection The field selection on the first resource.
- */
-case class TopLevelRequest(resource: ResourceName, selection: RequestField, alias: Option[String] = None)
-
-/**
- * Represents a requested field within a requested resource.
- *
- * TODO: figure out directives
- *
- * @param name The name of the requested field.
- * @param alias The name the field should be renamed to in the response.
- * @param args If the field takes parameters, they are encapsulated here.
- * @param selections The list of fields in the related resource.
- */
-case class RequestField(
-  name: String,
-  alias: Option[String],
-  args: Set[(String, JsValue)], // TODO: Should JsValue be a specific ARI type?
-  selections: List[RequestField],
-  typeCondition: Option[String] = None)
-
-case class ResponseMetrics(
-  numRequests: Int = 0,
-  duration: FiniteDuration = FiniteDuration(0, "seconds")) {
-
-  def ++(other: ResponseMetrics): ResponseMetrics = {
-    ResponseMetrics(
-      numRequests = numRequests + other.numRequests,
-      duration = duration + other.duration)
-  }
-}
-
-/**
- * All of the data required to assemble a response to an automatic includes query.
- *
- * TODO: performance test, and determine if mutable collections yield non-trivial performance improvements.
- *
- * @param topLevelResponses A map from the top level requests to a TopLevelResponse,
-  *                         containing ids and pagination
- * @param data A map from the resource name to a Map of IDs to DataMaps.
+ * @param data A list of elements in the response, in the order that they're returned
+ * @param pagination The response pagination information (including total and next)
+ * @param url The source url that was used to make the request.
+  *            This is implementation specific by the fetcher, so it cannot be part of the Request.
  */
 case class Response(
-  topLevelResponses: Map[TopLevelRequest, TopLevelResponse],
-  data: Map[ResourceName, Map[AnyRef, DataMap]],
-  metrics: ResponseMetrics = ResponseMetrics()) {
-
-  // TODO: performance test this implementation, and consider optimizing it.
-  // Note: this operation potentially mutates the current response due to interior mutability.
-  def ++(other: Response): Response = {
-    val mergedTopLevel = topLevelResponses ++ other.topLevelResponses
-    val mergedData = (data.keySet ++ other.data.keySet).map { resourceName =>
-      val lhs = data.getOrElse(resourceName, Map.empty)
-      val rhs = other.data.getOrElse(resourceName, Map.empty)
-      val mergedMap = (lhs.keySet ++ rhs.keySet).map { key =>
-        val lh = lhs.get(key)
-        val rh = rhs.get(key)
-        val merged = (lh, rh) match {
-          case (None, None) =>
-            throw new IllegalStateException(s"Neither map had an entry for key $key.")
-          case (Some(dm), None) => dm
-          case (None, Some(dm)) => dm
-          case (Some(l), Some(r)) =>
-            val mutableL = l.clone()
-            mutableL.putAll(r)
-            mutableL
-        }
-        key -> merged
-      }.toMap
-      resourceName -> mergedMap
-    }.toMap
-    val mergedMetrics = metrics ++ other.metrics
-    Response(mergedTopLevel, mergedData, mergedMetrics)
-  }
-}
+  data: List[DataMap],
+  pagination: ResponsePagination,
+  url: Option[String])
 
 object Response {
-  val empty = Response(Map.empty, Map.empty)
+  def empty = Response(List.empty, ResponsePagination.empty, None)
 }
-
-/**
-  * Represents the response data from a TopLevelRequest, including returned ids and pagination
-  *
-  * @param ids a list of IDs returned by the top level request.
-  *            (i.e. ids 5, 6, and 7 were returned by the bySlug finder)
-  * @param pagination pagination info from the top level request, including total and next cursor
-  * @param url the downstream url used to fetch the data
-  */
-case class TopLevelResponse(ids: DataList, pagination: ResponsePagination, url: Option[String] = None)

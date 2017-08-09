@@ -5,9 +5,7 @@ import com.typesafe.scalalogging.StrictLogging
 import org.coursera.naptime.ResourceName
 import org.coursera.naptime.ResponsePagination
 import org.coursera.naptime.ari.Request
-import org.coursera.naptime.ari.RequestField
 import org.coursera.naptime.ari.Response
-import org.coursera.naptime.ari.TopLevelRequest
 import org.coursera.naptime.ari.graphql.SangriaGraphQlContext
 import org.coursera.naptime.ari.graphql.schema.DataMapWithParent
 import org.coursera.naptime.ari.graphql.schema.NaptimeResourceUtils
@@ -15,10 +13,10 @@ import org.coursera.naptime.ari.graphql.schema.ParentModel
 import play.api.libs.json.JsArray
 import play.api.libs.json.JsNull
 import play.api.libs.json.JsValue
+import play.api.mvc.RequestHeader
 import sangria.execution.deferred.Deferred
 import sangria.execution.deferred.DeferredResolver
 
-import scala.collection.JavaConverters._
 import scala.concurrent.ExecutionContext
 import scala.concurrent.Future
 
@@ -33,11 +31,14 @@ case class NaptimeRequest(
 case class NaptimeResponse(
     elements: List[DataMapWithParent],
     pagination: Option[ResponsePagination],
-    url: String)
+    url: String,
+    status: Int = 200,
+    errorMessage: Option[String] = None)
 
 case class NaptimeError(
     url: String,
-    error: String)
+    status: Int,
+    errorMessage: String)
 
 sealed trait DeferredNaptime {
   def toNaptimeRequest(idx: Int): NaptimeRequest
@@ -129,35 +130,40 @@ class NaptimeResolver extends DeferredResolver[SangriaGraphQlContext] with Stric
     Future[Map[RequestId, Either[NaptimeError, NaptimeResponse]]] = {
 
     Future.sequence {
-      mergeMultigetRequests(requests, resourceName).map { case (topLevelRequest, sourceRequests) =>
-        val request = Request(context.requestHeader, List(topLevelRequest))
-        context.fetcher.data(request, context.debugMode).map { response =>
-          // TODO(bryan): Fix this `.head`
-          val parsedElements = parseElements(response, requests.head.resourceSchema)
-          val parsedElementsMap = parsedElements.map { element =>
-            val id = Option(element.element.get("id"))
-              .map(NaptimeResourceUtils.parseToJson)
-              .getOrElse(JsNull)
-            id -> element
-          }.toMap
-          sourceRequests.map { sourceRequest =>
-            // TODO(bryan): Clean this up
-            val ids = sourceRequest.arguments
-              .find(_._1 == "ids")
-              .map(_._2)
-              .map {
-                case JsArray(idValues) => idValues
-                case value: JsValue => List(value)
-              }
-              .getOrElse(List.empty)
+      mergeMultigetRequests(context.requestHeader, requests, resourceName)
+        .map { case (request, sourceRequests) =>
+          context.fetcher.data(request, context.debugMode).map {
+            case Right(successfulResponse) =>
+              val parsedElements = parseElements(request, successfulResponse, requests.head.resourceSchema)
+              val parsedElementsMap = parsedElements.map { element =>
+                val id = Option(element.element.get("id"))
+                  .map(NaptimeResourceUtils.parseToJson)
+                  .getOrElse(JsNull)
+                id -> element
+              }.toMap
+              sourceRequests.map { sourceRequest =>
+                // TODO(bryan): Clean this up
+                val ids = sourceRequest.arguments
+                  .find(_._1 == "ids")
+                  .map(_._2)
+                  .map {
+                    case JsArray(idValues) => idValues
+                    case value: JsValue => List(value)
+                  }
+                  .getOrElse(List.empty)
 
-            val elements = ids.flatMap(parsedElementsMap.get).toList
-            val url = response.topLevelResponses.headOption.flatMap(_._2.url).getOrElse("???")
-            sourceRequest.idx ->
-              Right[NaptimeError, NaptimeResponse](
-                NaptimeResponse(elements, sourceRequest.paginationOverride, url))
-          }.toMap
-        }
+                val elements = ids.flatMap(parsedElementsMap.get).toList
+                val url = successfulResponse.url.getOrElse("???")
+                sourceRequest.idx ->
+                  Right[NaptimeError, NaptimeResponse](
+                    NaptimeResponse(elements, sourceRequest.paginationOverride, url, 200, None))
+              }.toMap
+            case Left(error) =>
+              sourceRequests.map { sourceRequest =>
+                sourceRequest.idx ->
+                  Left(NaptimeError(error.url.getOrElse("???"), error.code, error.message))
+              }.toMap
+          }
       }
     }.map(_.flatten.toMap)
   }
@@ -171,25 +177,21 @@ class NaptimeResolver extends DeferredResolver[SangriaGraphQlContext] with Stric
     * @return a map of TopLevelRequests -> list of NaptimeRequests that it fulfills
     */
   def mergeMultigetRequests(
+      header: RequestHeader,
       requests: Vector[NaptimeRequest],
       resourceName: ResourceName):
-    Map[TopLevelRequest, Vector[NaptimeRequest]] = {
+    Map[Request, Vector[NaptimeRequest]] = {
 
     requests
       .groupBy(_.arguments.filterNot(_._1 == "ids"))
       .map { case (nonIdArguments, innerRequests) =>
         val ids = innerRequests.flatMap(_.arguments.find(_._1 == "ids").map(_._2)).distinct
         // TODO(bryan): Limit multiget requests by number of ids as well, to avoid http limits
-        val topLevelRequest = TopLevelRequest(
+        Request(
+          header,
           resourceName,
-          RequestField(
-            name = "",
-            alias = None,
-            args = nonIdArguments + ("ids" -> JsArray(ids)),
-            selections = List.empty))
-        topLevelRequest -> innerRequests
+          nonIdArguments + ("ids" -> JsArray(ids))) -> innerRequests
       }
-
   }
 
   /**
@@ -212,27 +214,16 @@ class NaptimeResolver extends DeferredResolver[SangriaGraphQlContext] with Stric
 
     Future.sequence {
       requests.map { request =>
-        val topLevelRequest = TopLevelRequest(
-          resourceName,
-          RequestField(
-            name = "",
-            alias = None,
-            args = request.arguments,
-            selections = List.empty))
-        val fetcherRequest = Request(context.requestHeader, List(topLevelRequest))
-        context.fetcher.data(fetcherRequest, context.debugMode).map { response =>
-          (for {
-            (_, topLevelResponse) <- response.topLevelResponses.headOption
-          } yield {
-            val elements = parseElements(response, requests.head.resourceSchema)
+        val fetcherRequest = Request(context.requestHeader, resourceName, request.arguments)
+        context.fetcher.data(fetcherRequest, context.debugMode).map {
+          case Right(response) =>
+            val elements = parseElements(fetcherRequest, response, requests.head.resourceSchema)
             Right(NaptimeResponse(
               elements,
-              Some(topLevelResponse.pagination),
-              topLevelResponse.url.getOrElse("???")))
-          }).getOrElse {
-            val url = response.topLevelResponses.headOption.flatMap(_._2.url).getOrElse("???")
-            Left(NaptimeError(url, "Unknown error while fetching data."))
-          }
+              Some(response.pagination),
+              response.url.getOrElse("???")))
+          case Left(error) =>
+            Left(NaptimeError(error.url.getOrElse("???"), error.code, error.message))
         }.map(res => Map(request.idx -> res))
       }
     }.map(_.flatten.toMap)
@@ -245,17 +236,13 @@ class NaptimeResolver extends DeferredResolver[SangriaGraphQlContext] with Stric
     * @return Map of JsValue ids to DataMapWithParents
     */
   def parseElements(
+      request: Request,
       response: Response,
       resourceSchema: RecordDataSchema): List[DataMapWithParent] = {
-    for {
-      (_, topLevelResponse) <- response.topLevelResponses.headOption.toList
-      (resourceName, data) <- response.data.toList // Should only be one resource, ideally
-      id <- topLevelResponse.ids.asScala
-      element <- data.get(id).toList
-    } yield {
+    response.data.map { element =>
       DataMapWithParent(
         element,
-        ParentModel(resourceName, element, resourceSchema))
+        ParentModel(request.resource, element, resourceSchema))
     }
   }
 

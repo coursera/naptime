@@ -5,9 +5,8 @@ import com.linkedin.data.DataMap
 import com.linkedin.data.schema.DataSchema
 import com.linkedin.data.schema.RecordDataSchema
 import org.coursera.naptime.NestedMacroCourierTests.CoursesResource
+import org.coursera.naptime.ari.FetcherError
 import org.coursera.naptime.ari.Request
-import org.coursera.naptime.ari.RequestField
-import org.coursera.naptime.ari.TopLevelRequest
 import org.coursera.naptime.ari.fetcher.LocalFetcher
 import org.coursera.naptime.couriertests.ExpectedMergedCourse
 import org.coursera.naptime.model.Keyed
@@ -20,6 +19,7 @@ import org.scalatest.exceptions.TestFailedException
 import org.scalatest.junit.AssertionsForJUnit
 import play.api.libs.json.JsString
 import play.api.test.FakeRequest
+
 import scala.concurrent.ExecutionContext.Implicits.global
 
 /**
@@ -138,22 +138,15 @@ class NestedMacroCourierTests extends AssertionsForJUnit with ScalaFutures {
 
     val request = Request(
       requestHeader = FakeRequest(),
-      topLevelRequests = List(
-        TopLevelRequest(
-          CoursesResource.ID,
-          RequestField(
-            name = "get",
-            alias = None,
-            args = Set("id" -> JsString("abc")),
-            selections = List(
-              RequestField("id", None, Set.empty, List.empty),
-              RequestField("name", None, Set.empty, List.empty))))))
+      resource = CoursesResource.ID,
+      arguments = Set("id" -> JsString("abc")))
 
-    val interceptedException = intercept[TestFailedException] {
-      val response = fetcher.data(request, isDebugMode = false).futureValue
-    }
+    val response = fetcher.data(request, isDebugMode = false).futureValue
 
-    assert(interceptedException.getMessage.contains("Get attempted"))
+    assert(response.left.get === FetcherError(
+      code = 404,
+      message = "Handler was not a RestAction, or Get attempted",
+      url = Some("/api/courses.v1?id=abc")))
   }
 
   @Test
@@ -165,29 +158,15 @@ class NestedMacroCourierTests extends AssertionsForJUnit with ScalaFutures {
 
     val request = Request(
       requestHeader = FakeRequest(),
-      topLevelRequests = List(
-        TopLevelRequest(
-          CoursesResource.ID,
-          RequestField(
-            name = "multiGet",
-            alias = None,
-            args = Set("ids" -> JsString("abc,qrs")),
-            selections = List(
-              RequestField("id", None, Set.empty, List.empty),
-              RequestField("name", None, Set.empty, List.empty))))))
+      resource = CoursesResource.ID,
+      arguments = Set("ids" -> JsString("abc,qrs")))
 
     val response = fetcher.data(request, isDebugMode = false).futureValue
 
 
-    assert(1 === response.topLevelResponses.size)
-    assert(1 === response.data.size)
-    assert(response.data.contains(CoursesResource.ID))
-    val coursesResponse = response.data(CoursesResource.ID)
-    assert(2 === coursesResponse.size)
-    assert(coursesResponse.contains("abc"))
-    assert("course-abc" === coursesResponse("abc").get("name"),
-      s"Data map: ${coursesResponse("abc")}")
-    // TODO: Check pagination
+    assert(2 === response.right.get.data.size)
+    assert(response.right.get.data.exists(_.get("id") == "abc"))
+    assert("course-abc" === response.right.get.data.find(_.get("id") == "abc").get.get("name"))
   }
 
   @Test
@@ -199,27 +178,13 @@ class NestedMacroCourierTests extends AssertionsForJUnit with ScalaFutures {
 
     val request = Request(
       requestHeader = FakeRequest(),
-      topLevelRequests = List(
-        TopLevelRequest(
-          CoursesResource.ID,
-          RequestField(
-            name = "search",
-            alias = None,
-            args = Set("q" -> JsString("search"), "query" -> JsString("xyz")),
-            selections = List(
-              RequestField("id", None, Set.empty, List.empty),
-              RequestField("name", None, Set.empty, List.empty))))))
+      resource = CoursesResource.ID,
+      arguments = Set("q" -> JsString("search"), "query" -> JsString("xyz")))
 
     val response = fetcher.data(request, isDebugMode = false).futureValue
 
-    assert(1 === response.topLevelResponses.size)
-    assert(1 === response.data.size)
-    assert(response.data.contains(CoursesResource.ID))
-    val coursesResponse = response.data(CoursesResource.ID)
-    assert(1 === coursesResponse.size)
-    assert(coursesResponse.contains("xyz"))
-    assert("course-xyz" === coursesResponse("xyz").get("name"),
-      s"Data map: ${coursesResponse("xyz")}")
-    // TODO: Check pagination
+    assert(1 === response.right.get.data.size)
+    assert(response.right.get.data.exists(_.get("id") == "xyz"))
+    assert("course-xyz" === response.right.get.data.find(_.get("id") == "xyz").get.get("name"))
   }
 }
