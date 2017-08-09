@@ -1,3 +1,4 @@
+import filters.ExampleProjectFilters
 import org.coursera.naptime.NaptimeModule
 import org.coursera.naptime.ari.FetcherApi
 import org.coursera.naptime.ari.LocalSchemaProvider
@@ -6,7 +7,6 @@ import org.coursera.naptime.ari.fetcher.LocalFetcher
 import org.coursera.naptime.ari.graphql.DefaultGraphqlSchemaProvider
 import org.coursera.naptime.ari.graphql.GraphqlSchemaProvider
 import org.coursera.naptime.ari.graphql.controllers.filters.ComplexityFilterConfiguration
-import org.coursera.naptime.ari.graphql.controllers.filters.DefaultFilters
 import org.coursera.naptime.ari.graphql.controllers.filters.FilterList
 import org.coursera.naptime.ari.graphql.controllers.middleware.GraphQLMetricsCollector
 import org.coursera.naptime.ari.graphql.controllers.middleware.LoggingMetricsCollector
@@ -29,7 +29,7 @@ class ResourceModule extends NaptimeModule {
     bind[GraphQLMetricsCollector].to[LoggingMetricsCollector]
     bind[SchemaProvider].to[LocalSchemaProvider]
     bind[GraphqlSchemaProvider].to[DefaultGraphqlSchemaProvider]
-    bind[FilterList].to[DefaultFilters]
+    bind[FilterList].to[ExampleProjectFilters]
     bind[ComplexityFilterConfiguration].toInstance(ComplexityFilterConfiguration.DEFAULT)
   }
 }

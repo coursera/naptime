@@ -33,9 +33,11 @@ import play.api.libs.json.JsString
 import play.api.libs.json.JsValue
 import sangria.schema.DeferredValue
 import sangria.schema.Field
+import sangria.schema.LeafAction
 import sangria.schema.ListType
 import sangria.schema.ObjectType
 import sangria.schema.OptionType
+import sangria.schema.PartialValue
 import sangria.schema.Value
 
 object NaptimePaginatedResourceField extends StrictLogging {
@@ -147,13 +149,10 @@ object NaptimePaginatedResourceField extends StrictLogging {
                   resourceName, updatedArgs, resourceMergedType, paginationOverride))
                 .map {
                   case Left(error) =>
-                    // TODO(bryan): Replace this with an exception once clients can handle it
-                    NaptimeResponse(List.empty, None, error.url)
-                  case Right(response) => {
+                    NaptimeResponse(List.empty, None, error.url, error.status, Some(error.errorMessage))
+                  case Right(response) =>
                     val limit = context.arg(NaptimePaginationField.limitArgument)
-                    // If more results are returned than requested, only take up to the limit
                     response.copy(elements = response.elements.take(limit))
-                  }
                 }(context.ctx.executionContext)
             }
           },

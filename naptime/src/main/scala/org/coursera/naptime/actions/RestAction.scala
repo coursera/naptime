@@ -28,9 +28,7 @@ import org.coursera.naptime.RestContext
 import org.coursera.naptime.RestResponse
 import org.coursera.naptime.access.HeaderAccessControl
 import org.coursera.naptime.ari.Response
-import org.coursera.naptime.ari.TopLevelRequest
 import play.api.Play
-import play.api.libs.iteratee.Enumeratee
 import play.api.libs.iteratee.Iteratee
 import play.api.libs.json.OFormat
 import play.api.mvc.BodyParser
@@ -91,8 +89,7 @@ trait RestAction[RACType, AuthType, BodyType, KeyType, ResourceType, ResponseTyp
 
   private[naptime] def localRun(
       rh: RequestHeader,
-      resourceName: ResourceName,
-      topLevelRequest: TopLevelRequest): Future[Response] = {
+      resourceName: ResourceName): Future[Response] = {
     val authResult = restAuth.run(rh) // Kick off the authentication check in parallel
     restBodyParser(rh).mapM[Response] {
       case Left(bodyError) =>
@@ -126,7 +123,7 @@ trait RestAction[RACType, AuthType, BodyType, KeyType, ResourceType, ResponseTyp
                   highLevelResponse.flatMap { resp =>
                     restEngine match {
                       case engine2: RestActionCategoryEngine2[RACType, KeyType, ResourceType, ResponseType] =>
-                        engine2.mkResponse(rh, fieldsEngine, fields, includes, pagination, resp, resourceName, topLevelRequest)
+                        engine2.mkResponse(rh, fieldsEngine, fields, includes, pagination, resp, resourceName)
                       case _ =>
                         Future.failed(new IllegalArgumentException("Was not an engine2 resource.")) // TODO: better msg
                     }
