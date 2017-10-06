@@ -445,6 +445,9 @@ object CourierFormats extends StrictLogging {
     jsValue: JsValue,
     schema: DataSchema): AnyRef = {
     (schema, jsValue) match {
+      case (_, JsNull) =>
+        checkSchema[NullDataSchema](schemaPath, "deserializing a NULL", schema)
+        Null.getInstance
       case (arraySchema: ArrayDataSchema, jsArray: JsArray) =>
         jsArrayToDataList(schemaPath, jsArray, arraySchema)
       case (recordSchema: RecordDataSchema, jsValue: JsValue) =>
@@ -469,9 +472,6 @@ object CourierFormats extends StrictLogging {
         new java.lang.Float(value.toFloat)
       case (_: DoubleDataSchema, JsNumber(value)) =>
         new java.lang.Double(value.toDouble)
-      case (_, JsNull) =>
-        checkSchema[NullDataSchema](schemaPath, "deserializing a NULL", schema)
-        Null.getInstance
       case (_, JsBoolean(boolean)) =>
         checkSchema[BooleanDataSchema](schemaPath, "deserializing a BOOLEAN", schema)
         new java.lang.Boolean(boolean)
