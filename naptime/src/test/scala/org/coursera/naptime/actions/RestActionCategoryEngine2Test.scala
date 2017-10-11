@@ -816,7 +816,7 @@ class RestActionCategoryEngine2Test extends AssertionsForJUnit with ScalaFutures
   private[this] def runTestRequestInternal[BodyType](
       restAction: RestAction[_, _, BodyType, _, _, _],
       request: RequestHeader,
-      body: HttpEntity = HttpEntity.Strict(ByteString(), None)): Result = {
+      body: HttpEntity = HttpEntity.NoEntity): Result = {
     val accumulator = restAction.apply(request)
     val resultFut = accumulator.run()
     resultFut.futureValue

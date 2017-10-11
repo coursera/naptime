@@ -23,6 +23,7 @@ import de.heikoseeberger.sbtheader.license.Apache2_0
 object NaptimeBuild extends Build with NamedDependencies with PluginVersionProvider {
 
   def playVersion = "2.6.2" // Play version is defined here, and in project/plugins.sbt
+  def playJsonVersion = "2.6.2"
   def akkaVersion = "2.5.3" // Akka version must match the one Play is built with.
   def courierVersion = "2.0.15"
 

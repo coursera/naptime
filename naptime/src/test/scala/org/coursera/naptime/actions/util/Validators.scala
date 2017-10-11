@@ -93,10 +93,10 @@ object Validators extends AssertionsForJUnit {
    * @return
    */
   def hasBody(result: Result): Boolean = {
-    val headers = result.header.headers
-    result.body match {
-      case HttpEntity.Strict(data, contentType) => contentType.isDefined
-      case _ => false // doesn't support matching other types right now
+    if (result.body.isKnownEmpty) {
+      false
+    } else {
+      result.body.contentLength.exists(_ > 0) || result.body.contentType.nonEmpty
     }
   }
 

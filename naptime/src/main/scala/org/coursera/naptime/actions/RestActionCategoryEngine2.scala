@@ -293,7 +293,7 @@ trait RestActionCategoryEngine2Impls {
         Results.NotModified.withHeaders(etag)
       } else {
         Results.Status(code)(codec.mapToBytes(response))
-          .as(ContentTypes.JSON + "; charset=utf-8")
+          .as(ContentTypes.JSON + "; charset=utf-8")  // TODO(yifan): Why is charset here?
           .withHeaders(etag)
       }
     }

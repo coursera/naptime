@@ -17,6 +17,7 @@
 package org.coursera.naptime.router2
 
 import com.google.inject.Guice
+import org.coursera.common.jsonformat.JsonFormats.Implicits.dateTimeFormat
 import org.coursera.naptime.actions.NaptimeActionSerializer.AnyWrites._
 import org.coursera.naptime.actions.NaptimeSerializer.AnyWrites._
 import org.coursera.naptime.model.KeyFormat
@@ -35,8 +36,6 @@ import org.mockito.Matchers._
 import org.mockito.Mockito._
 import org.scalatest.junit.AssertionsForJUnit
 import org.scalatest.mockito.MockitoSugar
-import play.api.libs.json.JodaReads._
-import play.api.libs.json.JodaWrites._
 import play.api.libs.json.Json
 import play.api.libs.json.OFormat
 import play.api.mvc.AnyContentAsEmpty

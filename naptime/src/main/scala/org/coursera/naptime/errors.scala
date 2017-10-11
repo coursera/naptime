@@ -46,7 +46,7 @@ case class NaptimeActionException(
     val bodyString = Json.stringify(bodyJson)
     Result(
       ResponseHeader(httpCode, Map(HeaderNames.CONTENT_TYPE -> MimeTypes.JSON)),
-      HttpEntity.Strict(ByteString(bodyString), Some(MimeTypes.JSON)))
+      HttpEntity.Strict(ByteString.fromString(bodyString), Some(MimeTypes.JSON)))
   }
 
 }

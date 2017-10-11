@@ -19,6 +19,7 @@ package org.coursera.naptime
 import com.linkedin.data.DataMap
 import com.linkedin.data.schema.DataSchema
 import com.linkedin.data.schema.RecordDataSchema
+import org.coursera.common.jsonformat.JsonFormats.Implicits.dateTimeFormat
 import org.coursera.naptime.actions.NaptimeSerializer.AnyWrites._
 import org.coursera.naptime.actions.NaptimeActionSerializer.AnyWrites._
 import org.coursera.naptime.courier.CourierFormats
@@ -42,8 +43,6 @@ import org.mockito.Matchers.any
 import org.mockito.Matchers.{eq => e}
 import org.scalatest.junit.AssertionsForJUnit
 import org.scalatest.mockito.MockitoSugar
-import play.api.libs.json.JodaReads._
-import play.api.libs.json.JodaWrites._
 import play.api.libs.json.Json
 import play.api.libs.json.OFormat
 import play.api.mvc.AnyContent

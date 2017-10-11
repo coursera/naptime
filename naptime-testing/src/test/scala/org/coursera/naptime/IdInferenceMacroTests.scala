@@ -5,6 +5,7 @@ import java.util.UUID
 
 import com.linkedin.data.schema.DataSchema
 import com.linkedin.data.schema.RecordDataSchema
+import org.coursera.common.jsonformat.JsonFormats.Implicits.dateTimeFormat
 import org.coursera.common.stringkey.StringKeyFormat
 import org.coursera.naptime.model.KeyFormat
 import org.coursera.naptime.resources.CourierCollectionResource
@@ -16,8 +17,6 @@ import org.scalatest.junit.AssertionsForJUnit
 import play.api.libs.json.Json
 import play.api.libs.json.OFormat
 import play.api.libs.json.OWrites
-import play.api.libs.json.JodaReads._
-import play.api.libs.json.JodaWrites._
 
 import scala.util.Try
 import scala.collection.JavaConverters._

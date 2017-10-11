@@ -19,6 +19,7 @@ import sbt.Keys._
 
 trait PluginVersionProvider {
   def playVersion: String
+  def playJsonVersion: String
   def akkaVersion: String
   def courierVersion: String
 }
@@ -26,14 +27,13 @@ trait PluginVersionProvider {
 trait NamedDependencies { this: PluginVersionProvider =>
 
   val courierRuntime = "org.coursera.courier" %% "courier-runtime" % courierVersion
-  val courscala = "org.coursera" %% "courscala" % "0.0.12"
+  val courscala = "org.coursera" %% "courscala" % "0.1.0"
   val governator = "com.netflix.governator" % "governator" % "1.10.5"
   val guice = "com.google.inject" % "guice" % "4.0"
   val guiceMultibindings = "com.google.inject.extensions" % "guice-multibindings" % "4.0"
   val jodaConvert = "org.joda" % "joda-convert" % "1.2"
   val jodaTime = "joda-time" % "joda-time" % "2.2"
-  val playJson = "com.typesafe.play" %% "play-json" % playVersion
-  val playJsonJoda = "com.typesafe.play" %% "play-json-joda" % playVersion
+  val playJson = "com.typesafe.play" %% "play-json" % playJsonVersion
   val playTestCompile = ("com.typesafe.play" %% "play-test" % playVersion)
     .excludeAll(new ExclusionRule(organization="org.specs2"))
   val sangria = "org.sangria-graphql" %% "sangria" % "1.2.2"
