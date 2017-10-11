@@ -1,5 +1,8 @@
 package org.coursera.naptime
 
+import akka.actor.ActorSystem
+import akka.stream.ActorMaterializer
+import akka.util.ByteString
 import org.coursera.naptime.model.KeyFormat
 import org.coursera.naptime.model.Keyed
 import org.coursera.common.stringkey.StringKeyFormat
@@ -7,24 +10,20 @@ import org.coursera.naptime.actions.PlayJsonRestActionCategoryEngine
 import org.coursera.naptime.actions.RestAction
 import org.coursera.naptime.actions.RestActionCategoryEngine
 import org.coursera.naptime.actions.util.Validators
-import org.coursera.naptime.resources.CollectionResource
 import org.coursera.naptime.resources.TopLevelCollectionResource
 import org.junit.Test
-import org.scalatest.concurrent.IntegrationPatience
 import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.junit.AssertionsForJUnit
 import play.api.http.HeaderNames
+import play.api.http.HttpEntity
 import play.api.http.Status
 import play.api.http.Writeable
-import play.api.libs.iteratee.Enumerator
 import play.api.libs.json.Json
 import play.api.mvc.AnyContentAsEmpty
 import play.api.mvc.RequestHeader
 import play.api.test.FakeRequest
 import play.api.mvc.Result
 import play.api.mvc.AnyContent
-
-import scala.concurrent.duration._
 import play.api.libs.json.OFormat
 import play.api.libs.json.OWrites
 import play.api.test.Helpers.contentAsBytes
@@ -107,6 +106,8 @@ object RestActionCategoryEngineTest {
 
 class RestActionCategoryEngineTest extends AssertionsForJUnit with ScalaFutures {
   import RestActionCategoryEngineTest._
+  implicit val system = ActorSystem("Naptime")
+  implicit val materializer = ActorMaterializer()
 
   override def spanScaleFactor: Double = 10
 
@@ -174,9 +175,9 @@ class RestActionCategoryEngineTest extends AssertionsForJUnit with ScalaFutures 
   private[this] def runTestRequestInternal[BodyType](
       restAction: RestAction[_, _, BodyType, _, _, _],
       request: RequestHeader,
-      body: Enumerator[Array[Byte]] = Enumerator.empty): Result = {
-    val iteratee = restAction.apply(request)
-    val resultFut = body.run(iteratee)
+      body: HttpEntity = HttpEntity.Strict(ByteString(), None)): Result = {
+    val accumulator = restAction.apply(request)
+    val resultFut = accumulator.run()
     resultFut.futureValue
   }
 
@@ -186,7 +187,7 @@ class RestActionCategoryEngineTest extends AssertionsForJUnit with ScalaFutures 
     val requestWithHeader = writeable.contentType.map { ct =>
       fakeRequest.withHeaders(HeaderNames.CONTENT_TYPE -> ct)
     }.getOrElse(fakeRequest)
-    val b = Enumerator(fakeRequest.body).through(writeable.toEnumeratee)
+    val b = writeable.toEntity(fakeRequest.body)
     runTestRequestInternal(restAction, requestWithHeader, b)
   }
 

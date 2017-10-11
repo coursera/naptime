@@ -33,6 +33,7 @@ trait NamedDependencies { this: PluginVersionProvider =>
   val jodaConvert = "org.joda" % "joda-convert" % "1.2"
   val jodaTime = "joda-time" % "joda-time" % "2.2"
   val playJson = "com.typesafe.play" %% "play-json" % playVersion
+  val playJsonJoda = "com.typesafe.play" %% "play-json-joda" % playVersion
   val playTestCompile = ("com.typesafe.play" %% "play-test" % playVersion)
     .excludeAll(new ExclusionRule(organization="org.specs2"))
   val sangria = "org.sangria-graphql" %% "sangria" % "1.2.2"

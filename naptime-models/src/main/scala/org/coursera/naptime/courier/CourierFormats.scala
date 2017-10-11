@@ -60,7 +60,7 @@ import org.coursera.courier.templates.ScalaRecordTemplate
 import org.coursera.courier.templates.ScalaTemplate
 import org.coursera.naptime.courier.CourierUtils._
 import org.coursera.naptime.courier.Exceptions._
-import play.api.data.validation.ValidationError
+import play.api.libs.json.JsonValidationError
 import play.api.libs.json.Format
 import play.api.libs.json.IdxPathNode
 import play.api.libs.json.JsArray
@@ -215,7 +215,7 @@ object CourierFormats extends StrictLogging {
         case idx: java.lang.Integer => IdxPathNode(idx)
         case name: String => KeyPathNode(name)
       }.toList)
-      path -> Seq(ValidationError(message.toString))
+      path -> Seq(JsonValidationError(message.toString))
     })
   }
 

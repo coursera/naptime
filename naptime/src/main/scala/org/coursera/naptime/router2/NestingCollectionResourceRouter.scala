@@ -16,6 +16,7 @@
 
 package org.coursera.naptime.router2
 
+import akka.actor.ActorSystem
 import com.typesafe.scalalogging.StrictLogging
 import org.coursera.common.stringkey.StringKey
 import org.coursera.common.stringkey.StringKeyFormat
@@ -33,6 +34,7 @@ import play.api.mvc.RequestTaggingHandler
 import play.api.mvc.Result
 import play.api.mvc.Results
 
+import scala.concurrent.ExecutionContext
 import scala.concurrent.Future
 import scala.language.existentials
 
@@ -299,6 +301,8 @@ class NestingCollectionResourceRouter[CollectionResourceType <: CollectionResour
 }
 
 object NestingCollectionResourceRouter {
+  private[this] val actorSystem = ActorSystem("naptime")
+  private[this] val ec = actorSystem.dispatcher
 
   private[naptime] def errorRoute(
       resourceClass: Class[_],
@@ -306,6 +310,8 @@ object NestingCollectionResourceRouter {
       statusCode: Int = Status.BAD_REQUEST): RouteAction = {
 
     new Action[Unit] with RequestTaggingHandler {
+      override def executionContext: ExecutionContext = ec
+
       override def parser: BodyParser[Unit] = BodyParsers.parse.empty
 
       override def apply(request: Request[Unit]): Future[Result] = {

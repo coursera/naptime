@@ -16,6 +16,7 @@
 
 package org.coursera.naptime.router2
 
+import akka.util.ByteString
 import com.google.inject.Injector
 import org.coursera.naptime.resources.RootResource
 import org.coursera.naptime.schema.Handler
@@ -28,7 +29,7 @@ import org.mockito.Mockito.when
 import org.mockito.Matchers.any
 import org.scalatest.junit.AssertionsForJUnit
 import org.scalatest.mockito.MockitoSugar
-import play.api.libs.iteratee.Iteratee
+import play.api.libs.streams.Accumulator
 import play.api.mvc.EssentialAction
 import play.api.mvc.RequestHeader
 import play.api.mvc.RequestTaggingHandler
@@ -39,7 +40,7 @@ class NaptimePlayRouterTest extends AssertionsForJUnit with MockitoSugar {
   object FakeHandler extends /* RouteAction */ EssentialAction with RequestTaggingHandler {
     override def tagRequest(request: RequestHeader): RequestHeader = request
 
-    override def apply(v1: RequestHeader): Iteratee[Array[Byte], Result] = ???
+    override def apply(v1: RequestHeader): Accumulator[ByteString, Result] = ???
   }
 
   val resourceSchema = Resource(

@@ -16,6 +16,8 @@ import org.scalatest.junit.AssertionsForJUnit
 import play.api.libs.json.Json
 import play.api.libs.json.OFormat
 import play.api.libs.json.OWrites
+import play.api.libs.json.JodaReads._
+import play.api.libs.json.JodaWrites._
 
 import scala.util.Try
 import scala.collection.JavaConverters._

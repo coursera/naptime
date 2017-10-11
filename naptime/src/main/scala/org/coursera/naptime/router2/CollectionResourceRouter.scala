@@ -16,6 +16,7 @@
 
 package org.coursera.naptime.router2
 
+import akka.actor.ActorSystem
 import org.coursera.common.stringkey.StringKey
 import org.coursera.common.stringkey.StringKeyFormat
 import play.api.libs.json.Json
@@ -28,13 +29,18 @@ import play.api.mvc.RequestTaggingHandler
 import play.api.mvc.Result
 import play.api.mvc.Results
 
+import scala.concurrent.ExecutionContext
 import scala.concurrent.Future
 import scala.language.existentials
 
 object CollectionResourceRouter {
+  private[this] val actorSystem = ActorSystem("naptime")
+  private[this] val ec = actorSystem.dispatcher
 
   private[naptime] def errorRoute(msg: String, resourceClass: Class[_]): RouteAction = {
     new Action[Unit] with RequestTaggingHandler {
+      override def executionContext: ExecutionContext = ec
+
       override def parser: BodyParser[Unit] = BodyParsers.parse.empty
 
       override def tagRequest(request: RequestHeader): RequestHeader =

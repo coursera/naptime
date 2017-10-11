@@ -25,6 +25,8 @@ import org.coursera.naptime.resources.NestingTests.PeopleResource
 import org.joda.time.DateTime
 import org.junit.Test
 import org.scalatest.junit.AssertionsForJUnit
+import play.api.libs.json.JodaReads._
+import play.api.libs.json.JodaWrites._
 import play.api.libs.json.Json
 import play.api.libs.json.OFormat
 

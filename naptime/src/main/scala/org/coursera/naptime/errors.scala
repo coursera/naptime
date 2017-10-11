@@ -18,11 +18,12 @@ package org.coursera.naptime
 
 import java.nio.charset.StandardCharsets
 
+import akka.util.ByteString
 import org.coursera.common.jsonformat.JsonFormats
 import org.coursera.common.jsonformat.JsonFormats.Implicits.optionalReads
 import play.api.http.HeaderNames
+import play.api.http.HttpEntity
 import play.api.http.MimeTypes
-import play.api.libs.iteratee.Enumerator
 import play.api.libs.json.JsValue
 import play.api.libs.json.Json
 import play.api.libs.json.OFormat
@@ -42,10 +43,10 @@ case class NaptimeActionException(
 
   def result: Result = {
     val bodyJson = Json.toJson(NaptimeActionException.Body(errorCode, message, details))
-    val bodyBytes = Json.stringify(bodyJson).getBytes(StandardCharsets.UTF_8)
+    val bodyString = Json.stringify(bodyJson)
     Result(
       ResponseHeader(httpCode, Map(HeaderNames.CONTENT_TYPE -> MimeTypes.JSON)),
-      Enumerator(bodyBytes))
+      HttpEntity.Strict(ByteString(bodyString), Some(MimeTypes.JSON)))
   }
 
 }
