@@ -25,7 +25,8 @@ object NaptimeModuleTest {
   object User {
     implicit val oFormat: OFormat[User] = Json.format[User]
   }
-  class MyResource(implicit val executionContext: ExecutionContext, val materializer: Materializer) extends TopLevelCollectionResource[String, User] {
+  class MyResource(implicit val executionContext: ExecutionContext, val materializer: Materializer)
+    extends TopLevelCollectionResource[String, User] {
     override implicit def resourceFormat: OFormat[User] = User.oFormat
     override def keyFormat: KeyFormat[KeyType] = KeyFormat.stringKeyFormat
     override def resourceName: String = "myResource"

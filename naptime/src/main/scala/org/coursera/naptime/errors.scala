@@ -45,7 +45,7 @@ case class NaptimeActionException(
     val bodyJson = Json.toJson(NaptimeActionException.Body(errorCode, message, details))
     val bodyString = Json.stringify(bodyJson)
     Result(
-      ResponseHeader(httpCode, Map(HeaderNames.CONTENT_TYPE -> MimeTypes.JSON)),
+      ResponseHeader(httpCode),
       HttpEntity.Strict(ByteString.fromString(bodyString), Some(MimeTypes.JSON)))
   }
 

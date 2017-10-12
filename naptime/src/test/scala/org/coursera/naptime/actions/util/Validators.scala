@@ -51,7 +51,7 @@ object Validators extends AssertionsForJUnit {
       case Status.OK | Status.CREATED | Status.NO_CONTENT =>
         assertValidSuccessResponse(result, strictMode)
       case Status.NOT_MODIFIED =>
-        assert(result.header.headers.get(HeaderNames.CONTENT_TYPE).isEmpty)
+        assert(result.body.contentType.isEmpty)
         assert(result.header.headers.get(HeaderNames.ETAG).isDefined)
         assert(0 === contentAsBytes(Future.successful(result)).length)
       case code if code >= 400 && code < 500 =>

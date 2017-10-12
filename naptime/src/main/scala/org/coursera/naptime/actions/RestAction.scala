@@ -96,8 +96,7 @@ trait RestAction[RACType, AuthType, BodyType, KeyType, ResourceType, ResponseTyp
       rh: RequestHeader,
       resourceName: ResourceName): Future[Response] = {
     val authResult = restAuth.run(rh) // Kick off the authentication check in parallel
-    val accumulator: Accumulator[ByteString, Either[Result, BodyType]] = restBodyParser(rh)
-    accumulator.mapFuture[Response] {
+    restBodyParser(rh).mapFuture[Response] {
       case Left(bodyError) =>
         // If it was an auth error, override with that. Otherwise serve the body error.
         authResult.flatMap { authResult =>
@@ -105,7 +104,7 @@ trait RestAction[RACType, AuthType, BodyType, KeyType, ResourceType, ResponseTyp
             error => Future.failed(error),
             // TODO: keep as an exception.
             successAuth => {
-              val bodyAsBytesEventually = bodyError.body.consumeData(materializer)
+              val bodyAsBytesEventually = bodyError.body.consumeData
               val bodyAsStrEventually =
                 bodyAsBytesEventually.map(byteStr => byteStr.utf8String)
               import scala.concurrent.duration._
@@ -156,7 +155,7 @@ trait RestAction[RACType, AuthType, BodyType, KeyType, ResourceType, ResponseTyp
               }.get
             })
         }
-    }.run()(materializer)
+    }.run()
   }
 
   /**

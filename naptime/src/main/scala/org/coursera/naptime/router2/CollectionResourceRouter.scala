@@ -40,7 +40,9 @@ object CollectionResourceRouter {
   private[naptime] def errorRoute(msg: String, resourceClass: Class[_]): RouteAction =
     new EssentialAction with RequestTaggingHandler {
       override def apply(request: RequestHeader): Accumulator[ByteString, Result] = {
-        Accumulator(Sink.ignore.mapMaterializedValue(_ => Future.successful(Results.BadRequest(Json.obj("msg" -> s"Routing error: $msg")))))
+        Accumulator(Sink.ignore.mapMaterializedValue { _ =>
+          Future.successful(Results.BadRequest(Json.obj("msg" -> s"Routing error: $msg")))
+        })
       }
 
       override def tagRequest(request: RequestHeader): RequestHeader =

@@ -50,7 +50,9 @@ object NestingCollectionResourceRouterTest {
   /**
    * A sample top-level resource, with very standard / normal Naptime operations.
    */
-  class MyResource(implicit val executionContext: ExecutionContext, val materializer: Materializer) extends TopLevelCollectionResource[String, Person] {
+  class MyResource
+      (implicit val executionContext: ExecutionContext, val materializer: Materializer)
+    extends TopLevelCollectionResource[String, Person] {
     override def keyFormat: KeyFormat[KeyType] = KeyFormat.stringKeyFormat
     override implicit def resourceFormat: OFormat[Person] = Person.jsonFormat
     override def resourceName: String = "myResource"
@@ -169,7 +171,8 @@ object NestingCollectionResourceRouterTest {
    * A nested resource that has more sophisticated parameters to its Naptime operations to test the
    * capabilities of the routing system.
    */
-  class MyNestedResource(val parentResource: MyResource)(implicit val executionContext: ExecutionContext, val materializer: Materializer)
+  class MyNestedResource(val parentResource: MyResource)
+      (implicit val executionContext: ExecutionContext, val materializer: Materializer)
     extends CollectionResource[MyResource, String, Person] {
 
     override def keyFormat: KeyFormat[KeyType] = KeyFormat.stringKeyFormat

@@ -46,7 +46,10 @@ import scala.util.control.NonFatal
 class RestActionBuilder[RACType, AuthType, BodyType, ResourceKeyType, ResourceType, ResponseType](
     auth: HeaderAccessControl[AuthType], bodyParser: BodyParser[BodyType],
     errorHandler: PartialFunction[Throwable, RestError])
-    (implicit keyFormat: KeyFormat[ResourceKeyType], resourceFormat: OFormat[ResourceType], ec: ExecutionContext, mat: Materializer) {
+    (implicit keyFormat: KeyFormat[ResourceKeyType],
+    resourceFormat: OFormat[ResourceType],
+    ec: ExecutionContext,
+    mat: Materializer) {
 
   /**
    * Set the authentication framework.

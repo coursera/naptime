@@ -59,7 +59,8 @@ object PlayNaptimeRouterIntegrationTest {
   /**
    * The top level resource in our fledgling social network.
    */
-  class PersonResource(implicit val executionContext: ExecutionContext, val materializer: Materializer)
+  class PersonResource
+      (implicit val executionContext: ExecutionContext, val materializer: Materializer)
     extends TopLevelCollectionResource[String, Person] {
 
     val PATH_KEY: PathKey = ("myPathKeyId" ::: RootParsedPathKey).asInstanceOf[PathKey]
@@ -112,7 +113,8 @@ object PlayNaptimeRouterIntegrationTest {
     implicit val jsonFormat: OFormat[FriendshipInfo] = Json.format[FriendshipInfo]
   }
 
-  class FriendsResource(val parentResource: PersonResource)(implicit val executionContext: ExecutionContext, val materializer: Materializer)
+  class FriendsResource(val parentResource: PersonResource)
+      (implicit val executionContext: ExecutionContext, val materializer: Materializer)
     extends CollectionResource[PersonResource, String, FriendshipInfo] {
     override def keyFormat: KeyFormat[KeyType] = KeyFormat.stringKeyFormat
 

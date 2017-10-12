@@ -112,48 +112,48 @@ class RestActionCategoryEngineTest extends AssertionsForJUnit with ScalaFutures 
   import RestActionCategoryEngineTest._
 
   override def spanScaleFactor: Double = 10
-  val resource = new SampleResource
+  val sampleResource = new SampleResource
 
   @Test
   def get1(): Unit = {
-    testEmptyBody(resource.get1(1))
+    testEmptyBody(sampleResource.get1(1))
   }
 
   @Test
   def get2(): Unit = {
-    testEmptyBody(resource.get2(2))
+    testEmptyBody(sampleResource.get2(2))
   }
 
   @Test
   def create1(): Unit = {
-    testEmptyBody(resource.create1)
+    testEmptyBody(sampleResource.create1)
   }
 
   @Test
   def create2(): Unit = {
-    testEmptyBody(resource.create2)
+    testEmptyBody(sampleResource.create2)
   }
 
   @Test
   def create3(): Unit = {
-    testEmptyBody(resource.create3)
+    testEmptyBody(sampleResource.create3)
   }
 
   @Test
   def delete1(): Unit = {
-    testEmptyBody(resource.delete1(1))
+    testEmptyBody(sampleResource.delete1(1))
   }
 
   @Test
   def testFinder1(): Unit = {
     val request = FakeRequest("GET", "/?q1=1")
-    testEmptyBody(resource.testFinder1(K1(1)), request = request)
+    testEmptyBody(sampleResource.testFinder1(K1(1)), request = request)
   }
 
   @Test
   def testFinder2(): Unit = {
     val request = FakeRequest("GET", "/?q1=1&q2=2")
-    testEmptyBody(resource.testFinder2(K1(1), K2(2)), request = request)
+    testEmptyBody(sampleResource.testFinder2(K1(1), K2(2)), request = request)
   }
 
   // Helpers below.
@@ -187,11 +187,8 @@ class RestActionCategoryEngineTest extends AssertionsForJUnit with ScalaFutures 
   private[this] def runTestRequest[BodyType](restAction: RestAction[_, _, BodyType, _, _, _],
       fakeRequest: FakeRequest[BodyType])(
       implicit writeable: Writeable[BodyType]): Result = {
-    val requestWithHeader = writeable.contentType.map { ct =>
-      fakeRequest.withHeaders(HeaderNames.CONTENT_TYPE -> ct)
-    }.getOrElse(fakeRequest)
     val b = writeable.toEntity(fakeRequest.body)
-    runTestRequestInternal(restAction, requestWithHeader, b)
+    runTestRequestInternal(restAction, fakeRequest, b)
   }
 
   private[this] def runTestRequest(restAction: RestAction[_, _, AnyContent, _, _, _],

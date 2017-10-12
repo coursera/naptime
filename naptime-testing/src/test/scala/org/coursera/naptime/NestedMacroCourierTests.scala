@@ -35,7 +35,9 @@ object NestedMacroCourierTests {
     val ID = ResourceName("courses", 1)
   }
 
-  class CoursesResource @Inject() (implicit val executionContext: ExecutionContext, val materializer: Materializer) extends CourierCollectionResource[String, Course] {
+  class CoursesResource @Inject()
+      (implicit val executionContext: ExecutionContext, val materializer: Materializer)
+    extends CourierCollectionResource[String, Course] {
     override def resourceName: String = CoursesResource.ID.topLevelName
 
     override implicit lazy val Fields: Fields[Course] = BaseFields
@@ -89,7 +91,9 @@ object NestedMacroCourierTests {
     }
   }
 
-  class InstructorsResource @Inject() (implicit val executionContext: ExecutionContext, val materializer: Materializer) extends CourierCollectionResource[String, Instructor] {
+  class InstructorsResource @Inject()
+      (implicit val executionContext: ExecutionContext, val materializer: Materializer)
+    extends CourierCollectionResource[String, Instructor] {
     override def resourceName: String = "instructors"
 
     def multiGet(ids: Set[String]) = Nap.multiGet { ctx =>

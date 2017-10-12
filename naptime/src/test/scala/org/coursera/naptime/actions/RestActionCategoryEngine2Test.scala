@@ -829,11 +829,8 @@ class RestActionCategoryEngine2Test extends AssertionsForJUnit with ScalaFutures
   private[this] def runTestRequest[BodyType](restAction: RestAction[_, _, BodyType, _, _, _],
     fakeRequest: FakeRequest[BodyType])(
     implicit writeable: Writeable[BodyType]): Result = {
-    val requestWithHeader = writeable.contentType.map { ct =>
-      fakeRequest.withHeaders(HeaderNames.CONTENT_TYPE -> ct)
-    }.getOrElse(fakeRequest)
     val b = writeable.toEntity(fakeRequest.body)
-    runTestRequestInternal(restAction, requestWithHeader, b)
+    runTestRequestInternal(restAction, fakeRequest, b)
   }
 
   private[this] def runTestRequest(restAction: RestAction[_, _, AnyContent, _, _, _],

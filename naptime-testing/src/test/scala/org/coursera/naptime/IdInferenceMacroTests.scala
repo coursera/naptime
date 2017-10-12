@@ -36,7 +36,8 @@ object IdInferenceMacroTests {
   case class LegacyCourseId(id: Int) extends CourseId
   case class NewCourseId(id: String) extends CourseId
 
-  class CourseResource(implicit val executionContext: ExecutionContext, val materializer: Materializer) extends CourierCollectionResource[CourseId, Course] {
+  class CourseResource(implicit val executionContext: ExecutionContext, val materializer: Materializer)
+    extends CourierCollectionResource[CourseId, Course] {
     override def resourceName: String = "courses"
     def getAll = Nap.getAll(ctx => ???)
   }
@@ -83,7 +84,8 @@ object IdInferenceMacroTests {
     implicit val jsonFormat = Json.format[Membership]
   }
 
-  class MembershipResource(implicit val executionContext: ExecutionContext, val materializer: Materializer) extends TopLevelCollectionResource[MembershipId, Membership] {
+  class MembershipResource(implicit val executionContext: ExecutionContext, val materializer: Materializer)
+    extends TopLevelCollectionResource[MembershipId, Membership] {
     override def keyFormat: KeyFormat[KeyType] = MembershipId.keyFormat
     override implicit def resourceFormat: OFormat[Membership] = Membership.jsonFormat
     override def resourceName: String = "memberships"
@@ -102,13 +104,12 @@ object IdInferenceMacroTests {
     implicit val keyFormat: KeyFormat[PaymentId] = KeyFormat.idAsPrimitive(apply, unapply)
   }
 
-  class PaymentResource extends TopLevelCollectionResource[PaymentId, Membership] {
+  class PaymentResource(implicit val executionContext: ExecutionContext, val materializer: Materializer)
+    extends TopLevelCollectionResource[PaymentId, Membership] {
     override def keyFormat: KeyFormat[KeyType] = PaymentId.keyFormat
     override implicit def resourceFormat: OFormat[Membership] = Membership.jsonFormat
     override def resourceName: String = "payments"
     implicit val fields = Fields
-    override implicit protected val executionContext: ExecutionContext = ???
-    override implicit protected val materializer: Materializer = ???
 
     def getAll = Nap.getAll(ctx => ???)
   }

@@ -236,7 +236,7 @@ trait RestActionCategoryEngine2Impls {
 
   /**
    * Call this after calling [[serializeCollection()]], passing in the returned [[RequestFields]]
- *
+   *
    * @return Pass the returned RequestFields to construct the [[FlattenedFilteringJacksonDataCodec]]
    */
   private[this] def serializeRelated[T](
@@ -293,7 +293,7 @@ trait RestActionCategoryEngine2Impls {
         Results.NotModified.withHeaders(etag)
       } else {
         Results.Status(code)(codec.mapToBytes(response))
-          .as(ContentTypes.JSON + "; charset=utf-8")  // TODO(yifan): Why is charset here?
+          .as(ContentTypes.JSON)
           .withHeaders(etag)
       }
     }
@@ -642,7 +642,6 @@ trait RestActionCategoryEngine2Impls {
       }
     }
   }
-
   private[naptime] class FlattenedFilteringJacksonDataCodec(fields: RequestFields)
     extends JacksonDataCodec {
 

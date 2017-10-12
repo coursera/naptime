@@ -39,7 +39,8 @@ object NestingTests {
     implicit val jsonFormat: OFormat[Person] = Json.format[Person]
   }
 
-  class PeopleResource(implicit val executionContext: ExecutionContext, val materializer: Materializer)
+  class PeopleResource
+      (implicit val executionContext: ExecutionContext, val materializer: Materializer)
     extends TopLevelCollectionResource[String, Person] {
 
     override def keyFormat = KeyFormat.stringKeyFormat
@@ -52,7 +53,8 @@ object NestingTests {
     implicit val jsonFormat: OFormat[FriendInfo] = Json.format[FriendInfo]
   }
 
-  class FriendInfoResource(peopleResource: PeopleResource)(implicit val executionContext: ExecutionContext, val materializer: Materializer)
+  class FriendInfoResource(peopleResource: PeopleResource)
+      (implicit val executionContext: ExecutionContext, val materializer: Materializer)
     extends CollectionResource[PeopleResource, String, FriendInfo] {
 
     override def keyFormat = KeyFormat.stringKeyFormat
