@@ -18,6 +18,7 @@ package org.coursera.naptime.actions
 
 import akka.actor.ActorSystem
 import akka.stream.ActorMaterializer
+import akka.stream.Materializer
 import akka.util.ByteString
 import com.linkedin.data.DataList
 import org.coursera.common.stringkey.StringKey
@@ -36,6 +37,7 @@ import org.coursera.naptime.QueryFields
 import org.coursera.naptime.QueryIncludes
 import org.coursera.naptime.RequestPagination
 import org.coursera.naptime.ResourceName
+import org.coursera.naptime.ResourceTestImplicits
 import org.coursera.naptime.actions.util.Validators
 import org.coursera.naptime.resources.TopLevelCollectionResource
 import org.junit.Test
@@ -58,6 +60,7 @@ import play.api.test.FakeRequest
 import play.api.test.Helpers
 import play.api.test.Helpers.defaultAwaitTimeout
 
+import scala.concurrent.ExecutionContext
 import scala.concurrent.Future
 
 object RestActionCategoryEngine2Test {
@@ -76,7 +79,7 @@ object RestActionCategoryEngine2Test {
    *
    * In general, it is a very bad idea to have multiple gets, creates, etc, in a single resource.
    */
-  object PlayJsonTestResource
+  class PlayJsonTestResource(implicit val executionContext: ExecutionContext, val materializer: Materializer)
     extends TopLevelCollectionResource[Int, Person] {
     import RestActionCategoryEngine2._
 
@@ -130,7 +133,7 @@ object RestActionCategoryEngine2Test {
    *
    * In general, it is a very bad idea to have multiple gets, creates, etc, in a single resource.
    */
-  object CourierTestResource
+  class CourierTestResource(implicit val executionContext: ExecutionContext, val materializer: Materializer)
     extends TopLevelCollectionResource[String, Course] {
     import RestActionCategoryEngine2._
 
@@ -180,7 +183,7 @@ object RestActionCategoryEngine2Test {
     }
   }
 
-  object CourierKeyedTestResource
+  class courierKeyedTestResource(implicit val executionContext: ExecutionContext, val materializer: Materializer)
     extends TopLevelCollectionResource[EnrollmentId, Course] {
     import RestActionCategoryEngine2._
 
@@ -305,16 +308,17 @@ object RestActionCategoryEngine2Test {
   }
 }
 
-class RestActionCategoryEngine2Test extends AssertionsForJUnit with ScalaFutures {
+class RestActionCategoryEngine2Test extends AssertionsForJUnit with ScalaFutures with ResourceTestImplicits {
   import RestActionCategoryEngine2Test._
-  implicit val system = ActorSystem("Naptime")
-  implicit val materializer = ActorMaterializer()
   // Increase timeout a bit.
   override def spanScaleFactor: Double = 10
+  val playJsonTestResource = new PlayJsonTestResource
+  val courierTestResource = new CourierTestResource
+  val courierKeyedTestResource = new courierKeyedTestResource
 
   @Test
   def playJsonGet1(): Unit = {
-    val response = testEmptyRequestBody(PlayJsonTestResource.get1(1))
+    val response = testEmptyRequestBody(playJsonTestResource.get1(1))
     RelatedResources.assertRelatedPresent(response)
     val elements = assertElements(response)
     val expected = Json.arr(
@@ -326,7 +330,7 @@ class RestActionCategoryEngine2Test extends AssertionsForJUnit with ScalaFutures
 
   @Test
   def playJsonGet1NoRelated(): Unit = {
-    val response = testEmptyRequestBody(PlayJsonTestResource.get1(1), FakeRequest())
+    val response = testEmptyRequestBody(playJsonTestResource.get1(1), FakeRequest())
     RelatedResources.assertRelatedAbsent(response)
     val elements = assertElements(response)
     val expected = Json.arr(
@@ -338,9 +342,9 @@ class RestActionCategoryEngine2Test extends AssertionsForJUnit with ScalaFutures
 
   @Test
   def playJsonGet1Etags(): Unit = {
-    val response1 = testEmptyRequestBody(PlayJsonTestResource.get1(1))
-    val responseNoRelated = testEmptyRequestBody(PlayJsonTestResource.get1(1), FakeRequest())
-    val response2 = testEmptyRequestBody(PlayJsonTestResource.get1(1))
+    val response1 = testEmptyRequestBody(playJsonTestResource.get1(1))
+    val responseNoRelated = testEmptyRequestBody(playJsonTestResource.get1(1), FakeRequest())
+    val response2 = testEmptyRequestBody(playJsonTestResource.get1(1))
 
     assert(response1.header.status === Status.OK)
     assert(response1.header.headers.contains(HeaderNames.ETAG))
@@ -356,54 +360,54 @@ class RestActionCategoryEngine2Test extends AssertionsForJUnit with ScalaFutures
 
   @Test
   def playJsonGet1IfNoneMatch(): Unit = {
-    val response1 = testEmptyRequestBody(PlayJsonTestResource.get1(4))
+    val response1 = testEmptyRequestBody(playJsonTestResource.get1(4))
     assert(response1.header.headers.contains(HeaderNames.ETAG))
     val etag = response1.header.headers(HeaderNames.ETAG)
     val request2 = standardFakeRequest.withHeaders(HeaderNames.IF_NONE_MATCH -> etag)
-    val response2 = testEmptyRequestBody(PlayJsonTestResource.get1(4), request2)
+    val response2 = testEmptyRequestBody(playJsonTestResource.get1(4), request2)
     assert(response2.header.status === Status.NOT_MODIFIED)
   }
 
   @Test
   def playJsonGet2(): Unit = {
-    testEmptyRequestBody(PlayJsonTestResource.get2(1))
+    testEmptyRequestBody(playJsonTestResource.get2(1))
   }
 
   @Test
   def playJsonMultiGet(): Unit = {
-    val response = testEmptyRequestBody(PlayJsonTestResource.multiGet(Set(1, 2)))
+    val response = testEmptyRequestBody(playJsonTestResource.multiGet(Set(1, 2)))
     RelatedResources.assertRelatedPresent(response)
   }
 
   @Test
   def playJsonMultiGetNoRelated(): Unit = {
-    val response = testEmptyRequestBody(PlayJsonTestResource.multiGet(Set(1, 2)), FakeRequest())
+    val response = testEmptyRequestBody(playJsonTestResource.multiGet(Set(1, 2)), FakeRequest())
     RelatedResources.assertRelatedAbsent(response)
   }
 
   @Test
   def playJsonCreate1(): Unit = {
-    testEmptyRequestBody(PlayJsonTestResource.create1)
+    testEmptyRequestBody(playJsonTestResource.create1)
   }
 
   @Test
   def playJsonCreate2(): Unit = {
-    testEmptyRequestBody(PlayJsonTestResource.create2)
+    testEmptyRequestBody(playJsonTestResource.create2)
   }
 
   @Test
   def playJsonCreate3(): Unit = {
-    testEmptyRequestBody(PlayJsonTestResource.create3)
+    testEmptyRequestBody(playJsonTestResource.create3)
   }
 
   @Test
   def playJsonDelete1(): Unit = {
-    testEmptyRequestBody(PlayJsonTestResource.delete1(1))
+    testEmptyRequestBody(playJsonTestResource.delete1(1))
   }
 
   @Test
   def courierGet1(): Unit = {
-    val response = testEmptyRequestBody(CourierTestResource.get1("test"))
+    val response = testEmptyRequestBody(courierTestResource.get1("test"))
     RelatedResources.assertRelatedPresent(response)
     val elements = assertElements(response)
     val expected = Json.arr(
@@ -415,7 +419,7 @@ class RestActionCategoryEngine2Test extends AssertionsForJUnit with ScalaFutures
 
   @Test
   def courierGet1NoRelated(): Unit = {
-    val response = testEmptyRequestBody(CourierTestResource.get1("test"), FakeRequest())
+    val response = testEmptyRequestBody(courierTestResource.get1("test"), FakeRequest())
     RelatedResources.assertRelatedAbsent(response)
     val elements = assertElements(response)
     val expected = Json.arr(
@@ -427,9 +431,9 @@ class RestActionCategoryEngine2Test extends AssertionsForJUnit with ScalaFutures
 
   @Test
   def courierGet1Etags(): Unit = {
-    val response1 = testEmptyRequestBody(CourierTestResource.get1("test"))
-    val response2 = testEmptyRequestBody(CourierTestResource.get1("test"))
-    val responseNoRelated = testEmptyRequestBody(CourierTestResource.get1("test"), FakeRequest())
+    val response1 = testEmptyRequestBody(courierTestResource.get1("test"))
+    val response2 = testEmptyRequestBody(courierTestResource.get1("test"))
+    val responseNoRelated = testEmptyRequestBody(courierTestResource.get1("test"), FakeRequest())
 
     assert(response1.header.status === Status.OK)
     assert(response2.header.status === Status.OK)
@@ -445,55 +449,55 @@ class RestActionCategoryEngine2Test extends AssertionsForJUnit with ScalaFutures
 
   @Test
   def courierGet1IfNoneMatch(): Unit = {
-    val response1 = testEmptyRequestBody(CourierTestResource.get1("etagTest"))
+    val response1 = testEmptyRequestBody(courierTestResource.get1("etagTest"))
     assert(response1.header.headers.contains(HeaderNames.ETAG))
     val etag = response1.header.headers(HeaderNames.ETAG)
     val request2 = standardFakeRequest.withHeaders(HeaderNames.IF_NONE_MATCH -> etag)
-    val response2 = testEmptyRequestBody(CourierTestResource.get1("etagTest"), request2)
+    val response2 = testEmptyRequestBody(courierTestResource.get1("etagTest"), request2)
     assert(response2.header.status === Status.NOT_MODIFIED)
   }
 
   @Test
   def courierGet2(): Unit = {
-    testEmptyRequestBody(CourierTestResource.get2("test"))
+    testEmptyRequestBody(courierTestResource.get2("test"))
   }
 
   @Test
   def courierMultiGet(): Unit = {
-    val response = testEmptyRequestBody(CourierTestResource.multiGet(Set("test1", "test2")))
+    val response = testEmptyRequestBody(courierTestResource.multiGet(Set("test1", "test2")))
     RelatedResources.assertRelatedPresent(response)
   }
 
   @Test
   def courierMultiGetNoRelated(): Unit = {
-    val response = testEmptyRequestBody(CourierTestResource.multiGet(Set("test1", "test2")), FakeRequest())
+    val response = testEmptyRequestBody(courierTestResource.multiGet(Set("test1", "test2")), FakeRequest())
     RelatedResources.assertRelatedAbsent(response)
   }
 
   @Test
   def courierCreate1(): Unit = {
-    testEmptyRequestBody(CourierTestResource.create1)
+    testEmptyRequestBody(courierTestResource.create1)
   }
 
   @Test
   def courierCreate2(): Unit = {
-    testEmptyRequestBody(CourierTestResource.create2)
+    testEmptyRequestBody(courierTestResource.create2)
   }
 
   @Test
   def courierCreate3(): Unit = {
-    testEmptyRequestBody(CourierTestResource.create3)
+    testEmptyRequestBody(courierTestResource.create3)
   }
 
   @Test
   def courierDelete1(): Unit = {
-    testEmptyRequestBody(CourierTestResource.delete1("test"))
+    testEmptyRequestBody(courierTestResource.delete1("test"))
   }
 
 
   @Test
   def courierKeyedGet1(): Unit = {
-    val response = testEmptyRequestBody(CourierKeyedTestResource.get1(CourierKeyedTestResource.EnrollmentIds.a))
+    val response = testEmptyRequestBody(courierKeyedTestResource.get1(courierKeyedTestResource.EnrollmentIds.a))
     RelatedResources.assertRelatedPresent(response)
     val elements = assertElements(response)
     val expected = Json.arr(
@@ -509,7 +513,7 @@ class RestActionCategoryEngine2Test extends AssertionsForJUnit with ScalaFutures
 
   @Test
   def courierKeyedGet1NoRelated(): Unit = {
-    val response = testEmptyRequestBody(CourierKeyedTestResource.get1(CourierKeyedTestResource.EnrollmentIds.a),
+    val response = testEmptyRequestBody(courierKeyedTestResource.get1(courierKeyedTestResource.EnrollmentIds.a),
       FakeRequest())
     RelatedResources.assertRelatedAbsent(response)
     val elements = assertElements(response)
@@ -526,41 +530,41 @@ class RestActionCategoryEngine2Test extends AssertionsForJUnit with ScalaFutures
 
   @Test
   def courierKeyedGet2(): Unit = {
-    testEmptyRequestBody(CourierKeyedTestResource.get2(CourierKeyedTestResource.EnrollmentIds.a))
+    testEmptyRequestBody(courierKeyedTestResource.get2(courierKeyedTestResource.EnrollmentIds.a))
   }
 
   @Test
   def courierKeyedMultiGet(): Unit = {
-    val response = testEmptyRequestBody(CourierKeyedTestResource.multiGet(Set(
-      CourierKeyedTestResource.EnrollmentIds.a, CourierKeyedTestResource.EnrollmentIds.b)))
+    val response = testEmptyRequestBody(courierKeyedTestResource.multiGet(Set(
+      courierKeyedTestResource.EnrollmentIds.a, courierKeyedTestResource.EnrollmentIds.b)))
     RelatedResources.assertRelatedPresent(response)
   }
 
   @Test
   def courierKeyedMultiGetNoRelated(): Unit = {
-    val response = testEmptyRequestBody(CourierKeyedTestResource.multiGet(Set(
-      CourierKeyedTestResource.EnrollmentIds.a, CourierKeyedTestResource.EnrollmentIds.b)), FakeRequest())
+    val response = testEmptyRequestBody(courierKeyedTestResource.multiGet(Set(
+      courierKeyedTestResource.EnrollmentIds.a, courierKeyedTestResource.EnrollmentIds.b)), FakeRequest())
     RelatedResources.assertRelatedAbsent(response)
   }
 
   @Test
   def courierKeyedCreate1(): Unit = {
-    testEmptyRequestBody(CourierKeyedTestResource.create1)
+    testEmptyRequestBody(courierKeyedTestResource.create1)
   }
 
   @Test
   def courierKeyedCreate2(): Unit = {
-    testEmptyRequestBody(CourierKeyedTestResource.create2)
+    testEmptyRequestBody(courierKeyedTestResource.create2)
   }
 
   @Test
   def courierKeyedCreate3(): Unit = {
-    testEmptyRequestBody(CourierKeyedTestResource.create3)
+    testEmptyRequestBody(courierKeyedTestResource.create3)
   }
 
   @Test
   def courierKeyedDelete1(): Unit = {
-    testEmptyRequestBody(CourierKeyedTestResource.delete1(CourierKeyedTestResource.EnrollmentIds.b))
+    testEmptyRequestBody(courierKeyedTestResource.delete1(courierKeyedTestResource.EnrollmentIds.b))
   }
 
   @Test

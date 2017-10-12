@@ -16,6 +16,7 @@
 
 package org.coursera.naptime.actions
 
+import akka.stream.Materializer
 import org.coursera.common.concurrent.Futures
 import org.coursera.naptime.model.KeyFormat
 import org.coursera.naptime
@@ -28,6 +29,7 @@ import org.coursera.naptime.access.HeaderAccessControl
 import play.api.libs.json.OFormat
 import play.api.mvc.BodyParser
 
+import scala.concurrent.ExecutionContext
 import scala.concurrent.Future
 
 /**
@@ -41,7 +43,9 @@ class RestActionBodyBuilder
     bodyParser: BodyParser[BodyType],
     errorHandler: PartialFunction[Throwable, RestError])
     (implicit keyFormat: KeyFormat[ResourceKeyType],
-    resourceFormat: OFormat[ResourceType]) { self =>
+    resourceFormat: OFormat[ResourceType],
+    ec: ExecutionContext,
+    mat: Materializer) { self =>
 
   type CategoryEngine =
     RestActionCategoryEngine[RACType, ResourceKeyType, ResourceType, ResponseType]
@@ -86,6 +90,8 @@ class RestActionBodyBuilder
       override def errorHandler: PartialFunction[Throwable, RestError] = self.errorHandler
       override val keyFormat = self.keyFormat
       override val resourceFormat = self.resourceFormat
+      override val executionContext = ec
+      override val materializer = mat
 
       override def apply(context: RestContext[AuthType, BodyType]):
         Future[RestResponse[ResponseType]] = Futures.safelyCall(fn(context))

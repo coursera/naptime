@@ -16,6 +16,7 @@
 
 package org.coursera.naptime.resources
 
+import akka.stream.Materializer
 import org.coursera.courier.templates.ScalaRecordTemplate
 import org.coursera.naptime.model.KeyFormat
 import org.coursera.naptime.model.Keyed
@@ -35,6 +36,7 @@ import play.api.libs.json.OFormat
 import play.api.mvc.AnyContent
 import play.api.mvc.BodyParsers
 
+import scala.concurrent.ExecutionContext
 import scala.reflect.ClassTag
 
 /**
@@ -80,6 +82,9 @@ trait CollectionResource[ParentResource <: Resource[_], K, M] extends Resource[M
   // TODO Efficient field projection at model level (not just filtered on the way out)
 
   def keyFormat: KeyFormat[KeyType]
+
+  implicit protected val executionContext: ExecutionContext
+  implicit protected val materializer: Materializer
 
   /**
    * The (Hlist-like) collection of ancestor keys has this type.
@@ -127,7 +132,7 @@ trait CollectionResource[ParentResource <: Resource[_], K, M] extends Resource[M
   def Nap[RACType, ResponseType] =
     new RestActionBuilder[RACType, Unit, AnyContent, K, M, ResponseType](
       HeaderAccessControl.allowAll, BodyParsers.parse.anyContent, PartialFunction.empty)(
-        keyFormat, resourceFormat)
+        keyFormat, resourceFormat, executionContext, materializer)
 
 
   def OkIfPresent[T](a: Option[T]): RestResponse[T] = {

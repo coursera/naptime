@@ -16,6 +16,7 @@
 
 package org.coursera.naptime.router2
 
+import akka.stream.Materializer
 import com.google.inject.Guice
 import org.coursera.common.jsonformat.JsonFormats.Implicits.dateTimeFormat
 import org.coursera.naptime.actions.NaptimeActionSerializer.AnyWrites._
@@ -25,6 +26,7 @@ import org.coursera.naptime.model.Keyed
 import org.coursera.naptime.ComplexEmailType
 import org.coursera.naptime.NaptimeModule
 import org.coursera.naptime.Ok
+import org.coursera.naptime.ResourceTestImplicits
 import org.coursera.naptime.path.ParseFailure
 import org.coursera.naptime.path.ParseSuccess
 import org.coursera.naptime.path.RootParsedPathKey
@@ -42,6 +44,8 @@ import play.api.mvc.AnyContentAsEmpty
 import play.api.mvc.RequestHeader
 import play.api.test.FakeRequest
 
+import scala.concurrent.ExecutionContext
+
 // TODO(saeta): De-dupe the test resources to share amongst tests.
 object PlayNaptimeRouterIntegrationTest {
   case class Person(
@@ -55,7 +59,7 @@ object PlayNaptimeRouterIntegrationTest {
   /**
    * The top level resource in our fledgling social network.
    */
-  class PersonResource
+  class PersonResource(implicit val executionContext: ExecutionContext, val materializer: Materializer)
     extends TopLevelCollectionResource[String, Person] {
 
     val PATH_KEY: PathKey = ("myPathKeyId" ::: RootParsedPathKey).asInstanceOf[PathKey]
@@ -108,7 +112,7 @@ object PlayNaptimeRouterIntegrationTest {
     implicit val jsonFormat: OFormat[FriendshipInfo] = Json.format[FriendshipInfo]
   }
 
-  class FriendsResource(val parentResource: PersonResource)
+  class FriendsResource(val parentResource: PersonResource)(implicit val executionContext: ExecutionContext, val materializer: Materializer)
     extends CollectionResource[PersonResource, String, FriendshipInfo] {
     override def keyFormat: KeyFormat[KeyType] = KeyFormat.stringKeyFormat
 
@@ -155,7 +159,7 @@ object PlayNaptimeRouterIntegrationTest {
   }
 }
 
-class PlayNaptimeRouterIntegrationTest extends AssertionsForJUnit with MockitoSugar {
+class PlayNaptimeRouterIntegrationTest extends AssertionsForJUnit with MockitoSugar with ResourceTestImplicits {
   import PlayNaptimeRouterIntegrationTest._
 
   val peopleInstanceImpl = new PersonResource

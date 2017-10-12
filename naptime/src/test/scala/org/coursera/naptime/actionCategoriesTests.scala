@@ -2,6 +2,7 @@ package org.coursera.naptime
 
 import akka.actor.ActorSystem
 import akka.stream.ActorMaterializer
+import akka.stream.Materializer
 import akka.util.ByteString
 import org.coursera.naptime.model.KeyFormat
 import org.coursera.naptime.model.Keyed
@@ -29,6 +30,7 @@ import play.api.libs.json.OWrites
 import play.api.test.Helpers.contentAsBytes
 import play.api.test.Helpers.defaultAwaitTimeout
 
+import scala.concurrent.ExecutionContext
 import scala.concurrent.Future
 
 case class EngineTestResource(name: String, desc: String)
@@ -47,12 +49,14 @@ object RestActionCategoryEngineTest {
    * Note: because we're not using routing, we can get away with having multiple get's / etc.
    * In general, it is a very bad idea to have multiple gets / etc. in a single resource.
    */
-  object SampleResource
+  class SampleResource(implicit ec: ExecutionContext, mat: Materializer)
     extends TopLevelCollectionResource[Int, EngineTestResource] {
     override val keyFormat: KeyFormat[Int] = KeyFormat.intKeyFormat
     override val resourceName: String = "tests"
     override val resourceFormat = Json.format[EngineTestResource]
     implicit val fields = Fields.withDefaultFields("name", "desc")
+    override val executionContext = implicitly[ExecutionContext]
+    override val materializer = implicitly[Materializer]
 
     def get1(id: Int) = Nap.get { ctx =>
       Ok(Keyed(1, EngineTestResource.mk(1)))
@@ -104,53 +108,52 @@ object RestActionCategoryEngineTest {
 
 }
 
-class RestActionCategoryEngineTest extends AssertionsForJUnit with ScalaFutures {
+class RestActionCategoryEngineTest extends AssertionsForJUnit with ScalaFutures with ResourceTestImplicits {
   import RestActionCategoryEngineTest._
-  implicit val system = ActorSystem("Naptime")
-  implicit val materializer = ActorMaterializer()
 
   override def spanScaleFactor: Double = 10
+  val resource = new SampleResource
 
   @Test
   def get1(): Unit = {
-    testEmptyBody(SampleResource.get1(1))
+    testEmptyBody(resource.get1(1))
   }
 
   @Test
   def get2(): Unit = {
-    testEmptyBody(SampleResource.get2(2))
+    testEmptyBody(resource.get2(2))
   }
 
   @Test
   def create1(): Unit = {
-    testEmptyBody(SampleResource.create1)
+    testEmptyBody(resource.create1)
   }
 
   @Test
   def create2(): Unit = {
-    testEmptyBody(SampleResource.create2)
+    testEmptyBody(resource.create2)
   }
 
   @Test
   def create3(): Unit = {
-    testEmptyBody(SampleResource.create3)
+    testEmptyBody(resource.create3)
   }
 
   @Test
   def delete1(): Unit = {
-    testEmptyBody(SampleResource.delete1(1))
+    testEmptyBody(resource.delete1(1))
   }
 
   @Test
   def testFinder1(): Unit = {
     val request = FakeRequest("GET", "/?q1=1")
-    testEmptyBody(SampleResource.testFinder1(K1(1)), request = request)
+    testEmptyBody(resource.testFinder1(K1(1)), request = request)
   }
 
   @Test
   def testFinder2(): Unit = {
     val request = FakeRequest("GET", "/?q1=1&q2=2")
-    testEmptyBody(SampleResource.testFinder2(K1(1), K2(2)), request = request)
+    testEmptyBody(resource.testFinder2(K1(1), K2(2)), request = request)
   }
 
   // Helpers below.

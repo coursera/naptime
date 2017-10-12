@@ -25,7 +25,6 @@ trait PluginVersionProvider {
 }
 
 trait NamedDependencies { this: PluginVersionProvider =>
-
   val courierRuntime = "org.coursera.courier" %% "courier-runtime" % courierVersion
   val courscala = "org.coursera" %% "courscala" % "0.1.0"
   val governator = "com.netflix.governator" % "governator" % "1.10.5"
@@ -41,6 +40,7 @@ trait NamedDependencies { this: PluginVersionProvider =>
   val scalaLogging = "com.typesafe.scala-logging" %% "scala-logging" % "3.1.0"
 
   // Test dependencies
+  val akkaTestKit = "com.typesafe.akka" %% "akka-testkit" % akkaVersion % Test
   val junitCompile = "junit" % "junit" % "4.11"
   val junit = junitCompile % "test"
   val junitInterface = "com.novocode" % "junit-interface" % "0.11" % "test"

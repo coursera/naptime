@@ -11,6 +11,7 @@ libraryDependencies ++= Seq(
   scalaGuice,
   scalaLogging,
   "org.scala-lang" % "scala-reflect" % scalaVersion.value,
+  akkaTestKit,
   junit,
   junitInterface,
   scalatest,

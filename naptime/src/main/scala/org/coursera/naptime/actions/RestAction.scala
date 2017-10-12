@@ -18,6 +18,7 @@ package org.coursera.naptime.actions
 
 import akka.actor.ActorSystem
 import akka.stream.ActorMaterializer
+import akka.stream.Materializer
 import akka.util.ByteString
 import org.coursera.naptime.model.KeyFormat
 import org.coursera.naptime.RestError
@@ -42,6 +43,7 @@ import play.api.mvc.RequestTaggingHandler
 import play.api.mvc.Result
 
 import scala.concurrent.Await
+import scala.concurrent.ExecutionContext
 import scala.concurrent.Future
 import scala.util.control.NonFatal
 
@@ -65,9 +67,6 @@ import scala.util.control.NonFatal
 trait RestAction[RACType, AuthType, BodyType, KeyType, ResourceType, ResponseType]
   extends EssentialAction with RequestTaggingHandler {
 
-  import play.api.libs.concurrent.Execution.Implicits.defaultContext
-  import RestAction.materializer
-
   protected[actions] def restAuth: HeaderAccessControl[AuthType]
   protected def restBodyParser: BodyParser[BodyType]
   protected[naptime] def restEngine: RestActionCategoryEngine[RACType, KeyType, ResourceType, ResponseType]
@@ -76,6 +75,8 @@ trait RestAction[RACType, AuthType, BodyType, KeyType, ResourceType, ResponseTyp
   protected def errorHandler: PartialFunction[Throwable, RestError]
   protected implicit val keyFormat: KeyFormat[KeyType]
   protected implicit val resourceFormat: OFormat[ResourceType]
+  protected implicit val executionContext: ExecutionContext
+  protected implicit val materializer: Materializer
 
   /**
    * High level API, also used for testing.
@@ -250,9 +251,4 @@ trait RestAction[RACType, AuthType, BodyType, KeyType, ResourceType, ResponseTyp
     this.tags = Some(tags)
     this
   }
-}
-
-object RestAction {
-  implicit val system = ActorSystem("naptime")
-  val materializer = ActorMaterializer()
 }

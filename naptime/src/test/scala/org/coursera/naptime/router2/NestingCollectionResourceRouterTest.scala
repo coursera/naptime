@@ -16,12 +16,12 @@
 
 package org.coursera.naptime.router2
 
+import akka.stream.Materializer
 import org.coursera.common.stringkey.StringKeyFormat
+import org.coursera.naptime.ResourceTestImplicits
 import org.coursera.naptime.actions.NaptimeActionSerializer.AnyWrites._
 import org.coursera.naptime.actions.NaptimeSerializer.AnyWrites._
 import org.coursera.naptime.model.KeyFormat
-import org.coursera.naptime.actions.RestActionBuilder
-import org.coursera.naptime.access.HeaderAccessControl
 import org.coursera.naptime.path.:::
 import org.coursera.naptime.path.ParseSuccess
 import org.coursera.naptime.path.RootParsedPathKey
@@ -36,10 +36,10 @@ import org.scalatest.junit.AssertionsForJUnit
 import org.scalatest.mockito.MockitoSugar
 import play.api.libs.json.Json
 import play.api.libs.json.OFormat
-import play.api.mvc.AnyContent
-import play.api.mvc.BodyParsers
 import play.api.mvc.RequestHeader
 import play.api.test.FakeRequest
+
+import scala.concurrent.ExecutionContext
 
 object NestingCollectionResourceRouterTest {
   case class Person(name: String)
@@ -50,12 +50,11 @@ object NestingCollectionResourceRouterTest {
   /**
    * A sample top-level resource, with very standard / normal Naptime operations.
    */
-  class MyResource extends TopLevelCollectionResource[String, Person] {
+  class MyResource(implicit val executionContext: ExecutionContext, val materializer: Materializer) extends TopLevelCollectionResource[String, Person] {
     override def keyFormat: KeyFormat[KeyType] = KeyFormat.stringKeyFormat
     override implicit def resourceFormat: OFormat[Person] = Person.jsonFormat
     override def resourceName: String = "myResource"
     implicit val fields = Fields
-
     def get(id: String) = Nap.get { ctx =>
       ???
     }
@@ -170,7 +169,7 @@ object NestingCollectionResourceRouterTest {
    * A nested resource that has more sophisticated parameters to its Naptime operations to test the
    * capabilities of the routing system.
    */
-  class MyNestedResource(val parentResource: MyResource)
+  class MyNestedResource(val parentResource: MyResource)(implicit val executionContext: ExecutionContext, val materializer: Materializer)
     extends CollectionResource[MyResource, String, Person] {
 
     override def keyFormat: KeyFormat[KeyType] = KeyFormat.stringKeyFormat
@@ -291,7 +290,7 @@ object NestingCollectionResourceRouterTest {
   }
 }
 
-class NestingCollectionResourceRouterTest extends AssertionsForJUnit with MockitoSugar {
+class NestingCollectionResourceRouterTest extends AssertionsForJUnit with MockitoSugar with ResourceTestImplicits {
   import NestingCollectionResourceRouterTest._
 
   val resourceInstance = new MyResource
