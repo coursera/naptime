@@ -2,8 +2,6 @@ package org.coursera.naptime.ari.graphql.controllers.filters
 
 import org.junit.Test
 
-import scala.concurrent.ExecutionContext.Implicits.global
-
 class QueryComplexityFilterTest extends FilterTest {
 
   val config = ComplexityFilterConfiguration.DEFAULT

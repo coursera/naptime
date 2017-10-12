@@ -17,13 +17,13 @@
 package org.coursera.naptime.access
 
 import org.coursera.naptime.NaptimeActionException
+import org.coursera.naptime.ResourceTestImplicits
 import org.coursera.naptime.access.authenticator.Authenticator
 import org.coursera.naptime.access.authenticator.Decorator
 import org.coursera.naptime.access.authenticator.HeaderAuthenticationParser
 import org.coursera.naptime.access.authenticator.ParseResult
 import org.coursera.naptime.access.authorizer.AuthorizeResult
 import org.coursera.naptime.access.authorizer.Authorizer
-import org.junit.Ignore
 import org.junit.Test
 import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.junit.AssertionsForJUnit
@@ -31,9 +31,7 @@ import play.api.http.Status
 import play.api.mvc.RequestHeader
 import play.api.test.FakeRequest
 
-import scala.concurrent.ExecutionContext.Implicits.global
-
-class HeaderAccessControlCombinersTest extends AssertionsForJUnit with ScalaFutures {
+class HeaderAccessControlCombinersTest extends AssertionsForJUnit with ScalaFutures with ResourceTestImplicits {
 
   import HeaderAccessControlCombinersTest._
 

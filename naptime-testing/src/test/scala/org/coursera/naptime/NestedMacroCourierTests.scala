@@ -20,13 +20,11 @@ import org.coursera.naptime.router2.NaptimeRoutes
 import org.coursera.naptime.router2.Router
 import org.junit.Test
 import org.scalatest.concurrent.ScalaFutures
-import org.scalatest.exceptions.TestFailedException
 import org.scalatest.junit.AssertionsForJUnit
 import play.api.libs.json.JsString
 import play.api.test.FakeRequest
 
 import scala.concurrent.ExecutionContext
-import scala.concurrent.ExecutionContext.Implicits.global
 
 /**
  * This test suite uses Courier to exercise advanced use cases for Naptime.
