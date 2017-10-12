@@ -25,7 +25,6 @@ object NaptimeBuild extends Build with NamedDependencies with PluginVersionProvi
   override def playVersion = "2.6.2" // Play version is defined here, and in project/plugins.sbt
   override def playJsonVersion = "2.6.2"
   override def courierVersion = "2.0.15"
-  override def akkaVersion = "2.5.3"
 
   lazy val root = project
     .in(file("."))

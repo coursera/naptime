@@ -16,12 +16,9 @@
 
 package org.coursera.naptime
 
-import java.nio.charset.StandardCharsets
-
 import akka.util.ByteString
 import org.coursera.common.jsonformat.JsonFormats
 import org.coursera.common.jsonformat.JsonFormats.Implicits.optionalReads
-import play.api.http.HeaderNames
 import play.api.http.HttpEntity
 import play.api.http.MimeTypes
 import play.api.libs.json.JsValue

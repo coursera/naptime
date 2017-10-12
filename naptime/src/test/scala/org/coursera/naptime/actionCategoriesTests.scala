@@ -1,9 +1,6 @@
 package org.coursera.naptime
 
-import akka.actor.ActorSystem
-import akka.stream.ActorMaterializer
 import akka.stream.Materializer
-import akka.util.ByteString
 import org.coursera.naptime.model.KeyFormat
 import org.coursera.naptime.model.Keyed
 import org.coursera.common.stringkey.StringKeyFormat

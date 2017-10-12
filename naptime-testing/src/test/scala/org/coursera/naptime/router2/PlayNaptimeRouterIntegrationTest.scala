@@ -20,7 +20,6 @@ import akka.stream.Materializer
 import com.google.inject.Guice
 import org.coursera.common.jsonformat.JsonFormats.Implicits.dateTimeFormat
 import org.coursera.naptime.actions.NaptimeActionSerializer.AnyWrites._
-import org.coursera.naptime.actions.NaptimeSerializer.AnyWrites._
 import org.coursera.naptime.model.KeyFormat
 import org.coursera.naptime.model.Keyed
 import org.coursera.naptime.ComplexEmailType

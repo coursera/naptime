@@ -16,10 +16,7 @@
 
 package org.coursera.naptime.actions
 
-import akka.actor.ActorSystem
-import akka.stream.ActorMaterializer
 import akka.stream.Materializer
-import akka.util.ByteString
 import com.linkedin.data.DataList
 import org.coursera.common.stringkey.StringKey
 import org.coursera.courier.templates.DataTemplates.DataConversion

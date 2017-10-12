@@ -19,7 +19,6 @@ package org.coursera.naptime.actions
 import akka.stream.Materializer
 import org.coursera.common.concurrent.Futures
 import org.coursera.naptime.model.KeyFormat
-import org.coursera.naptime
 import org.coursera.naptime.Fields
 import org.coursera.naptime.PaginationConfiguration
 import org.coursera.naptime.RestContext

@@ -18,7 +18,6 @@ package org.coursera.naptime.actions.util
 
 import org.scalatest.junit.AssertionsForJUnit
 import play.api.http.HeaderNames
-import play.api.http.HttpEntity
 import play.api.http.Status
 import play.api.libs.json.JsArray
 import play.api.libs.json.JsObject

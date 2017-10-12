@@ -20,7 +20,6 @@ import akka.stream.Materializer
 import org.coursera.common.stringkey.StringKeyFormat
 import org.coursera.naptime.ResourceTestImplicits
 import org.coursera.naptime.actions.NaptimeActionSerializer.AnyWrites._
-import org.coursera.naptime.actions.NaptimeSerializer.AnyWrites._
 import org.coursera.naptime.model.KeyFormat
 import org.coursera.naptime.path.:::
 import org.coursera.naptime.path.ParseSuccess

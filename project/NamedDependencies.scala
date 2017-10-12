@@ -20,7 +20,6 @@ import sbt.Keys._
 trait PluginVersionProvider {
   def playVersion: String
   def playJsonVersion: String
-  def akkaVersion: String
   def courierVersion: String
 }
 
@@ -40,7 +39,6 @@ trait NamedDependencies { this: PluginVersionProvider =>
   val scalaLogging = "com.typesafe.scala-logging" %% "scala-logging" % "3.1.0"
 
   // Test dependencies
-  val akkaTestKit = "com.typesafe.akka" %% "akka-testkit" % akkaVersion % Test
   val junitCompile = "junit" % "junit" % "4.11"
   val junit = junitCompile % "test"
   val junitInterface = "com.novocode" % "junit-interface" % "0.11" % "test"

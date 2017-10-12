@@ -311,6 +311,7 @@ object NestingCollectionResourceRouter {
     new EssentialAction with RequestTaggingHandler {
       override def apply(request: RequestHeader): Accumulator[ByteString, Result] = {
         Accumulator(Sink.ignore.mapMaterializedValue { _ =>
+          // TODO(saeta): use standardized error response format.
           Future.successful(Results.Status(statusCode)(Json.obj("msg" -> s"Routing error: $msg")))
         })
       }
