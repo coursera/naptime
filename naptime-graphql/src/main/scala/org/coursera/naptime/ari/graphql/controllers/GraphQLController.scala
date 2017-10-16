@@ -118,7 +118,10 @@ class GraphQLController @Inject() (
       variables: JsObject,
       operation: Option[String]): Future[OutgoingQuery] = {
     Future {
-      QueryParser.parse(query) match {
+      val parsedQuery = metricsCollector.timeQueryParsing {
+        QueryParser.parse(query)
+      }
+      parsedQuery match {
         case Success(queryAst) =>
           val baseFilter: IncomingQuery => Future[OutgoingQuery] = (incoming: IncomingQuery) => {
             val context = SangriaGraphQlContext(fetcher, requestHeader, ec, incoming.debugMode)
