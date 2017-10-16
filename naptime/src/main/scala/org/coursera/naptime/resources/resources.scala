@@ -196,7 +196,10 @@ trait TopLevelCollectionResource[K, M] extends CollectionResource[RootResource, 
  * @tparam M The "value" type of the resource.
  */
 abstract class NestedCourierCollectionResource[ParentResource <: Resource[_], K, M <: ScalaRecordTemplate]()(
-    implicit kf: KeyFormat[K], classTag: ClassTag[M])
+    implicit kf: KeyFormat[K],
+    classTag: ClassTag[M],
+    override val executionContext: ExecutionContext,
+    override val materializer: Materializer)
   extends CollectionResource[ParentResource, K, M] {
 
   final override implicit val keyFormat = kf
@@ -224,8 +227,11 @@ abstract class NestedCourierCollectionResource[ParentResource <: Resource[_], K,
  * @tparam M The "value" type of the resource.
  */
 abstract class CourierCollectionResource[K, M <: ScalaRecordTemplate](
-    implicit kf: KeyFormat[K], classTag: ClassTag[M])
-  extends NestedCourierCollectionResource[RootResource, K, M]()(kf, classTag) {
+    implicit kf: KeyFormat[K],
+    classTag: ClassTag[M],
+    override val executionContext: ExecutionContext,
+    override val materializer: Materializer)
+  extends NestedCourierCollectionResource[RootResource, K, M]()(kf, classTag, executionContext, materializer) {
 
   final override val parentResource: RootResource = RootResource
 }
