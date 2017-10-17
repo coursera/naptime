@@ -39,7 +39,7 @@ class MetricsCollectionMiddleware(
 
 trait GraphQLMetricsCollector {
   def markFieldError(fieldName: String): Unit
-  def timeQueryParsing[A](f: => A): A
+  def timeQueryParsing[A](operationName: String)(f: => A): A
 }
 
 class LoggingMetricsCollector extends GraphQLMetricsCollector with StrictLogging {
@@ -47,11 +47,11 @@ class LoggingMetricsCollector extends GraphQLMetricsCollector with StrictLogging
     logger.info(s"Error when loading field $fieldName")
   }
 
-  def timeQueryParsing[A](f: => A): A = {
+  def timeQueryParsing[A](operationName: String)(f: => A): A = {
     val before = System.currentTimeMillis()
     val res = f
     val after = System.currentTimeMillis()
-    logger.info(s"Parsed query in ${after - before}ms")
+    logger.info(s"Parsed query $operationName in ${after - before}ms")
     res
   }
 }
@@ -59,7 +59,7 @@ class LoggingMetricsCollector extends GraphQLMetricsCollector with StrictLogging
 class NoopMetricsCollector extends GraphQLMetricsCollector with StrictLogging {
   def markFieldError(fieldName: String): Unit = ()
 
-  def timeQueryParsing[A](f: => A): A = {
+  def timeQueryParsing[A](operationName: String)(f: => A): A = {
     f
   }
 }

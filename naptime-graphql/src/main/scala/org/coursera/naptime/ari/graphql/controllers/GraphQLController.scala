@@ -118,7 +118,7 @@ class GraphQLController @Inject() (
       variables: JsObject,
       operation: Option[String]): Future[OutgoingQuery] = {
     Future {
-      val parsedQuery = metricsCollector.timeQueryParsing {
+      val parsedQuery = metricsCollector.timeQueryParsing(operation.getOrElse("AnonymousQuery")) {
         QueryParser.parse(query)
       }
       parsedQuery match {
