@@ -656,14 +656,15 @@ object CourierFormats extends StrictLogging {
       value.toLongExact
     } else if (value.isExactFloat) {
       value.toFloat
-    // per http://www.scala-lang.org/api/2.11.5/index.html#scala.math.BigDecimal
-    // this is the most lenient check we can make to validate that the conversion to
-    // number will not lose information.
-    } else if (value.isDecimalDouble) {
-      value.toDouble
     } else {
-      throw new ReadException(
-        s"Unable to convert to numeric value without loss of information: $value")
+      val double = value.toDouble
+      /* The result will be `Double.NEGATIVE_INFINITY` or `Double.POSITIVE_INFINITY`
+         if the `BigDecimal` is outside of the range of `Double`, hence this check. */
+      if (double.isInfinity) {
+        throw new ReadException(
+          s"Unable to convert to numeric value without loss of information: $value")
+      }
+      double
     }
   }
 
