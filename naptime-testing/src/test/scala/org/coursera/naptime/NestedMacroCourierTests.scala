@@ -36,7 +36,7 @@ object NestedMacroCourierTests {
   }
 
   class CoursesResource @Inject()
-      (implicit val executionContext: ExecutionContext, val materializer: Materializer)
+      (implicit executionContext: ExecutionContext, materializer: Materializer)
     extends CourierCollectionResource[String, Course] {
     override def resourceName: String = CoursesResource.ID.topLevelName
 
@@ -92,7 +92,6 @@ object NestedMacroCourierTests {
   }
 
   class InstructorsResource @Inject()
-      (implicit val executionContext: ExecutionContext, val materializer: Materializer)
     extends CourierCollectionResource[String, Instructor] {
     override def resourceName: String = "instructors"
 

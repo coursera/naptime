@@ -36,7 +36,7 @@ object IdInferenceMacroTests {
   case class LegacyCourseId(id: Int) extends CourseId
   case class NewCourseId(id: String) extends CourseId
 
-  class CourseResource(implicit val executionContext: ExecutionContext, val materializer: Materializer)
+  class CourseResource(implicit override val executionContext: ExecutionContext, override val materializer: Materializer)
     extends CourierCollectionResource[CourseId, Course] {
     override def resourceName: String = "courses"
     def getAll = Nap.getAll(ctx => ???)

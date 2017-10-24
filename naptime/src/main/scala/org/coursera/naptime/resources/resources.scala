@@ -198,11 +198,14 @@ trait TopLevelCollectionResource[K, M] extends CollectionResource[RootResource, 
 abstract class NestedCourierCollectionResource[ParentResource <: Resource[_], K, M <: ScalaRecordTemplate]()(
     implicit kf: KeyFormat[K],
     classTag: ClassTag[M],
-    override val executionContext: ExecutionContext,
-    override val materializer: Materializer)
+    ec: ExecutionContext,
+    mat: Materializer)
   extends CollectionResource[ParentResource, K, M] {
 
   final override implicit val keyFormat = kf
+
+  override implicit protected val executionContext: ExecutionContext = ec
+  override implicit protected val materializer: Materializer = mat
 
   // When we use the serializer constructor, the classTag parameter is never initialized, and
   // thus, we get NPEs when working with schemas. Because the OFormat isn't actually needed
@@ -229,9 +232,9 @@ abstract class NestedCourierCollectionResource[ParentResource <: Resource[_], K,
 abstract class CourierCollectionResource[K, M <: ScalaRecordTemplate](
     implicit kf: KeyFormat[K],
     classTag: ClassTag[M],
-    override val executionContext: ExecutionContext,
-    override val materializer: Materializer)
-  extends NestedCourierCollectionResource[RootResource, K, M]()(kf, classTag, executionContext, materializer) {
+    ec: ExecutionContext,
+    mat: Materializer)
+  extends NestedCourierCollectionResource[RootResource, K, M]()(kf, classTag, ec, mat) {
 
   final override val parentResource: RootResource = RootResource
 }

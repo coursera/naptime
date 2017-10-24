@@ -16,7 +16,6 @@
 
 package org.coursera.naptime.router2
 
-import akka.actor.ActorSystem
 import akka.stream.scaladsl.Sink
 import akka.util.ByteString
 import com.typesafe.scalalogging.StrictLogging
@@ -300,9 +299,6 @@ class NestingCollectionResourceRouter[CollectionResourceType <: CollectionResour
 }
 
 object NestingCollectionResourceRouter {
-  private[this] val actorSystem = ActorSystem("naptime")
-  private[this] val ec = actorSystem.dispatcher
-
   private[naptime] def errorRoute(
     resourceClass: Class[_],
     msg: String,
