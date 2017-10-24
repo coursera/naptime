@@ -28,6 +28,7 @@ import org.coursera.naptime.access.HeaderAccessControl
 import play.api.libs.json.OFormat
 import play.api.mvc.BodyParser
 
+import scala.concurrent.blocking
 import scala.concurrent.Future
 import scala.util.Try
 
@@ -54,7 +55,7 @@ class RestActionBodyBuilder
       fields: Fields[ResourceType],
       paginationConfiguration: PaginationConfiguration): BuiltAction = {
 
-    async(ctx => Future.successful(fn(ctx)))
+    async(ctx => Future(blocking(fn(ctx))))
   }
 
   def apply(fn: => RestResponse[ResponseType])
@@ -62,7 +63,7 @@ class RestActionBodyBuilder
       fields: Fields[ResourceType],
       paginationConfiguration: PaginationConfiguration): BuiltAction = {
 
-    async(_ => Futures.immediate(fn))
+    async(_ => Future(blocking(fn)))
   }
 
   def async(fn: => Future[RestResponse[ResponseType]])
