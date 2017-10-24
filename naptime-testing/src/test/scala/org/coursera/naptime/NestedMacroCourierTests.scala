@@ -92,7 +92,8 @@ object NestedMacroCourierTests {
   }
 
   class InstructorsResource @Inject()
-    extends CourierCollectionResource[String, Instructor] {
+      (implicit ec: ExecutionContext, mat: Materializer)
+    extends CourierCollectionResource[String, Instructor]() {
     override def resourceName: String = "instructors"
 
     def multiGet(ids: Set[String]) = Nap.multiGet { ctx =>
