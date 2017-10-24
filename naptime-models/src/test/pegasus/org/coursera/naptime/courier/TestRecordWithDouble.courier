@@ -1,0 +1,5 @@
+namespace org.coursera.naptime.courier
+
+record TestRecordWithDouble {
+  doubleField: double
+}
