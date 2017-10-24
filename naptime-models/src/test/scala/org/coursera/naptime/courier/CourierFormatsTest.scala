@@ -15,6 +15,8 @@ import org.coursera.courier.data.IntArray
 import org.coursera.courier.templates.DataTemplates
 import org.coursera.courier.templates.DataTemplates
 import org.coursera.courier.templates.DataTemplates.DataConversion
+import org.coursera.naptime.courier.Exceptions.ReadException
+import org.coursera.naptime.courier.TestRecordWithDouble
 import org.junit.Test
 import org.junit.Test
 import org.scalatest.junit.AssertionsForJUnit
@@ -323,6 +325,31 @@ class CourierFormatsTest extends AssertionsForJUnit {
           "ERROR :: /string :: field is required but not found and has no default value")
     }
   }
+
+  @Test
+  def testDecimal1p17e22Parse(): Unit = {
+    val result = testRecordWithDoubleFormat.reads(Json.parse(testRecordWithDoubleJson))
+    assert(result === JsSuccess(testRecordWithDouble))
+  }
+
+  @Test
+  def testDecimal1p17e22RoundTrip(): Unit = {
+    val serialized = Json.prettyPrint(testRecordWithDoubleFormat.writes(testRecordWithDouble))
+    val result = testRecordWithDoubleFormat.reads(Json.parse(serialized))
+    assert(result === JsSuccess(testRecordWithDouble))
+  }
+
+  @Test
+  def testDecimal1point17e22ToNumber(): Unit = {
+    // testing that no exception is thrown
+    CourierFormats.bigDecimalToNumber(decimal1p17e22)
+  }
+
+  @Test
+  def testDecimalOutsideDoubleRangeToNumber(): Unit = {
+    assertThrows[ReadException](CourierFormats.bigDecimalToNumber(decimalTooBigForDouble))
+    assertThrows[ReadException](CourierFormats.bigDecimalToNumber(decimalTooSmallForDouble))
+  }
 }
 
 object CourierFormatsTest {
@@ -525,4 +552,17 @@ object CourierFormatsTest {
       |}
       |""".stripMargin).asInstanceOf[TyperefDataSchema]
   }
+
+  val decimal1p17e22 = BigDecimal("1.17e22")
+  val decimalTooBigForDouble = 2 * BigDecimal(Double.MaxValue)
+  val decimalTooSmallForDouble = 2 * BigDecimal(Double.MinValue)
+  val testRecordWithDoubleFormat = CourierFormats.recordTemplateFormats[TestRecordWithDouble]
+  val testRecordWithDouble = TestRecordWithDouble(doubleField = decimal1p17e22.toDouble)
+  val testRecordWithDoubleJson =
+    """
+      |{
+      |  "doubleField": 1.17e22
+      |}
+    """.stripMargin
+
 }
