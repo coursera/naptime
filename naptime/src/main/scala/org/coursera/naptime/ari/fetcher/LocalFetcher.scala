@@ -89,10 +89,7 @@ class LocalFetcher @Inject() (naptimeRoutes: NaptimeRoutes)
       // TODO: handle header filtering more properly
       handler <- router.routeRequest(path, fakePlayRequest)
     } yield {
-      logger.info(request.requestHeader.headers.getClass.toString)
       logger.info(s"Making local request to ${request.resource.identifier} / ${fakePlayRequest.queryString}")
-      logger.info(s"Headers: ${fakePlayRequest.headers.headers}")
-
       val taggedRequest = handler.tagRequest(fakePlayRequest)
       handler match {
         case naptimeAction: RestAction[_, _, _, _, _, _] =>
