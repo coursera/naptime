@@ -33,6 +33,8 @@ import play.api.libs.json.JsObject
 import play.api.libs.json.JsString
 import play.api.libs.json.JsValue
 import play.api.libs.json.Json
+import play.api.mvc.AnyContentAsEmpty
+import play.api.mvc.Headers
 
 import scala.concurrent.ExecutionContext
 import scala.concurrent.Future
@@ -69,14 +71,28 @@ class LocalFetcher @Inject() (naptimeRoutes: NaptimeRoutes)
       router <- routers.get(resourceSchema.className)
 
       path = s"/${request.resource.identifier}"
-      fakePlayRequest = request.requestHeader.copy(
-        method = "GET", // TODO: handle non-read-only request types.
-        uri = request.resource.identifier, // Warning: uri is not consistent with queryString
-        queryString = queryString,
-        headers = request.requestHeader.headers.remove("content-type")) // TODO: handle header filtering more properly
+      fakePlayRequestTarget = request.requestHeader.target
+        .withUriString(request.resource.identifier)
+        .withQueryString(queryString)
+      // We need to make a Headers object that does not have have Content-Type or Content-Length,
+      // because Content-Type and Content-Length headers cause the handler to attempt to parse the body and fail.
+      // The request.requestHeader.headers is of type play.core.server.akkahttp.AkkaHeadersWrapper
+      // which always adds back the Content-Type and Content-Length of the original request
+      // so we have to make our own clean play.api.mvc.Headers headers.
+      fakePlayRequestHeaders = Headers(request.requestHeader.headers.headers: _*)
+        .remove("Content-Type", "Content-Length")
+      fakePlayRequest = request.requestHeader
+        .withMethod("GET")
+        .withTarget(fakePlayRequestTarget)
+        .withHeaders(fakePlayRequestHeaders)
+        .withBody(())
+      // TODO: handle header filtering more properly
       handler <- router.routeRequest(path, fakePlayRequest)
     } yield {
+      logger.info(request.requestHeader.headers.getClass.toString)
       logger.info(s"Making local request to ${request.resource.identifier} / ${fakePlayRequest.queryString}")
+      logger.info(s"Headers: ${fakePlayRequest.headers.headers}")
+
       val taggedRequest = handler.tagRequest(fakePlayRequest)
       handler match {
         case naptimeAction: RestAction[_, _, _, _, _, _] =>

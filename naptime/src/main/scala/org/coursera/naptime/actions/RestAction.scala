@@ -103,11 +103,10 @@ trait RestAction[RACType, AuthType, BodyType, KeyType, ResourceType, ResponseTyp
             // TODO: keep as an exception.
             successAuth => {
               val bodyAsBytesEventually = bodyError.body.consumeData
-              val bodyAsStrEventually =
-                bodyAsBytesEventually.map(byteStr => byteStr.utf8String)
-              import scala.concurrent.duration._
-              val bodyAsStr = Await.result(bodyAsStrEventually, 5.seconds)
-              Future.failed(new IllegalArgumentException(s"Encountered body error: ${bodyError}"))
+              val bodyAsStrEventually = bodyAsBytesEventually.map(byteStr => byteStr.utf8String)
+              bodyAsStrEventually.map { bodyAsStr =>
+                throw new IllegalArgumentException(s"${rh.headers} Encountered body error: $bodyAsStr")
+              }
             })
         }
       case Right(a) =>

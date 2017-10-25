@@ -18,13 +18,14 @@ import sbt._
 import sbt.Keys
 import de.heikoseeberger.sbtheader.HeaderKey.headers
 import de.heikoseeberger.sbtheader.license.Apache2_0
+import play.sbt.PlayFilters
 
 
 object NaptimeBuild extends Build with NamedDependencies with PluginVersionProvider {
 
   override def playVersion = "2.6.2" // Play version is defined here, and in project/plugins.sbt
   override def playJsonVersion = "2.6.2"
-  override def courierVersion = "2.0.15"
+  override def courierVersion = "2.1.1"
 
   lazy val root = project
     .in(file("."))
@@ -45,7 +46,7 @@ object NaptimeBuild extends Build with NamedDependencies with PluginVersionProvi
 
   lazy val testing = configure(project)
     .in(file("naptime-testing"))
-    .dependsOn(naptime)
+    .dependsOn(naptime % "test->test;compile->compile")
 
   lazy val pegasus = configure(project)
     .in(file("naptime-pegasus"))
@@ -74,7 +75,7 @@ object NaptimeBuild extends Build with NamedDependencies with PluginVersionProvi
   private[this] def configure(project: Project): Project = {
     project
       .enablePlugins(play.sbt.PlayScala)
-      .disablePlugins(play.sbt.PlayLayoutPlugin)
+      .disablePlugins(play.sbt.PlayLayoutPlugin, PlayFilters)
       .settings(testSettings)
       .settings(headerSettings)
       .settings(org.coursera.naptime.sbt.Sonatype.settings)

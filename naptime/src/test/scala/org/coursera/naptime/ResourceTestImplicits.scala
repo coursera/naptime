@@ -8,9 +8,13 @@ import org.junit.After
 import scala.concurrent.ExecutionContext
 
 trait ResourceTestImplicits {
-  implicit protected val actorSystem: ActorSystem = ActorSystem()
-  implicit protected val executionContext: ExecutionContext = actorSystem.dispatcher
-  implicit protected val materializer: Materializer = ActorMaterializer()
+  private[this] val internalActorSystem: ActorSystem = ActorSystem("test")
+  private[this] val internalExecutionContext: ExecutionContext = actorSystem.dispatcher
+  private[this] val internalMaterializer: Materializer = ActorMaterializer()
+
+  implicit protected def actorSystem: ActorSystem = internalActorSystem
+  implicit protected def executionContext: ExecutionContext = internalExecutionContext
+  implicit protected def materializer: Materializer = internalMaterializer
 
   @After
   def shutDownActorSystem(): Unit = {

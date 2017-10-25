@@ -6,7 +6,7 @@ addSbtPlugin("com.typesafe.play" % "sbt-plugin" % "2.4.4")
 resolvers += Resolver.bintrayRepo("coursera", "sbt-plugins")
 
 // Courier binding generator plugin
-addSbtPlugin("org.coursera.courier" % "courier-sbt-plugin" % "2.0.15")
+addSbtPlugin("org.coursera.courier" % "courier-sbt-plugin" % "2.1.1")
 
 // From http://www.scala-sbt.org/0.13/docs/Testing-sbt-plugins.html#step+3%3A+src%2Fsbt-test
 sys.props.get("plugin.version") match {

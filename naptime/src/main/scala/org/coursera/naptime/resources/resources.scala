@@ -131,7 +131,7 @@ trait CollectionResource[ParentResource <: Resource[_], K, M] extends Resource[M
    */
   def Nap[RACType, ResponseType] =
     new RestActionBuilder[RACType, Unit, AnyContent, K, M, ResponseType](
-      HeaderAccessControl.allowAll, BodyParsers.parse.anyContent, PartialFunction.empty)(
+      HeaderAccessControl.allowAll, BodyParsers.parse.default, PartialFunction.empty)(
         keyFormat, resourceFormat, executionContext, materializer)
 
 
