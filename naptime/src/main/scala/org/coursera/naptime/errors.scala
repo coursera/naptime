@@ -46,6 +46,16 @@ case class NaptimeActionException(
       HttpEntity.Strict(ByteString.fromString(bodyString), Some(MimeTypes.JSON)))
   }
 
+  /**
+   * Set detail in NaptimeActionException which can be used for reasoning for downstream service.
+   * TODO: only exposing detail to internal users?
+   * @return NaptimeActionException with details set up as json formated detail.
+   */
+  def withExceptionDetail[T](detail: T)(implicit format: OFormat[T]): NaptimeActionException =
+    this.copy(
+      details = Some(format.writes(detail))
+    )
+
 }
 
 object NaptimeActionException {
@@ -65,8 +75,8 @@ object NaptimeActionException {
       import play.api.libs.functional.syntax.{unapply => _, _}
       val builder =
         (__ \ "errorCode").format[Option[String]] and
-        (__ \ "message").format[Option[String]] and
-        (__ \ "details").format[Option[JsValue]]
+          (__ \ "message").format[Option[String]] and
+          (__ \ "details").format[Option[JsValue]]
       builder(apply, unlift(unapply))
     }
 
