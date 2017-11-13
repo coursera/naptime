@@ -16,6 +16,8 @@
 
 package org.coursera.naptime.actions
 
+import akka.stream.Materializer
+import akka.util.ByteString
 import org.coursera.naptime.model.KeyFormat
 import org.coursera.naptime.RestError
 import org.coursera.naptime.NaptimeActionException
@@ -29,8 +31,8 @@ import org.coursera.naptime.RestResponse
 import org.coursera.naptime.access.HeaderAccessControl
 import org.coursera.naptime.ari.Response
 import play.api.Play
-import play.api.libs.iteratee.Iteratee
 import play.api.libs.json.OFormat
+import play.api.libs.streams.Accumulator
 import play.api.mvc.BodyParser
 import play.api.mvc.EssentialAction
 import play.api.mvc.Request
@@ -39,6 +41,7 @@ import play.api.mvc.RequestTaggingHandler
 import play.api.mvc.Result
 
 import scala.concurrent.Await
+import scala.concurrent.ExecutionContext
 import scala.concurrent.Future
 import scala.util.control.NonFatal
 
@@ -62,8 +65,6 @@ import scala.util.control.NonFatal
 trait RestAction[RACType, AuthType, BodyType, KeyType, ResourceType, ResponseType]
   extends EssentialAction with RequestTaggingHandler {
 
-  import play.api.libs.concurrent.Execution.Implicits.defaultContext
-
   protected[actions] def restAuth: HeaderAccessControl[AuthType]
   protected def restBodyParser: BodyParser[BodyType]
   protected[naptime] def restEngine: RestActionCategoryEngine[RACType, KeyType, ResourceType, ResponseType]
@@ -72,6 +73,8 @@ trait RestAction[RACType, AuthType, BodyType, KeyType, ResourceType, ResponseTyp
   protected def errorHandler: PartialFunction[Throwable, RestError]
   protected implicit val keyFormat: KeyFormat[KeyType]
   protected implicit val resourceFormat: OFormat[ResourceType]
+  protected implicit val executionContext: ExecutionContext
+  protected implicit val materializer: Materializer
 
   /**
    * High level API, also used for testing.
@@ -91,7 +94,7 @@ trait RestAction[RACType, AuthType, BodyType, KeyType, ResourceType, ResponseTyp
       rh: RequestHeader,
       resourceName: ResourceName): Future[Response] = {
     val authResult = restAuth.run(rh) // Kick off the authentication check in parallel
-    restBodyParser(rh).mapM[Response] {
+    restBodyParser(rh).mapFuture[Response] {
       case Left(bodyError) =>
         // If it was an auth error, override with that. Otherwise serve the body error.
         authResult.flatMap { authResult =>
@@ -99,11 +102,11 @@ trait RestAction[RACType, AuthType, BodyType, KeyType, ResourceType, ResponseTyp
             error => Future.failed(error),
             // TODO: keep as an exception.
             successAuth => {
-              val bodyAsBytesEventually = bodyError.body.run(Iteratee.fold(Array.empty[Byte]) { (memo, nextChunk) => memo ++ nextChunk })
-              val bodyAsStrEventually = bodyAsBytesEventually.map(bytes => new String(bytes))
-              import scala.concurrent.duration._
-              val bodyAsStr = Await.result(bodyAsStrEventually, 5.seconds)
-              Future.failed(new IllegalArgumentException(s"Encountered body error: ${bodyError}"))
+              val bodyAsBytesEventually = bodyError.body.consumeData
+              val bodyAsStrEventually = bodyAsBytesEventually.map(byteStr => byteStr.utf8String)
+              bodyAsStrEventually.map { bodyAsStr =>
+                throw new IllegalArgumentException(s"${rh.headers} Encountered body error: $bodyAsStr")
+              }
             })
         }
       case Right(a) =>
@@ -149,15 +152,15 @@ trait RestAction[RACType, AuthType, BodyType, KeyType, ResourceType, ResponseTyp
               }.get
             })
         }
-    }.run
+    }.run()
   }
 
   /**
    * Invoke the rest action in production.
    */
-  final override def apply(rh: RequestHeader): Iteratee[Array[Byte], Result] = {
+  final override def apply(rh: RequestHeader): Accumulator[ByteString, Result] = {
     val authResult = restAuth.run(rh) // Kick off the authentication check in parallel
-    restBodyParser(rh).mapM {
+    restBodyParser(rh).mapFuture {
       case Left(bodyError) =>
         // If it was an auth error, override with that. Otherwise serve the body error.
         authResult.map { authResult =>

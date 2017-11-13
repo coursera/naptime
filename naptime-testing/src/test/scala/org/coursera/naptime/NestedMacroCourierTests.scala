@@ -1,6 +1,11 @@
 package org.coursera.naptime
 
+import javax.inject.Inject
+
+import akka.stream.Materializer
+import com.google.inject.Binder
 import com.google.inject.Guice
+import com.google.inject.Module
 import com.linkedin.data.DataMap
 import com.linkedin.data.schema.DataSchema
 import com.linkedin.data.schema.RecordDataSchema
@@ -15,12 +20,11 @@ import org.coursera.naptime.router2.NaptimeRoutes
 import org.coursera.naptime.router2.Router
 import org.junit.Test
 import org.scalatest.concurrent.ScalaFutures
-import org.scalatest.exceptions.TestFailedException
 import org.scalatest.junit.AssertionsForJUnit
 import play.api.libs.json.JsString
 import play.api.test.FakeRequest
 
-import scala.concurrent.ExecutionContext.Implicits.global
+import scala.concurrent.ExecutionContext
 
 /**
  * This test suite uses Courier to exercise advanced use cases for Naptime.
@@ -30,7 +34,10 @@ object NestedMacroCourierTests {
   object CoursesResource {
     val ID = ResourceName("courses", 1)
   }
-  class CoursesResource extends CourierCollectionResource[String, Course] {
+
+  class CoursesResource @Inject()
+      (implicit executionContext: ExecutionContext, materializer: Materializer)
+    extends CourierCollectionResource[String, Course] {
     override def resourceName: String = CoursesResource.ID.topLevelName
 
     override implicit lazy val Fields: Fields[Course] = BaseFields
@@ -84,7 +91,9 @@ object NestedMacroCourierTests {
     }
   }
 
-  class InstructorsResource extends CourierCollectionResource[String, Instructor] {
+  class InstructorsResource @Inject()
+      (implicit ec: ExecutionContext, mat: Materializer)
+    extends CourierCollectionResource[String, Instructor]() {
     override def resourceName: String = "instructors"
 
     def multiGet(ids: Set[String]) = Nap.multiGet { ctx =>
@@ -97,7 +106,14 @@ object NestedMacroCourierTests {
   val instructorRouter = Router.build[InstructorsResource]
 }
 
-class NestedMacroCourierTests extends AssertionsForJUnit with ScalaFutures {
+class NestedMacroCourierTests extends AssertionsForJUnit with ScalaFutures with ResourceTestImplicits {
+
+  val implicitsModule = new Module {
+    override def configure(binder: Binder): Unit = {
+      binder.bind(classOf[ExecutionContext]).toInstance(executionContext)
+      binder.bind(classOf[Materializer]).toInstance(materializer)
+    }
+  }
 
   @Test
   def checkCoursesMergedType(): Unit = {
@@ -131,7 +147,7 @@ class NestedMacroCourierTests extends AssertionsForJUnit with ScalaFutures {
 
   @Test
   def coursesLocalFetcher_Get(): Unit = {
-    val injector = Guice.createInjector()
+    val injector = Guice.createInjector(implicitsModule)
     val routerBuilders = Set(NestedMacroCourierTests.courseRouter, NestedMacroCourierTests.instructorRouter)
     val naptimeRoutes = NaptimeRoutes(injector, routerBuilders)
     val fetcher = new LocalFetcher(naptimeRoutes)
@@ -151,7 +167,7 @@ class NestedMacroCourierTests extends AssertionsForJUnit with ScalaFutures {
 
   @Test
   def coursesLocalFetcher_MultiGet(): Unit = {
-    val injector = Guice.createInjector()
+    val injector = Guice.createInjector(implicitsModule)
     val routerBuilders = Set(NestedMacroCourierTests.courseRouter, NestedMacroCourierTests.instructorRouter)
     val naptimeRoutes = NaptimeRoutes(injector, routerBuilders)
     val fetcher = new LocalFetcher(naptimeRoutes)
@@ -171,7 +187,7 @@ class NestedMacroCourierTests extends AssertionsForJUnit with ScalaFutures {
 
   @Test
   def coursesLocalFetcher_Finder(): Unit = {
-    val injector = Guice.createInjector()
+    val injector = Guice.createInjector(implicitsModule)
     val routerBuilders = Set(NestedMacroCourierTests.courseRouter, NestedMacroCourierTests.instructorRouter)
     val naptimeRoutes = NaptimeRoutes(injector, routerBuilders)
     val fetcher = new LocalFetcher(naptimeRoutes)

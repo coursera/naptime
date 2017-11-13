@@ -3,6 +3,7 @@ package org.coursera.naptime
 import java.util.Date
 import javax.inject.Inject
 
+import akka.stream.Materializer
 import com.google.inject.Guice
 import com.google.inject.Stage
 import com.linkedin.data.schema.DataSchema
@@ -17,12 +18,15 @@ import org.scalatest.junit.AssertionsForJUnit
 import play.api.libs.json.Json
 import play.api.libs.json.OFormat
 
+import scala.concurrent.ExecutionContext
+
 object NaptimeModuleTest {
   case class User(name: String, createdAt: Date)
   object User {
     implicit val oFormat: OFormat[User] = Json.format[User]
   }
-  class MyResource extends TopLevelCollectionResource[String, User] {
+  class MyResource(implicit val executionContext: ExecutionContext, val materializer: Materializer)
+    extends TopLevelCollectionResource[String, User] {
     override implicit def resourceFormat: OFormat[User] = User.oFormat
     override def keyFormat: KeyFormat[KeyType] = KeyFormat.stringKeyFormat
     override def resourceName: String = "myResource"

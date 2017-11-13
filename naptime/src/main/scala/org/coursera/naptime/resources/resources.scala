@@ -16,6 +16,7 @@
 
 package org.coursera.naptime.resources
 
+import akka.stream.Materializer
 import org.coursera.courier.templates.ScalaRecordTemplate
 import org.coursera.naptime.model.KeyFormat
 import org.coursera.naptime.model.Keyed
@@ -35,6 +36,7 @@ import play.api.libs.json.OFormat
 import play.api.mvc.AnyContent
 import play.api.mvc.BodyParsers
 
+import scala.concurrent.ExecutionContext
 import scala.reflect.ClassTag
 
 /**
@@ -81,6 +83,9 @@ trait CollectionResource[ParentResource <: Resource[_], K, M] extends Resource[M
 
   def keyFormat: KeyFormat[KeyType]
 
+  implicit protected val executionContext: ExecutionContext
+  implicit protected val materializer: Materializer
+
   /**
    * The (Hlist-like) collection of ancestor keys has this type.
    */
@@ -126,8 +131,8 @@ trait CollectionResource[ParentResource <: Resource[_], K, M] extends Resource[M
    */
   def Nap[RACType, ResponseType] =
     new RestActionBuilder[RACType, Unit, AnyContent, K, M, ResponseType](
-      HeaderAccessControl.allowAll, BodyParsers.parse.anyContent, PartialFunction.empty)(
-        keyFormat, resourceFormat)
+      HeaderAccessControl.allowAll, BodyParsers.parse.default, PartialFunction.empty)(
+        keyFormat, resourceFormat, executionContext, materializer)
 
 
   def OkIfPresent[T](a: Option[T]): RestResponse[T] = {
@@ -191,10 +196,16 @@ trait TopLevelCollectionResource[K, M] extends CollectionResource[RootResource, 
  * @tparam M The "value" type of the resource.
  */
 abstract class NestedCourierCollectionResource[ParentResource <: Resource[_], K, M <: ScalaRecordTemplate]()(
-    implicit kf: KeyFormat[K], classTag: ClassTag[M])
+    implicit kf: KeyFormat[K],
+    classTag: ClassTag[M],
+    ec: ExecutionContext,
+    mat: Materializer)
   extends CollectionResource[ParentResource, K, M] {
 
   final override implicit val keyFormat = kf
+
+  override implicit protected val executionContext: ExecutionContext = ec
+  override implicit protected val materializer: Materializer = mat
 
   // When we use the serializer constructor, the classTag parameter is never initialized, and
   // thus, we get NPEs when working with schemas. Because the OFormat isn't actually needed
@@ -219,8 +230,11 @@ abstract class NestedCourierCollectionResource[ParentResource <: Resource[_], K,
  * @tparam M The "value" type of the resource.
  */
 abstract class CourierCollectionResource[K, M <: ScalaRecordTemplate](
-    implicit kf: KeyFormat[K], classTag: ClassTag[M])
-  extends NestedCourierCollectionResource[RootResource, K, M]()(kf, classTag) {
+    implicit kf: KeyFormat[K],
+    classTag: ClassTag[M],
+    ec: ExecutionContext,
+    mat: Materializer)
+  extends NestedCourierCollectionResource[RootResource, K, M]()(kf, classTag, ec, mat) {
 
   final override val parentResource: RootResource = RootResource
 }

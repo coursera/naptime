@@ -16,13 +16,11 @@
 
 package org.coursera.naptime
 
+import akka.stream.Materializer
 import org.coursera.common.stringkey.StringKeyFormat
 import org.coursera.naptime.actions.NaptimeActionSerializer.AnyWrites._
-import org.coursera.naptime.actions.NaptimeSerializer.AnyWrites._
 import org.coursera.naptime.model.KeyFormat
 import org.coursera.naptime.model.Keyed
-import org.coursera.naptime.actions.RestActionBuilder
-import org.coursera.naptime.access.HeaderAccessControl
 import org.coursera.naptime.path.ParseSuccess
 import org.coursera.naptime.path.RootParsedPathKey
 import org.coursera.naptime.resources.TopLevelCollectionResource
@@ -32,13 +30,13 @@ import org.scalatest.junit.AssertionsForJUnit
 import org.scalatest.mockito.MockitoSugar
 import play.api.libs.json.Json
 import play.api.libs.json.OFormat
-import play.api.mvc.AnyContent
 import play.api.mvc.AnyContentAsEmpty
-import play.api.mvc.BodyParsers
 import play.api.mvc.RequestHeader
 import play.api.test.FakeRequest
 import org.mockito.Mockito._
 import org.mockito.Matchers.any
+
+import scala.concurrent.ExecutionContext
 
 case class Item(name: String, description: String)
 object Item {
@@ -53,7 +51,7 @@ object ComplexEmailType {
     ComplexEmailType.unapply)
 }
 
-class Resource extends TopLevelCollectionResource[String, Item] {
+class Resource(implicit val executionContext: ExecutionContext, val materializer: Materializer) extends TopLevelCollectionResource[String, Item] {
 
   override def keyFormat: KeyFormat[String] = KeyFormat.stringKeyFormat
 
@@ -119,7 +117,7 @@ object Resource {
   val routerBuilder = Router.build[Resource]
 }
 
-class NonNestedMacroTests extends AssertionsForJUnit with MockitoSugar {
+class NonNestedMacroTests extends AssertionsForJUnit with MockitoSugar with ResourceTestImplicits {
 
   val instance = mock[Resource]
   val instanceImpl = new Resource

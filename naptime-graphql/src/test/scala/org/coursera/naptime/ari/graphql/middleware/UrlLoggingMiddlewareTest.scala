@@ -23,7 +23,6 @@ import org.coursera.naptime.ari.graphql.resolvers.NaptimeResponse
 import org.junit.Test
 import org.scalatest.junit.AssertionsForJUnit
 import org.scalatest.mockito.MockitoSugar
-import play.api.libs.iteratee.Input
 import play.api.libs.json.Json
 import play.api.mvc.Headers
 import play.api.test.FakeRequest
@@ -97,12 +96,12 @@ class UrlLoggingMiddlewareTest extends AssertionsForJUnit with MockitoSugar {
 
   def buildMiddlewareQueryContext(
       ctx: SangriaGraphQlContext): MiddlewareQueryContext[SangriaGraphQlContext, _, _] = {
-    MiddlewareQueryContext[SangriaGraphQlContext, Any, Any](
+    MiddlewareQueryContext[SangriaGraphQlContext, Any, Unit](
       ctx = ctx,
       executor = null,
       queryAst = Document(Vector.empty),
       operationName = None,
-      variables = Input.Empty,
+      variables = (),
       inputUnmarshaller = null,
       validationTiming = TimeMeasurement.empty,
       queryReducerTiming = TimeMeasurement.empty)

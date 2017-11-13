@@ -16,6 +16,9 @@
 
 package org.coursera.naptime.resources
 
+import akka.stream.Materializer
+import org.coursera.common.jsonformat.JsonFormats.Implicits.dateTimeFormat
+import org.coursera.naptime.ResourceTestImplicits
 import org.coursera.naptime.model.KeyFormat
 import org.coursera.naptime.path.ParseFailure
 import org.coursera.naptime.path.ParseSuccess
@@ -28,13 +31,16 @@ import org.scalatest.junit.AssertionsForJUnit
 import play.api.libs.json.Json
 import play.api.libs.json.OFormat
 
+import scala.concurrent.ExecutionContext
+
 object NestingTests {
   case class Person(name: String)
   object Person {
     implicit val jsonFormat: OFormat[Person] = Json.format[Person]
   }
 
-  object PeopleResource
+  class PeopleResource
+      (implicit val executionContext: ExecutionContext, val materializer: Materializer)
     extends TopLevelCollectionResource[String, Person] {
 
     override def keyFormat = KeyFormat.stringKeyFormat
@@ -47,32 +53,36 @@ object NestingTests {
     implicit val jsonFormat: OFormat[FriendInfo] = Json.format[FriendInfo]
   }
 
-  object FriendInfoResource
-    extends CollectionResource[PeopleResource.type, String, FriendInfo] {
+  class FriendInfoResource(peopleResource: PeopleResource)
+      (implicit val executionContext: ExecutionContext, val materializer: Materializer)
+    extends CollectionResource[PeopleResource, String, FriendInfo] {
 
     override def keyFormat = KeyFormat.stringKeyFormat
-    override val parentResource = PeopleResource
+    override val parentResource = peopleResource
     override implicit def resourceFormat = implicitly
     override def resourceName: String = "friendInfo"
   }
 }
 
-class NestingTests extends AssertionsForJUnit {
+class NestingTests extends AssertionsForJUnit with ResourceTestImplicits {
 
   @Test
   def topLevelRouting(): Unit = {
+    val peopleResource = new PeopleResource
     assert(ParseSuccess(None, "asdf" ::: RootParsedPathKey) ===
-      PeopleResource.pathParser.parse("/people.v1/asdf"))
+      peopleResource.pathParser.parse("/people.v1/asdf"))
     assert(ParseSuccess(Some("/friendInfo.v1/fdsa"), "asdf" ::: RootParsedPathKey) ===
-      PeopleResource.pathParser.parse("/people.v1/asdf/friendInfo.v1/fdsa"))
-    assert(ParseFailure === PeopleResource.pathParser.parse("/friendInfo.v1/asdf"))
+      peopleResource.pathParser.parse("/people.v1/asdf/friendInfo.v1/fdsa"))
+    assert(ParseFailure === peopleResource.pathParser.parse("/friendInfo.v1/asdf"))
   }
 
   @Test
   def nestedRouting(): Unit = {
+    val peopleResource = new PeopleResource
+    val friendInfoResource = new FriendInfoResource(peopleResource)
     assert(ParseSuccess(None, "fdsa" ::: "asdf" ::: RootParsedPathKey) ===
-      FriendInfoResource.pathParser.parse("/people.v1/asdf/friendInfo.v1/fdsa"))
-    assert(ParseFailure === FriendInfoResource.pathParser.parse("/friendInfo.v1/fdsa"))
-    assert(ParseFailure === FriendInfoResource.pathParser.parse("/people.v1/asdf"))
+      friendInfoResource.pathParser.parse("/people.v1/asdf/friendInfo.v1/fdsa"))
+    assert(ParseFailure === friendInfoResource.pathParser.parse("/friendInfo.v1/fdsa"))
+    assert(ParseFailure === friendInfoResource.pathParser.parse("/people.v1/asdf"))
   }
 }

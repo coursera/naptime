@@ -3,6 +3,7 @@ package resources
 import javax.inject.Inject
 import javax.inject.Singleton
 
+import akka.stream.Materializer
 import org.coursera.example.Instructor
 import org.coursera.naptime.Fields
 import org.coursera.naptime.FinderReverseRelation
@@ -13,9 +14,11 @@ import org.coursera.naptime.model.Keyed
 import org.coursera.naptime.resources.CourierCollectionResource
 import stores.InstructorStore
 
+import scala.concurrent.ExecutionContext
+
 @Singleton
 class InstructorsResource @Inject() (
-    instructorStore: InstructorStore)
+    instructorStore: InstructorStore)(implicit ec: ExecutionContext, mat: Materializer)
   extends CourierCollectionResource[Int, Instructor] {
 
   override def resourceName = "instructors"
