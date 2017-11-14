@@ -23,8 +23,8 @@ import play.sbt.PlayFilters
 
 object NaptimeBuild extends Build with NamedDependencies with PluginVersionProvider {
 
-  override def playVersion = "2.6.2" // Play version is defined here, and in project/plugins.sbt
-  override def playJsonVersion = "2.6.2"
+  override def playVersion = "2.6.7" // Play version is defined here, and in project/plugins.sbt
+  override def playJsonVersion = "2.6.7"
   override def courierVersion = "2.1.1"
 
   lazy val root = project
