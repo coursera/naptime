@@ -47,15 +47,13 @@ case class NaptimeActionException(
   }
 
   /**
-   * Set detail in NaptimeActionException which can be used for reasoning for downstream service.
-   * TODO: only exposing detail to internal users?
-   * @return NaptimeActionException with details set up as json formated detail.
+   * Add exception details which can be used by downstream services for debugging to NaptimeActionException.
+   * @return A new NaptimeActionException with exception details formatted as JSON.
    */
-  def withExceptionDetail[T](detail: T)(implicit format: OFormat[T]): NaptimeActionException =
+  def withExceptionDetails[T](details: T)(implicit format: OFormat[T]): NaptimeActionException =
     this.copy(
-      details = Some(format.writes(detail))
+      details = Some(format.writes(details))
     )
-
 }
 
 object NaptimeActionException {
