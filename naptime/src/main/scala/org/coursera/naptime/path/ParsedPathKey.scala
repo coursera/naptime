@@ -22,7 +22,7 @@ package org.coursera.naptime.path
  * Note, we use `:::` for concatenation to separate ourselves from normal lists which use `::`.
  */
 sealed trait ParsedPathKey {
-  final def :::[H](h: H): H ::: this.type = new :::(h, this)
+  final def :::[H](h: H): :::[H, this.type] = new :::(h, this)
 }
 
 /**

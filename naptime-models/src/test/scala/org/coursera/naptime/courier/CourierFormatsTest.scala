@@ -9,17 +9,11 @@ import com.linkedin.data.template.DataTemplateUtil
 import com.linkedin.data.template.RecordTemplate
 import com.linkedin.data.template.UnionTemplate
 import org.coursera.common.stringkey.StringKey
-import org.coursera.common.stringkey.StringKey
 import org.coursera.courier.data.IntArray
-import org.coursera.courier.data.IntArray
-import org.coursera.courier.templates.DataTemplates
 import org.coursera.courier.templates.DataTemplates
 import org.coursera.courier.templates.DataTemplates.DataConversion
 import org.coursera.naptime.courier.Exceptions.ReadException
-import org.coursera.naptime.courier.TestRecordWithDouble
 import org.junit.Test
-import org.junit.Test
-import org.scalatest.junit.AssertionsForJUnit
 import org.scalatest.junit.AssertionsForJUnit
 import play.api.libs.json.JsError
 import play.api.libs.json.JsSuccess

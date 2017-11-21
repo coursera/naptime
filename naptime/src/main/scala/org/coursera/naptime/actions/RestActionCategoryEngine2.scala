@@ -138,7 +138,7 @@ trait RestActionCategoryEngine2Impls {
 
   private[this] object ETagHelpers {
     private[this] def constructEtagHeader(etag: ETag): (String, String) = {
-      HeaderNames.ETAG -> StringKey(etag).key
+      HeaderNames.ETAG -> StringKey.toStringKey(etag).key
     }
 
     private[naptime] def addProvidedETag[T](ok: Ok[T]): Option[(String, String)] = {

@@ -39,6 +39,7 @@ import play.api.mvc.Request
 import play.api.mvc.RequestHeader
 import play.api.mvc.RequestTaggingHandler
 import play.api.mvc.Result
+import play.api.mvc.request.RequestAttrKey
 
 import scala.concurrent.Await
 import scala.concurrent.ExecutionContext
@@ -231,7 +232,7 @@ trait RestAction[RACType, AuthType, BodyType, KeyType, ResourceType, ResponseTyp
    */
   override def tagRequest(request: RequestHeader): RequestHeader = {
     tags.map { tags =>
-      request.copy(tags = tags)
+      request.addAttr(RequestAttrKey.Tags, tags)
     }.getOrElse(request)
   }
 
