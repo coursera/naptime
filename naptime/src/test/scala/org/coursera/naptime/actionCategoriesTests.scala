@@ -4,7 +4,6 @@ import akka.stream.Materializer
 import org.coursera.naptime.model.KeyFormat
 import org.coursera.naptime.model.Keyed
 import org.coursera.common.stringkey.StringKeyFormat
-import org.coursera.naptime.actions.PlayJsonRestActionCategoryEngine
 import org.coursera.naptime.actions.RestAction
 import org.coursera.naptime.actions.RestActionCategoryEngine
 import org.coursera.naptime.actions.util.Validators
@@ -22,10 +21,9 @@ import play.api.mvc.RequestHeader
 import play.api.test.FakeRequest
 import play.api.mvc.Result
 import play.api.mvc.AnyContent
+
 import play.api.libs.json.OFormat
 import play.api.libs.json.OWrites
-import play.api.test.Helpers.contentAsBytes
-import play.api.test.Helpers.defaultAwaitTimeout
 
 import scala.concurrent.ExecutionContext
 import scala.concurrent.Future
@@ -218,35 +216,6 @@ class ETagRestActionCategoryEngineTest extends AssertionsForJUnit with ScalaFutu
     val okResponse = Ok(result)
 
     assert(None === RestActionCategoryEngine.mkETagHeaderOpt(testPagination, okResponse, None))
-  }
-
-  @Test
-  def fallbackETagHeader(): Unit = {
-    val jsObject = Json.obj("hello" -> "world", "foo" -> Json.obj("bar" -> "baz"))
-    val result = "test result"
-    val okResponse = Ok(result)
-
-    val etag = PlayJsonRestActionCategoryEngine.mkETagHeader(testPagination, okResponse, jsObject)
-    assert(etag._1 === HeaderNames.ETAG)
-    assertETagHeaderValueFormat(etag._2)
-  }
-
-  @Test
-  def etagShouldShortCircuitResponse(): Unit = {
-    implicit val intKeyFormat = KeyFormat.intKeyFormat
-    val req = FakeRequest().withHeaders(HeaderNames.IF_NONE_MATCH -> "W/\"asdf\"")
-    val fields = Fields[TestResponse](TestResponse.fmt)
-    val pagination = RequestPagination(20, None, isDefault = true)
-    val naptimeResponse = Ok(Keyed(1, TestResponse(foo = "bar"))).withETag(ETag("asdf"))
-
-    val engine = PlayJsonRestActionCategoryEngine.getActionCategoryEngine[Int, TestResponse](
-      TestResponse.writes, intKeyFormat)
-
-    val response = engine.mkResult(req, fields, QueryFields.empty, QueryIncludes.empty,
-      pagination, naptimeResponse)
-    assert(response.header.status === Status.NOT_MODIFIED)
-    val bodyContent = contentAsBytes(Future.successful(response))
-    assert(bodyContent.length === 0)
   }
 
   private[this] def assertETagHeaderValueFormat(etagHeaderValue: String) = {
