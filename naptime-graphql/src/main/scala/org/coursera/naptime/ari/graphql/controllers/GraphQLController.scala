@@ -34,6 +34,7 @@ import org.coursera.naptime.ari.graphql.marshaller.NaptimeMarshaller._
 import org.coursera.naptime.ari.graphql.resolvers.NaptimeResolver
 import play.api.libs.json.JsObject
 import play.api.libs.json.JsString
+import play.api.libs.json.JsValue
 import play.api.libs.json.Json
 import play.api.mvc._
 import sangria.execution.ErrorWithResolver
@@ -58,14 +59,14 @@ class GraphQLController @Inject() (
     filterList: FilterList,
     metricsCollector: GraphQLMetricsCollector)
     (implicit ec: ExecutionContext)
-  extends Controller
+  extends InjectedController
   with StrictLogging {
 
   def renderSchema = Action {
     Ok(SchemaRenderer.renderSchema(graphqlSchemaProvider.schema))
   }
 
-  def graphqlBody = Action.async(parse.json) { request =>
+  def graphqlBody: Action[JsValue] = Action.async(parse.json) { request =>
 
     val query = (request.body \ "query").as[String]
     val operation = (request.body \ "operationName").asOpt[String]
@@ -81,7 +82,7 @@ class GraphQLController @Inject() (
     }
   }
 
-  def graphqlBatch = Action.async(parse.json) { request =>
+  def graphqlBatch: Action[JsValue] = Action.async(parse.json) { request =>
 
     val queries = request.body.as[List[JsObject]]
     val resultsFut = Future.traverse(queries) { queryObj =>

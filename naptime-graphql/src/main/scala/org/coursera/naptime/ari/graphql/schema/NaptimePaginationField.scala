@@ -34,9 +34,6 @@ object NaptimePaginationField extends StrictLogging {
             context.value match {
               case responsePagination: ResponsePagination =>
                 responsePagination.total
-              case other: Any =>
-                logger.error(s"Expected ResponsePagination but got $other")
-                None
               case null =>
                 logger.error("Expected ResponsePagination but got null")
                 None

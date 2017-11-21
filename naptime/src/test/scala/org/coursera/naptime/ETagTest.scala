@@ -24,8 +24,8 @@ class ETagTest extends AssertionsForJUnit {
 
   @Test
   def weakSerialization(): Unit = {
-    assertResult("W/\"abc\"")(StringKey(ETag.Weak("abc")).key)
-    assertResult("W/\"abc\"")(StringKey(ETag.Weak("abc"): ETag).key)
+    assertResult("W/\"abc\"")(StringKey.toStringKey(ETag.Weak("abc")).key)
+    assertResult("W/\"abc\"")(StringKey.toStringKey(ETag.Weak("abc")).key)
   }
 
   @Test
@@ -38,8 +38,8 @@ class ETagTest extends AssertionsForJUnit {
 
   @Test
   def strongSerialization(): Unit = {
-    assertResult("\"abc\"")(StringKey(ETag.Strong("abc")).key)
-    assertResult("\"abc\"")(StringKey(ETag.Strong("abc"): ETag).key)
+    assertResult("\"abc\"")(StringKey.toStringKey(ETag.Strong("abc")).key)
+    assertResult("\"abc\"")(StringKey.toStringKey(ETag.Strong("abc")).key)
   }
 
   @Test

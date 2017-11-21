@@ -193,7 +193,7 @@ object RestActionCategoryEngine2Test {
       "relatedCaseClass" -> RelatedResources.CaseClass.relatedName,
       "relatedCourier" -> RelatedResources.Courier.relatedName)
 
-    def mk(id: EnrollmentId): Course = Course(s"${StringKey(id).key} name", s"$id description")
+    def mk(id: EnrollmentId): Course = Course(s"${StringKey.toStringKey(id).key} name", s"$id description")
 
     object EnrollmentIds {
       val a = EnrollmentId(userId = 1225, courseId = SessionId(courseId = "abc", iterationId = 2))

@@ -130,7 +130,7 @@ object KeyFormat extends PrimitiveFormats {
       val writes = OWrites { key: K =>
         val extraFields = baseJsonWrites.writes(key)
         require(!extraFields.keys.contains(ID_FIELD), s"Cannot overwrite $ID_FIELD")
-        Json.obj(ID_FIELD -> StringKey(key).key) ++ extraFields
+        Json.obj(ID_FIELD -> StringKey.toStringKey(key).key) ++ extraFields
       }
       OFormat(reads, writes)
     }

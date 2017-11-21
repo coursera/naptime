@@ -17,6 +17,7 @@
 package org.coursera.naptime.actions
 
 import akka.stream.Materializer
+import akka.util.ByteString
 import com.typesafe.scalalogging.StrictLogging
 import org.coursera.naptime.model.KeyFormat
 import org.coursera.naptime.model.Keyed
@@ -32,6 +33,7 @@ import play.api.libs.json.JsValue
 import play.api.libs.json.Json
 import play.api.libs.json.OFormat
 import play.api.libs.json.Reads
+import play.api.libs.streams.Accumulator
 import play.api.mvc.BodyParser
 import play.api.mvc.BodyParsers
 import play.api.mvc.RequestHeader
@@ -99,7 +101,7 @@ class RestActionBuilder[RACType, AuthType, BodyType, ResourceKeyType, ResourceTy
       RACType, AuthType, NewBodyType, ResourceKeyType, ResourceType, ResponseType] = {
 
     val parser: BodyParser[NewBodyType] = new BodyParser[NewBodyType] with StrictLogging {
-      override def apply(rh: RequestHeader) = {
+      override def apply(rh: RequestHeader): Accumulator[ByteString, Either[Result, NewBodyType]] = {
         val innerParser = BodyParsers.parse.tolerantJson(maxLength)
         innerParser(rh).map(_.right.map(toJsObj).joinRight)
       }

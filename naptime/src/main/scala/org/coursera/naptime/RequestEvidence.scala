@@ -27,7 +27,7 @@ import scala.annotation.implicitNotFound
   """Please avoid interacting directly with the underlying request, as this may surprise API users.
      If you must use the request directly, mix in DangerousAccessToUnderlyingRequest.
   """)
-sealed trait RequestEvidence extends NotNull
+sealed trait RequestEvidence
 
 private[naptime] object RequestEvidence extends RequestEvidence
 

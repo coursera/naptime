@@ -106,6 +106,8 @@ object CourierUtils {
         throw new ReadException(s"No '$typeNameField' found on typedDefinition $entries")
       case (_, None) =>
         throw new ReadException(s"No '$definitionField' found on typedDefinition $entries")
+      case (_, _) =>
+        throw new ReadException(s"Unmatched on typedDefinition $entries")
     }
   }
 
@@ -116,6 +118,9 @@ object CourierUtils {
         (typeName, JsObject(entries - typeNameField))
       case None =>
         throw new ReadException(s"No '$typeNameField' found on typedDefinition $entries")
+      case _ =>
+        throw new ReadException(
+          s"Type doesn't match for field '$typeNameField' on typedDefinition $entries")
     }
   }
 
@@ -133,13 +138,14 @@ object CourierUtils {
         typeName = nameMap.get(simpleName)
       }
     }
-    if (typeName.isInstanceOf[String]) {
-      typeName.asInstanceOf[String]
-    } else {
-      throw new WriteException(
-        "No mapping in 'typedDefinition' or 'flatTypedDefinition' of " +
-          s"'${typerefSchema.getFullName}' found for memberKey " +
-          s"'$memberKey'. Mapping value must be a 'typeName' string.")
+    typeName match {
+      case str: String =>
+        str
+      case _ =>
+        throw new WriteException(
+          "No mapping in 'typedDefinition' or 'flatTypedDefinition' of " +
+            s"'${typerefSchema.getFullName}' found for memberKey " +
+            s"'$memberKey'. Mapping value must be a 'typeName' string.")
     }
   }
 

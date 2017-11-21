@@ -27,6 +27,7 @@ import play.api.mvc.RequestHeader
 import play.api.mvc.RequestTaggingHandler
 import play.api.mvc.Result
 import play.api.mvc.Results
+import play.api.mvc.request.RequestAttrKey
 
 import scala.concurrent.Future
 import scala.language.existentials
@@ -42,7 +43,9 @@ object CollectionResourceRouter {
       }
 
       override def tagRequest(request: RequestHeader): RequestHeader =
-        request.copy(tags = Map(Router.NAPTIME_RESOURCE_NAME -> resourceClass.getName))
+        request.addAttr(
+          RequestAttrKey.Tags,
+          Map(Router.NAPTIME_RESOURCE_NAME -> resourceClass.getName))
     }
 
   case class StrictQueryParser[T](
