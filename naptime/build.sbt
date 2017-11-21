@@ -3,7 +3,7 @@ name := "naptime"
 libraryDependencies ++= Seq(
   courierRuntime,
   governator,
-  guice,
+  NaptimeBuild.guice,
   guiceMultibindings,
   jodaTime,
   jodaConvert,

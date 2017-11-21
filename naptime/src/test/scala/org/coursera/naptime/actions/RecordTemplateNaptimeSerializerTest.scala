@@ -30,12 +30,13 @@ class RecordTemplateNaptimeSerializerTest extends AssertionsForJUnit {
 
   @Test
   def simpleTest(): Unit = {
-    val parameter = Parameter("parameterName", "fakeType", List.empty)
+    val parameter = Parameter("parameterName", "fakeType", None, List.empty)
 
     val expected = new DataMap()
     expected.put("name", "parameterName")
     expected.put("type", "fakeType")
     expected.put("attributes", new DataList())
+    expected.put("required", Boolean.box(false))
 
     assert(expected === helper(parameter))
   }

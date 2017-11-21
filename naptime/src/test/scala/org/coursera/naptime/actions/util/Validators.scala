@@ -50,7 +50,7 @@ object Validators extends AssertionsForJUnit {
       case Status.OK | Status.CREATED | Status.NO_CONTENT =>
         assertValidSuccessResponse(result, strictMode)
       case Status.NOT_MODIFIED =>
-        assert(result.header.headers.get(HeaderNames.CONTENT_TYPE).isEmpty)
+        assert(result.body.contentType.isEmpty)
         assert(result.header.headers.get(HeaderNames.ETAG).isDefined)
         assert(0 === contentAsBytes(Future.successful(result)).length)
       case code if code >= 400 && code < 500 =>
@@ -92,10 +92,11 @@ object Validators extends AssertionsForJUnit {
    * @return
    */
   def hasBody(result: Result): Boolean = {
-    val headers = result.header.headers
-    headers.contains(HeaderNames.CONTENT_LENGTH) ||
-      headers.contains(HeaderNames.CONTENT_TYPE) ||
-      headers.contains(HeaderNames.CONTENT_ENCODING)
+    if (result.body.isKnownEmpty) {
+      false
+    } else {
+      result.body.contentLength.exists(_ > 0) || result.body.contentType.nonEmpty
+    }
   }
 
   /**
@@ -104,7 +105,7 @@ object Validators extends AssertionsForJUnit {
    * @return body as a JsValue
    */
   def assertBodyIsJson(result: Result): JsValue = {
-    val contentType = result.header.headers.get(HeaderNames.CONTENT_TYPE)
+    val contentType = result.body.contentType
     assert(contentType.isDefined)
     assert(contentType.get.startsWith(MimeTypes.JSON),
       s"Content-Type must be json. Found ${contentType.get}")

@@ -1,0 +1,23 @@
+namespace org.coursera.naptime.schema
+
+/**
+ * The schema for a reverse-relation annotation.
+ */
+record ReverseRelationAnnotation {
+
+  /**
+   * The name of the resource.
+   */
+  resourceName: string
+
+  /**
+   * Arguments passed along to the reverse relation request
+   */
+  arguments: map[string, string]
+
+  /**
+   * Type of the relation (which describes how the data is fetched)
+   */
+  relationType: enum RelationType { FINDER, MULTI_GET, GET, SINGLE_ELEMENT_FINDER }
+
+}

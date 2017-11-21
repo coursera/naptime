@@ -20,6 +20,7 @@ import javax.inject.Inject
 import javax.inject.Singleton
 
 import com.google.inject.Injector
+import com.linkedin.data.schema.DataSchema
 import com.netflix.governator.annotations.WarmUp
 import com.typesafe.scalalogging.StrictLogging
 import org.coursera.naptime.schema.HandlerKind
@@ -35,7 +36,8 @@ import scala.collection.immutable
 
 @Singleton
 private[naptime] case class NaptimeRoutes @Inject() (
-    injector: Injector, routerBuilders: immutable.Set[ResourceRouterBuilder]) {
+    injector: Injector,
+    routerBuilders: immutable.Set[ResourceRouterBuilder]) {
   /**
    * Helper function to filter out those resource router builders that don't provide schemas.
    */
@@ -132,18 +134,21 @@ case class NaptimePlayRouter (
         case HandlerKind.CREATE | HandlerKind.MULTI_GET | HandlerKind.GET_ALL | HandlerKind.FINDER |
           HandlerKind.ACTION =>
           false
+        case HandlerKind.$UNKNOWN =>
+          false
       }
     }
 
     /**
-      * Computes the URL path to access the resource.
+     * Computes the URL path to access the resource.
      *
      * @param resourceSchema The resource to compute.
-      * @return (PathWithoutKeys, PathWithKeySuffix)
-      */
+     * @return (PathWithoutKeys, PathWithKeySuffix)
+     */
     def computeFullPath(resourceSchema: schema.Resource): (String, String) = {
-      val previous = if (resourceSchema.parentClass.isDefined &&
-          !resourceSchema.parentClass.contains("org.coursera.naptime.resources.RootResource")) {
+      val hasNonRootParent = resourceSchema.parentClass.isDefined &&
+          !resourceSchema.parentClass.contains("org.coursera.naptime.resources.RootResource") 
+      val previous = if (hasNonRootParent) {
         try {
           computeFullPath(naptimeRoutes.schemaMap(resourceSchema.parentClass.get))._2
         } catch {
@@ -156,7 +161,7 @@ case class NaptimePlayRouter (
       } else {
         prefix
       }
-      val resourceName = if (resourceSchema.parentClass.isDefined) {
+      val resourceName = if (hasNonRootParent) {
         s"${resourceSchema.name}"
       } else {
         s"${resourceSchema.name}.v${resourceSchema.version.getOrElse("???")}"
@@ -167,6 +172,8 @@ case class NaptimePlayRouter (
           path -> path
         case ResourceKind.COLLECTION =>
           path -> s"$path/$$id" // TODO: add key type information
+        case ResourceKind.$UNKNOWN =>
+          path -> "unknown" // this is definitely wrong, let me know what's the right one in code review. -- Zhaojun
       }
     }
 

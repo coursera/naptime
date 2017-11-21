@@ -16,6 +16,14 @@
 
 package org.coursera.naptime.ari.graphql
 
+import org.coursera.naptime.ari.FetcherApi
 import org.coursera.naptime.ari.Response
+import play.api.mvc.RequestHeader
 
-case class SangriaGraphQlContext(response: Response)
+import scala.concurrent.ExecutionContext
+
+case class SangriaGraphQlContext(
+    fetcher: FetcherApi,
+    requestHeader: RequestHeader,
+    executionContext: ExecutionContext,
+    debugMode: Boolean)

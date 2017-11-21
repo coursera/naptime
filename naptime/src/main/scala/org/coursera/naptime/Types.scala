@@ -18,20 +18,29 @@ package org.coursera.naptime
 
 import java.lang.StringBuilder
 
+import com.linkedin.data.schema.ArrayDataSchema
 import com.linkedin.data.schema.DataSchema
+import com.linkedin.data.schema.MapDataSchema
 import com.linkedin.data.schema.Name
 import com.linkedin.data.schema.PrimitiveDataSchema
 import com.linkedin.data.schema.RecordDataSchema
 import com.linkedin.data.schema.RecordDataSchema.RecordType
 import com.linkedin.data.schema.StringDataSchema
 import com.linkedin.data.schema.TyperefDataSchema
+import com.linkedin.data.schema.UnionDataSchema
 import com.typesafe.scalalogging.StrictLogging
+import org.coursera.naptime.schema.RelationType.FINDER
+import org.coursera.naptime.schema.RelationType.GET
+import org.coursera.naptime.schema.RelationType.MULTI_GET
+import org.coursera.naptime.schema.RelationType.SINGLE_ELEMENT_FINDER
+
 import scala.collection.JavaConverters._
 
 object Types extends StrictLogging {
 
   object Relations {
     val PROPERTY_NAME = "related"
+    val REVERSE_PROPERTY_NAME = "relatedOn"
   }
 
   @deprecated("Please use the one with fields included", "0.2.4")
@@ -83,16 +92,32 @@ object Types extends StrictLogging {
       case unknown: DataSchema =>
         throw new RuntimeException(s"Cannot compute asymmetric type for key type: $unknown")
     }
-    for ((name, relation) <- fields.relations) {
+    for ((name, reverseRelation) <- fields.reverseRelations) {
       Option(mergedSchema.getField(name)) match {
-        case None =>
-          logger.warn(s"Fields for resource $typeName mentions field name '$name' but this field " +
-            "is not found in the merged type schema.")
         case Some(field) =>
-          val properties = field.getProperties.asScala
-          val relatedMap = Map[String, AnyRef](
-            Relations.PROPERTY_NAME -> relation.identifier)
-          field.setProperties((properties ++ relatedMap).asJava)
+          logger.warn(s"Fields for resource $typeName tries to add reverse relation on field " +
+            s"'$name', but that field is already defined on the model")
+        case None =>
+          val errorMessageBuilder = new StringBuilder
+          val newField = reverseRelation.toAnnotation.relationType match {
+            case FINDER | MULTI_GET =>
+              val newField = new RecordDataSchema.Field(new ArrayDataSchema(new StringDataSchema)) // TODO(bryan): fix type here
+              newField.setOptional(false)
+              newField
+            case SINGLE_ELEMENT_FINDER | GET =>
+              val newField = new RecordDataSchema.Field(new StringDataSchema) // TODO(bryan): fix type here
+              newField.setOptional(true)
+              newField
+            case _ =>
+              throw new RuntimeException("unknown relation type: " +
+                reverseRelation.toAnnotation.relationType.toString)
+          }
+          val reverseRelatedMap = Map[String, AnyRef](
+            Relations.REVERSE_PROPERTY_NAME -> reverseRelation.toAnnotation.data())
+          newField.setProperties(reverseRelatedMap.asJava)
+          newField.setDoc(reverseRelation.description)
+          newField.setName(name.split("/").last, errorMessageBuilder)
+          insertFieldAtLocation(mergedSchema, name.split("/").dropRight(1).toList, newField)
       }
     }
     mergedSchema
@@ -157,5 +182,53 @@ object Types extends StrictLogging {
       logger.warn(s"Error while computing asymmetric type $typeName: $errorMessageBuilder")
     }
     recordDataSchema
+  }
+
+  // Adapted from DataSchemaUtil.getField
+  private[this] def insertFieldAtLocation(
+    schema: DataSchema,
+    location: List[String],
+    field: RecordDataSchema.Field): DataSchema = {
+
+    schema.getDereferencedDataSchema match {
+      case mapDataSchema: MapDataSchema =>
+        insertFieldAtLocation(mapDataSchema.getValues, location, field)
+      case arrayDataSchema: ArrayDataSchema =>
+        insertFieldAtLocation(arrayDataSchema.getItems, location, field)
+      case recordDataSchema: RecordDataSchema =>
+        if (location.isEmpty) {
+          field.setRecord(recordDataSchema)
+          val existingFields = recordDataSchema.getFields
+          val newFields = (existingFields.asScala ++ List(field)).asJava
+          val errorMessageBuilder = new StringBuilder
+          recordDataSchema.setFields(newFields, errorMessageBuilder)
+          val error = errorMessageBuilder.toString
+          if (error.nonEmpty) {
+            logger.warn("Error while inserting field", error)
+          }
+          recordDataSchema
+        } else {
+          val fieldOption = Option(recordDataSchema.getField(location.head))
+          fieldOption.map { recordField =>
+            insertFieldAtLocation(recordField.getType, location.tail, field)
+          }.getOrElse {
+            logger.warn(s"Could not find field ${location.headOption} on record $schema")
+            schema
+          }
+        }
+      case unionDataSchema: UnionDataSchema =>
+        location
+          .headOption
+          .flatMap(loc => Option(unionDataSchema.getType(loc)))
+          .map { unionSchema =>
+            insertFieldAtLocation(unionSchema, location.tail, field)
+          }.getOrElse {
+            logger.warn(s"Could not find type ${location.headOption} on union $schema")
+            schema
+          }
+      case _ =>
+        schema
+    }
+
   }
 }

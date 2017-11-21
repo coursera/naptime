@@ -1,5 +1,6 @@
 package org.coursera.naptime
 
+import akka.stream.Materializer
 import org.coursera.naptime.model.KeyFormat
 import org.coursera.naptime.model.Keyed
 import org.coursera.common.stringkey.StringKeyFormat
@@ -11,9 +12,9 @@ import org.junit.Test
 import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.junit.AssertionsForJUnit
 import play.api.http.HeaderNames
+import play.api.http.HttpEntity
 import play.api.http.Status
 import play.api.http.Writeable
-import play.api.libs.iteratee.Enumerator
 import play.api.libs.json.Json
 import play.api.mvc.AnyContentAsEmpty
 import play.api.mvc.RequestHeader
@@ -24,6 +25,7 @@ import play.api.mvc.AnyContent
 import play.api.libs.json.OFormat
 import play.api.libs.json.OWrites
 
+import scala.concurrent.ExecutionContext
 import scala.concurrent.Future
 
 case class EngineTestResource(name: String, desc: String)
@@ -42,12 +44,14 @@ object RestActionCategoryEngineTest {
    * Note: because we're not using routing, we can get away with having multiple get's / etc.
    * In general, it is a very bad idea to have multiple gets / etc. in a single resource.
    */
-  object SampleResource
+  class SampleResource(implicit ec: ExecutionContext, mat: Materializer)
     extends TopLevelCollectionResource[Int, EngineTestResource] {
     override val keyFormat: KeyFormat[Int] = KeyFormat.intKeyFormat
     override val resourceName: String = "tests"
     override val resourceFormat = Json.format[EngineTestResource]
     implicit val fields = Fields.withDefaultFields("name", "desc")
+    override val executionContext = implicitly[ExecutionContext]
+    override val materializer = implicitly[Materializer]
 
     def get1(id: Int) = Nap.get { ctx =>
       Ok(Keyed(1, EngineTestResource.mk(1)))
@@ -99,51 +103,52 @@ object RestActionCategoryEngineTest {
 
 }
 
-class RestActionCategoryEngineTest extends AssertionsForJUnit with ScalaFutures {
+class RestActionCategoryEngineTest extends AssertionsForJUnit with ScalaFutures with ResourceTestImplicits {
   import RestActionCategoryEngineTest._
 
   override def spanScaleFactor: Double = 10
+  val sampleResource = new SampleResource
 
   @Test
   def get1(): Unit = {
-    testEmptyBody(SampleResource.get1(1))
+    testEmptyBody(sampleResource.get1(1))
   }
 
   @Test
   def get2(): Unit = {
-    testEmptyBody(SampleResource.get2(2))
+    testEmptyBody(sampleResource.get2(2))
   }
 
   @Test
   def create1(): Unit = {
-    testEmptyBody(SampleResource.create1)
+    testEmptyBody(sampleResource.create1)
   }
 
   @Test
   def create2(): Unit = {
-    testEmptyBody(SampleResource.create2)
+    testEmptyBody(sampleResource.create2)
   }
 
   @Test
   def create3(): Unit = {
-    testEmptyBody(SampleResource.create3)
+    testEmptyBody(sampleResource.create3)
   }
 
   @Test
   def delete1(): Unit = {
-    testEmptyBody(SampleResource.delete1(1))
+    testEmptyBody(sampleResource.delete1(1))
   }
 
   @Test
   def testFinder1(): Unit = {
     val request = FakeRequest("GET", "/?q1=1")
-    testEmptyBody(SampleResource.testFinder1(K1(1)), request = request)
+    testEmptyBody(sampleResource.testFinder1(K1(1)), request = request)
   }
 
   @Test
   def testFinder2(): Unit = {
     val request = FakeRequest("GET", "/?q1=1&q2=2")
-    testEmptyBody(SampleResource.testFinder2(K1(1), K2(2)), request = request)
+    testEmptyBody(sampleResource.testFinder2(K1(1), K2(2)), request = request)
   }
 
   // Helpers below.
@@ -168,20 +173,17 @@ class RestActionCategoryEngineTest extends AssertionsForJUnit with ScalaFutures 
   private[this] def runTestRequestInternal[BodyType](
       restAction: RestAction[_, _, BodyType, _, _, _],
       request: RequestHeader,
-      body: Enumerator[Array[Byte]] = Enumerator.empty): Result = {
-    val iteratee = restAction.apply(request)
-    val resultFut = body.run(iteratee)
+      body: HttpEntity = HttpEntity.NoEntity): Result = {
+    val accumulator = restAction.apply(request)
+    val resultFut = accumulator.run()
     resultFut.futureValue
   }
 
   private[this] def runTestRequest[BodyType](restAction: RestAction[_, _, BodyType, _, _, _],
       fakeRequest: FakeRequest[BodyType])(
       implicit writeable: Writeable[BodyType]): Result = {
-    val requestWithHeader = writeable.contentType.map { ct =>
-      fakeRequest.withHeaders(HeaderNames.CONTENT_TYPE -> ct)
-    }.getOrElse(fakeRequest)
-    val b = Enumerator(fakeRequest.body).through(writeable.toEnumeratee)
-    runTestRequestInternal(restAction, requestWithHeader, b)
+    val b = writeable.toEntity(fakeRequest.body)
+    runTestRequestInternal(restAction, fakeRequest, b)
   }
 
   private[this] def runTestRequest(restAction: RestAction[_, _, AnyContent, _, _, _],

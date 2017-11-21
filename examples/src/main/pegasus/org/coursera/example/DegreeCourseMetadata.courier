@@ -1,0 +1,6 @@
+namespace org.coursera.example
+
+record DegreeCourseMetadata {
+  degreeCertificateName: string
+  degreeInstructorIds: array[InstructorId]
+}

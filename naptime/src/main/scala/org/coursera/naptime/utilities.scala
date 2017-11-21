@@ -16,6 +16,12 @@
 
 package org.coursera.naptime
 
+import com.linkedin.data.schema.ArrayDataSchema
+import com.linkedin.data.schema.DataSchema
+import com.linkedin.data.schema.MapDataSchema
+import com.linkedin.data.schema.NamedDataSchema
+import com.linkedin.data.schema.RecordDataSchema
+import com.linkedin.data.schema.UnionDataSchema
 import org.coursera.naptime.model.KeyFormat
 import org.coursera.naptime.model.Keyed
 import play.api.libs.json.JsArray
@@ -25,6 +31,7 @@ import play.api.libs.json.Json
 import play.api.libs.json.OWrites
 import play.api.mvc.RequestHeader
 
+import scala.collection.JavaConverters._
 import scala.language.existentials
 
 /**
@@ -127,5 +134,91 @@ private[naptime] object JsonUtilities {
       obj = obj + ("links" -> formatLinksMeta(queryIncludes, requestFields, fields, response))
     }
     obj
+  }
+}
+
+/**
+ * Helpers for working with Courier/Pegasus Schemas.
+ */
+object SchemaUtils {
+
+  /**
+   * Fixes up inferred schemas with additional type information.
+   *
+   * When computing the schemas for resources, if the model or value type is not a courier
+   * (or known type), the macro calls [[org.coursera.naptime.courier.SchemaInference]], which
+   * attempts to infer the schema via reflection. There are a number of types that the schema
+   * inferencer cannot handle. This function will take a scala-guice map-binding and fix up
+   * the inappropriately inferred schemas with configured types.
+   *
+   * Note: this is a destructive operation, and mutates the input record data schema. Please
+   * use with care to ensure that the schemas are not being modified inappropriately.
+   */
+  def fixupInferredSchemas(
+      schemaToFix: RecordDataSchema,
+      typeOverrides: NaptimeModule.SchemaTypeOverrides,
+      visitedFields: Set[String] = Set.empty): Unit = {
+
+    def getTypeOverride(schema: DataSchema): Option[DataSchema] = {
+      schema.getDereferencedDataSchema match {
+        case named: NamedDataSchema if typeOverrides.contains(named.getFullName) =>
+          typeOverrides.get(named.getFullName)
+        case _ =>
+          None
+      }
+    }
+
+    def recursivelyFixup(schema: DataSchema) = {
+      schema.getDereferencedDataSchema match {
+        case recordType: RecordDataSchema if !visitedFields.contains(recordType.getFullName) =>
+          val updatedVisitedFields = visitedFields + recordType.getFullName
+          fixupInferredSchemas(recordType, typeOverrides, updatedVisitedFields)
+        case _ =>
+      }
+    }
+
+    Option(schemaToFix.getFields).map(_.asScala).getOrElse(List.empty).foreach { field =>
+      val fieldType = field.getType
+      Option(fieldType.getDereferencedDataSchema).foreach {
+
+        case named: NamedDataSchema if typeOverrides.contains(named.getFullName) =>
+          getTypeOverride(named).foreach { overrideType =>
+            field.setType(overrideType)
+          }
+
+        case arrayType: ArrayDataSchema =>
+          getTypeOverride(arrayType.getItems).foreach { overrideType =>
+            field.setType(new ArrayDataSchema(overrideType))
+          }
+          recursivelyFixup(arrayType.getItems)
+
+        case unionType: UnionDataSchema =>
+          val updatedTypes = unionType.getTypes.asScala.map { innerType =>
+            recursivelyFixup(innerType)
+            getTypeOverride(innerType).getOrElse(innerType)
+          }
+          val newUnion = new UnionDataSchema()
+          val stringBuilder = new java.lang.StringBuilder()
+          newUnion.setTypes(updatedTypes.asJava, stringBuilder)
+          newUnion
+
+        case mapType: MapDataSchema =>
+          getTypeOverride(mapType.getValues).foreach { overrideType =>
+            field.setType(new MapDataSchema(overrideType))
+          }
+          recursivelyFixup(mapType.getValues)
+
+        case recordType: RecordDataSchema if !visitedFields.contains(recordType.getFullName) =>
+          val updatedVisitedFields = visitedFields + recordType.getFullName
+          fixupInferredSchemas(recordType, typeOverrides, updatedVisitedFields)
+
+        case named: NamedDataSchema =>
+          getTypeOverride(named).foreach { overrideType =>
+            field.setType(overrideType)
+          }
+
+        case _ => // Do nothing otherwise.
+      }
+    }
   }
 }

@@ -76,6 +76,6 @@ object AttributesProvider extends StrictLogging {
   }
 
   private[this] def jsObjToJsValue(jsObj: JsObject): JsValue = {
-    JsValue.apply(CourierFormats.objToDataMap(jsObj), DataConversion.SetReadOnly)
+    JsValue.build(CourierFormats.objToDataMap(jsObj), DataConversion.SetReadOnly)
   }
 }

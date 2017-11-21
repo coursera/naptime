@@ -3,24 +3,33 @@ package resources
 import javax.inject.Inject
 import javax.inject.Singleton
 
+import akka.stream.Materializer
 import org.coursera.example.Partner
 import org.coursera.naptime.Fields
+import org.coursera.naptime.MultiGetReverseRelation
 import org.coursera.naptime.Ok
 import org.coursera.naptime.ResourceName
 import org.coursera.naptime.model.Keyed
 import org.coursera.naptime.resources.CourierCollectionResource
 import stores.PartnerStore
 
+import scala.concurrent.ExecutionContext
+
 @Singleton
 class PartnersResource @Inject() (
-    partnerStore: PartnerStore)
+    partnerStore: PartnerStore)(implicit ec: ExecutionContext, mat: Materializer)
   extends CourierCollectionResource[String, Partner] {
 
   override def resourceName = "partners"
   override def resourceVersion = 1
-  override implicit lazy val Fields: Fields[Partner] = BaseFields.withRelated(
-    "courses" -> ResourceName("courses", 1),
-    "instructors" -> ResourceName("instructors", 1))
+  override implicit lazy val Fields: Fields[Partner] = BaseFields
+    .withReverseRelations(
+      "instructors" -> MultiGetReverseRelation(
+        resourceName = ResourceName("instructors", 1),
+        ids = "$instructorIds"),
+      "courses" -> MultiGetReverseRelation(
+        resourceName = ResourceName("courses", 1),
+        ids = "$courseIds"))
 
   def get(id: String) = Nap.get { context =>
     OkIfPresent(id, partnerStore.get(id))

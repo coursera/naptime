@@ -11,9 +11,7 @@ record MergedInstructor {
 
   bio: string
 
-  @related = "courses.v1"
-  courses: array[CourseId]
+  courseIds: array[CourseId]
 
-  @related = "partners.v1"
-  partner: PartnerId
+  partnerId: PartnerId
 }

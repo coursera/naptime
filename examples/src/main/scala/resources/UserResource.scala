@@ -4,6 +4,7 @@ import java.util.concurrent.atomic.AtomicInteger
 import javax.inject.Inject
 import javax.inject.Singleton
 
+import akka.stream.Materializer
 import org.coursera.naptime.model.KeyFormat
 import org.coursera.naptime.model.Keyed
 import org.coursera.naptime.Ok
@@ -11,6 +12,8 @@ import org.coursera.example.User
 import org.coursera.naptime.courier.CourierFormats
 import org.coursera.naptime.resources.TopLevelCollectionResource
 import play.api.libs.json.OFormat
+
+import scala.concurrent.ExecutionContext
 
 /**
  * This is a sample resource, illustrating the power of Naptime.
@@ -48,6 +51,8 @@ import play.api.libs.json.OFormat
 class UsersResource @Inject() (
     userStore: UserStore,
     banManager: UserBanManager)
+    (implicit override val executionContext: ExecutionContext,
+    override val materializer: Materializer)
   extends TopLevelCollectionResource[Int, User] {
 
   override def resourceName = "users"

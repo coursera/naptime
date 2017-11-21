@@ -4,7 +4,7 @@ routesGenerator := InjectedRoutesGenerator
 
 libraryDependencies ++= Seq(
   courierRuntime,
-  cache,
+  ehcache,
   sangria
 )
 

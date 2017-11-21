@@ -1,16 +1,16 @@
 namespace org.coursera.example
 
 record Course {
-
-  @related = "instructors.v1"
-  instructors: array[InstructorId]
-
-  @related = "partners.v1"
-  partner: PartnerId
+  instructorIds: array[InstructorId]
+  partnerId: PartnerId
 
   slug: string
   name: string
-  description: string
+  description: string?
 
   extraData: AnyData
+
+  courseMetadata: CourseMetadata
+
+  __all: string = "ALL"
 }

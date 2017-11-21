@@ -16,6 +16,7 @@
 
 package org.coursera.naptime.actions
 
+import akka.stream.Materializer
 import com.typesafe.scalalogging.StrictLogging
 import org.coursera.naptime.model.KeyFormat
 import org.coursera.naptime.model.Keyed
@@ -36,6 +37,7 @@ import play.api.mvc.BodyParsers
 import play.api.mvc.RequestHeader
 import play.api.mvc.Result
 
+import scala.concurrent.ExecutionContext
 import scala.util.control.NonFatal
 
 /**
@@ -44,7 +46,10 @@ import scala.util.control.NonFatal
 class RestActionBuilder[RACType, AuthType, BodyType, ResourceKeyType, ResourceType, ResponseType](
     auth: HeaderAccessControl[AuthType], bodyParser: BodyParser[BodyType],
     errorHandler: PartialFunction[Throwable, RestError])
-    (implicit keyFormat: KeyFormat[ResourceKeyType], resourceFormat: OFormat[ResourceType]) {
+    (implicit keyFormat: KeyFormat[ResourceKeyType],
+    resourceFormat: OFormat[ResourceType],
+    ec: ExecutionContext,
+    mat: Materializer) {
 
   /**
    * Set the authentication framework.
@@ -94,7 +99,6 @@ class RestActionBuilder[RACType, AuthType, BodyType, ResourceKeyType, ResourceTy
       RACType, AuthType, NewBodyType, ResourceKeyType, ResourceType, ResponseType] = {
 
     val parser: BodyParser[NewBodyType] = new BodyParser[NewBodyType] with StrictLogging {
-      import play.api.libs.concurrent.Execution.Implicits._
       override def apply(rh: RequestHeader) = {
         val innerParser = BodyParsers.parse.tolerantJson(maxLength)
         innerParser(rh).map(_.right.map(toJsObj).joinRight)

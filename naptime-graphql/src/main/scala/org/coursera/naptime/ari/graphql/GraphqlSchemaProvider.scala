@@ -20,11 +20,15 @@ import javax.inject.Inject
 
 import com.linkedin.data.schema.RecordDataSchema
 import com.typesafe.scalalogging.StrictLogging
+import org.coursera.naptime.ResourceName
 import org.coursera.naptime.ari.FullSchema
 import org.coursera.naptime.ari.SchemaProvider
+import org.coursera.naptime.ari.graphql.schema.MissingMergedType
+import org.coursera.naptime.ari.graphql.schema.SchemaErrors
+import sangria.schema.Field
 import sangria.schema.ObjectType
 import sangria.schema.Schema
-import sangria.schema.SchemaValidationException
+import sangria.schema.StringType
 
 import scala.util.control.NonFatal
 
@@ -33,6 +37,7 @@ import scala.util.control.NonFatal
  */
 trait GraphqlSchemaProvider {
   def schema: Schema[org.coursera.naptime.ari.graphql.SangriaGraphQlContext, Any]
+  def errors: SchemaErrors
 }
 
 /**
@@ -56,29 +61,38 @@ trait GraphqlSchemaProvider {
 class DefaultGraphqlSchemaProvider @Inject() (schemaProvider: SchemaProvider)
   extends GraphqlSchemaProvider with StrictLogging {
   private[this] var fullSchema = FullSchema.empty
-  private[this] var cachedSchema: Schema[SangriaGraphQlContext, Any] = DefaultGraphqlSchemaProvider.EMPTY_SCHEMA
+  private[this] var cachedSchema: Schema[SangriaGraphQlContext, Any] =
+    DefaultGraphqlSchemaProvider.EMPTY_SCHEMA
+  private[this] var schemaErrors: SchemaErrors = SchemaErrors.empty
 
   private[this] def recomputeSchema(latestSchema: FullSchema): Unit = {
     val typesMap = latestSchema.types.collect {
       case record: RecordDataSchema => record.getFullName -> record
     }.toMap
 
-    val types = latestSchema.resources.flatMap { resource =>
-      typesMap.get(resource.mergedType).map(resource.mergedType -> _).orElse {
-        logger.warn(s"Did not find merged type `${resource.mergedType}` for resource " +
-          s"${resource.name}.v${resource.version.getOrElse(0L)}")
-        None
-      }
-    }.toMap
+    val typesAndErrors = latestSchema.resources.map { resource =>
+      typesMap
+        .get(resource.mergedType)
+        .map(mergedType => Right(resource.mergedType -> mergedType))
+        .getOrElse {
+          logger.info(s"Did not find merged type `${resource.mergedType}` for resource " +
+            s"${resource.name}.v${resource.version.getOrElse(0L)}")
+          val resourceName = ResourceName(resource.name, resource.version.getOrElse(0L).toInt)
+          Left(MissingMergedType(resourceName))
+        }
+    }
+    val types = typesAndErrors.flatMap(_.right.toOption).toMap
     try {
       val builder = new SangriaGraphQlSchemaBuilder(latestSchema.resources, types)
-      val graphQlSchema =
-        builder.generateSchema().asInstanceOf[Schema[SangriaGraphQlContext, Any]]
+      val schemaAndErrors = builder.generateSchema()
+      val graphQlSchema = schemaAndErrors.data.asInstanceOf[Schema[SangriaGraphQlContext, Any]]
       fullSchema = latestSchema
       cachedSchema = graphQlSchema
+
+      schemaErrors = schemaAndErrors.errors ++ typesAndErrors.toList.flatMap(_.left.toOption)
     } catch {
       case NonFatal(e) =>
-        logger.error(s"Could not build schema.", e.getMessage)
+        logger.error(s"Could not build schema.", e)
         fullSchema = latestSchema
         // Note: we do not update cachedSchema, but instead retain the existing schema.
     }
@@ -96,8 +110,19 @@ class DefaultGraphqlSchemaProvider @Inject() (schemaProvider: SchemaProvider)
     checkSchema()
     cachedSchema
   }
+
+  override def errors: SchemaErrors = {
+    schemaErrors
+  }
 }
 
 object DefaultGraphqlSchemaProvider {
-  val EMPTY_SCHEMA = Schema(query = ObjectType[SangriaGraphQlContext, Any](name = "root", fields = List.empty))
+  val EMPTY_FIELDS = List(
+    Field.apply[SangriaGraphQlContext, Any, Any, Any](
+      "ArbitraryField",
+      StringType,
+      resolve = context => null))
+  val EMPTY_SCHEMA = Schema[SangriaGraphQlContext, Any](query = ObjectType[SangriaGraphQlContext, Any](name = "root", fields = EMPTY_FIELDS))
+
 }
+

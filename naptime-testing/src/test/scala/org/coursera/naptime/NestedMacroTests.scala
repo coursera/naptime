@@ -16,9 +16,11 @@
 
 package org.coursera.naptime
 
+import akka.stream.Materializer
 import com.linkedin.data.DataMap
 import com.linkedin.data.schema.DataSchema
 import com.linkedin.data.schema.RecordDataSchema
+import org.coursera.common.jsonformat.JsonFormats.Implicits.dateTimeFormat
 import org.coursera.naptime.actions.NaptimeSerializer.AnyWrites._
 import org.coursera.naptime.actions.NaptimeActionSerializer.AnyWrites._
 import org.coursera.naptime.courier.CourierFormats
@@ -41,7 +43,7 @@ import org.mockito.Mockito._
 import org.mockito.Matchers.any
 import org.mockito.Matchers.{eq => e}
 import org.scalatest.junit.AssertionsForJUnit
-import org.scalatest.mock.MockitoSugar
+import org.scalatest.mockito.MockitoSugar
 import play.api.libs.json.Json
 import play.api.libs.json.OFormat
 import play.api.mvc.AnyContent
@@ -51,11 +53,12 @@ import play.api.mvc.RequestHeader
 import play.api.test.FakeRequest
 
 import scala.collection.JavaConversions._
+import scala.concurrent.ExecutionContext
 
 /**
  * The top level resource in our fledgling social network.
  */
-class PersonResource
+class PersonResource(implicit val executionContext: ExecutionContext, val materializer: Materializer)
   extends TopLevelCollectionResource[String, Person] {
 
   val PATH_KEY: PathKey = ("myPathKeyId" ::: RootParsedPathKey).asInstanceOf[PathKey]
@@ -122,7 +125,7 @@ object FriendshipInfo {
   implicit val jsonFormat: OFormat[FriendshipInfo] = Json.format[FriendshipInfo]
 }
 
-class FriendsResource(val parentResource: PersonResource)
+class FriendsResource(val parentResource: PersonResource)(implicit val executionContext: ExecutionContext, val materializer: Materializer)
   extends CollectionResource[PersonResource, String, FriendshipInfo] {
   override def keyFormat: KeyFormat[KeyType] = KeyFormat.stringKeyFormat
 
@@ -174,7 +177,7 @@ object FriendsResource {
   val routerBuilder = Router.build[FriendsResource]
 }
 
-class NestedMacroTests extends AssertionsForJUnit with MockitoSugar {
+class NestedMacroTests extends AssertionsForJUnit with MockitoSugar with ResourceTestImplicits {
 
   val peopleInstanceImpl = new PersonResource
   val peopleInstance = mock[PersonResource]
@@ -629,6 +632,8 @@ class NestedMacroTests extends AssertionsForJUnit with MockitoSugar {
     val multiGetSetParameter = multiGetSchema.parameters.head
     assert(multiGetSetParameter.name === "ids")
     assert(multiGetSetParameter.`type` === "Set[String]") // TODO(saeta): Use a courier type.
+    assert(multiGetSetParameter.typeSchema.get.data().getString("type") === "array")
+    assert(multiGetSetParameter.typeSchema.get.data().getString("items") === "string")
     assert(multiGetSetParameter.default === None)
 
     // TODO(saeta): verify more things (i.e. more handlers)

@@ -9,13 +9,13 @@ record MergedCourse {
 
   description: string?
 
-  @related = "instructors.v1"
-  instructors: array[InstructorId]
+  instructorIds: array[InstructorId]
 
-  @related = "partners.v1"
-  partner: PartnerId
+  partnerId: PartnerId
 
   originalId: union[int, string]
+
+  platformSpecificData: union[OldPlatformData, NewPlatformData]
 
   coursePlatform: array[enum CoursePlatform {OldPlatform NewPlatform}]
 

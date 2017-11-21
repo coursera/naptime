@@ -1,0 +1,11 @@
+namespace org.coursera.naptime.ari.graphql.models
+
+/**
+ * Fields used only by the new platform
+ */
+record NewPlatformData {
+  /**
+   * How often new sessions are run
+   */
+  sessionIntervalInWeeks: int
+}

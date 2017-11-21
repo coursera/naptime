@@ -43,5 +43,5 @@ We've attempted to follow a few principles to help guide development. They are r
 
 ## Using Naptime ##
 
-To learn more about how to use naptime, check out our
+To learn more about how to use naptime, check out our 
 [getting started guide](http://coursera.github.io/naptime/gettingstarted/)!

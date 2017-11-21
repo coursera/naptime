@@ -16,6 +16,8 @@
 
 package org.coursera.naptime.router2
 
+import akka.stream.scaladsl.Sink
+import akka.util.ByteString
 import com.typesafe.scalalogging.StrictLogging
 import org.coursera.common.stringkey.StringKey
 import org.coursera.common.stringkey.StringKeyFormat
@@ -24,10 +26,8 @@ import org.coursera.naptime.path.ParseSuccess
 import org.coursera.naptime.resources.CollectionResource
 import play.api.http.Status
 import play.api.libs.json.Json
-import play.api.mvc.Action
-import play.api.mvc.BodyParser
-import play.api.mvc.BodyParsers
-import play.api.mvc.Request
+import play.api.libs.streams.Accumulator
+import play.api.mvc.EssentialAction
 import play.api.mvc.RequestHeader
 import play.api.mvc.RequestTaggingHandler
 import play.api.mvc.Result
@@ -44,7 +44,7 @@ class NestingCollectionResourceRouter[CollectionResourceType <: CollectionResour
 
   /**
    * Helper method to convert a path key to the ancestor keys.
- *
+   *
    * @param pathKey The path key to convert.
    */
   protected[this] def pathToAncestor(
@@ -299,23 +299,21 @@ class NestingCollectionResourceRouter[CollectionResourceType <: CollectionResour
 }
 
 object NestingCollectionResourceRouter {
-
   private[naptime] def errorRoute(
-      resourceClass: Class[_],
-      msg: String,
-      statusCode: Int = Status.BAD_REQUEST): RouteAction = {
+    resourceClass: Class[_],
+    msg: String,
+    statusCode: Int = Status.BAD_REQUEST): RouteAction = {
 
-    new Action[Unit] with RequestTaggingHandler {
-      override def parser: BodyParser[Unit] = BodyParsers.parse.empty
-
-      override def apply(request: Request[Unit]): Future[Result] = {
-        // TODO(saeta): use standardized error response format.
-        Future.successful(Results.Status(statusCode)(Json.obj("msg" -> s"Routing error: $msg")))
+    new EssentialAction with RequestTaggingHandler {
+      override def apply(request: RequestHeader): Accumulator[ByteString, Result] = {
+        Accumulator(Sink.ignore.mapMaterializedValue { _ =>
+          // TODO(saeta): use standardized error response format.
+          Future.successful(Results.Status(statusCode)(Json.obj("msg" -> s"Routing error: $msg")))
+        })
       }
 
       override def tagRequest(request: RequestHeader): RequestHeader =
         request.copy(tags = request.tags + (Router.NAPTIME_RESOURCE_NAME -> resourceClass.getName))
     }
   }
-
 }

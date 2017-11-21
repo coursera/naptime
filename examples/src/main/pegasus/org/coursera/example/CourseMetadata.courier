@@ -1,0 +1,7 @@
+namespace org.coursera.example
+
+@typedDefinition = {
+  "org.coursera.example.CertificateCourseMetadata": "certificate",
+  "org.coursera.example.DegreeCourseMetadata": "degree"
+}
+typeref CourseMetadata = union[CertificateCourseMetadata, DegreeCourseMetadata]

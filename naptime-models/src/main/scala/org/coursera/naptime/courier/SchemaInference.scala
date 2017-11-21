@@ -16,7 +16,6 @@
 
 package org.coursera.naptime.courier
 
-import com.linkedin.data.DataComplex
 import com.linkedin.data.DataMap
 import com.linkedin.data.schema.DataSchema
 import com.linkedin.data.schema.DataSchemaUtil
@@ -49,6 +48,9 @@ object SchemaInference {
    */
   def inferSchema[T: ru.TypeTag]: JsObject = inferSchema(ru.typeOf[T])
 
+  def inferSchemaFromWeakTypeTag[T: ru.WeakTypeTag]: JsObject = inferSchema(ru.weakTypeOf[T])
+
+
   /**
    * Extracts schemas from Courier generated bindings.
    * Infers schemas from Play! JSON style classes that use `Format` and `OFormat`.
@@ -58,7 +60,7 @@ object SchemaInference {
    */
   def inferSchema(typ: ru.Type): JsObject = {
     val traverser = new ScalaClassTraverser(typ)
-    traverser.extractPegasusSchemaIfPresent().getOrElse {
+    traverser.extractPegasusSchemaIfPresent().flatMap(_.asOpt[JsObject]).getOrElse {
       traverser.inferSchema().schema match {
         case obj: JsObject => obj
         case value: JsValue => Json.obj("type" -> value)
@@ -82,20 +84,24 @@ private[courier] class ScalaClassTraverser(rootType: ru.Type) {
     inferSchema(rootType)
   }
 
+  def extractPegasusSchemaIfPresent(): Option[JsValue] = {
+    extractPegasusSchemaIfPresent(rootType)
+  }
+
   // If the type is a Courier generated data binding, extract the pegasus schema from the class.
-  def extractPegasusSchemaIfPresent(): Option[JsObject] = {
-    if (rootType <:< runtimeMirror.typeOf[DataTemplate[_]]) {
-      val maybeSchema = runtimeMirror.runtimeClass(rootType) match {
-        case clazz: Class[DataTemplate[DataComplex]] => Some(CourierSerializer.getSchema(clazz))
-        case _: ru.RuntimeClass => None
+  def extractPegasusSchemaIfPresent(typ: ru.Type): Option[JsValue] = {
+    if (typ <:< runtimeMirror.typeOf[DataTemplate[_]]) {
+      val maybeSchema = runtimeMirror.runtimeClass(typ) match {
+        case clazz: Class[DataTemplate[Object] @unchecked] => Some(CourierSerializer.getSchema(clazz))
       }
       maybeSchema.map(schemaToJson)
-    } else if (rootType <:< ru.typeOf[scala.Enumeration#Value]) {
-      inferEnumObjectFromValue(rootType) collect {
+    } else if (typ <:< ru.typeOf[scala.Enumeration#Value]) {
+      inferEnumObjectFromValue(typ) collect {
         case EnumerationInfo(enum, enumSymbol)
           // Is the enum a Courier generated enum?
           if enumSymbol.isType &&
              enumSymbol.asType.toType <:< runtimeMirror.typeOf[CourierCompanionObject] =>
+            import scala.language.reflectiveCalls
             schemaToJson(enum.asInstanceOf[CourierCompanionObject].SCHEMA)
       }
     } else {
@@ -103,14 +109,17 @@ private[courier] class ScalaClassTraverser(rootType: ru.Type) {
     }
   }
 
-  private[this] def schemaToJson(schema: DataSchema): JsObject = {
+  private[this] def schemaToJson(schema: DataSchema): JsValue = {
     val schemaJson = SchemaToJsonEncoder.schemaToJson(schema, JsonBuilder.Pretty.COMPACT)
-    Json.parse(schemaJson).as[JsObject]
+    Json.parse(schemaJson)
   }
 
   private[this] def inferSchema(typ: ru.Type): InferredSchema = {
     val typeName = typ.typeSymbol.fullName
-    if (isPredef(typ)) {
+    val maybePegasusSchema = extractPegasusSchemaIfPresent(typ)
+    if (maybePegasusSchema.isDefined) {
+      InferredSchema(maybePegasusSchema.get)
+    } else if (isPredef(typ)) {
       inferPredef(typ)
     } else if (typ <:< ru.typeOf[scala.Enumeration#Value]) {
       inferEnum(typ)
@@ -222,7 +231,7 @@ private[courier] class ScalaClassTraverser(rootType: ru.Type) {
       pegasusName: String,
       scalaClassName: String,
       coercerClass: String,
-      pegasusRefType: DataSchema): JsObject = {
+      pegasusRefType: DataSchema): JsValue = {
     val schema = new TyperefDataSchema(new Name(pegasusName))
     schema.setReferencedType(pegasusRefType)
     schema.setProperties(Map[String, AnyRef](

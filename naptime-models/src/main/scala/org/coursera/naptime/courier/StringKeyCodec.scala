@@ -27,16 +27,25 @@ import java.nio.charset.Charset
 import com.linkedin.data.ByteString
 import com.linkedin.data.DataList
 import com.linkedin.data.DataMap
+import com.linkedin.data.Null
 import com.linkedin.data.codec.DataCodec
 import com.linkedin.data.schema.ArrayDataSchema
+import com.linkedin.data.schema.BooleanDataSchema
 import com.linkedin.data.schema.BytesDataSchema
 import com.linkedin.data.schema.DataSchema
+import com.linkedin.data.schema.DoubleDataSchema
 import com.linkedin.data.schema.EnumDataSchema
+import com.linkedin.data.schema.FloatDataSchema
+import com.linkedin.data.schema.IntegerDataSchema
+import com.linkedin.data.schema.LongDataSchema
+import com.linkedin.data.schema.NullDataSchema
 import com.linkedin.data.schema.PrimitiveDataSchema
 import com.linkedin.data.schema.RecordDataSchema
+import com.linkedin.data.schema.StringDataSchema
 
 import scala.collection.JavaConverters._
 import scala.collection.SortedSet
+import scala.reflect.ClassTag
 import scala.util.parsing.combinator.RegexParsers
 
 /**
@@ -45,7 +54,7 @@ import scala.util.parsing.combinator.RegexParsers
  * This should only be used where compatibility with `StringKeyFormat` is required, for all other
  * uses, please see the more flexible `InlineStringCodec`.
  *
- * Provides an codec for Pegasus data that is compatible with `StringKeyFormat`.
+ * Provides a codec for Pegasus data that is compatible with `StringKeyFormat`.
  *
  * While this codec encodes data in the same format as `StringKeyFormat`, it is
  * designed to be used with Courier, not with Play JSON Formats.
@@ -112,7 +121,9 @@ class StringKeyCodec(schema: DataSchema, prefix: Option[String] = None) extends 
 
   override def writeMap(dataMap: DataMap, outputStream: OutputStream): Unit = {
     generator.generateMap(
-      dataMap, requireSchemaType(schema, classOf[RecordDataSchema]), outputStream)
+      dataMap,
+      requireSchemaType(schema, classOf[RecordDataSchema]),
+      outputStream)
   }
 
   override def bytesToMap(bytes: Array[Byte]): DataMap = {
@@ -132,7 +143,9 @@ class StringKeyCodec(schema: DataSchema, prefix: Option[String] = None) extends 
 
   override def writeList(dataList: DataList, outputStream: OutputStream): Unit = {
     generator.generateList(
-      dataList, requireSchemaType(schema, classOf[ArrayDataSchema]), outputStream)
+      dataList,
+      requireSchemaType(schema, classOf[ArrayDataSchema]),
+      outputStream)
   }
 
   override def bytesToList(bytes: Array[Byte]): DataList = {
@@ -150,7 +163,7 @@ class StringKeyCodec(schema: DataSchema, prefix: Option[String] = None) extends 
     out.toByteArray
   }
 
-  private[this] def requireSchemaType[T](schema: DataSchema, clazz: Class[T]): T = {
+  private[this] def requireSchemaType[T: ClassTag](schema: DataSchema, clazz: Class[T]): T = {
     schema.getDereferencedDataSchema match {
       case matchingSchema: T => matchingSchema
       case unknown: DataSchema =>
@@ -198,9 +211,10 @@ object StringKeyCodec {
       }
 
       val dataMap = new DataMap(fields.size)
-      fields.zip(items).foreach { case (field, item) =>
-        assert(!field.getOptional, "Records with optional fields are not supported.")
-        dataMap.put(field.getName, parseData(item, field.getType))
+      fields.zip(items).foreach {
+        case (field, item) =>
+          assert(!field.getOptional, "Records with optional fields are not supported.")
+          dataMap.put(field.getName, parseData(item, field.getType))
       }
       dataMap
     }
@@ -218,12 +232,30 @@ object StringKeyCodec {
 
     private[this] def parseData(item: String, schema: DataSchema): AnyRef = {
       schema.getDereferencedDataSchema match {
-        case bytesSchema: BytesDataSchema =>
+        case _: BytesDataSchema =>
           throw new IOException(
-            s"'bytes' not supported, please consider base64 encoding a string instead.")
-        case primitiveSchema: PrimitiveDataSchema =>
+            "'bytes' not supported, please consider base64 encoding a string instead.")
+        case _: BooleanDataSchema =>
+          new java.lang.Boolean(item)
+        case _: IntegerDataSchema =>
+          new java.lang.Integer(item)
+        case _: LongDataSchema =>
+          new java.lang.Long(item)
+        case _: FloatDataSchema =>
+          new java.lang.Float(item)
+        case _: DoubleDataSchema =>
+          new java.lang.Double(item)
+        case _: StringDataSchema =>
           item
-        case enumSchema: EnumDataSchema =>
+        case _: NullDataSchema =>
+          Null.getInstance()
+        // if primitives are all turned into strings like below instead of separated like above,
+        // then the CoercionMode.STRING_TO_PRIMITIVE option must be used for validation
+        /*
+        case _: PrimitiveDataSchema =>
+          item
+         */
+        case _: EnumDataSchema =>
           item
         case recordSchema: RecordDataSchema =>
           toDataMap(tupleParser.parse(item), recordSchema)
@@ -247,17 +279,20 @@ object StringKeyCodec {
     }
 
     def generateList(
-        dataList: DataList, schema: ArrayDataSchema, outputStream: OutputStream): Unit = {
+      dataList: DataList,
+      schema: ArrayDataSchema,
+      outputStream: OutputStream): Unit = {
       val items = dataList.iterator().asScala
       val itemsSchema = schema.getItems
 
-      items.zipWithIndex.foreach { case (item, idx) =>
-        val valueString = generateData(item, itemsSchema)
-        outputStream.write(seqParser.escape(valueString).getBytes(StringKeyCodec.charset))
+      items.zipWithIndex.foreach {
+        case (item, idx) =>
+          val valueString = generateData(item, itemsSchema)
+          outputStream.write(seqParser.escape(valueString).getBytes(StringKeyCodec.charset))
 
-        if (idx < dataList.size() - 1) {
-          outputStream.write(seqParser.separatorBytes)
-        }
+          if (idx < dataList.size() - 1) {
+            outputStream.write(seqParser.separatorBytes)
+          }
       }
     }
 
@@ -270,8 +305,7 @@ object StringKeyCodec {
       new String(out.toByteArray, charset)
     }
 
-    def generateMap(
-        dataMap: DataMap, schema: RecordDataSchema, outputStream: OutputStream): Unit = {
+    def generateMap(dataMap: DataMap, schema: RecordDataSchema, outputStream: OutputStream): Unit = {
       val entries = dataMap.entrySet().asScala
 
       if (prefix.isDefined) {
@@ -285,17 +319,19 @@ object StringKeyCodec {
         case record: RecordDataSchema =>
           val fields = record.getFields.asScala
 
-          fields.zipWithIndex.foreach { case (field, idx) =>
-            assert(!field.getOptional, "Records with optional fields are not supported.")
-            val value = Option(dataMap.get(field.getName)).getOrElse {
-              throw new IOException(s"Missing required field: ${field.getName}")
-            }
-            val valueString = generateData(value, field.getType)
-            outputStream.write(tupleParser.escape(valueString).getBytes(StringKeyCodec.charset))
+          fields.zipWithIndex.foreach {
+            case (field, idx) =>
+              assert(!field.getOptional, "Records with optional fields are not supported.")
+              val value = Option(dataMap.get(field.getName)).getOrElse {
+                throw new IOException(s"Missing required field: ${field.getName}")
+              }
+              val valueString = generateData(value, field.getType)
+              outputStream.write(
+                tupleParser.escape(valueString).getBytes(StringKeyCodec.charset))
 
-            if (idx < fields.size - 1) {
-              outputStream.write(tupleParser.separatorBytes)
-            }
+              if (idx < fields.size - 1) {
+                outputStream.write(tupleParser.separatorBytes)
+              }
           }
         case unknown: DataSchema =>
           throw new IOException(s"Unsupported schema type: ${unknown.getClass}")
@@ -330,7 +366,8 @@ object StringKeyCodec {
   private[this] class StringListParser(
     val escapeChar: Char,
     val separator: Char,
-    val interpretEmptyInputAsEmptyList: Boolean = false) extends RegexParsers {
+    val interpretEmptyInputAsEmptyList: Boolean = false)
+    extends RegexParsers {
 
     val separatorBytes = separator.toString.getBytes(StringKeyCodec.charset)
 
@@ -366,7 +403,7 @@ object StringKeyCodec {
 
     private[this] val listParser: Parser[Seq[String]] = repsep(itemParser, separator) ^^ {
       case items: List[String] => {
-        if(interpretEmptyInputAsEmptyList && items.size == 1 && items.head == "") {
+        if (interpretEmptyInputAsEmptyList && items.size == 1 && items.head == "") {
           Seq.empty
         } else {
           items
@@ -377,7 +414,7 @@ object StringKeyCodec {
     private[this] def handleParseErrors[T](parseResult: ParseResult[T]): T = {
       parseResult match {
         case Success(result, _) => result
-        case failure : NoSuccess =>
+        case failure: NoSuccess =>
           throw new IOException(
             s"${failure.msg} line: ${failure.next.pos.line} column: ${failure.next.pos.column}")
       }

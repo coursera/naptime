@@ -6,7 +6,9 @@ import javax.inject.Singleton
 import com.linkedin.data.DataMap
 import org.coursera.courier.templates.DataTemplates.DataConversion
 import org.coursera.example.AnyData
+import org.coursera.example.CertificateCourseMetadata
 import org.coursera.example.Course
+import org.coursera.example.DegreeCourseMetadata
 import org.coursera.naptime.model.Keyed
 
 import scala.collection.JavaConverters._
@@ -19,23 +21,28 @@ class CourseStore {
 
   courseStore = courseStore + (
     "ml" -> Course(
-      instructors = List("andrew-ng"),
-      partner = "stanford",
+      instructorIds = List(1),
+      partnerId = "stanford",
       slug = "machine-learning",
       name = "Machine Learning",
-      description = "",
-      extraData = AnyData(new DataMap(
+      description = Some("Machine learning is the science of getting computers to act without being explicitly programmed."),
+      extraData = AnyData.build(new DataMap(
         Map("firstModuleId" -> "wrh7vtpj").asJava),
-        DataConversion.SetReadOnly)),
+        DataConversion.SetReadOnly),
+      courseMetadata = CertificateCourseMetadata(
+        certificateInstructorIds = List(1))),
     "lhtl" -> Course(
-      instructors = List("barb-oakley"),
-      partner = "ucsd",
+      instructorIds = List(2),
+      partnerId = "ucsd",
       slug = "learning-how-to-learn",
       name = "Learning How to Learn",
-      description = "",
-      extraData = AnyData(new DataMap(
+      description = None,
+      extraData = AnyData.build(new DataMap(
         Map("recentEnrollments" -> new Integer(1000)).asJava),
-        DataConversion.SetReadOnly)))
+        DataConversion.SetReadOnly),
+      courseMetadata = DegreeCourseMetadata(
+        degreeCertificateName = "iMBA",
+        degreeInstructorIds = List(1, 2))))
 
   def get(id: String) = courseStore.get(id)
 

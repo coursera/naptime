@@ -18,6 +18,9 @@ package org.coursera.naptime
 
 import com.linkedin.data.DataMap
 import org.coursera.naptime.QueryStringParser.NaptimeParseError
+import org.coursera.naptime.schema.RelationType
+import org.coursera.naptime.schema.Resource
+import org.coursera.naptime.schema.ReverseRelationAnnotation
 import play.api.http.Status
 import play.api.i18n.Lang
 import play.api.libs.json.JsObject
@@ -253,7 +256,8 @@ object QueryIncludes {
 sealed case class Fields[T](
     defaultFields: Set[String],
     fieldsPermissionsFunction: FieldsFunction,
-    relations: Map[String, ResourceName])
+    relations: Map[String, ResourceName],
+    reverseRelations: Map[String, ReverseRelation])
     (implicit format: OFormat[T]) {
 
   private[this] val relationsInJson = relations.map { case (field, resourceName) =>
@@ -340,16 +344,30 @@ sealed case class Fields[T](
   def withRelated(newRelations: (String, ResourceName)*): Fields[T] = {
     withRelated(newRelations.toMap)
   }
+
+  def withReverseRelations(newRelations: Map[String, ReverseRelation]): Fields[T] = {
+    val intersection = newRelations.keySet.intersect(reverseRelations.keySet)
+    require(intersection.isEmpty, s"Duplicate relations provided for: $intersection")
+    copy(reverseRelations = reverseRelations ++ newRelations)
+  }
+
+  def withReverseRelations(newRelations: (String, ReverseRelation)*): Fields[T] = {
+    withReverseRelations(newRelations.toMap)
+  }
 }
 
 object Fields {
   def apply[T](implicit format: OFormat[T]): Fields[T] = {
-    Fields(Set.empty, FieldsFunction.default, Map.empty)
+    Fields(Set.empty, FieldsFunction.default, Map.empty, Map.empty)
   }
 
   val FIELDS_HEADER = "X-Coursera-Naptime-Fields"
 
-  private[naptime] val FAKE_FIELDS: Fields[_] = Fields(Set.empty, FieldsFunction.default, Map.empty)(null)
+  private[naptime] val FAKE_FIELDS: Fields[_] = Fields(
+    Set.empty,
+    FieldsFunction.default,
+    Map.empty,
+    Map.empty)(null)
 }
 
 // TODO(saeta): FieldFn should also take advantage of the authentication applied. This will require
@@ -420,6 +438,10 @@ object ResourceName {
         }.toOption
       case _ => None
     }
+  }
+
+  def fromResource(resource: Resource): ResourceName = {
+    ResourceName(resource.name, resource.version.getOrElse(0L).toInt)
   }
 }
 
@@ -516,6 +538,7 @@ private[naptime] case class DelegateFields(delegate: RequestFields,
  * Note: it is possible for field names to include the `.` character.
  */
 private[naptime] object QueryStringParser extends RegexParsers {
+  import scala.language.postfixOps
 
   class NaptimeParseError(source: String, msg: String) extends NaptimeActionException(
     httpCode = Status.BAD_REQUEST,
@@ -574,4 +597,76 @@ private[naptime] object QueryStringParser extends RegexParsers {
   def parseQueryFields(input: String): ParseResult[QueryFields] = parse(fieldsAllContent, input)
   def parseQueryIncludes(input: String): ParseResult[QueryIncludes] =
     parse(includesAllContent, input)
+}
+
+trait ReverseRelation {
+  val resourceName: ResourceName
+  val arguments: Map[String, String]
+  val description: String
+
+  def toAnnotation: ReverseRelationAnnotation
+}
+
+case class FinderReverseRelation(
+    resourceName: ResourceName,
+    finderName: String,
+    arguments: Map[String, String] = Map.empty,
+    description: String = "")
+  extends ReverseRelation {
+
+  def toAnnotation: ReverseRelationAnnotation = {
+    val mergedArguments = arguments + ("q" -> finderName)
+    ReverseRelationAnnotation(
+      resourceName.identifier,
+      mergedArguments,
+      RelationType.FINDER)
+  }
+}
+
+case class MultiGetReverseRelation(
+    resourceName: ResourceName,
+    ids: String,
+    arguments: Map[String, String] = Map.empty,
+    description: String = "")
+  extends ReverseRelation {
+
+  def toAnnotation: ReverseRelationAnnotation = {
+    val mergedArguments = arguments + ("ids" -> ids)
+    ReverseRelationAnnotation(
+      resourceName.identifier,
+      mergedArguments,
+      RelationType.MULTI_GET)
+  }
+}
+
+case class GetReverseRelation(
+    resourceName: ResourceName,
+    id: String,
+    arguments: Map[String, String] = Map.empty,
+    description: String = "")
+  extends ReverseRelation {
+
+  def toAnnotation: ReverseRelationAnnotation = {
+    val mergedArguments = arguments + ("ids" -> id)
+    ReverseRelationAnnotation(
+      resourceName.identifier,
+      mergedArguments,
+      RelationType.GET)
+  }
+}
+
+case class SingleElementFinderReverseRelation(
+    resourceName: ResourceName,
+    finderName: String,
+    arguments: Map[String, String] = Map.empty,
+    description: String = "")
+  extends ReverseRelation {
+
+  def toAnnotation: ReverseRelationAnnotation = {
+    val mergedArguments = arguments + ("q" -> finderName)
+    ReverseRelationAnnotation(
+      resourceName.identifier,
+      mergedArguments,
+      RelationType.SINGLE_ELEMENT_FINDER)
+  }
 }

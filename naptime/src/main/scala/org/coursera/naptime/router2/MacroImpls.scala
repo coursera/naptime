@@ -16,15 +16,13 @@
 
 package org.coursera.naptime.router2
 
-import com.linkedin.data.schema.IntegerDataSchema
-import com.linkedin.data.schema.LongDataSchema
-import com.linkedin.data.schema.StringDataSchema
 import com.linkedin.data.template.DataTemplate
 import org.coursera.common.stringkey.StringKey
 import org.coursera.common.stringkey.StringKeyFormat
 import org.coursera.courier.templates.ScalaRecordTemplate
 import org.coursera.naptime.actions._
 import org.coursera.naptime.resources.CollectionResource
+import org.coursera.naptime.resources.CourierCollectionResource
 import org.coursera.naptime.resources.TopLevelCollectionResource
 import play.api.mvc.RequestHeader
 
@@ -70,6 +68,7 @@ class MacroImpls(val c: blackbox.Context) {
   val STRING_KEY = typeOf[StringKey]
   val COLLECTION_RESOURCE_TYPE = typeOf[CollectionResource[_, _, _]]
   val TOP_LEVEL_COLLECTION = typeOf[TopLevelCollectionResource[_, _]]
+  val TOP_LEVEL_COURIER_COLLECTION = typeOf[CourierCollectionResource[_, _]]
   val STRING_KEY_FORMAT_TYPE_CONSTRUCTOR = weakTypeOf[StringKeyFormat[_]].typeConstructor
 
   val ANY_VAL = typeOf[AnyVal] // Primitive types.
@@ -161,12 +160,14 @@ class MacroImpls(val c: blackbox.Context) {
       val resourceRouterBuilderType = weakTypeOf[ResourceRouterBuilder]
       debug(s"TREES ARE: $trees")
 
-      val parentResourceName = if (resourceType <:< TOP_LEVEL_COLLECTION) {
-        q"None"
-      } else {
-        val collectionTypeView = resourceType.baseType(COLLECTION_RESOURCE_TYPE.typeSymbol)
-        q"Some(${collectionTypeView.typeArgs.head.toString})"
-      }
+      val parentResourceName =
+        if (resourceType <:< TOP_LEVEL_COLLECTION ||
+          resourceType <:< TOP_LEVEL_COURIER_COLLECTION) {
+          q"None"
+        } else {
+          val collectionTypeView = resourceType.baseType(COLLECTION_RESOURCE_TYPE.typeSymbol)
+          q"Some(${collectionTypeView.typeArgs.head.toString})"
+        }
 
       val finalResource = q"""
       new $resourceRouterBuilderType {
@@ -232,15 +233,42 @@ class MacroImpls(val c: blackbox.Context) {
       } else {
         q"""
           scala.util.Try {
-            import scala.collection.JavaConversions._
+            import scala.collection.JavaConverters._
             val resolver = new com.linkedin.data.schema.resolver.DefaultDataSchemaResolver()
             val parser = new com.linkedin.data.schema.SchemaParser(resolver)
             val schemaJson = org.coursera.naptime.courier.SchemaInference.inferSchema(
               scala.reflect.runtime.universe.typeTag[$targetType])
             parser.parse(schemaJson.toString)
-            parser.topLevelDataSchemas.head.asInstanceOf[com.linkedin.data.schema.RecordDataSchema]
+            parser.topLevelDataSchemas.asScala.head.asInstanceOf[com.linkedin.data.schema.RecordDataSchema]
           }.toOption"""
       }
+    }
+
+    private[this] def getDataSchemaDataMapForType(targetType: c.Type): c.Tree = {
+      val schema = if (targetType <:< SCALA_RECORD_TEMPLATE) {
+        q"""Some(
+          org.coursera.courier.templates.DataTemplates
+            .getSchema[$targetType]
+            .asInstanceOf[com.linkedin.data.schema.DataSchema])"""
+      } else {
+        q"""
+          scala.util.Try {
+            import scala.collection.JavaConverters._
+            val resolver = new com.linkedin.data.schema.resolver.DefaultDataSchemaResolver()
+            val parser = new com.linkedin.data.schema.SchemaParser(resolver)
+            val schemaJson = org.coursera.naptime.courier.SchemaInference.inferSchemaFromWeakTypeTag(
+              scala.reflect.runtime.universe.weakTypeTag[$targetType])
+            parser.parse(schemaJson.toString)
+            parser.topLevelDataSchemas.asScala.head.asInstanceOf[com.linkedin.data.schema.DataSchema]
+          }.toOption"""
+      }
+      q"""
+        val schemaOpt = $schema
+        schemaOpt.flatMap { schema =>
+          val dataCodec = new com.linkedin.data.codec.JacksonDataCodec();
+          scala.util.Try(dataCodec.stringToMap(schema.toString)).toOption
+        }
+      """
     }
 
     private[this] def computeKeyType(keyType: c.Type): c.Tree = {
@@ -312,9 +340,10 @@ class MacroImpls(val c: blackbox.Context) {
       q"""{
         val mergedType: String = ${mergedType(resourceType)}
         val keySchemaOption: Option[com.linkedin.data.schema.DataSchema] = $keySchemaOption
+        val keySchema: com.linkedin.data.schema.DataSchema = keySchemaOption
+          .getOrElse(new com.linkedin.data.schema.StringDataSchema)
         val bodySchemaOption: Option[com.linkedin.data.schema.RecordDataSchema] = $bodySchemaOption
         (for {
-          keySchema <- keySchemaOption
           bodySchema <- bodySchemaOption
         } yield {
           org.coursera.naptime.model.Keyed(
@@ -366,7 +395,8 @@ class MacroImpls(val c: blackbox.Context) {
         // TODO(saeta): handle path keys appropriately!
         val parameterModelName = TermName(c.freshName())
         // TODO(saeta): Handle attributes!
-        if (param.asTerm.isParamWithDefault) {
+        val isOptionalParam = Types.OptionalParam.unapply(param)
+        val parameterDefinition = if (param.asTerm.isParamWithDefault) {
           val defaultFnName = TermName(s"${method.name}$$default$$" + (i + 1))
           val defaultValue = if (param.typeSignature <:< DATA_TEMPLATE) {
             q"""org.coursera.naptime.schema.ArbitraryValue.ArbitraryRecordMember(
@@ -405,7 +435,8 @@ class MacroImpls(val c: blackbox.Context) {
               name = ${param.name.toString},
               `type` = ${param.typeSignature.toString},
               attributes = List.empty,
-              default = Some(defaultValue)
+              default = Some(defaultValue),
+              required = ${!isOptionalParam}
             )
           """
         } else {
@@ -414,10 +445,20 @@ class MacroImpls(val c: blackbox.Context) {
               name = ${param.name.toString},
               `type` = ${param.typeSignature.toString},
               attributes = List.empty,
-              default = None
+              default = None,
+              required = ${!isOptionalParam}
             )
           """
         }
+        q"""
+          val parameterWithoutTypeSchema = $parameterDefinition
+          val typeSchema: Option[com.linkedin.data.DataMap] = ${getDataSchemaDataMapForType(param.typeSignature)}
+          val updatedDataMap = parameterWithoutTypeSchema.data().clone()
+          typeSchema.foreach(t => updatedDataMap.put("typeSchema", t))
+          org.coursera.naptime.schema.Parameter.build(
+            updatedDataMap,
+            org.coursera.courier.templates.DataTemplates.DataConversion.SetReadOnly)
+        """
       }
       // TODO: handle input, custom output bodies, and attributes
       q"""
@@ -789,7 +830,7 @@ class MacroImpls(val c: blackbox.Context) {
            ${param.typeSignature.typeSymbol.companion}.SCHEMA,
            resourceInstance.getClass,
            requestHeader).right.map { dataMap =>
-             ${param.typeSignature.typeSymbol.companion}.apply(dataMap,
+             ${param.typeSignature.typeSymbol.companion}.build(dataMap,
                org.coursera.courier.templates.DataTemplates.DataConversion.SetReadOnly)
            }"""
       } else if (param.typeSignature <:< typeOf[Option[ScalaRecordTemplate]]) {
@@ -799,7 +840,7 @@ class MacroImpls(val c: blackbox.Context) {
            resourceInstance.getClass,
            requestHeader).right.map { dataMapOpt =>
              dataMapOpt.map { dataMap =>
-               ${param.typeSignature.typeSymbol.companion}.apply(dataMap,
+               ${param.typeSignature.typeSymbol.companion}.build(dataMap,
                  org.coursera.courier.templates.DataTemplates.DataConversion.SetReadOnly)
              }
            }"""
