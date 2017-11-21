@@ -50,7 +50,7 @@ class RestContext[+AuthType, +BodyType] private[naptime] (
     val fields: RequestFields) {
 
   def request(implicit evidence: RequestEvidence): RequestHeader = _request
-  def acceptLanguages = _request.acceptLanguages
+  def acceptLanguages: Seq[Lang] = _request.acceptLanguages
 
   /**
    * Compute the preferred language for this context given a set of available languages.
@@ -120,12 +120,12 @@ object RequestPagination {
    */
   def apply(rh: RequestHeader, configuration: PaginationConfiguration): RequestPagination = {
     // Parse out the start parameter.
-    val start = rh.queryString.get("start").flatMap(_.headOption)
+    val start: Option[String] = rh.queryString.get("start").flatMap(_.headOption)
     // Parse out the limit string.
-    val limit = rh.queryString.get("limit").flatMap(_.headOption).flatMap(str => Try(str.toInt).toOption)
+    val limit: Option[Int] = rh.queryString.get("limit").flatMap(_.headOption).flatMap(str => Try(str.toInt).toOption)
     limit.map { limit =>
-      RequestPagination(limit, start, isDefault = false)
-    }.getOrElse(RequestPagination(configuration.defaultLimit, start, isDefault = true))
+      RequestPagination(limit = limit, start = start, isDefault = false)
+    }.getOrElse(RequestPagination(limit = configuration.defaultLimit, start = start, isDefault = true))
   }
 }
 
@@ -167,7 +167,7 @@ case class ResponsePagination(
     facets: Option[Map[String, FacetField]] = None)
 
 object ResponsePagination {
-  implicit val format = Json.format[ResponsePagination]
+  implicit val format: OFormat[ResponsePagination] = Json.format[ResponsePagination]
   val empty = ResponsePagination(None, None, None)
 }
 
@@ -188,6 +188,7 @@ trait RequestIncludes {
   def includeFieldsRelatedResource(fieldName: String): Boolean
   def forResource(resource: ResourceName): Option[RequestIncludes]
 }
+
 /**
  * The type safe structure of the requested includes for a request.
  *
@@ -201,7 +202,6 @@ private[naptime] case class QueryIncludes(
     fields: Set[String],
     resources: Map[ResourceName, Set[String]])
   extends RequestIncludes {
-
 
   override def includeFieldsRelatedResource(fieldName: String): Boolean = fields.contains(fieldName)
 
@@ -260,14 +260,13 @@ sealed case class Fields[T](
     reverseRelations: Map[String, ReverseRelation])
     (implicit format: OFormat[T]) {
 
-  private[this] val relationsInJson = relations.map { case (field, resourceName) =>
+  private[this] val relationsInJson: Seq[(String, JsString)] = relations.map { case (field, resourceName) =>
     field -> JsString(resourceName.identifier)
   }.toList
 
   /**
    * Generates the JsObject that goes inside the `links` field in responses for
    * Play-Json engines.
-   * @param fieldsToInclude
    * @return
    */
   private[naptime] def makeMetaRelationsMap(fieldsToInclude: Set[String]): JsObject = {
@@ -382,8 +381,10 @@ object FieldsFunction {
    *
    * @return
    */
-  def default = new FieldsFunction {
-    override def apply(rh: RequestHeader, qf: QueryFields) = qf
+  def default: FieldsFunction {
+    def apply(rh: RequestHeader, qf: QueryFields): QueryFields
+  } = new FieldsFunction {
+    override def apply(rh: RequestHeader, qf: QueryFields): QueryFields = qf
   }
 }
 
@@ -402,7 +403,7 @@ trait RequestFields {
 }
 
 object RequestFields {
-  val empty = QueryFields.empty
+  val empty: QueryFields = QueryFields.empty
 }
 
 /**
@@ -410,15 +411,12 @@ object RequestFields {
  *
  * @param topLevelName The first top level name.
  * @param version The version of the top level resource.
- * @param resourcePath The names of path selectors.
  */
 case class ResourceName(
     topLevelName: String,
-    version: Int,
-    resourcePath: immutable.Seq[String] = List.empty) {
+    version: Int) {
   def identifier: String = {
-    val suffix = if (resourcePath.isEmpty) "" else resourcePath.mkString("/", "/", "")
-    s"$topLevelName.v$version$suffix"
+    s"$topLevelName.v$version"
   }
 }
 
@@ -558,7 +556,7 @@ private[naptime] object QueryStringParser extends RegexParsers {
     }
   private[this] def resource: Parser[(ResourceName, Set[String])] =
     resourceName ~ ("(" ~> nonEmptyFields <~ ")") ^^ { parsed =>
-      parsed._1 -> parsed._2.toSet
+      parsed._1 -> parsed._2
     }
   private[this] def topLevelResource: Parser[Either[String, (ResourceName, Set[String])]] =
     resource ^^ (Right(_))
