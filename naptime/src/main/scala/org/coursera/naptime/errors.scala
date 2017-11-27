@@ -50,9 +50,10 @@ case class NaptimeActionException(
    * Add exception details which can be used by downstream services for debugging to NaptimeActionException.
    * @return A new NaptimeActionException with exception details formatted as JSON.
    */
-  def withExceptionDetails[T](details: T)(implicit format: OFormat[T]): NaptimeActionException =
+  def withExceptionDetails[T](details: Option[T])(implicit format: OFormat[T]):
+  NaptimeActionException =
     this.copy(
-      details = Some(format.writes(details))
+      details = details.map(format.writes)
     )
 }
 
