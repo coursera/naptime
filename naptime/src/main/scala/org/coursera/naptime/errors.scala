@@ -104,6 +104,18 @@ trait Errors {
       details)
 
   /**
+   * Error out with a BadRequest (400) response.
+   * Detail will be converted to a json object.
+   *
+   * Note: Only use this within a Rest Action, and not a general action.
+   */
+  def BadRequestT[T](errorCode: String = null, msg: String = null, details: Option[T] =
+  None)(implicit format: OFormat[T]) =
+    throw new NaptimeActionException(BAD_REQUEST,
+      Option(errorCode),
+      Option(msg)).withExceptionDetails(details)
+
+  /**
    * Error out with an Unauthorized (401) response.
    *
    * Note: Only use this within a Rest Action, and not a general action.
@@ -113,6 +125,18 @@ trait Errors {
       Option(errorCode),
       Option(msg),
       details)
+
+  /**
+   * Error out with an Unauthorized (401) response.
+   * Detail will be converted to a json object.
+   *
+   * Note: Only use this within a Rest Action, and not a general action.
+   */
+  def UnauthorizedT[T](errorCode: String = null, msg: String = null, details: Option[T] =
+  None)(implicit format: OFormat[T]) =
+    throw new NaptimeActionException(UNAUTHORIZED,
+      Option(errorCode),
+      Option(msg)).withExceptionDetails(details)
 
   /**
    * Error out with an Forbidden (403) response.
@@ -135,6 +159,17 @@ trait Errors {
       Option(errorCode),
       Option(msg),
       details)
+
+  /**
+   * Error out with an Not Found (404) response.
+   * Detail will be converted to a json object.
+   *
+   * Note: Only use this within a Rest Action, and not a general action.
+   */
+  def NotFoundT[T](errorCode: String = null, msg: String = null, details: Option[T] = None)(implicit format: OFormat[T]) =
+    throw new NaptimeActionException(NOT_FOUND,
+      Option(errorCode),
+      Option(msg)).withExceptionDetails(details)
 
   import scala.reflect.runtime.universe.TypeTag
 
