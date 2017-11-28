@@ -46,6 +46,15 @@ case class NaptimeActionException(
       HttpEntity.Strict(ByteString.fromString(bodyString), Some(MimeTypes.JSON)))
   }
 
+  /**
+   * Add exception details which can be used by downstream services for debugging to NaptimeActionException.
+   * @return A new NaptimeActionException with exception details formatted as JSON.
+   */
+  def withExceptionDetails[T](details: Option[T])(implicit format: OFormat[T]):
+  NaptimeActionException =
+    this.copy(
+      details = details.map(format.writes)
+    )
 }
 
 object NaptimeActionException {
@@ -65,8 +74,8 @@ object NaptimeActionException {
       import play.api.libs.functional.syntax.{unapply => _, _}
       val builder =
         (__ \ "errorCode").format[Option[String]] and
-        (__ \ "message").format[Option[String]] and
-        (__ \ "details").format[Option[JsValue]]
+          (__ \ "message").format[Option[String]] and
+          (__ \ "details").format[Option[JsValue]]
       builder(apply, unlift(unapply))
     }
 
@@ -96,6 +105,18 @@ trait Errors {
       details)
 
   /**
+   * Error out with a BadRequest (400) response.
+   * Detail will be converted to a json object.
+   *
+   * Note: Only use this within a Rest Action, and not a general action.
+   */
+  def BadRequestT[T](errorCode: String = null, msg: String = null, details: Option[T] =
+  None)(implicit format: OFormat[T]) =
+    throw new NaptimeActionException(BAD_REQUEST,
+      Option(errorCode),
+      Option(msg)).withExceptionDetails(details)
+
+  /**
    * Error out with an Unauthorized (401) response.
    *
    * Note: Only use this within a Rest Action, and not a general action.
@@ -105,6 +126,18 @@ trait Errors {
       Option(errorCode),
       Option(msg),
       details)
+
+  /**
+   * Error out with an Unauthorized (401) response.
+   * Detail will be converted to a json object.
+   *
+   * Note: Only use this within a Rest Action, and not a general action.
+   */
+  def UnauthorizedT[T](errorCode: String = null, msg: String = null, details: Option[T] =
+  None)(implicit format: OFormat[T]) =
+    throw new NaptimeActionException(UNAUTHORIZED,
+      Option(errorCode),
+      Option(msg)).withExceptionDetails(details)
 
   /**
    * Error out with an Forbidden (403) response.
@@ -127,6 +160,17 @@ trait Errors {
       Option(errorCode),
       Option(msg),
       details)
+
+  /**
+   * Error out with an Not Found (404) response.
+   * Detail will be converted to a json object.
+   *
+   * Note: Only use this within a Rest Action, and not a general action.
+   */
+  def NotFoundT[T](errorCode: String = null, msg: String = null, details: Option[T] = None)(implicit format: OFormat[T]) =
+    throw new NaptimeActionException(NOT_FOUND,
+      Option(errorCode),
+      Option(msg)).withExceptionDetails(details)
 
   import scala.reflect.runtime.universe.TypeTag
 
