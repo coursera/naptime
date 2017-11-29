@@ -25,18 +25,18 @@ trait PluginVersionProvider {
 
 trait NamedDependencies { this: PluginVersionProvider =>
   val courierRuntime = "org.coursera.courier" %% "courier-runtime" % courierVersion
-  val courscala = "org.coursera" %% "courscala" % "0.1.0"
+  val courscala = "org.coursera" %% "courscala" % "0.1.2"
   val governator = "com.netflix.governator" % "governator" % "1.10.5"
-  val guice = "com.google.inject" % "guice" % "4.0"
-  val guiceMultibindings = "com.google.inject.extensions" % "guice-multibindings" % "4.0"
+  val guice = "com.google.inject" % "guice" % "4.1.0"
+  val guiceMultibindings = "com.google.inject.extensions" % "guice-multibindings" % "4.1.0"
   val jodaConvert = "org.joda" % "joda-convert" % "1.2"
   val jodaTime = "joda-time" % "joda-time" % "2.2"
   val playJson = "com.typesafe.play" %% "play-json" % playJsonVersion
   val playTestCompile = ("com.typesafe.play" %% "play-test" % playVersion)
     .excludeAll(new ExclusionRule(organization="org.specs2"))
   val sangria = "org.sangria-graphql" %% "sangria" % "1.2.2"
-  val scalaGuice = "net.codingwell" %% "scala-guice" % "4.0.0"
-  val scalaLogging = "com.typesafe.scala-logging" %% "scala-logging" % "3.1.0"
+  val scalaGuice = "net.codingwell" %% "scala-guice" % "4.1.1"
+  val scalaLogging = "com.typesafe.scala-logging" %% "scala-logging" % "3.7.2"
 
   // Test dependencies
   val junitCompile = "junit" % "junit" % "4.11"
@@ -44,7 +44,7 @@ trait NamedDependencies { this: PluginVersionProvider =>
   val junitInterface = "com.novocode" % "junit-interface" % "0.11" % "test"
   val mockitoCompile = "org.mockito" % "mockito-all" % "1.9.5"
   val mockito = mockitoCompile % "test"
-  val scalatestCompile = "org.scalatest" %% "scalatest" % "3.0.1"
+  val scalatestCompile = "org.scalatest" %% "scalatest" % "3.0.4"
   val scalatest = scalatestCompile % "test"
 
 }
