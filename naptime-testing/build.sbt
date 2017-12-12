@@ -7,7 +7,7 @@ libraryDependencies ++= Seq(
   scalatestCompile,
   playTestCompile,
   mockitoCompile,
-  "com.chuusai" %% "shapeless" % "2.2.5" % "test" // Added for illTyped macro.
+  "com.chuusai" %% "shapeless" % "2.3.2" % "test" // Added for illTyped macro.
 )
 
 dependencyOverrides += playJson
