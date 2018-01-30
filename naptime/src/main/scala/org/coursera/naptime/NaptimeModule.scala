@@ -110,7 +110,8 @@ private[naptime] object NaptimeModuleHelpers {
     (implicit wtt: c.WeakTypeTag[Resource]): c.Tree = {
     import c.universe._
     val routerObject = typeOf[Router.type]
-    q"bindResourceRouterBuilder($routerObject.build[$wtt])"
+    q"""bindResourceRouterBuilder($routerObject.build[$wtt])
+       requireBinding(classOf[$wtt])"""
   }
 
 }
