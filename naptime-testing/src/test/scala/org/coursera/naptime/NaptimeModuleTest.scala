@@ -14,6 +14,7 @@ import org.coursera.naptime.model.KeyFormat
 import org.coursera.naptime.resources.TopLevelCollectionResource
 import org.coursera.naptime.router2.NaptimeRoutes
 import org.junit.Test
+import org.mockito.Mockito.mock
 import org.scalatest.junit.AssertionsForJUnit
 import play.api.libs.json.Json
 import play.api.libs.json.OFormat
@@ -37,6 +38,7 @@ object NaptimeModuleTest {
   object MyFakeModule extends NaptimeModule {
     override def configure(): Unit = {
       bindResource[MyResource]
+      bind[MyResource].toInstance(mock(classOf[MyResource]))
       bindSchemaType[Date](DataSchemaUtil.dataSchemaTypeToPrimitiveDataSchema(DataSchema.Type.LONG))
     }
   }
