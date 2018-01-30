@@ -48,8 +48,11 @@ object NaptimeBuild extends Build with NamedDependencies with PluginVersionProvi
     .in(file("naptime-testing"))
     .dependsOn(naptime % "test->test;compile->compile")
 
-  lazy val pegasus = configure(project)
+  lazy val pegasus = project
     .in(file("naptime-pegasus"))
+    .settings(testSettings)
+    .settings(headerSettings)
+    .settings(org.coursera.naptime.sbt.Sonatype.settings)
 
   lazy val examples = configure(project)
     .in(file("examples"))
