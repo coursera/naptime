@@ -5,7 +5,7 @@ routesGenerator := InjectedRoutesGenerator
 lazy val root = (project in file(".")).enablePlugins(PlayScala)
 
 libraryDependencies ++= Seq(
-  "org.coursera.courier" %% "courier-runtime" % "2.0.2",
+  "org.coursera.courier" %% "courier-runtime" % "2.1.4",
   cache
 )
 

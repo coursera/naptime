@@ -25,12 +25,12 @@ trait PluginVersionProvider {
 
 trait NamedDependencies { this: PluginVersionProvider =>
   val courierRuntime = "org.coursera.courier" %% "courier-runtime" % courierVersion
-  val courscala = "org.coursera" %% "courscala" % "0.1.2"
+  val courscala = "org.coursera" %% "courscala" % "0.1.3"
   val governator = "com.netflix.governator" % "governator" % "1.10.5"
   val guice = "com.google.inject" % "guice" % "4.1.0"
   val guiceMultibindings = "com.google.inject.extensions" % "guice-multibindings" % "4.1.0"
-  val jodaConvert = "org.joda" % "joda-convert" % "1.2"
-  val jodaTime = "joda-time" % "joda-time" % "2.2"
+  val jodaConvert = "org.joda" % "joda-convert" % "1.9.2"
+  val jodaTime = "joda-time" % "joda-time" % "2.9.9"
   val playJson = "com.typesafe.play" %% "play-json" % playJsonVersion
   val playTestCompile = ("com.typesafe.play" %% "play-test" % playVersion)
     .excludeAll(new ExclusionRule(organization="org.specs2"))
