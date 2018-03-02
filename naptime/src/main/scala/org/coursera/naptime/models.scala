@@ -49,7 +49,7 @@ class RestContext[+AuthType, +BodyType] private[naptime] (
     val includes: RequestIncludes,
     val fields: RequestFields) {
 
-  def request(implicit evidence: RequestEvidence): RequestHeader = _request
+  def request: RequestHeader = _request
   def acceptLanguages = _request.acceptLanguages
 
   /**
