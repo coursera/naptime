@@ -159,7 +159,7 @@ trait RestAction[RACType, AuthType, BodyType, KeyType, ResourceType, ResponseTyp
   /**
    * Invoke the rest action in production.
    */
-  final override def apply(rh: RequestHeader): Accumulator[ByteString, Result] = {
+  override def apply(rh: RequestHeader): Accumulator[ByteString, Result] = {
     val authResult = restAuth.run(rh) // Kick off the authentication check in parallel
     restBodyParser(rh).mapFuture {
       case Left(bodyError) =>
