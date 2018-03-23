@@ -44,7 +44,9 @@ import sangria.execution.QueryAnalysisError
 import sangria.parser.QueryParser
 import sangria.parser.SyntaxError
 import sangria.renderer.SchemaRenderer
+import sangria.slowlog.SlowLog
 
+import scala.concurrent.duration._
 import scala.concurrent.ExecutionContext
 import scala.concurrent.Future
 import scala.util.Failure
@@ -126,12 +128,19 @@ class GraphQLController @Inject() (
         case Success(queryAst) =>
           val baseFilter: IncomingQuery => Future[OutgoingQuery] = (incoming: IncomingQuery) => {
             val context = SangriaGraphQlContext(fetcher, requestHeader, ec, incoming.debugMode)
+            val slowLogMiddleware = if (incoming.debugMode) {
+                SlowLog.extension
+            } else {
+                SlowLog(logger.underlying, threshold = 10 seconds)
+            }
             Executor.execute(
               graphqlSchemaProvider.schema,
               queryAst,
               context,
               variables = variables,
-              middleware = List(new ResponseMetadataMiddleware(), metricsCollectionMiddleware),
+              middleware = List(
+                new ResponseMetadataMiddleware(),
+                metricsCollectionMiddleware) :+ slowLogMiddleware,
               exceptionHandler = GraphQLController.exceptionHandler(logger),
               deferredResolver = naptimeResolver)
               .map { executionResponse =>
