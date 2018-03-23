@@ -86,6 +86,7 @@ class UrlLoggingMiddlewareTest extends AssertionsForJUnit with MockitoSugar {
       field = courseField,
       parentType = mock[ObjectType[SangriaGraphQlContext, Any]],
       marshaller = mock[ResultMarshaller],
+      query = Document.emptyStub,
       sourceMapper = None,
       deprecationTracker = DeprecationTracker.empty,
       astFields = Vector.empty,

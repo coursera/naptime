@@ -150,6 +150,7 @@ object DefaultGraphqlSchemaProviderTest extends MockitoSugar {
     MergedInstructor.SCHEMA.getFullName -> MergedInstructor.SCHEMA,
     MergedPartner.SCHEMA.getFullName -> MergedPartner.SCHEMA)
 
+  // REFER TO https://github.com/sangria-graphql/sangria/blob/v1.4.0/src/main/scala/sangria/schema/package.scala#L175
   val DEFAULT_TYPES = Set(
     "ID",
     "root",

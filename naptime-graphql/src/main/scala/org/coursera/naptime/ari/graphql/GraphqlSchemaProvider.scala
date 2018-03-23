@@ -85,7 +85,7 @@ class DefaultGraphqlSchemaProvider @Inject() (schemaProvider: SchemaProvider)
     try {
       val builder = new SangriaGraphQlSchemaBuilder(latestSchema.resources, types)
       val schemaAndErrors = builder.generateSchema()
-      val graphQlSchema = schemaAndErrors.data.asInstanceOf[Schema[SangriaGraphQlContext, Any]]
+      val graphQlSchema = schemaAndErrors.data.asInstanceOf[Schema[SangriaGraphQlContext, Any]].copy(additionalTypes = sangria.schema.BuiltinScalars)
       fullSchema = latestSchema
       cachedSchema = graphQlSchema
 
@@ -122,7 +122,9 @@ object DefaultGraphqlSchemaProvider {
       "ArbitraryField",
       StringType,
       resolve = context => null))
-  val EMPTY_SCHEMA = Schema[SangriaGraphQlContext, Any](query = ObjectType[SangriaGraphQlContext, Any](name = "root", fields = EMPTY_FIELDS))
+  val EMPTY_SCHEMA = Schema[SangriaGraphQlContext, Any](
+    query = ObjectType[SangriaGraphQlContext, Any](name = "root", fields = EMPTY_FIELDS),
+    additionalTypes = sangria.schema.BuiltinScalars)
 
 }
 

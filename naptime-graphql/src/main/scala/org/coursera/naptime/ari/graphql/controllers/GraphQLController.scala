@@ -30,6 +30,7 @@ import org.coursera.naptime.ari.graphql.controllers.filters.OutgoingQuery
 import org.coursera.naptime.ari.graphql.controllers.middleware.GraphQLMetricsCollector
 import org.coursera.naptime.ari.graphql.controllers.middleware.MetricsCollectionMiddleware
 import org.coursera.naptime.ari.graphql.controllers.middleware.ResponseMetadataMiddleware
+import org.coursera.naptime.ari.graphql.controllers.middleware.SlowLogMiddleware
 import org.coursera.naptime.ari.graphql.marshaller.NaptimeMarshaller._
 import org.coursera.naptime.ari.graphql.resolvers.NaptimeResolver
 import play.api.libs.json.JsObject
@@ -38,13 +39,16 @@ import play.api.libs.json.JsValue
 import play.api.libs.json.Json
 import play.api.mvc._
 import sangria.execution.ErrorWithResolver
+import sangria.execution.ExceptionHandler
 import sangria.execution.Executor
 import sangria.execution.HandledException
 import sangria.execution.QueryAnalysisError
 import sangria.parser.QueryParser
 import sangria.parser.SyntaxError
 import sangria.renderer.SchemaRenderer
+import sangria.slowlog.SlowLog
 
+import scala.concurrent.duration._
 import scala.concurrent.ExecutionContext
 import scala.concurrent.Future
 import scala.util.Failure
@@ -131,7 +135,10 @@ class GraphQLController @Inject() (
               queryAst,
               context,
               variables = variables,
-              middleware = List(new ResponseMetadataMiddleware(), metricsCollectionMiddleware),
+              middleware = List(
+                new ResponseMetadataMiddleware(),
+                metricsCollectionMiddleware,
+                new SlowLogMiddleware(logger, incoming.debugMode)),
               exceptionHandler = GraphQLController.exceptionHandler(logger),
               deferredResolver = naptimeResolver)
               .map { executionResponse =>
@@ -174,10 +181,12 @@ class GraphQLController @Inject() (
 }
 
 object GraphQLController {
-  def exceptionHandler(logger: Logger): Executor.ExceptionHandler = {
+  def exceptionHandler(logger: Logger): ExceptionHandler = {
     // TODO(bryan): Check superuser status here before returning message
-    case (m, e: Exception) =>
-      logger.error("Uncaught query execution error", e)
-      HandledException(e.getMessage)
+    ExceptionHandler(onException = {
+        case (m, e: Exception) =>
+          logger.error("Uncaught query execution error", e)
+          HandledException(e.getMessage)
+    })
   }
 }

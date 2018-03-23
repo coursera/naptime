@@ -2,9 +2,9 @@ package org.coursera.naptime.ari.graphql.controllers.middleware
 
 import com.typesafe.scalalogging.StrictLogging
 import org.coursera.naptime.ari.graphql.SangriaGraphQlContext
+import sangria.execution.BeforeFieldResult
 import sangria.execution.MiddlewareErrorField
 import sangria.execution.MiddlewareQueryContext
-import sangria.schema.Action
 import sangria.schema.Context
 
 class MetricsCollectionMiddleware(
@@ -23,8 +23,8 @@ class MetricsCollectionMiddleware(
   override def beforeField(
       queryVal: Unit,
       mctx: MiddlewareQueryContext[SangriaGraphQlContext, _, _],
-      ctx: Context[SangriaGraphQlContext, _]): (Unit, Option[Action[SangriaGraphQlContext, _]]) =
-    (Unit, None)
+      ctx: Context[SangriaGraphQlContext, _]): BeforeFieldResult[SangriaGraphQlContext, FieldVal] =
+    BeforeFieldResult(Unit, None)
 
   override def fieldError(
       queryVal: QueryVal,

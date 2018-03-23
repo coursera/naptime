@@ -4,6 +4,7 @@ libraryDependencies ++= Seq(
   courierRuntime,
   playJson,
   sangria,
+  sangriaSlowLog,
   scalaLogging,
   junit,
   junitInterface,

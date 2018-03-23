@@ -18,6 +18,7 @@ import play.api.libs.json.JsObject
 import play.api.libs.json.JsString
 import play.api.libs.json.JsValue
 import play.api.libs.json.Json
+import sangria.execution.BeforeFieldResult
 import sangria.execution.MiddlewareErrorField
 
 import scala.collection.JavaConverters._
@@ -48,8 +49,8 @@ class ResponseMetadataMiddleware
   override def beforeField(
       queryVal: Unit,
       mctx: MiddlewareQueryContext[SangriaGraphQlContext, _, _],
-      ctx: Context[SangriaGraphQlContext, _]): (Unit, Option[Action[SangriaGraphQlContext, _]]) =
-    (Unit, None)
+      ctx: Context[SangriaGraphQlContext, _]): BeforeFieldResult[SangriaGraphQlContext, FieldVal] =
+    BeforeFieldResult(Unit, None)
 
   override def afterField(
       queryVal: Unit,
