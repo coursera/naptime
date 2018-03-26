@@ -8,4 +8,5 @@ record OldPlatformData {
    * Course not available message
    */
   notAvailableMessage: string
+  oldPlatformId: string
 }

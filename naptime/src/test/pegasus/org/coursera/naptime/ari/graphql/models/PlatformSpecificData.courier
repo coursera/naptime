@@ -1,0 +1,7 @@
+namespace org.coursera.naptime.ari.graphql.models
+
+@typedDefinition = {
+  "org.coursera.naptime.ari.graphql.models.OldPlatformData": "old",
+  "org.coursera.naptime.ari.graphql.models.NewPlatformData": "new"
+}
+typeref PlatformSpecificData = union[OldPlatformData, NewPlatformData]
