@@ -30,7 +30,7 @@ object NaptimeTypes {
       case _ => Left(DataMapCoercionViolation)
     },
     coerceInput = {
-      case StringValue(string, _, _) => stringToDataMapEither(string)
+      case StringValue(string, _, _, _, _) => stringToDataMapEither(string)
       case _ => Left(DataMapCoercionViolation)
     })
 }

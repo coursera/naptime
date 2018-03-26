@@ -49,24 +49,24 @@ object NaptimeUnionField {
       resourceName: ResourceName,
       currentPath: List[String]): UnionType[SangriaGraphQlContext] = {
 
-    val objects = unionDataSchema.getTypes.asScala.map { subType =>
+    val objects = unionDataSchema.getTypes.asScala.map { unionMember =>
 
       val typedDefinitions = getTypedDefinition(unionDataSchema).getOrElse(Map[String, String]())
 
-      val unionMemberKey = subType match {
-        case _ if typedDefinitions.contains(subType.getUnionMemberKey) =>
-          typedDefinitions(subType.getUnionMemberKey)
+      val unionMemberKey = unionMember match {
+        case _ if typedDefinitions.contains(unionMember.getUnionMemberKey) =>
+          typedDefinitions(unionMember.getUnionMemberKey)
         case namedType: NamedDataSchema
           if typedDefinitions.contains(namedType.getName)
             && unionDataSchema.getProperties.get(NAMESPACE_KEY) == namedType.getNamespace =>
           typedDefinitions(namedType.getName)
-        case _ => subType.getUnionMemberKey
+        case _ => unionMember.getUnionMemberKey
       }
 
       val unionMemberFieldName = FieldBuilder.formatName(unionMemberKey)
       val subTypeField = FieldBuilder.buildField(
         schemaMetadata,
-        new RecordDataSchemaField(subType),
+        new RecordDataSchemaField(unionMember),
         namespace,
         Some(unionMemberKey),
         resourceName = resourceName,

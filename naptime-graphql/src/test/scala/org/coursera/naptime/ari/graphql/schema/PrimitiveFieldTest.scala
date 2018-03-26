@@ -24,6 +24,7 @@ import org.coursera.naptime.ari.graphql.helpers.ArgumentBuilder
 import org.junit.Test
 import org.scalatest.junit.AssertionsForJUnit
 import org.scalatest.mockito.MockitoSugar
+import sangria.ast.Document
 import sangria.execution.DeprecationTracker
 import sangria.execution.ExecutionPath
 import sangria.marshalling.ResultMarshaller
@@ -52,6 +53,7 @@ class PrimitiveFieldTest extends AssertionsForJUnit with MockitoSugar {
       field = mock[Field[SangriaGraphQlContext, Val]],
       parentType = mock[ObjectType[SangriaGraphQlContext, Any]],
       marshaller = mock[ResultMarshaller],
+      query = Document.emptyStub,
       sourceMapper = None,
       deprecationTracker = DeprecationTracker.empty,
       astFields = Vector.empty,
