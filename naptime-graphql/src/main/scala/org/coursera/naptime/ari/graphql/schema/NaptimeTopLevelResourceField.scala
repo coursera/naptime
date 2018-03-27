@@ -115,7 +115,9 @@ object NaptimeTopLevelResourceField extends StrictLogging {
         currentPath = List.empty)
         .right
         .map { field =>
-          field.copy(arguments = arguments ++ field.arguments)
+          val newArguments = field.arguments.filterNot(newArg => arguments.map(_.name).contains(newArg.name))
+          logger.info(s"existing arguments: ${arguments.map(_.name)}\tnewArguments: ${newArguments.map(_.name)}")
+          field.copy(arguments = arguments ++ newArguments)
         }
     } else {
       Left(HasGetButMissingMultiGet(ResourceName.fromResource(resource)))
