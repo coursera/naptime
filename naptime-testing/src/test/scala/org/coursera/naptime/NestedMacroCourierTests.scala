@@ -19,6 +19,7 @@ import org.coursera.naptime.resources.CourierCollectionResource
 import org.coursera.naptime.router2.NaptimeRoutes
 import org.coursera.naptime.router2.Router
 import org.junit.Test
+import org.scalatest.concurrent.IntegrationPatience
 import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.junit.AssertionsForJUnit
 import play.api.libs.json.JsString
@@ -106,7 +107,8 @@ object NestedMacroCourierTests {
   val instructorRouter = Router.build[InstructorsResource]
 }
 
-class NestedMacroCourierTests extends AssertionsForJUnit with ScalaFutures with ResourceTestImplicits {
+class NestedMacroCourierTests extends AssertionsForJUnit with ScalaFutures with ResourceTestImplicits with IntegrationPatience {
+
 
   val implicitsModule = new Module {
     override def configure(binder: Binder): Unit = {
