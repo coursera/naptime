@@ -116,7 +116,7 @@ object NaptimeTopLevelResourceField extends StrictLogging {
         .right
         .map { field =>
           val newArguments = field.arguments.filterNot(newArg => arguments.map(_.name).contains(newArg.name))
-          logger.info(s"existing arguments: ${arguments.map(_.name)}\tnewArguments: ${newArguments.map(_.name)}")
+          logger.debug(s"existing arguments: ${arguments.map(_.name)}\tnewArguments: ${newArguments.map(_.name)}")
           field.copy(arguments = arguments ++ newArguments)
         }
     } else {
