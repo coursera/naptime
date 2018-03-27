@@ -1,0 +1,1 @@
+sonatypeProfileName := "org.coursera"
