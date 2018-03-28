@@ -180,11 +180,11 @@ class NaptimeResolver extends DeferredResolver[SangriaGraphQlContext] with Stric
         Request(
           header,
           resourceName,
-          nonIdArguments + ("ids" -> JsArray(mergeIds(innerRequests)))) -> innerRequests
+          nonIdArguments + ("ids" -> JsArray(parseAndMergeIds(innerRequests)))) -> innerRequests
       }
   }
 
-  private[this] def mergeIds(requests: Vector[NaptimeRequest]): Seq[JsValue] = {
+  private[this] def parseAndMergeIds(requests: Vector[NaptimeRequest]): Seq[JsValue] = {
     requests.flatMap(parseIds).distinct
   }
 
