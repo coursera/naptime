@@ -143,8 +143,7 @@ class NaptimeResolver extends DeferredResolver[SangriaGraphQlContext] with Stric
               }.toMap
               sourceRequests.map { sourceRequest =>
                 // TODO(bryan): Clean this up
-                val elements = parseAndDeduplicateIds(sourceRequest)
-                    .flatMap(parsedElementsMap.get).toList
+                val elements = parseIds(sourceRequest).flatMap(parsedElementsMap.get).toList
                 val url = successfulResponse.url.getOrElse("???")
                 sourceRequest.idx ->
                   Right[NaptimeError, NaptimeResponse](
@@ -181,29 +180,24 @@ class NaptimeResolver extends DeferredResolver[SangriaGraphQlContext] with Stric
         Request(
           header,
           resourceName,
-          nonIdArguments + ("ids" -> JsArray(parseAndDeduplicateIds(innerRequests)))) -> innerRequests
+          nonIdArguments + ("ids" -> JsArray(mergeIds(innerRequests)))) -> innerRequests
       }
   }
 
-  private[this] def parseAndDeduplicateIds(innerRequests: Vector[NaptimeRequest]): Vector[JsValue] = {
-    val parsedIds = for {
-      request <- innerRequests
-      id <- parseAndDeduplicateIds(request)
-    } yield id
-    parsedIds.distinct
+  private[this] def mergeIds(requests: Vector[NaptimeRequest]): Seq[JsValue] = {
+    requests.flatMap(parseIds).distinct
   }
 
-  private[this] def parseAndDeduplicateIds(request: NaptimeRequest): Seq[JsValue] = {
+  private[this] def parseIds(request: NaptimeRequest): Set[JsValue] = {
     request.arguments
-      .find(_._1 == "ids")
-      .map(_._2)
-      .map {
+      .collect {
+        case ("ids", ids) => ids
+      }
+      .flatMap {
         case JsArray(idValues) => idValues
         case value: JsValue => List(value)
       }
-      .getOrElse(List.empty).distinct
   }
-
 
   /**
     * Fetches reverse relations for a specific resource given a list of requests
