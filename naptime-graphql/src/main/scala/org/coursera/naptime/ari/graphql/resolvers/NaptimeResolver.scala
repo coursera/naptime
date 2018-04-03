@@ -188,15 +188,12 @@ class NaptimeResolver extends DeferredResolver[SangriaGraphQlContext] with Stric
     requests.flatMap(parseIds).distinct
   }
 
-  private[this] def parseIds(request: NaptimeRequest): Set[JsValue] = {
-    request.arguments
-      .collect {
-        case ("ids", ids) => ids
-      }
+  private[this] def parseIds(request: NaptimeRequest): Seq[JsValue] = {
+    request.arguments.toSeq.filter { case (key, _) => key == "ids"}.map(_._2)
       .flatMap {
         case JsArray(idValues) => idValues
         case value: JsValue => List(value)
-      }
+      }.distinct
   }
 
   /**
