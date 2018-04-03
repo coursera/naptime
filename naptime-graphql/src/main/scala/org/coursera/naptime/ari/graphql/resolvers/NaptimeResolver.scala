@@ -189,6 +189,7 @@ class NaptimeResolver extends DeferredResolver[SangriaGraphQlContext] with Stric
   }
 
   private[this] def parseIds(request: NaptimeRequest): Seq[JsValue] = {
+    // .toSeq here is to preserve id ordering in related resource id arrays
     request.arguments.toSeq.filter { case (key, _) => key == "ids" }.map(_._2)
       .flatMap {
         case JsArray(idValues) => idValues
