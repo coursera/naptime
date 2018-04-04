@@ -61,7 +61,7 @@ object StructuredAccessControl {
     Left(NaptimeActionException(
       Status.UNAUTHORIZED,
       Some("auth.perms"),
-      Some("Missing authentication")))
+      Some("Missing authentication: please try to login to your authentication provider (e.g., Google auth). ")))
   }
 
 }
