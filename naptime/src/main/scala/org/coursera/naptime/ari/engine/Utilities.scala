@@ -85,18 +85,16 @@ object Utilities extends StrictLogging {
 
     logger.trace(s"getValuesAtPath for path: $path with typedDefinitionMappings: $typedDefinitionMappings")
     getIterator()
-      // Filter out non-value types, so the below logic can focus on computing whether a value
-      // should be included because it satisfies the path.
       .filterNot(dataElement => {
-        val filteredSchemaTypes = Set(DataSchema.Type.ARRAY, DataSchema.Type.RECORD, DataSchema.Type.UNION)
-        Try(dataElement.getSchema.getType).isFailure ||
+        logInfoAboutDataElement(dataElement)
+        // Filter out non-value types, so the below logic can focus on computing whether a value
+        // should be included because it satisfies the path. NOTE: Records can potentially be
+        // value types, as they may be coerced to string ids.
+        val filteredSchemaTypes = Set(DataSchema.Type.ARRAY, DataSchema.Type.UNION)
+        dataElement.getSchema != null &&
           filteredSchemaTypes.contains(dataElement.getSchema.getType)
       })
       .filter(dataElement => {
-        logger.trace(s"Checking if value: `${dataElement.getValue.toString}` " +
-          s"(${dataElement.getSchema.getType}) at " +
-          s"${dataElement.pathAsString()} should be included...")
-
         // Substitute with typed definition names.
         // e.g `org.coursera.naptime.ari.graphql.models.OldPlatformData -> old` allows
         // for users to substitute the fully qualified path for a readable and stable path.
@@ -163,6 +161,19 @@ object Utilities extends StrictLogging {
         false
       case JsNull =>
         true
+    }
+  }
+
+  // Why is this function needed? `dataElement.getSchema` may return NULL.
+  private def logInfoAboutDataElement(dataElement: DataElement): Unit = {
+    if (dataElement.getSchema != null) {
+      logger.trace(s"Encountered DataElement at ${dataElement.pathAsString} " +
+        s"with value: `${dataElement.getValue.toString}`\t" +
+        s"Schema: ${dataElement.getSchema}\t" +
+        s"Type: ${dataElement.getSchema.getType}")
+    } else {
+      logger.debug(s"Encountered DataElement at ${dataElement.pathAsString} " +
+        s"with value: `${dataElement.getValue.toString}` and NULL SCHEMA...")
     }
   }
 }
