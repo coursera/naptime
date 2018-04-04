@@ -33,13 +33,14 @@ import play.api.libs.json.JsValue
 import play.api.libs.json.Json
 
 import scala.collection.JavaConverters._
+import scala.util.Try
 
 
 object Utilities extends StrictLogging {
   private val TYPED_DEFINITION_KEY = "typedDefinition"
   private def getTypedDefinitionMappings(elements: Iterator[DataElement]): Map[String, String] = {
     val typedDefinitionMappings: List[Map[String, String]] = elements.map { element =>
-      Option(element.getSchema.getProperties.get(TYPED_DEFINITION_KEY)).collect {
+      Try(element.getSchema.getProperties.get(TYPED_DEFINITION_KEY)).toOption.collect {
         case definitions: java.util.Map[String@unchecked, String@unchecked] =>
           definitions.asScala.toMap // toMap as the .asScala map is default mutable.
       }.getOrElse(Map.empty[String, String])
@@ -88,7 +89,8 @@ object Utilities extends StrictLogging {
       // should be included because it satisfies the path.
       .filterNot(dataElement => {
         val filteredSchemaTypes = Set(DataSchema.Type.ARRAY, DataSchema.Type.RECORD, DataSchema.Type.UNION)
-        filteredSchemaTypes.contains(dataElement.getSchema.getType)
+        Try(dataElement.getSchema.getType).isFailure ||
+          filteredSchemaTypes.contains(dataElement.getSchema.getType)
       })
       .filter(dataElement => {
         logger.trace(s"Checking if value: `${dataElement.getValue.toString}` " +
@@ -117,7 +119,8 @@ object Utilities extends StrictLogging {
           // path that contains the type information of the union [e.g `path = /myUnionedId`,
           // and `myUnionedId = union[int, string]`, then
           // the data for the provided path is under `/myUnionedId/string` or `/myUnionedId/int`.
-          (dataElement.getParent.getSchema.getType == DataSchema.Type.UNION &&
+          (Try(dataElement.getParent.getSchema.getType).isSuccess &&
+            dataElement.getParent.getSchema.getType == DataSchema.Type.UNION &&
             withArrayIndicesRemoved.dropRight(1) == path)
 
         logger.trace(s"Data element to be included? $shouldBeIncluded " +

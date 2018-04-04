@@ -162,7 +162,8 @@ object NaptimeResourceUtils extends StrictLogging {
 
     relation.arguments
       .mapValues { value =>
-        val interpolatedIds: List[String] = InterpolationRegex.findAllMatchIn(value).flatMap { regexMatch =>
+        val matches = InterpolationRegex.findAllMatchIn(value).toList
+        val interpolatedIds: List[String] = matches.flatMap { regexMatch =>
           val withoutBraces = Option(regexMatch.group("withoutBraces"))
           val withBraces = Option(regexMatch.group("withBraces"))
           val variableName = withoutBraces.orElse(withBraces).getOrElse("")
@@ -170,10 +171,12 @@ object NaptimeResourceUtils extends StrictLogging {
             data.parentModel.value,
             data.parentModel.schema,
             variableName.split(INTERPOLATION_PATH_SPLIT_REGEX))
-        }.toList
+        }
         if (interpolatedIds.isEmpty) {
           logger.debug(s"Arguments: $value did not result in id interpolation")
-          List(value)
+          // If we wanted to interpolate but no value is found for the data, then return an empty list.
+          // Else, return the original value, which we take to be a hard coded constant.
+          if (matches.nonEmpty) List.empty else List(value)
         } else {
           val interpolatedIdsWithNonIdParts = interpolatedIds.map { id => InterpolationRegex.replaceAllIn(value, id) }
           logger.debug(s"Arguments: $value\tInterpolated ids: $interpolatedIds" +
