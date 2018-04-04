@@ -16,7 +16,6 @@
 
 package org.coursera.naptime.ari.graphql.schema
 
-import com.linkedin.data.DataList
 import com.typesafe.scalalogging.StrictLogging
 import org.coursera.naptime.ResourceName
 import org.coursera.naptime.ari.engine.Utilities
@@ -46,6 +45,11 @@ import scala.util.matching.Regex
 object NaptimeResourceUtils extends StrictLogging {
   private[this] val PAGINATION_ARGUMENT_NAMES: List[String] =
     NaptimePaginationField.paginationArguments.map(_.name)
+
+  // Why do we not allow splitting on `.`? Because fully qualified paths for Pegasus unions
+  // are of the form `a.b.my.namespace.MyModel` which makes splitting on dots incorrect as dots
+  // may denote either a path delimiter or a namespace delimiter.
+  private[this] val INTERPOLATION_PATH_SPLIT_REGEX = "/"
 
   def generateHandlerArguments(
       handler: Handler,
@@ -158,24 +162,27 @@ object NaptimeResourceUtils extends StrictLogging {
 
     relation.arguments
       .mapValues { value =>
-        InterpolationRegex.replaceAllIn(
-          value, { regexMatch =>
-            val withoutBraces = Option(regexMatch.group("withoutBraces"))
-            val withBraces = Option(regexMatch.group("withBraces"))
-            val variableName = withoutBraces.orElse(withBraces).getOrElse("")
-            val fieldName = variableName.split("/").last
-            Utilities.getValueAtPath(
-              data.parentModel.value,
-              data.parentModel.schema,
-              variableName.split("/")).map {
-              case dataList: DataList => dataList.asScala.mkString(",")
-              case other: Any => other.toString
-            }.getOrElse("")
-          })
+        val interpolatedIds: List[String] = InterpolationRegex.findAllMatchIn(value).flatMap { regexMatch =>
+          val withoutBraces = Option(regexMatch.group("withoutBraces"))
+          val withBraces = Option(regexMatch.group("withBraces"))
+          val variableName = withoutBraces.orElse(withBraces).getOrElse("")
+          Utilities.getValuesAtPath(
+            data.parentModel.value,
+            data.parentModel.schema,
+            variableName.split(INTERPOLATION_PATH_SPLIT_REGEX))
+        }.toList
+        if (interpolatedIds.isEmpty) {
+          logger.debug(s"Arguments: $value did not result in id interpolation")
+          List(value)
+        } else {
+          val interpolatedIdsWithNonIdParts = interpolatedIds.map { id => InterpolationRegex.replaceAllIn(value, id) }
+          logger.debug(s"Arguments: $value\tInterpolated ids: $interpolatedIds" +
+            s"\tArguments with interpolation: $interpolatedIdsWithNonIdParts")
+          interpolatedIdsWithNonIdParts
+        }
       }
-      .filterNot(_._2.isEmpty)
       .mapValues { value =>
-        val values = value.split(",").map(NaptimeResourceUtils.parseToJson)
+        val values = value.map(NaptimeResourceUtils.parseToJson)
         if (values.length > 1) {
           JsArray(values)
         } else {

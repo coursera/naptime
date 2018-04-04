@@ -23,27 +23,89 @@ import org.scalatest.junit.AssertionsForJUnit
 import org.scalatest.mockito.MockitoSugar
 import org.coursera.naptime.ari.graphql.Models
 import org.coursera.naptime.ari.graphql.models.MergedCourse
+import org.coursera.naptime.ari.graphql.models.MergedCourses
 import org.coursera.naptime.schema.RelationType
 import org.coursera.naptime.schema.ReverseRelationAnnotation
+import play.api.libs.json.JsArray
 import play.api.libs.json.JsString
 
 class NaptimeResourceUtilsTest extends AssertionsForJUnit with MockitoSugar {
 
-  val testCourse = DataMapWithParent(
-    Models.COURSE_A.data(),
-    ParentModel(ResourceName("courses", 1), Models.COURSE_A.data(), MergedCourse.SCHEMA))
-
-  val finderRelation = ReverseRelationAnnotation(
-    resourceName = "courses.v1",
-    arguments = StringMap(Map("id" -> "COURSE~$id", "q" -> "byId")),
-    relationType = RelationType.FINDER)
-
   @Test
-  def interpolateArguments(): Unit = {
+  def interpolateArgumentsSingleElement(): Unit = {
+
+    val testCourse = DataMapWithParent(
+      Models.COURSE_A.data(),
+      ParentModel(ResourceName("courses", 1), Models.COURSE_A.data(), MergedCourse.SCHEMA))
+
+    val finderRelation = ReverseRelationAnnotation(
+      resourceName = "courses.v1",
+      arguments = StringMap(Map("id" -> "COURSE~$id", "q" -> "byId")),
+      relationType = RelationType.FINDER)
+
     val interpolatedArguments =
       NaptimeResourceUtils.interpolateArguments(testCourse, finderRelation).toMap
     assert(interpolatedArguments("id") === JsString(s"COURSE~${Models.COURSE_A.id}"))
     assert(interpolatedArguments("q") === JsString("byId"))
   }
 
+  @Test
+  def interpolateArgumentsMultipleElementsFromArray(): Unit = {
+
+    val testCourse = DataMapWithParent(
+      Models.COURSE_A.data(),
+      ParentModel(ResourceName("instructors", 1), Models.COURSE_A.data(), MergedCourse.SCHEMA))
+
+    val finderRelation = ReverseRelationAnnotation(
+      resourceName = "instructors.v1",
+      arguments = StringMap(Map("ids" -> "INSTRUCTOR~${instructorIds}")),
+      relationType = RelationType.MULTI_GET)
+
+    val interpolatedArguments =
+      NaptimeResourceUtils.interpolateArguments(testCourse, finderRelation).toMap
+    val expectedInstructorIds = Models.COURSE_A.instructorIds.map(id => JsString(s"INSTRUCTOR~$id"))
+    assert(interpolatedArguments("ids") === JsArray(expectedInstructorIds))
+  }
+
+  @Test
+  def interpolateArgumentsMultipleElementsFromArrayOfRecords(): Unit = {
+
+    val testCourse = DataMapWithParent(
+      Models.COURSES.data(),
+      ParentModel(ResourceName("courses", 1), Models.COURSES.data(), MergedCourses.SCHEMA))
+
+    val multiGetRelation = ReverseRelationAnnotation(
+      resourceName = "courses.v1",
+      arguments = StringMap(Map("ids" -> "COURSE~${courses/id}")),
+      relationType = RelationType.MULTI_GET)
+
+
+    val interpolatedArguments =
+      NaptimeResourceUtils.interpolateArguments(testCourse, multiGetRelation).toMap
+    val expectedCourseIds = JsArray(List(
+      JsString(s"COURSE~${Models.COURSE_A.id}"),
+      JsString(s"COURSE~${Models.COURSE_B.id}")))
+    assert(interpolatedArguments("ids") === expectedCourseIds)
+  }
+
+  @Test
+  def interpolateArgumentsMultipleElementsWithTypedDefinitions(): Unit = {
+
+    val testCourse = DataMapWithParent(
+      Models.COURSES.data(),
+      ParentModel(ResourceName("oldCourses", 1), Models.COURSES.data(), MergedCourses.SCHEMA))
+
+    val multiGetRelation = ReverseRelationAnnotation(
+      resourceName = "oldCourses.v1",
+      arguments = StringMap(Map("ids" -> "OLD_COURSE~${courses/platformSpecificData/old/oldPlatformId}")),
+      relationType = RelationType.MULTI_GET)
+
+
+    val interpolatedArguments =
+      NaptimeResourceUtils.interpolateArguments(testCourse, multiGetRelation).toMap
+    val expectedCourseIds = JsArray(List(
+      JsString(s"OLD_COURSE~${Models.oldCourseIdA}"),
+      JsString(s"OLD_COURSE~${Models.oldCourseIdB}")))
+    assert(interpolatedArguments("ids") === expectedCourseIds)
+  }
 }

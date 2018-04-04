@@ -15,7 +15,7 @@ record MergedCourse {
 
   originalId: union[int, string]
 
-  platformSpecificData: union[OldPlatformData, NewPlatformData]
+  platformSpecificData: PlatformSpecificData
 
   coursePlatform: array[enum CoursePlatform {OldPlatform NewPlatform}]
 

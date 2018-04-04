@@ -6,7 +6,9 @@ import org.coursera.naptime.ari.graphql.models.AnyData
 import org.coursera.naptime.ari.graphql.models.Coordinates
 import org.coursera.naptime.ari.graphql.models.CoursePlatform
 import org.coursera.naptime.ari.graphql.models.MergedCourse
-import org.coursera.naptime.ari.graphql.models.MergedCourse.PlatformSpecificData.OldPlatformDataMember
+import org.coursera.naptime.ari.graphql.models.MergedCourse.OriginalId.StringMember
+import org.coursera.naptime.ari.graphql.models.PlatformSpecificData.OldPlatformDataMember
+import org.coursera.naptime.ari.graphql.models.MergedCourses
 import org.coursera.naptime.ari.graphql.models.MergedInstructor
 import org.coursera.naptime.ari.graphql.models.MergedPartner
 import org.coursera.naptime.ari.graphql.models.OldPlatformData
@@ -155,15 +157,22 @@ object Models {
     className = "",
     attributes = List.empty)
 
+  val oldPlatformNotAvailableMessageA = "Not Available."
+  val oldPlatformNotAvailableMessageB = "Still Not Available."
+
+  val oldCourseIdA = "oldCourseIdA"
+  val oldCourseIdB = "oldCourseIdB"
+
+  val originalId = StringMember("originalIdValue")
   val COURSE_A = MergedCourse(
     id = "courseAId",
     name = "Machine Learning",
     slug = "machine-learning",
     description = Some("An awesome course on machine learning."),
-    instructorIds = List("instructor1Id"),
+    instructorIds = List("instructor1Id", "instructor2Id"),
     partnerId = 123,
-    originalId = "",
-    platformSpecificData = OldPlatformDataMember(OldPlatformData("Not Available.")),
+    originalId = originalId,
+    platformSpecificData = OldPlatformDataMember(OldPlatformData(oldPlatformNotAvailableMessageA, oldCourseIdA)),
     coursePlatform = List(CoursePlatform.NewPlatform),
     arbitraryData = AnyData.build(new DataMap(), DataConversion.SetReadOnly))
   val COURSE_B = MergedCourse(
@@ -174,9 +183,10 @@ object Models {
     instructorIds = List("instructor2Id"),
     partnerId = 123,
     originalId = "",
-    platformSpecificData = OldPlatformDataMember(OldPlatformData("Not Available.")),
+    platformSpecificData = OldPlatformDataMember(OldPlatformData(oldPlatformNotAvailableMessageB, oldCourseIdB)),
     coursePlatform = List(CoursePlatform.NewPlatform),
     arbitraryData = AnyData.build(new DataMap(), DataConversion.SetReadOnly))
+  val COURSES = MergedCourses(courses = List(COURSE_A, COURSE_B))
 
   val INSTRUCTOR_1 = MergedInstructor(
     id = "instructor1Id",
