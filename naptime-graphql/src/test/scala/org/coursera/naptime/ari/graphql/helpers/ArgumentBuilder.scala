@@ -9,7 +9,8 @@ object ArgumentBuilder {
   def buildArgs(argumentDefinitions: List[Argument[_]], argumentInputs: Map[String, Any]): Args = {
     val argsWithDefault = argumentDefinitions.filter(_.defaultValue.isDefined).map(_.name).toSet
     val optionalArgs = argumentDefinitions.filter(_.inputValueType.isOptional).map(_.name).toSet
-    val undefinedArgs = argumentDefinitions.map(_.name)
+    val undefinedArgs = argumentDefinitions
+      .map(_.name)
       .filterNot(argsWithDefault.contains)
       .filterNot(optionalArgs.contains)
       .filterNot(argumentInputs.contains)

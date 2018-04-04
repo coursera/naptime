@@ -36,9 +36,10 @@ import play.api.mvc.Results
 import scala.concurrent.Future
 import scala.language.existentials
 
-class NestingCollectionResourceRouter[CollectionResourceType <: CollectionResource[_, _, _]] (
+class NestingCollectionResourceRouter[CollectionResourceType <: CollectionResource[_, _, _]](
     val resourceInstance: CollectionResourceType)
-  extends ResourceRouter with StrictLogging {
+    extends ResourceRouter
+    with StrictLogging {
 
   override type ResourceClass = CollectionResourceType
 
@@ -54,7 +55,7 @@ class NestingCollectionResourceRouter[CollectionResourceType <: CollectionResour
 
   /**
    * Helper method to convert an opt path key to the ancestor keys.
- *
+   *
    * @param pathKey The opt path key to convert.
    * @return
    */
@@ -88,7 +89,9 @@ class NestingCollectionResourceRouter[CollectionResourceType <: CollectionResour
         // Note: we centralize here the casting required to get the compiler to believe us.
         val pathKey: Either[resourceInstance.OptPathKey, resourceInstance.PathKey] =
           if (pathKeyOpt.head.isDefined) {
-            Right((pathKeyOpt.head.get ::: pathKeyOpt.tail).asInstanceOf[resourceInstance.PathKey])
+            Right(
+              (pathKeyOpt.head.get ::: pathKeyOpt.tail)
+                .asInstanceOf[resourceInstance.PathKey])
           } else {
             Left(pathKeyOpt)
           }
@@ -103,11 +106,11 @@ class NestingCollectionResourceRouter[CollectionResourceType <: CollectionResour
       requestHeader: RequestHeader,
       pathKey: Either[resourceInstance.OptPathKey, resourceInstance.PathKey]): RouteAction = {
     requestHeader.method match {
-      case "GET" => buildGetHandler(requestHeader, pathKey)
-      case "POST" => buildPostHandler(requestHeader, pathKey)
-      case "PUT" => buildPutHandler(requestHeader, pathKey)
-      case "DELETE" => buildDeleteHandler(requestHeader, pathKey)
-      case "PATCH" => buildPatchHandler(requestHeader, pathKey)
+      case "GET"           => buildGetHandler(requestHeader, pathKey)
+      case "POST"          => buildPostHandler(requestHeader, pathKey)
+      case "PUT"           => buildPutHandler(requestHeader, pathKey)
+      case "DELETE"        => buildDeleteHandler(requestHeader, pathKey)
+      case "PATCH"         => buildPatchHandler(requestHeader, pathKey)
       case unknown: String => errorRoute(s"Unknown HTTP method '$unknown'.")
     }
   }
@@ -119,37 +122,43 @@ class NestingCollectionResourceRouter[CollectionResourceType <: CollectionResour
       executeGet(requestHeader, pathKey.right.get)
     } else {
       val optPathKey = pathKey.left.get
-      requestHeader.queryString.get("q").map { queryStr =>
-        if (queryStr.isEmpty) {
-          errorRoute("Must provide a finder name.")
-        } else if (queryStr.length != 1) {
-          errorRoute("Must provide only one finder name.")
-        } else {
-          executeFinder(requestHeader, optPathKey, queryStr.head)
-        }
-      }.getOrElse {
-        requestHeader.queryString.get("ids").map { queryStr =>
+      requestHeader.queryString
+        .get("q")
+        .map { queryStr =>
           if (queryStr.isEmpty) {
-            errorRoute("Must provide an 'ids' query parameter.")
+            errorRoute("Must provide a finder name.")
           } else if (queryStr.length != 1) {
-            errorRoute("Must provide only one 'ids' query parameter.")
+            errorRoute("Must provide only one finder name.")
           } else {
-            val idsOrError = parseIds[resourceInstance.KeyType](
-              queryStr.head,
-              resourceInstance.keyFormat.stringKeyFormat)
-            idsOrError.right.map { ids =>
-              // Note: we have to cast to get the Scala compiler to believe us, even though
-              // Intellij sees this cast as redundant.
-              executeMultiGet(
-                requestHeader,
-                optPathKey,
-                ids.asInstanceOf[Set[resourceInstance.KeyType]])
-            }.merge
+            executeFinder(requestHeader, optPathKey, queryStr.head)
           }
-        }.getOrElse {
-          executeGetAll(requestHeader, optPathKey)
         }
-      }
+        .getOrElse {
+          requestHeader.queryString
+            .get("ids")
+            .map { queryStr =>
+              if (queryStr.isEmpty) {
+                errorRoute("Must provide an 'ids' query parameter.")
+              } else if (queryStr.length != 1) {
+                errorRoute("Must provide only one 'ids' query parameter.")
+              } else {
+                val idsOrError = parseIds[resourceInstance.KeyType](
+                  queryStr.head,
+                  resourceInstance.keyFormat.stringKeyFormat)
+                idsOrError.right.map { ids =>
+                  // Note: we have to cast to get the Scala compiler to believe us, even though
+                  // Intellij sees this cast as redundant.
+                  executeMultiGet(
+                    requestHeader,
+                    optPathKey,
+                    ids.asInstanceOf[Set[resourceInstance.KeyType]])
+                }.merge
+              }
+            }
+            .getOrElse {
+              executeGetAll(requestHeader, optPathKey)
+            }
+        }
     }
   }
 
@@ -157,17 +166,20 @@ class NestingCollectionResourceRouter[CollectionResourceType <: CollectionResour
       requestHeader: RequestHeader,
       pathKey: Either[resourceInstance.OptPathKey, resourceInstance.PathKey]): RouteAction = {
     if (pathKey.isLeft) {
-      requestHeader.queryString.get("action").map { queryStr =>
-        if (queryStr.isEmpty) {
-          errorRoute("Must provide an action name.")
-        } else if (queryStr.length == 1) {
-          executeAction(requestHeader, pathKey.left.get, queryStr.head)
-        } else {
-          errorRoute("Must provide only one action name.")
+      requestHeader.queryString
+        .get("action")
+        .map { queryStr =>
+          if (queryStr.isEmpty) {
+            errorRoute("Must provide an action name.")
+          } else if (queryStr.length == 1) {
+            executeAction(requestHeader, pathKey.left.get, queryStr.head)
+          } else {
+            errorRoute("Must provide only one action name.")
+          }
         }
-      }.getOrElse {
-        executeCreate(requestHeader, pathKey.left.get)
-      }
+        .getOrElse {
+          executeCreate(requestHeader, pathKey.left.get)
+        }
     } else {
       errorRoute("Post only to the collection resource, not individual elements.")
     }
@@ -176,31 +188,37 @@ class NestingCollectionResourceRouter[CollectionResourceType <: CollectionResour
   private[this] def buildPutHandler(
       requestHeader: RequestHeader,
       pathKey: Either[resourceInstance.OptPathKey, resourceInstance.PathKey]): RouteAction = {
-    pathKey.right.toOption.map { pathKey =>
-      executePut(requestHeader, pathKey)
-    }.getOrElse {
-      idRequired
-    }
+    pathKey.right.toOption
+      .map { pathKey =>
+        executePut(requestHeader, pathKey)
+      }
+      .getOrElse {
+        idRequired
+      }
   }
 
   private[this] def buildDeleteHandler(
       requestHeader: RequestHeader,
       pathKey: Either[resourceInstance.OptPathKey, resourceInstance.PathKey]): RouteAction = {
-    pathKey.right.toOption.map { pathKey =>
-      executeDelete(requestHeader, pathKey)
-    }.getOrElse {
-      idRequired
-    }
+    pathKey.right.toOption
+      .map { pathKey =>
+        executeDelete(requestHeader, pathKey)
+      }
+      .getOrElse {
+        idRequired
+      }
   }
 
   private[this] def buildPatchHandler(
       requestHeader: RequestHeader,
       pathKey: Either[resourceInstance.OptPathKey, resourceInstance.PathKey]): RouteAction = {
-    pathKey.right.toOption.map { pathKey =>
-      executePatch(requestHeader, pathKey)
-    }.getOrElse {
-      idRequired
-    }
+    pathKey.right.toOption
+      .map { pathKey =>
+        executePatch(requestHeader, pathKey)
+      }
+      .getOrElse {
+        idRequired
+      }
   }
 
   protected[this] def executeGet(
@@ -286,12 +304,12 @@ class NestingCollectionResourceRouter[CollectionResourceType <: CollectionResour
     // TODO(saeta): check length of idStrings to make sure it's not too long. (Potential DoS.)
     val idStrings = queryString.split("(?<!\\\\),")
     val ids = idStrings.flatMap { idStr =>
-        val parsed = parser.reads(StringKey(idStr))
-        if (parsed.isEmpty) {
-          error = Some(errorRoute(s"Could not parse key '$idStr'")) // TODO: truncate if too long.
-        }
-        parsed
-      }.toSet
+      val parsed = parser.reads(StringKey(idStr))
+      if (parsed.isEmpty) {
+        error = Some(errorRoute(s"Could not parse key '$idStr'")) // TODO: truncate if too long.
+      }
+      parsed
+    }.toSet
     error.toLeft(ids)
   }
 
@@ -300,9 +318,9 @@ class NestingCollectionResourceRouter[CollectionResourceType <: CollectionResour
 
 object NestingCollectionResourceRouter {
   private[naptime] def errorRoute(
-    resourceClass: Class[_],
-    msg: String,
-    statusCode: Int = Status.BAD_REQUEST): RouteAction = {
+      resourceClass: Class[_],
+      msg: String,
+      statusCode: Int = Status.BAD_REQUEST): RouteAction = {
 
     new EssentialAction with RequestTaggingHandler {
       override def apply(request: RequestHeader): Accumulator[ByteString, Result] = {

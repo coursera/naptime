@@ -44,21 +44,25 @@ private[access] trait SuccessfulOf {
   def successfulOf[A](
       controls: immutable.Seq[HeaderAccessControl[A]]): HeaderAccessControl[Set[A]] = {
     new HeaderAccessControl[Set[A]] {
-      override def run(
-          requestHeader: RequestHeader)
-          (implicit ec: ExecutionContext): Future[Either[NaptimeActionException, Set[A]]] = {
+      override def run(requestHeader: RequestHeader)(
+          implicit ec: ExecutionContext): Future[Either[NaptimeActionException, Set[A]]] = {
         Future
           .traverse(controls) { control =>
             Futures.safelyCall(control.run(requestHeader))
-          }.map { results =>
-            val successes = results.collect { case Right(authentication) => authentication }
-            lazy val firstErrorOption = results.collectFirst { case Left(error) => error }
+          }
+          .map { results =>
+            val successes = results.collect {
+              case Right(authentication) => authentication
+            }
+            lazy val firstErrorOption = results.collectFirst {
+              case Left(error) => error
+            }
             if (successes.nonEmpty) {
               Right(successes.toSet)
             } else {
               firstErrorOption match {
                 case Some(error) => Left(error)
-                case None => badAccessControlsResponse
+                case None        => badAccessControlsResponse
               }
             }
           }
@@ -75,10 +79,11 @@ private[access] trait SuccessfulOf {
 object SuccessfulOf {
 
   private[combiner] val badAccessControlsResponse = {
-    Left(NaptimeActionException(
-      Status.UNAUTHORIZED,
-      Some("auth.perms"),
-      Some("Invalid access control configuration")))
+    Left(
+      NaptimeActionException(
+        Status.UNAUTHORIZED,
+        Some("auth.perms"),
+        Some("Invalid access control configuration")))
   }
 
 }

@@ -32,12 +32,11 @@ private[access] trait And {
   /** See [[And]]. */
   def and[A, B](
       controlA: HeaderAccessControl[A],
-      controlB: HeaderAccessControl[B]):
-    HeaderAccessControl[(A, B)] = {
+      controlB: HeaderAccessControl[B]): HeaderAccessControl[(A, B)] = {
 
     new HeaderAccessControl[(A, B)] {
-      override def run(requestHeader: RequestHeader)(implicit ec: ExecutionContext):
-        Future[Either[NaptimeActionException, (A, B)]] = {
+      override def run(requestHeader: RequestHeader)(
+          implicit ec: ExecutionContext): Future[Either[NaptimeActionException, (A, B)]] = {
 
         val futureA = Futures.safelyCall(controlA.run(requestHeader))
         val futureB = Futures.safelyCall(controlB.run(requestHeader))
@@ -50,17 +49,18 @@ private[access] trait And {
             case (Right(authenticationA), Right(authenticationB)) =>
               Right((authenticationA, authenticationB))
             case _ =>
-              List(resultA, resultB)
-                .collectFirst { case Left(error) => Left(error) }
-                .head
+              List(resultA, resultB).collectFirst {
+                case Left(error) => Left(error)
+              }.head
           }
         }
       }
-      override private[naptime] def check(authInfo: (A, B)): Either[NaptimeActionException, (A, B)] = {
+      override private[naptime] def check(
+          authInfo: (A, B)): Either[NaptimeActionException, (A, B)] = {
         (controlA.check(authInfo._1), controlB.check(authInfo._2)) match {
           case (Right(resultA), Right(resultB)) => Right((resultA, resultB))
-          case (Left(err), _) => Left(err)
-          case (_, Left(err)) => Left(err)
+          case (Left(err), _)                   => Left(err)
+          case (_, Left(err))                   => Left(err)
         }
       }
     }
@@ -70,12 +70,11 @@ private[access] trait And {
   def and[A, B, C](
       controlA: HeaderAccessControl[A],
       controlB: HeaderAccessControl[B],
-      controlC: HeaderAccessControl[C]):
-    HeaderAccessControl[(A, B, C)] = {
+      controlC: HeaderAccessControl[C]): HeaderAccessControl[(A, B, C)] = {
 
     new HeaderAccessControl[(A, B, C)] {
-      override def run(requestHeader: RequestHeader)(implicit ec: ExecutionContext):
-        Future[Either[NaptimeActionException, (A, B, C)]] = {
+      override def run(requestHeader: RequestHeader)(
+          implicit ec: ExecutionContext): Future[Either[NaptimeActionException, (A, B, C)]] = {
 
         val futureA = Futures.safelyCall(controlA.run(requestHeader))
         val futureB = Futures.safelyCall(controlB.run(requestHeader))
@@ -90,19 +89,20 @@ private[access] trait And {
             case (Right(authenticationA), Right(authenticationB), Right(authenticationC)) =>
               Right((authenticationA, authenticationB, authenticationC))
             case _ =>
-              List(resultA, resultB)
-                .collectFirst { case Left(error) => Left(error) }
-                .head
+              List(resultA, resultB).collectFirst {
+                case Left(error) => Left(error)
+              }.head
           }
         }
       }
 
-      override private[naptime] def check(authInfo: (A, B, C)): Either[NaptimeActionException, (A, B, C)] = {
+      override private[naptime] def check(
+          authInfo: (A, B, C)): Either[NaptimeActionException, (A, B, C)] = {
         (controlA.check(authInfo._1), controlB.check(authInfo._2), controlC.check(authInfo._3)) match {
           case (Right(a), Right(b), Right(c)) => Right((a, b, c))
-          case (Left(err), _, _) => Left(err)
-          case (_, Left(err), _) => Left(err)
-          case (_, _, Left(err)) => Left(err)
+          case (Left(err), _, _)              => Left(err)
+          case (_, Left(err), _)              => Left(err)
+          case (_, _, Left(err))              => Left(err)
         }
       }
     }

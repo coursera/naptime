@@ -37,8 +37,8 @@ private[courier] object CourierTestFixtures {
        |}
        |""".stripMargin
 
-  val pegasusUnionSchema = DataTemplateUtil.parseSchema(
-    """
+  val pegasusUnionSchema =
+    DataTemplateUtil.parseSchema("""
       |{
       |  "name": "TypedDefinitionExample1",
       |  "type": "record",
@@ -111,8 +111,8 @@ private[courier] object CourierTestFixtures {
        |}
        |""".stripMargin
 
-  val typedDefinitionSchema = DataTemplateUtil.parseSchema(
-    """
+  val typedDefinitionSchema =
+    DataTemplateUtil.parseSchema("""
       |{
       |  "name": "TypedDefinitionExample1",
       |  "type": "record",
@@ -154,7 +154,7 @@ private[courier] object CourierTestFixtures {
     new TypedDefinitionCodec(typedDefinitionSchema, prettyPrinter, true)
 
   class TypedDefinitionRecord(private val dataMap: DataMap)
-    extends RecordTemplate(dataMap, TypedDefinitionRecord.SCHEMA) {
+      extends RecordTemplate(dataMap, TypedDefinitionRecord.SCHEMA) {
     dataMap.makeReadOnly()
   }
 
@@ -166,8 +166,8 @@ private[courier] object CourierTestFixtures {
     }
   }
 
-  val flatTypedDefinitionSchema = DataTemplateUtil.parseSchema(
-    """
+  val flatTypedDefinitionSchema =
+    DataTemplateUtil.parseSchema("""
       |{
       |  "name": "TypedDefinitionExample1",
       |  "type": "record",
@@ -206,7 +206,7 @@ private[courier] object CourierTestFixtures {
     new TypedDefinitionCodec(flatTypedDefinitionSchema, jsonCodec)
 
   class FlatTypedDefinitionRecord(private val dataMap: DataMap)
-    extends RecordTemplate(dataMap, FlatTypedDefinitionRecord.SCHEMA) {
+      extends RecordTemplate(dataMap, FlatTypedDefinitionRecord.SCHEMA) {
     dataMap.makeReadOnly()
   }
 
@@ -483,7 +483,7 @@ private[courier] object CourierTestFixtures {
   val complexCodec = new TypedDefinitionCodec(complexSchema, jsonCodec)
 
   class MockRecord(private val dataMap: DataMap)
-    extends RecordTemplate(dataMap, MockRecord.SCHEMA) {
+      extends RecordTemplate(dataMap, MockRecord.SCHEMA) {
     dataMap.makeReadOnly()
   }
 
@@ -508,7 +508,7 @@ private[courier] object CourierTestFixtures {
   }
 
   class MockTyperefUnion(private val dataMap: DataMap)
-    extends UnionTemplate(dataMap, MockTyperefUnion.SCHEMA) {
+      extends UnionTemplate(dataMap, MockTyperefUnion.SCHEMA) {
     dataMap.makeReadOnly()
   }
 

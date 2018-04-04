@@ -47,7 +47,8 @@ class DecoratorTest extends AssertionsForJUnit with ScalaFutures with ResourceTe
 
   @Test
   def compositionFailingFirst(): Unit = {
-    val decorator1 = Decorator.function[String, Int](a => Future.failed(new RuntimeException("err")))
+    val decorator1 =
+      Decorator.function[String, Int](a => Future.failed(new RuntimeException("err")))
     val decorator2 = Decorator.function[Int, Int](i => Future.successful(Right(i + 3)))
     val result = decorator1.andThen(decorator2)("abc")
     try {
@@ -55,7 +56,7 @@ class DecoratorTest extends AssertionsForJUnit with ScalaFutures with ResourceTe
       fail("Should have thrown an exception!")
     } catch {
       case e: RuntimeException =>
-        // pass
+      // pass
     }
   }
 

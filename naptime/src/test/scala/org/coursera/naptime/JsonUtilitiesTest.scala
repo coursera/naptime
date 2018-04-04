@@ -56,8 +56,11 @@ class JsonUtilitiesTest extends AssertionsForJUnit {
   @Test
   def metaLinksSimple(): Unit = {
     val fields = Fields[TestResource].withRelated("author" -> ResourceName("user", 1))
-    val meta = JsonUtilities.formatLinksMeta(QueryIncludes(Set("author"), Map.empty),
-      QueryFields.empty, fields, Ok(()))
+    val meta = JsonUtilities.formatLinksMeta(
+      QueryIncludes(Set("author"), Map.empty),
+      QueryFields.empty,
+      fields,
+      Ok(()))
     assert(meta === Json.obj("elements" -> Json.obj("author" -> "user.v1")))
   }
 
@@ -66,11 +69,14 @@ class JsonUtilitiesTest extends AssertionsForJUnit {
     val fields = Fields[TestResource].withRelated("author" -> ResourceName("user", 1))
     val userFields = Fields[FakeUser].withRelated("almaMater" -> ResourceName("university", 3))
     val result = Ok(()).withRelated(ResourceName("user", 1), Seq.empty[Keyed[Int, FakeUser]])(
-      FakeUser.format, KeyFormat.intKeyFormat, userFields)
+      FakeUser.format,
+      KeyFormat.intKeyFormat,
+      userFields)
     val meta = JsonUtilities.formatLinksMeta(
       QueryIncludes(Set("author"), Map(ResourceName("user", 1) -> Set("almaMater"))),
       QueryFields(Set("author"), Map(ResourceName("user", 1) -> Set("almaMater"))),
-      fields, result)
+      fields,
+      result)
     val expected = Json.obj(
       "elements" -> Json.obj("author" -> "user.v1"),
       "user.v1" -> Json.obj("almaMater" -> "university.v3")
@@ -86,14 +92,17 @@ class JsonUtilitiesTest extends AssertionsForJUnit {
 
     val fakeUser = FakeUser("bob", "good", 1)
     val ok = Ok(()).withRelated(ResourceName("user", 1), List(Keyed(1, fakeUser)))(
-      FakeUser.format, KeyFormat.intKeyFormat, userFields)
+      FakeUser.format,
+      KeyFormat.intKeyFormat,
+      userFields)
 
     val includesResult = JsonUtilities.formatIncludes(ok, QueryFields.empty, queryIncludes, fields)
 
-    val expected = Some(Json.obj(
-      "user.v1" -> Json.arr(
-        Json.obj("id" -> 1, "name" -> "bob")
-      )))
+    val expected = Some(
+      Json.obj(
+        "user.v1" -> Json.arr(
+          Json.obj("id" -> 1, "name" -> "bob")
+        )))
     assert(expected === includesResult)
   }
 
@@ -102,8 +111,8 @@ class JsonUtilitiesTest extends AssertionsForJUnit {
     val userResource = ResourceName("user", 1)
     val universityResource = ResourceName("universities", 1)
     implicit val fields = Fields[TestResource].withRelated("author" -> userResource)
-    implicit val userFields = Fields[FakeUser].withDefaultFields("name").withRelated(
-      "almaMater" -> universityResource)
+    implicit val userFields =
+      Fields[FakeUser].withDefaultFields("name").withRelated("almaMater" -> universityResource)
     implicit val uniFields = Fields[University].withDefaultFields("name")
     val queryIncludes = QueryIncludes(Set("author"), Map(userResource -> Set("almaMater")))
 
@@ -113,11 +122,10 @@ class JsonUtilitiesTest extends AssertionsForJUnit {
 
     val includesResult = JsonUtilities.formatIncludes(ok, QueryFields.empty, queryIncludes, fields)
 
-    val expected = Some(Json.obj(
-      "user.v1" -> Json.arr(
-        Json.obj("id" -> 1, "name" -> "bob")),
-      "universities.v1" -> Json.arr(
-        Json.obj("name" -> "ecole polytechnique", "id" -> 5))))
+    val expected = Some(
+      Json.obj(
+        "user.v1" -> Json.arr(Json.obj("id" -> 1, "name" -> "bob")),
+        "universities.v1" -> Json.arr(Json.obj("name" -> "ecole polytechnique", "id" -> 5))))
     assert(expected === includesResult)
   }
 
@@ -129,7 +137,9 @@ class JsonUtilitiesTest extends AssertionsForJUnit {
 
     val fakeUser = FakeUser("bob", "good", 1)
     val ok = Ok(()).withRelated(ResourceName("user", 1), List(Keyed(1, fakeUser)))(
-      FakeUser.format, KeyFormat.intKeyFormat, userFields)
+      FakeUser.format,
+      KeyFormat.intKeyFormat,
+      userFields)
 
     val includesResult = JsonUtilities.formatIncludes(ok, QueryFields.empty, queryIncludes, fields)
 

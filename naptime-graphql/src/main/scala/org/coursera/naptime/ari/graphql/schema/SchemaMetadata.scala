@@ -20,17 +20,16 @@ import com.linkedin.data.schema.RecordDataSchema
 import org.coursera.naptime.ResourceName
 import org.coursera.naptime.schema.Resource
 
-
-case class SchemaMetadata(
-    resources: Set[Resource],
-    schemas: Map[String, RecordDataSchema]) {
+case class SchemaMetadata(resources: Set[Resource], schemas: Map[String, RecordDataSchema]) {
 
   def getResource(resourceName: ResourceName): Resource = {
-    resources.find { resource =>
-      ResourceName.fromResource(resource) == resourceName
-    }.getOrElse {
-      throw new RuntimeException(s"Cannot find resource with name $resourceName")
-    }
+    resources
+      .find { resource =>
+        ResourceName.fromResource(resource) == resourceName
+      }
+      .getOrElse {
+        throw new RuntimeException(s"Cannot find resource with name $resourceName")
+      }
   }
 
   def getResourceOpt(resourceName: ResourceName): Option[Resource] = {

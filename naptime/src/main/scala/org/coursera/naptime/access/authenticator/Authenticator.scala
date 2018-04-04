@@ -43,26 +43,25 @@ trait Authenticator[+A] {
    * Attempt to authenticate the requester based on the request header. May return `Future[None]`
    * if authentication is skipped, or an error if authentication fails.
    */
-  def maybeAuthenticate(
-      requestHeader: RequestHeader)
-      (implicit ec: ExecutionContext): Future[Option[Either[NaptimeActionException, A]]]
+  def maybeAuthenticate(requestHeader: RequestHeader)(
+      implicit ec: ExecutionContext): Future[Option[Either[NaptimeActionException, A]]]
 
   def collect[B](f: PartialFunction[A, B]): Authenticator[B] = {
     val self = this
     new Authenticator[B] {
-      override def maybeAuthenticate(
-          requestHeader: RequestHeader)
-          (implicit ec: ExecutionContext):
-        Future[Option[Either[NaptimeActionException, B]]] = {
+      override def maybeAuthenticate(requestHeader: RequestHeader)(
+          implicit ec: ExecutionContext): Future[Option[Either[NaptimeActionException, B]]] = {
 
-        Futures.safelyCall(self.maybeAuthenticate(requestHeader))
+        Futures
+          .safelyCall(self.maybeAuthenticate(requestHeader))
           .map(_.map(_.right.map(f.lift)))
           .map {
-            case Some(Right(None)) => None
+            case Some(Right(None))    => None
             case Some(Right(Some(b))) => Some(Right(b))
-            case Some(Left(error)) => Some(Left(error))
-            case None => None
-          }.recover(Authenticator.errorRecovery)
+            case Some(Left(error))    => Some(Left(error))
+            case None                 => None
+          }
+          .recover(Authenticator.errorRecovery)
       }
     }
   }
@@ -78,19 +77,25 @@ object Authenticator extends StrictLogging with AnyOf with FirstOf with And {
       decorator: Decorator[P, A]): Authenticator[A] = {
 
     new Authenticator[A] {
-      def maybeAuthenticate(
-          requestHeader: RequestHeader)
-          (implicit ec: ExecutionContext): Future[Option[Either[NaptimeActionException, A]]] = {
+      def maybeAuthenticate(requestHeader: RequestHeader)(
+          implicit ec: ExecutionContext): Future[Option[Either[NaptimeActionException, A]]] = {
 
         parser.parseHeader(requestHeader) match {
           case ParseResult.Success(parsed) =>
-            Futures.safelyCall(decorator(parsed)).map { either =>
-              either.left.map { message =>
-                Some(Left(NaptimeActionException(FORBIDDEN, None, Some(message))))
-              }.right.map { decorated =>
-                Some(Right(decorated))
-              }.merge
-            }.recover(errorRecovery)
+            Futures
+              .safelyCall(decorator(parsed))
+              .map { either =>
+                either.left
+                  .map { message =>
+                    Some(Left(NaptimeActionException(FORBIDDEN, None, Some(message))))
+                  }
+                  .right
+                  .map { decorated =>
+                    Some(Right(decorated))
+                  }
+                  .merge
+              }
+              .recover(errorRecovery)
           case ParseResult.Error(message, status) =>
             Future.successful(
               Some(Left(NaptimeActionException(status, Some("auth.parse"), Some(message)))))
@@ -103,8 +108,8 @@ object Authenticator extends StrictLogging with AnyOf with FirstOf with And {
 
   private[access] def authenticateAndRecover[A](
       authenticator: Authenticator[A],
-      requestHeader: RequestHeader)
-      (implicit ec: ExecutionContext): Future[Option[Either[NaptimeActionException, A]]] = {
+      requestHeader: RequestHeader)(
+      implicit ec: ExecutionContext): Future[Option[Either[NaptimeActionException, A]]] = {
     Futures
       .safelyCall(authenticator.maybeAuthenticate(requestHeader))
       .recover(errorRecovery)

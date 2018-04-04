@@ -62,7 +62,9 @@ class NaptimeResourceUtilsTest extends AssertionsForJUnit with MockitoSugar {
 
     val interpolatedArguments =
       NaptimeResourceUtils.interpolateArguments(testCourse, getRelation).toMap
-    assert(interpolatedArguments("id") === JsString(s"${Models.COURSE_A.id}~${Models.COURSE_A.partnerId}"))
+    assert(
+      interpolatedArguments("id") === JsString(
+        s"${Models.COURSE_A.id}~${Models.COURSE_A.partnerId}"))
   }
 
   @Test
@@ -87,20 +89,23 @@ class NaptimeResourceUtilsTest extends AssertionsForJUnit with MockitoSugar {
   def interpolateArgumentsMultipleElementsAndMultipleIds(): Unit = {
     val testCourse = DataMapWithParent(
       Models.COURSE_A.data(),
-      ParentModel(ResourceName("courseInstructors", 1), Models.COURSE_A.data(), MergedCourse.SCHEMA))
+      ParentModel(
+        ResourceName("courseInstructors", 1),
+        Models.COURSE_A.data(),
+        MergedCourse.SCHEMA))
 
     val multiGetRelation = ReverseRelationAnnotation(
       resourceName = "courseInstructors.v1",
       arguments = StringMap(Map("ids" -> "COURSE~${id}~INSTRUCTOR~${instructorIds}")),
       relationType = RelationType.MULTI_GET)
 
-
     val interpolatedArguments =
       NaptimeResourceUtils.interpolateArguments(testCourse, multiGetRelation).toMap
-    val expectedIds = JsArray(List(
-      JsString(s"COURSE~${Models.COURSE_A.id}~INSTRUCTOR~${Models.COURSE_A.instructorIds(0)}"),
-      JsString(s"COURSE~${Models.COURSE_A.id}~INSTRUCTOR~${Models.COURSE_A.instructorIds(1)}")
-    ))
+    val expectedIds = JsArray(
+      List(
+        JsString(s"COURSE~${Models.COURSE_A.id}~INSTRUCTOR~${Models.COURSE_A.instructorIds(0)}"),
+        JsString(s"COURSE~${Models.COURSE_A.id}~INSTRUCTOR~${Models.COURSE_A.instructorIds(1)}")
+      ))
     assert(interpolatedArguments("ids") === expectedIds)
   }
 
@@ -116,12 +121,10 @@ class NaptimeResourceUtilsTest extends AssertionsForJUnit with MockitoSugar {
       arguments = StringMap(Map("ids" -> "COURSE~${courses/id}")),
       relationType = RelationType.MULTI_GET)
 
-
     val interpolatedArguments =
       NaptimeResourceUtils.interpolateArguments(testCourse, multiGetRelation).toMap
-    val expectedCourseIds = JsArray(List(
-      JsString(s"COURSE~${Models.COURSE_A.id}"),
-      JsString(s"COURSE~${Models.COURSE_B.id}")))
+    val expectedCourseIds = JsArray(
+      List(JsString(s"COURSE~${Models.COURSE_A.id}"), JsString(s"COURSE~${Models.COURSE_B.id}")))
     assert(interpolatedArguments("ids") === expectedCourseIds)
   }
 
@@ -134,15 +137,16 @@ class NaptimeResourceUtilsTest extends AssertionsForJUnit with MockitoSugar {
 
     val multiGetRelation = ReverseRelationAnnotation(
       resourceName = "oldCourses.v1",
-      arguments = StringMap(Map("ids" -> "OLD_COURSE~${courses/platformSpecificData/old/oldPlatformId}")),
+      arguments =
+        StringMap(Map("ids" -> "OLD_COURSE~${courses/platformSpecificData/old/oldPlatformId}")),
       relationType = RelationType.MULTI_GET)
-
 
     val interpolatedArguments =
       NaptimeResourceUtils.interpolateArguments(testCourse, multiGetRelation).toMap
-    val expectedCourseIds = JsArray(List(
-      JsString(s"OLD_COURSE~${Models.oldCourseIdA}"),
-      JsString(s"OLD_COURSE~${Models.oldCourseIdB}")))
+    val expectedCourseIds = JsArray(
+      List(
+        JsString(s"OLD_COURSE~${Models.oldCourseIdA}"),
+        JsString(s"OLD_COURSE~${Models.oldCourseIdB}")))
     assert(interpolatedArguments("ids") === expectedCourseIds)
   }
 }

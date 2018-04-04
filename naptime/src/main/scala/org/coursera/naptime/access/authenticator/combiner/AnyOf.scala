@@ -38,51 +38,51 @@ private[authenticator] trait AnyOf {
    * TODO(josh): Should existence of even a single error trigger failure?
    * TODO(josh): Write unit tests.
    */
-  def anyOf[A](authenticators: Set[Authenticator[A]]): Authenticator[A] = new Authenticator[A] {
+  def anyOf[A](authenticators: Set[Authenticator[A]]): Authenticator[A] =
+    new Authenticator[A] {
 
-    override def maybeAuthenticate(
-        requestHeader: RequestHeader)
-        (implicit ec: ExecutionContext):
-      Future[Option[Either[NaptimeActionException, A]]] = {
+      override def maybeAuthenticate(requestHeader: RequestHeader)(
+          implicit ec: ExecutionContext): Future[Option[Either[NaptimeActionException, A]]] = {
 
-      val authenticationResponses = authenticators
-        .map(Authenticator.authenticateAndRecover(_, requestHeader))
+        val authenticationResponses = authenticators
+          .map(Authenticator.authenticateAndRecover(_, requestHeader))
 
-      val successOptionFuture = Futures.findMatch(authenticationResponses) {
-        case Some(Right(authentication)) => Right(authentication)
+        val successOptionFuture = Futures.findMatch(authenticationResponses) {
+          case Some(Right(authentication)) => Right(authentication)
+        }
+        lazy val errorOptionFuture =
+          Futures.findMatch(authenticationResponses) {
+            case Some(Left(error)) => Left(error)
+          }
+
+        Common.combineAuthenticationResponses(successOptionFuture, errorOptionFuture)
       }
-      lazy val errorOptionFuture = Futures.findMatch(authenticationResponses) {
-        case Some(Left(error)) => Left(error)
-      }
 
-      Common.combineAuthenticationResponses(successOptionFuture, errorOptionFuture)
     }
 
-  }
-
-  def anyOf[A, A1, A2](
-      authenticator1: Authenticator[A1],
-      authenticator2: Authenticator[A2])
-      (implicit transformer1: AuthenticationTransformer[A1, A],
+  def anyOf[A, A1, A2](authenticator1: Authenticator[A1], authenticator2: Authenticator[A2])(
+      implicit transformer1: AuthenticationTransformer[A1, A],
       transformer2: AuthenticationTransformer[A2, A]): Authenticator[A] = {
 
-    anyOf(Set(
-      authenticator1.collect(transformer1.partial),
-      authenticator2.collect(transformer2.partial)))
+    anyOf(
+      Set(
+        authenticator1.collect(transformer1.partial),
+        authenticator2.collect(transformer2.partial)))
   }
 
   def anyOf[A, A1, A2, A3](
       authenticator1: Authenticator[A1],
       authenticator2: Authenticator[A2],
-      authenticator3: Authenticator[A3])
-      (implicit transformer1: AuthenticationTransformer[A1, A],
+      authenticator3: Authenticator[A3])(
+      implicit transformer1: AuthenticationTransformer[A1, A],
       transformer2: AuthenticationTransformer[A2, A],
       transformer3: AuthenticationTransformer[A3, A]): Authenticator[A] = {
 
-    anyOf(Set(
-      authenticator1.collect(transformer1.partial),
-      authenticator2.collect(transformer2.partial),
-      authenticator3.collect(transformer3.partial)))
+    anyOf(
+      Set(
+        authenticator1.collect(transformer1.partial),
+        authenticator2.collect(transformer2.partial),
+        authenticator3.collect(transformer3.partial)))
   }
 
   // TODO(josh): Generate for remaining arities.

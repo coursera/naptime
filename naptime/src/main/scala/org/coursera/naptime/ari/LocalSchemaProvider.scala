@@ -30,25 +30,29 @@ import org.coursera.naptime.schema.Resource
  *
  * @param naptimeRoutes The locally available naptime routes.
  */
-class LocalSchemaProvider @Inject() (naptimeRoutes: NaptimeRoutes) extends SchemaProvider with StrictLogging {
+class LocalSchemaProvider @Inject()(naptimeRoutes: NaptimeRoutes)
+    extends SchemaProvider
+    with StrictLogging {
 
-  private[this] val resourceSchemaMap: Map[ResourceName, Resource] = naptimeRoutes.schemaMap.flatMap {
-    // TODO: handle sub resources
-    case (_, schema)
-      if schema.parentClass.isEmpty ||
-        schema.parentClass.contains("org.coursera.naptime.resources.RootResource") =>
+  private[this] val resourceSchemaMap: Map[ResourceName, Resource] =
+    naptimeRoutes.schemaMap.flatMap {
+      // TODO: handle sub resources
+      case (_, schema)
+          if schema.parentClass.isEmpty ||
+            schema.parentClass.contains("org.coursera.naptime.resources.RootResource") =>
+        val resourceName = ResourceName(schema.name, version = schema.version.getOrElse(0L).toInt)
+        Some(resourceName -> schema)
 
-    val resourceName = ResourceName(schema.name, version = schema.version.getOrElse(0L).toInt)
-      Some(resourceName -> schema)
+      case (_, schema) =>
+        logger.warn(s"Cannot handle nested resource $schema")
+        None
+    }
 
-    case (_, schema) =>
-      logger.warn(s"Cannot handle nested resource $schema")
-      None
-  }
-
-  private[this] val mergedTypes = naptimeRoutes.routerBuilders.flatMap(_.types.map(_.tuple))
+  private[this] val mergedTypes = naptimeRoutes.routerBuilders
+    .flatMap(_.types.map(_.tuple))
     .filter(_._2.isInstanceOf[RecordDataSchema])
-    .map(tuple => tuple._1 -> tuple._2.asInstanceOf[RecordDataSchema]).toMap
+    .map(tuple => tuple._1 -> tuple._2.asInstanceOf[RecordDataSchema])
+    .toMap
 
   override val fullSchema: FullSchema =
     FullSchema(

@@ -35,8 +35,9 @@ class CollectionResourcePathParserTest extends AssertionsForJUnit {
     val path = CollectionResourcePathParser[String]("foo", 1)
     assert(ParseSuccess(None, "hello") === path.parseUrl("/foo.v1/hello"))
     assert(ParseSuccess(Some("/bar.v2"), "world") === path.parseUrl("/foo.v1/world/bar.v2"))
-    assert(ParseSuccess(Some("/bar.v2/123/baz.v3/321"), "goodbye") ===
-      path.parseUrl("/foo.v1/goodbye/bar.v2/123/baz.v3/321"))
+    assert(
+      ParseSuccess(Some("/bar.v2/123/baz.v3/321"), "goodbye") ===
+        path.parseUrl("/foo.v1/goodbye/bar.v2/123/baz.v3/321"))
     assert(ParseFailure === path.parseUrl("/bar.v1/hello"))
   }
 

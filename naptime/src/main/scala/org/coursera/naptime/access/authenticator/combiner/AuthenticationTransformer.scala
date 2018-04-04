@@ -37,8 +37,10 @@ object AuthenticationTransformer {
     }
   }
 
-  def function[I, O](f: I => O): AuthenticationTransformer[I, O] = apply(PartialFunction(f))
+  def function[I, O](f: I => O): AuthenticationTransformer[I, O] =
+    apply(PartialFunction(f))
 
-  implicit def identityTransformer[T]: AuthenticationTransformer[T, T] = function(identity)
+  implicit def identityTransformer[T]: AuthenticationTransformer[T, T] =
+    function(identity)
 
 }

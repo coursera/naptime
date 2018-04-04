@@ -37,7 +37,8 @@ final case class :::[+H, +T <: ParsedPathKey](h: H, t: T) extends ParsedPathKey 
   def key: H = h
   def tail: T = t
 
-  def parentKey[H2, T2 <: ParsedPathKey](implicit ev: T <:< (H2 ::: T2)): H2 = ev(t).h
+  def parentKey[H2, T2 <: ParsedPathKey](implicit ev: T <:< (H2 ::: T2)): H2 =
+    ev(t).h
   def grandparentKey[H2, H3, T2 <: ParsedPathKey](implicit ev: T <:< (H2 ::: H3 ::: T2)): H3 =
     ev(t).t.head
 }

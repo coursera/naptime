@@ -31,8 +31,11 @@ import sangria.schema.UnionType
 
 class NaptimeTopLevelResourceFieldTest extends AssertionsForJUnit {
 
-  val allResources = Set(Models.courseResource, Models.instructorResource,
-    Models.partnersResource, Models.multigetFreeEntity)
+  val allResources = Set(
+    Models.courseResource,
+    Models.instructorResource,
+    Models.partnersResource,
+    Models.multigetFreeEntity)
 
   val schemaTypes = Map(
     "org.coursera.naptime.ari.graphql.models.MergedCourse" -> MergedCourse.SCHEMA,
@@ -80,8 +83,15 @@ class NaptimeTopLevelResourceFieldTest extends AssertionsForJUnit {
     val courseUnionType = schema.unionTypes("CoursesV1_originalId")
     val courseUnionUnionType = courseUnionType.asInstanceOf[UnionType[Unit]]
     val unionObjects = courseUnionUnionType.types
-    assert(unionObjects.find(_.name == "CoursesV1_intMember").get.fieldsByName.keySet.head === "int")
-    assert(unionObjects.find(_.name == "CoursesV1_stringMember").get.fieldsByName.keySet.head === "string")
+    assert(
+      unionObjects.find(_.name == "CoursesV1_intMember").get.fieldsByName.keySet.head === "int")
+    assert(
+      unionObjects
+        .find(_.name == "CoursesV1_stringMember")
+        .get
+        .fieldsByName
+        .keySet
+        .head === "string")
   }
 
   @Test

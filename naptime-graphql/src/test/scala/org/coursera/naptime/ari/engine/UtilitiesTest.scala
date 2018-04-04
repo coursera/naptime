@@ -98,7 +98,8 @@ class UtilitiesTest extends AssertionsForJUnit with MockitoSugar {
 
     val path = List("courses", "platformSpecificData", "old", "notAvailableMessage")
     val retrievedValue = Utilities.getValuesAtPath(course, courseSchema, path)
-    val expectedValue = List(Models.oldPlatformNotAvailableMessageA, Models.oldPlatformNotAvailableMessageB)
+    val expectedValue =
+      List(Models.oldPlatformNotAvailableMessageA, Models.oldPlatformNotAvailableMessageB)
     assert(retrievedValue === expectedValue)
 
   }

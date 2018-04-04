@@ -38,7 +38,8 @@ class DefaultGraphqlSchemaProviderTest extends AssertionsForJUnit {
     val simpleSchema = new DefaultGraphqlSchemaProvider(simpleSchemaProvider())
 
     val nonMetadataTypes = simpleSchema.schema.allTypes.filterNot(_._1.startsWith("__"))
-    assert(nonMetadataTypes.keySet === DEFAULT_TYPES ++ COMPUTED_TYPES -- FILTERED_TYPES,
+    assert(
+      nonMetadataTypes.keySet === DEFAULT_TYPES ++ COMPUTED_TYPES -- FILTERED_TYPES,
       s"${nonMetadataTypes.keySet}")
   }
 
@@ -63,7 +64,8 @@ class DefaultGraphqlSchemaProviderTest extends AssertionsForJUnit {
     val regenerating = new DefaultGraphqlSchemaProvider(regeneratingProvider)
 
     val nonMetadataTypes = regenerating.schema.allTypes.filterNot(_._1.startsWith("__"))
-    assert(nonMetadataTypes.keySet === DEFAULT_TYPES ++ COMPUTED_TYPES -- FILTERED_TYPES,
+    assert(
+      nonMetadataTypes.keySet === DEFAULT_TYPES ++ COMPUTED_TYPES -- FILTERED_TYPES,
       s"${nonMetadataTypes.keySet}")
   }
 
@@ -76,15 +78,11 @@ class PartnersResource
 
 object DefaultGraphqlSchemaProviderTest extends MockitoSugar {
 
-
   val GET_HANDLER = Handler(
     kind = HandlerKind.GET,
     name = "get",
-    parameters = List(Parameter(
-      name = "id",
-      `type` = "int",
-      attributes = List.empty,
-      default = None)),
+    parameters =
+      List(Parameter(name = "id", `type` = "int", attributes = List.empty, default = None)),
     inputBody = None,
     customOutputBody = None,
     attributes = List.empty)
@@ -92,11 +90,8 @@ object DefaultGraphqlSchemaProviderTest extends MockitoSugar {
   val MULTIGET_HANDLER = Handler(
     kind = HandlerKind.MULTI_GET,
     name = "multiGet",
-    parameters = List(Parameter(
-      name = "ids",
-      `type` = "List[int]",
-      attributes = List.empty,
-      default = None)),
+    parameters =
+      List(Parameter(name = "ids", `type` = "List[int]", attributes = List.empty, default = None)),
     inputBody = None,
     customOutputBody = None,
     attributes = List.empty)
@@ -140,10 +135,7 @@ object DefaultGraphqlSchemaProviderTest extends MockitoSugar {
     className = "org.coursera.naptime.test.PartnersResource",
     attributes = List.empty)
 
-  val RESOURCE_SCHEMAS = Seq(
-    COURSES_RESOURCE,
-    INSTRUCTORS_RESOURCE,
-    PARTNERS_RESOURCE)
+  val RESOURCE_SCHEMAS = Seq(COURSES_RESOURCE, INSTRUCTORS_RESOURCE, PARTNERS_RESOURCE)
 
   val TYPE_SCHEMAS = Map(
     MergedCourse.SCHEMA.getFullName -> MergedCourse.SCHEMA,
@@ -151,16 +143,8 @@ object DefaultGraphqlSchemaProviderTest extends MockitoSugar {
     MergedPartner.SCHEMA.getFullName -> MergedPartner.SCHEMA)
 
   // REFER TO https://github.com/sangria-graphql/sangria/blob/v1.4.0/src/main/scala/sangria/schema/package.scala#L175
-  val DEFAULT_TYPES = Set(
-    "ID",
-    "root",
-    "Boolean",
-    "Long",
-    "Float",
-    "Int",
-    "BigInt",
-    "String",
-    "BigDecimal")
+  val DEFAULT_TYPES =
+    Set("ID", "root", "Boolean", "Long", "Float", "Int", "BigInt", "String", "BigDecimal")
 
   val COMPUTED_TYPES = Set(
     "CoursesV1",
@@ -183,9 +167,8 @@ object DefaultGraphqlSchemaProviderTest extends MockitoSugar {
     "CoursesV1_stringMember",
     "DataMap")
 
-  val FILTERED_TYPES = Set(
-    "PartnersV1",
-    "PartnersV1_org_coursera_naptime_ari_graphql_models_Coordinates")
+  val FILTERED_TYPES =
+    Set("PartnersV1", "PartnersV1_org_coursera_naptime_ari_graphql_models_Coordinates")
 
   val extraTypes = TYPE_SCHEMAS.map { case (key, value) => Keyed(key, value) }.toList
 
@@ -194,9 +177,8 @@ object DefaultGraphqlSchemaProviderTest extends MockitoSugar {
     val courseRouterBuilder = mock[ResourceRouterBuilder]
     when(courseRouterBuilder.schema).thenReturn(COURSES_RESOURCE)
     when(courseRouterBuilder.types).thenReturn(extraTypes)
-    when(courseRouterBuilder.resourceClass()).thenReturn(
-      classOf[CoursesResource].asInstanceOf[Class[courseRouterBuilder.ResourceClass]])
-
+    when(courseRouterBuilder.resourceClass())
+      .thenReturn(classOf[CoursesResource].asInstanceOf[Class[courseRouterBuilder.ResourceClass]])
 
     val instructorRouterBuilder = mock[ResourceRouterBuilder]
     when(instructorRouterBuilder.schema).thenReturn(INSTRUCTORS_RESOURCE)
@@ -207,14 +189,14 @@ object DefaultGraphqlSchemaProviderTest extends MockitoSugar {
     val partnerRouterBuilder = mock[ResourceRouterBuilder]
     when(partnerRouterBuilder.schema).thenReturn(PARTNERS_RESOURCE)
     when(partnerRouterBuilder.types).thenReturn(extraTypes)
-    when(partnerRouterBuilder.resourceClass()).thenReturn(
-      classOf[PartnersResource].asInstanceOf[Class[partnerRouterBuilder.ResourceClass]])
+    when(partnerRouterBuilder.resourceClass())
+      .thenReturn(classOf[PartnersResource].asInstanceOf[Class[partnerRouterBuilder.ResourceClass]])
 
     val injector = mock[Injector]
-    new LocalSchemaProvider(NaptimeRoutes(injector, Set(
-      courseRouterBuilder,
-      instructorRouterBuilder,
-      partnerRouterBuilder)))
+    new LocalSchemaProvider(
+      NaptimeRoutes(
+        injector,
+        Set(courseRouterBuilder, instructorRouterBuilder, partnerRouterBuilder)))
   }
 
   def emptySchemaProvider() = {

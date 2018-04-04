@@ -47,7 +47,7 @@ object RestActionCategoryEngineTest {
    * In general, it is a very bad idea to have multiple gets / etc. in a single resource.
    */
   class SampleResource(implicit ec: ExecutionContext, mat: Materializer)
-    extends TopLevelCollectionResource[Int, EngineTestResource] {
+      extends TopLevelCollectionResource[Int, EngineTestResource] {
     override val keyFormat: KeyFormat[Int] = KeyFormat.intKeyFormat
     override val resourceName: String = "tests"
     override val resourceFormat = Json.format[EngineTestResource]
@@ -71,11 +71,15 @@ object RestActionCategoryEngineTest {
       Ok(Keyed(1, None))
     }
 
-    def create3 = Nap.catching {
-      case e: RuntimeException => RestError(NaptimeActionException(Status.BAD_REQUEST, Some("boom"), None))
-    }.create { ctx =>
-      throw new RuntimeException("Boom")
-    }
+    def create3 =
+      Nap
+        .catching {
+          case e: RuntimeException =>
+            RestError(NaptimeActionException(Status.BAD_REQUEST, Some("boom"), None))
+        }
+        .create { ctx =>
+          throw new RuntimeException("Boom")
+        }
 
     def delete1(id: Int) = Nap.delete {
       Ok(())
@@ -94,18 +98,23 @@ object RestActionCategoryEngineTest {
   case class K1(key: Int)
 
   object K1 {
-    implicit val stringKeyFormat: StringKeyFormat[K1] = StringKeyFormat.delegateFormat[K1, Int](k => Some(K1(k)), k => k.key)
+    implicit val stringKeyFormat: StringKeyFormat[K1] =
+      StringKeyFormat.delegateFormat[K1, Int](k => Some(K1(k)), k => k.key)
   }
 
   case class K2(key: Int)
 
   object K2 {
-    implicit val stringKeyFormat: StringKeyFormat[K2] = StringKeyFormat.delegateFormat[K2, Int](k => Some(K2(k)), k => k.key)
+    implicit val stringKeyFormat: StringKeyFormat[K2] =
+      StringKeyFormat.delegateFormat[K2, Int](k => Some(K2(k)), k => k.key)
   }
 
 }
 
-class RestActionCategoryEngineTest extends AssertionsForJUnit with ScalaFutures with ResourceTestImplicits {
+class RestActionCategoryEngineTest
+    extends AssertionsForJUnit
+    with ScalaFutures
+    with ResourceTestImplicits {
   import RestActionCategoryEngineTest._
 
   override def spanScaleFactor: Double = 10
@@ -155,16 +164,17 @@ class RestActionCategoryEngineTest extends AssertionsForJUnit with ScalaFutures 
 
   // Helpers below.
 
-  private[this] def test[BodyType](actionToTest: RestAction[_, _, BodyType, _, _, _],
+  private[this] def test[BodyType](
+      actionToTest: RestAction[_, _, BodyType, _, _, _],
       request: FakeRequest[BodyType],
-      strictMode: Boolean = false)(
-      implicit writeable: Writeable[BodyType]): Result = {
+      strictMode: Boolean = false)(implicit writeable: Writeable[BodyType]): Result = {
     val result = runTestRequest(actionToTest, request)
     Validators.assertValidResponse(result, strictMode = strictMode)
     result
   }
 
-  private[this] def testEmptyBody(actionToTest: RestAction[_, _, AnyContent, _, _, _],
+  private[this] def testEmptyBody(
+      actionToTest: RestAction[_, _, AnyContent, _, _, _],
       request: FakeRequest[AnyContentAsEmpty.type] = FakeRequest(),
       strictMode: Boolean = false): Result = {
     val result = runTestRequest(actionToTest, request)
@@ -181,14 +191,15 @@ class RestActionCategoryEngineTest extends AssertionsForJUnit with ScalaFutures 
     resultFut.futureValue
   }
 
-  private[this] def runTestRequest[BodyType](restAction: RestAction[_, _, BodyType, _, _, _],
-      fakeRequest: FakeRequest[BodyType])(
-      implicit writeable: Writeable[BodyType]): Result = {
+  private[this] def runTestRequest[BodyType](
+      restAction: RestAction[_, _, BodyType, _, _, _],
+      fakeRequest: FakeRequest[BodyType])(implicit writeable: Writeable[BodyType]): Result = {
     val b = writeable.toEntity(fakeRequest.body)
     runTestRequestInternal(restAction, fakeRequest, b)
   }
 
-  private[this] def runTestRequest(restAction: RestAction[_, _, AnyContent, _, _, _],
+  private[this] def runTestRequest(
+      restAction: RestAction[_, _, AnyContent, _, _, _],
       fakeRequest: FakeRequest[AnyContentAsEmpty.type]): Result = {
     runTestRequestInternal(restAction, fakeRequest)
   }
@@ -239,11 +250,16 @@ class ETagRestActionCategoryEngineTest extends AssertionsForJUnit with ScalaFutu
     val pagination = RequestPagination(20, None, isDefault = true)
     val naptimeResponse = Ok(Keyed(1, TestResponse(foo = "bar"))).withETag(ETag("asdf"))
 
-    val engine = PlayJsonRestActionCategoryEngine.getActionCategoryEngine[Int, TestResponse](
-      TestResponse.writes, intKeyFormat)
+    val engine = PlayJsonRestActionCategoryEngine
+      .getActionCategoryEngine[Int, TestResponse](TestResponse.writes, intKeyFormat)
 
-    val response = engine.mkResult(req, fields, QueryFields.empty, QueryIncludes.empty,
-      pagination, naptimeResponse)
+    val response = engine.mkResult(
+      req,
+      fields,
+      QueryFields.empty,
+      QueryIncludes.empty,
+      pagination,
+      naptimeResponse)
     assert(response.header.status === Status.NOT_MODIFIED)
     val bodyContent = contentAsBytes(Future.successful(response))
     assert(bodyContent.length === 0)
@@ -251,7 +267,8 @@ class ETagRestActionCategoryEngineTest extends AssertionsForJUnit with ScalaFutu
 
   private[this] def assertETagHeaderValueFormat(etagHeaderValue: String) = {
     assert(
-      etagHeaderValue.startsWith("W/\""), "ETag header values must start with a quote character")
+      etagHeaderValue.startsWith("W/\""),
+      "ETag header values must start with a quote character")
     assert(etagHeaderValue.endsWith("\""), "ETag header values must end with a quote character.")
 
     assert(etagHeaderValueRegex.pattern.matcher(etagHeaderValue).matches)

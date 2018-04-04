@@ -148,9 +148,7 @@ class UrlLoggingMiddlewareTest extends AssertionsForJUnit with MockitoSugar {
     val expected =
       Json.obj(
         "responseMetadata" -> Json.obj(
-          "course" -> Json.obj(
-            "sourceUrl" -> "test url",
-            "statusCode" -> 200)))
+          "course" -> Json.obj("sourceUrl" -> "test url", "statusCode" -> 200)))
     assert(marshalled === expected)
 
   }

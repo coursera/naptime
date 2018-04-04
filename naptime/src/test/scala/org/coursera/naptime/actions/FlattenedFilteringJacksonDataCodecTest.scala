@@ -30,29 +30,14 @@ class FlattenedFilteringJacksonDataCodecTest extends AssertionsForJUnit {
   def testElementsFiltering(): Unit = {
     val unfiltered = Json.obj(
       "elements" -> Json.arr(
-        Json.obj(
-          "a" -> "1",
-          "b" -> "1",
-          "c" -> "1"),
-        Json.obj(
-          "a" -> "2",
-          "b" -> "2",
-          "c" -> "2"),
-        Json.obj(
-          "a" -> "3",
-          "b" -> "3",
-          "c" -> "3")))
+        Json.obj("a" -> "1", "b" -> "1", "c" -> "1"),
+        Json.obj("a" -> "2", "b" -> "2", "c" -> "2"),
+        Json.obj("a" -> "3", "b" -> "3", "c" -> "3")))
 
     val dataMap = NaptimeSerializer.PlayJson.serialize(unfiltered)
 
     val expected = Json.obj(
-      "elements" -> Json.arr(
-        Json.obj(
-          "a" -> "1"),
-        Json.obj(
-          "a" -> "2"),
-        Json.obj(
-          "a" -> "3")))
+      "elements" -> Json.arr(Json.obj("a" -> "1"), Json.obj("a" -> "2"), Json.obj("a" -> "3")))
 
     val fields = QueryFields(Set("a"), Map.empty)
 
@@ -60,7 +45,8 @@ class FlattenedFilteringJacksonDataCodecTest extends AssertionsForJUnit {
     val serialized = codec.mapToString(dataMap)
     val deserialized = codec.stringToMap(serialized)
 
-    assert(NaptimeSerializer.PlayJson.serialize(expected) === deserialized,
+    assert(
+      NaptimeSerializer.PlayJson.serialize(expected) === deserialized,
       s"Serialized is: $serialized")
     assert(expected === Json.parse(serialized))
   }
@@ -69,62 +55,34 @@ class FlattenedFilteringJacksonDataCodecTest extends AssertionsForJUnit {
   def testRelatedFiltering(): Unit = {
     val unfiltered = Json.obj(
       "elements" -> Json.arr(
-        Json.obj(
-          "a" -> 1,
-          "b" -> 1,
-          "c" -> 1),
-        Json.obj(
-          "a" -> 2,
-          "b" -> 2,
-          "c" -> 2),
-        Json.obj(
-          "a" -> 3,
-          "b" -> 3,
-          "c" -> 3)),
+        Json.obj("a" -> 1, "b" -> 1, "c" -> 1),
+        Json.obj("a" -> 2, "b" -> 2, "c" -> 2),
+        Json.obj("a" -> 3, "b" -> 3, "c" -> 3)),
       "linked" -> Json.obj(
-        "foo.v1" -> Json.arr(
-          Json.obj(
-            "x" -> 1,
-            "y" -> 1,
-            "z" -> 1),
-          Json.obj(
-            "x" -> 2,
-            "y" -> 2,
-            "z" -> 2)),
-        "bar.v2/sub/supersub" -> Json.arr(
-          Json.obj(
-            "p" -> 1,
-            "q" -> 1,
-            "r" -> 1),
-          Json.obj(
-            "p" -> 2,
-            "q" -> 2,
-            "r" -> 2)),
-        "unrelated.v3" -> Json.arr(
-          Json.obj("w" -> "oops"))))
+        "foo.v1" -> Json
+          .arr(Json.obj("x" -> 1, "y" -> 1, "z" -> 1), Json.obj("x" -> 2, "y" -> 2, "z" -> 2)),
+        "bar.v2/sub/supersub" -> Json
+          .arr(Json.obj("p" -> 1, "q" -> 1, "r" -> 1), Json.obj("p" -> 2, "q" -> 2, "r" -> 2)),
+        "unrelated.v3" -> Json.arr(Json.obj("w" -> "oops"))))
 
     val expected = Json.obj(
-      "elements" -> Json.arr(
-        Json.obj("a" -> 1),
-        Json.obj("a" -> 2),
-        Json.obj("a" -> 3)),
+      "elements" -> Json.arr(Json.obj("a" -> 1), Json.obj("a" -> 2), Json.obj("a" -> 3)),
       "linked" -> Json.obj(
-        "foo.v1" -> Json.arr(
-          Json.obj("x" -> 1),
-          Json.obj("x" -> 2)),
-        "bar.v2/sub/supersub" -> Json.arr(
-          Json.obj("p" -> 1),
-          Json.obj("p" -> 2))))
+        "foo.v1" -> Json.arr(Json.obj("x" -> 1), Json.obj("x" -> 2)),
+        "bar.v2/sub/supersub" -> Json.arr(Json.obj("p" -> 1), Json.obj("p" -> 2))))
 
-    val fields = QueryFields(Set("a"), Map(
-      ResourceName("foo", 1) -> Set("x"),
-      ResourceName("bar", 2, List("sub", "supersub")) -> Set("p")))
+    val fields = QueryFields(
+      Set("a"),
+      Map(
+        ResourceName("foo", 1) -> Set("x"),
+        ResourceName("bar", 2, List("sub", "supersub")) -> Set("p")))
 
     val dataMap = NaptimeSerializer.PlayJson.serialize(unfiltered)
     val codec = new FlattenedFilteringJacksonDataCodec(fields)
     val serialized = codec.mapToString(dataMap)
     val deserialized = codec.stringToMap(serialized)
-    assert(NaptimeSerializer.PlayJson.serialize(expected) === deserialized,
+    assert(
+      NaptimeSerializer.PlayJson.serialize(expected) === deserialized,
       s"Serialized is: $serialized")
     assert(expected === Json.parse(serialized))
   }
@@ -133,16 +91,11 @@ class FlattenedFilteringJacksonDataCodecTest extends AssertionsForJUnit {
   @Test
   def testEmptyTopLevels(): Unit = {
     val unfiltered = Json.obj(
-      "elements" -> Json.arr(
-        Json.obj("a" -> 1),
-        Json.obj("a" -> 2)),
+      "elements" -> Json.arr(Json.obj("a" -> 1), Json.obj("a" -> 2)),
       "paging" -> Json.obj(),
       "linked" -> Json.obj())
 
-    val expected = Json.obj(
-      "elements" -> Json.arr(
-        Json.obj("a" -> 1),
-        Json.obj("a" -> 2)))
+    val expected = Json.obj("elements" -> Json.arr(Json.obj("a" -> 1), Json.obj("a" -> 2)))
 
     val fields = QueryFields(Set("a"), Map.empty)
     val dataMap = NaptimeSerializer.PlayJson.serialize(unfiltered)

@@ -48,8 +48,8 @@ object SchemaInference {
    */
   def inferSchema[T: ru.TypeTag]: JsObject = inferSchema(ru.typeOf[T])
 
-  def inferSchemaFromWeakTypeTag[T: ru.WeakTypeTag]: JsObject = inferSchema(ru.weakTypeOf[T])
-
+  def inferSchemaFromWeakTypeTag[T: ru.WeakTypeTag]: JsObject =
+    inferSchema(ru.weakTypeOf[T])
 
   /**
    * Extracts schemas from Courier generated bindings.
@@ -60,12 +60,15 @@ object SchemaInference {
    */
   def inferSchema(typ: ru.Type): JsObject = {
     val traverser = new ScalaClassTraverser(typ)
-    traverser.extractPegasusSchemaIfPresent().flatMap(_.asOpt[JsObject]).getOrElse {
-      traverser.inferSchema().schema match {
-        case obj: JsObject => obj
-        case value: JsValue => Json.obj("type" -> value)
+    traverser
+      .extractPegasusSchemaIfPresent()
+      .flatMap(_.asOpt[JsObject])
+      .getOrElse {
+        traverser.inferSchema().schema match {
+          case obj: JsObject  => obj
+          case value: JsValue => Json.obj("type" -> value)
+        }
       }
-    }
   }
 }
 
@@ -92,17 +95,19 @@ private[courier] class ScalaClassTraverser(rootType: ru.Type) {
   def extractPegasusSchemaIfPresent(typ: ru.Type): Option[JsValue] = {
     if (typ <:< runtimeMirror.typeOf[DataTemplate[_]]) {
       val maybeSchema = runtimeMirror.runtimeClass(typ) match {
-        case clazz: Class[DataTemplate[Object] @unchecked] => Some(CourierSerializer.getSchema(clazz))
+        case clazz: Class[DataTemplate[Object] @unchecked] =>
+          Some(CourierSerializer.getSchema(clazz))
       }
       maybeSchema.map(schemaToJson)
     } else if (typ <:< ru.typeOf[scala.Enumeration#Value]) {
       inferEnumObjectFromValue(typ) collect {
         case EnumerationInfo(enum, enumSymbol)
-          // Is the enum a Courier generated enum?
-          if enumSymbol.isType &&
-             enumSymbol.asType.toType <:< runtimeMirror.typeOf[CourierCompanionObject] =>
-            import scala.language.reflectiveCalls
-            schemaToJson(enum.asInstanceOf[CourierCompanionObject].SCHEMA)
+            // Is the enum a Courier generated enum?
+            if enumSymbol.isType &&
+              enumSymbol.asType.toType <:< runtimeMirror
+                .typeOf[CourierCompanionObject] =>
+          import scala.language.reflectiveCalls
+          schemaToJson(enum.asInstanceOf[CourierCompanionObject].SCHEMA)
       }
     } else {
       None
@@ -110,7 +115,8 @@ private[courier] class ScalaClassTraverser(rootType: ru.Type) {
   }
 
   private[this] def schemaToJson(schema: DataSchema): JsValue = {
-    val schemaJson = SchemaToJsonEncoder.schemaToJson(schema, JsonBuilder.Pretty.COMPACT)
+    val schemaJson =
+      SchemaToJsonEncoder.schemaToJson(schema, JsonBuilder.Pretty.COMPACT)
     Json.parse(schemaJson)
   }
 
@@ -133,7 +139,8 @@ private[courier] class ScalaClassTraverser(rootType: ru.Type) {
       }
     } else if (typ <:< ru.typeOf[Map[_, _]]) {
       inferMap(typ)
-    } else if (typ <:< ru.typeOf[Traversable[_]] || typ <:< ru.typeOf[Array[_]]) {
+    } else if (typ <:< ru.typeOf[Traversable[_]] || typ <:< ru
+                 .typeOf[Array[_]]) {
       inferArray(typ)
     } else if (isUnion(typ)) {
       inferUnion(typ)
@@ -142,13 +149,15 @@ private[courier] class ScalaClassTraverser(rootType: ru.Type) {
     } else {
       // We don't know how to infer a schema for this type
       visitNamedSchema(typeName) {
-        val message = s"Unable to infer schema. See the $typeName Scala type for data model structure."
-        InferredSchema(Json.obj(
-          "name" -> typeName,
-          "type" -> "record",
-          "fields" -> Json.arr(),
-          "deprecated" -> message,
-          "doc" -> message))
+        val message =
+          s"Unable to infer schema. See the $typeName Scala type for data model structure."
+        InferredSchema(
+          Json.obj(
+            "name" -> typeName,
+            "type" -> "record",
+            "fields" -> Json.arr(),
+            "deprecated" -> message,
+            "doc" -> message))
       }
     }
   }
@@ -164,35 +173,43 @@ private[courier] class ScalaClassTraverser(rootType: ru.Type) {
         "deprecated" -> ("Provided for compatibility with existing data models only. Please " +
           "define schemas for all data. If enveloping is required, please ask infrastructure " +
           "team about 'AnyRecord'."),
-        "doc" -> "Marker type for arbitrary JSON data."),
-      name = Some("org.coursera.common.AnyData")),
+        "doc" -> "Marker type for arbitrary JSON data."
+      ),
+      name = Some("org.coursera.common.AnyData")
+    ),
     "org.coursera.common.EmptyModel" -> InferredSchema(
       Json.obj(
         "name" -> "EmptyRecord",
         "namespace" -> "org.coursera.common",
         "type" -> "record",
-        "fields" -> Json.arr()), name = Some("org.coursera.common.EmptyRecord")),
+        "fields" -> Json.arr()),
+      name = Some("org.coursera.common.EmptyRecord")),
     "java.util.UUID" -> InferredSchema(
       coercedType(
         "org.coursera.common.UUID",
         "java.util.UUID",
         "org.coursera.coercers.common.UUIDCoercer",
-        DataSchemaUtil.dataSchemaTypeToPrimitiveDataSchema(DataSchema.Type.STRING)),
-      name = Some("org.coursera.common.UUID")),
+        DataSchemaUtil.dataSchemaTypeToPrimitiveDataSchema(DataSchema.Type.STRING)
+      ),
+      name = Some("org.coursera.common.UUID")
+    ),
     "org.joda.time.DateTime" -> InferredSchema(
       coercedType(
         "org.coursera.common.DateTime",
         "org.joda.time.DateTime",
         "org.coursera.coercers.common.DateTime",
-        DataSchemaUtil.dataSchemaTypeToPrimitiveDataSchema(DataSchema.Type.LONG)),
-      name = Some("org.coursera.common.DateTime")),
+        DataSchemaUtil.dataSchemaTypeToPrimitiveDataSchema(DataSchema.Type.LONG)
+      ),
+      name = Some("org.coursera.common.DateTime")
+    ),
     "java.lang.String" -> InferredSchema(JsString("string")),
     "scala.Boolean" -> InferredSchema(JsString("boolean")),
     "scala.Short" -> InferredSchema(JsString("int")),
     "scala.Int" -> InferredSchema(JsString("int")),
     "scala.Long" -> InferredSchema(JsString("long")),
     "scala.Float" -> InferredSchema(JsString("float")),
-    "scala.Double" -> InferredSchema(JsString("double")))
+    "scala.Double" -> InferredSchema(JsString("double"))
+  )
 
   private[this] def isPredef(typ: ru.Type): Boolean = {
     val typeName = typ.typeSymbol.fullName
@@ -234,12 +251,14 @@ private[courier] class ScalaClassTraverser(rootType: ru.Type) {
       pegasusRefType: DataSchema): JsValue = {
     val schema = new TyperefDataSchema(new Name(pegasusName))
     schema.setReferencedType(pegasusRefType)
-    schema.setProperties(Map[String, AnyRef](
-      "scala" -> new DataMap(Map(
-        "class" -> scalaClassName,
-        "coercerClass" -> coercerClass
+    schema.setProperties(
+      Map[String, AnyRef](
+        "scala" -> new DataMap(
+          Map(
+            "class" -> scalaClassName,
+            "coercerClass" -> coercerClass
+          ).asJava)
       ).asJava)
-    ).asJava)
     schemaToJson(schema)
   }
 
@@ -250,23 +269,23 @@ private[courier] class ScalaClassTraverser(rootType: ru.Type) {
     val fullName = namespace.map(_ + ".").getOrElse("") + name
     visitNamedSchema(fullName) {
       val fieldList = typ.members.toList
-          .filter(_.isTerm)
-          // Order used here impacts where a type is first declared and where it is referenced
-          // by-name.  Since we lack a better approach, we alpha sort the keys so that we at
-          // least have a consistent order.
-          .sortBy(_.asTerm.name.decodedName.toString.trim)
-          .flatMap { member =>
-        fieldToJson(member)
-      }
+        .filter(_.isTerm)
+        // Order used here impacts where a type is first declared and where it is referenced
+        // by-name.  Since we lack a better approach, we alpha sort the keys so that we at
+        // least have a consistent order.
+        .sortBy(_.asTerm.name.decodedName.toString.trim)
+        .flatMap { member =>
+          fieldToJson(member)
+        }
 
       // Return the value and add it to the cache (since we're using getOrElseUpdate
-      val namespaceField = namespace.map(ns =>Json.obj("namespace" -> ns)).getOrElse(Json.obj())
+      val namespaceField =
+        namespace.map(ns => Json.obj("namespace" -> ns)).getOrElse(Json.obj())
 
-      InferredSchema(Json.obj(
-        "name" -> name,
-        "type" -> "record",
-        "fields" -> fieldList)
-        ++ namespaceField, name = Some(typ.typeSymbol.fullName))
+      InferredSchema(
+        Json.obj("name" -> name, "type" -> "record", "fields" -> fieldList)
+          ++ namespaceField,
+        name = Some(typ.typeSymbol.fullName))
     }
   }
 
@@ -280,7 +299,8 @@ private[courier] class ScalaClassTraverser(rootType: ru.Type) {
         if (term.isVal || term.isVal) {
           val fieldSchema = inferSchema(term.typeSignature)
           val optionalField =
-            if (fieldSchema.isOptional) Json.obj("optional" -> true) else Json.obj()
+            if (fieldSchema.isOptional) Json.obj("optional" -> true)
+            else Json.obj()
 
           if (term.isParamWithDefault) {
             // TODO(jbetz): Is it possible to extract the default value?
@@ -290,10 +310,10 @@ private[courier] class ScalaClassTraverser(rootType: ru.Type) {
             // Ignore OFormat fields.
             case JsString("play.api.libs.json.OFormat") => None
             case _: Any =>
-              Some(Json.obj(
-                "name" -> term.name.decodedName.toString.trim,
-                "type" -> fieldSchema.schema)
-                ++ optionalField)
+              Some(
+                Json
+                  .obj("name" -> term.name.decodedName.toString.trim, "type" -> fieldSchema.schema)
+                  ++ optionalField)
           }
         } else {
           None
@@ -309,6 +329,7 @@ private[courier] class ScalaClassTraverser(rootType: ru.Type) {
   }
 
   private[this] case class EnumerationInfo(enum: Enumeration, symbol: ru.Symbol)
+
   /**
    * Attempts to infer the Enumeration from a Enumeration.Value type using the following heuristics:
    *
@@ -356,40 +377,45 @@ private[courier] class ScalaClassTraverser(rootType: ru.Type) {
   }
 
   private[this] def inferEnum(typ: ru.Type): InferredSchema = {
-    inferEnumObjectFromValue(typ).map { enumInfo =>
-      val symbols = enumInfo.enum.values.map { v =>
-        Json.toJson(v.toString)
-      }.toList
-      val enumSymbol = runtimeMirror.classSymbol(enumInfo.enum.getClass)
-      val name = enumSymbol.asType.name.decodedName.toString
-      val namespace = packageName(enumSymbol)
-      val fullName = namespace.map(_ + ".").getOrElse("") + name
-      visitNamedSchema(fullName) {
-        val namespaceField = namespace.map(ns => Json.obj("namespace" -> ns)).getOrElse(Json.obj())
-        InferredSchema(Json.obj(
-          "name" -> name,
-          "type" -> "enum",
-          "symbols" -> JsArray(symbols))
-          ++ namespaceField, name = Some(fullName))
+    inferEnumObjectFromValue(typ)
+      .map { enumInfo =>
+        val symbols = enumInfo.enum.values.map { v =>
+          Json.toJson(v.toString)
+        }.toList
+        val enumSymbol = runtimeMirror.classSymbol(enumInfo.enum.getClass)
+        val name = enumSymbol.asType.name.decodedName.toString
+        val namespace = packageName(enumSymbol)
+        val fullName = namespace.map(_ + ".").getOrElse("") + name
+        visitNamedSchema(fullName) {
+          val namespaceField = namespace
+            .map(ns => Json.obj("namespace" -> ns))
+            .getOrElse(Json.obj())
+          InferredSchema(
+            Json.obj("name" -> name, "type" -> "enum", "symbols" -> JsArray(symbols))
+              ++ namespaceField,
+            name = Some(fullName))
+        }
       }
-    }.getOrElse(InferredSchema(JsString("UnableToInferEnum"), isOptional = false))
+      .getOrElse(InferredSchema(JsString("UnableToInferEnum"), isOptional = false))
   }
 
   private[this] def inferArray(typ: ru.Type): InferredSchema = {
-    InferredSchema(Json.obj(
-      "type" -> "array",
-      "items" -> inferSchema(typ.asInstanceOf[ru.TypeRefApi].args.head).schema))
+    InferredSchema(
+      Json.obj(
+        "type" -> "array",
+        "items" -> inferSchema(typ.asInstanceOf[ru.TypeRefApi].args.head).schema))
   }
 
   private[this] def inferMap(typ: ru.Type): InferredSchema = {
     val args = typ.asInstanceOf[ru.TypeRefApi].args
     require(args.length == 2)
     val keysType = inferSchema(args.head).schema
-    val keyField = if (keysType == JsString("string")) Json.obj() else Json.obj("keys" -> keysType)
-    InferredSchema(Json.obj(
-      "type" -> "map",
-      "values" -> inferSchema(args(1)).schema)
-      ++ keyField)
+    val keyField =
+      if (keysType == JsString("string")) Json.obj()
+      else Json.obj("keys" -> keysType)
+    InferredSchema(
+      Json.obj("type" -> "map", "values" -> inferSchema(args(1)).schema)
+        ++ keyField)
   }
 
   private[this] def isUnion(typ: ru.Type): Boolean = {
@@ -421,11 +447,13 @@ private[courier] class ScalaClassTraverser(rootType: ru.Type) {
       val memberName = subtype.name.decodedName.toString
       val memberNamespace = packageName(typ.typeSymbol)
       val typeName = camelCase(memberName)
-      val memberKey = s"${memberNamespace.map(_ + ".").getOrElse("")}$memberName"
+      val memberKey =
+        s"${memberNamespace.map(_ + ".").getOrElse("")}$memberName"
       memberKey -> JsString(typeName)
     }.toSeq)
 
-    InferredSchema(Json.obj(
+    InferredSchema(
+      Json.obj(
         "name" -> name,
         "namespace" -> namespace,
         "type" -> "typeref",

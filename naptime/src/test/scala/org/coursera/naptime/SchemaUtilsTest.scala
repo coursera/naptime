@@ -45,8 +45,9 @@ class SchemaUtilsTest extends AssertionsForJUnit {
     val longDataSchema = DataSchemaUtil.dataSchemaTypeToPrimitiveDataSchema(DataSchema.Type.LONG)
     val overrides = Map("org.coursera.naptime.RecursiveChild" -> longDataSchema)
     SchemaUtils.fixupInferredSchemas(schemaToFix, overrides)
-    assert(schemaToFix.getField("recursiveChildren").getType ===
-      new ArrayDataSchema(longDataSchema))
+    assert(
+      schemaToFix.getField("recursiveChildren").getType ===
+        new ArrayDataSchema(longDataSchema))
   }
 
   @Test
@@ -55,32 +56,45 @@ class SchemaUtilsTest extends AssertionsForJUnit {
     val longDataSchema = DataSchemaUtil.dataSchemaTypeToPrimitiveDataSchema(DataSchema.Type.LONG)
     val overrides = Map("org.coursera.naptime.RecursiveChild" -> longDataSchema)
     SchemaUtils.fixupInferredSchemas(schemaToFix, overrides)
-    assert(schemaToFix.getField("recursiveChildMap").getType ===
-      new MapDataSchema(longDataSchema))
+    assert(
+      schemaToFix.getField("recursiveChildMap").getType ===
+        new MapDataSchema(longDataSchema))
   }
 
   @Test
   def testFixupSchema_RecursiveListSchema_WithOverrides(): Unit = {
     val schemaToFix = RecursiveModelBase.SCHEMA
-    val stringDataSchema = DataSchemaUtil.dataSchemaTypeToPrimitiveDataSchema(DataSchema.Type.STRING)
+    val stringDataSchema =
+      DataSchemaUtil.dataSchemaTypeToPrimitiveDataSchema(DataSchema.Type.STRING)
     val overrides = Map("org.coursera.naptime.StringLikeField" -> stringDataSchema)
     SchemaUtils.fixupInferredSchemas(schemaToFix, overrides)
-    assert(schemaToFix
-      .getField("nestedChild").getType.asInstanceOf[ArrayDataSchema]
-      .getItems.asInstanceOf[RecordDataSchema]
-      .getField("stringLikeField").getType === stringDataSchema)
+    assert(
+      schemaToFix
+        .getField("nestedChild")
+        .getType
+        .asInstanceOf[ArrayDataSchema]
+        .getItems
+        .asInstanceOf[RecordDataSchema]
+        .getField("stringLikeField")
+        .getType === stringDataSchema)
   }
 
   @Test
   def testFixupSchema_RecursiveUnionSchema_WithOverrides(): Unit = {
     val schemaToFix = RecursiveModelBase.SCHEMA
-    val stringDataSchema = DataSchemaUtil.dataSchemaTypeToPrimitiveDataSchema(DataSchema.Type.STRING)
+    val stringDataSchema =
+      DataSchemaUtil.dataSchemaTypeToPrimitiveDataSchema(DataSchema.Type.STRING)
     val overrides = Map("org.coursera.naptime.StringLikeField" -> stringDataSchema)
     SchemaUtils.fixupInferredSchemas(schemaToFix, overrides)
-    assert(schemaToFix
-      .getField("unionChild").getType.asInstanceOf[UnionDataSchema]
-      .getTypeByName("NestedChild").asInstanceOf[RecordDataSchema]
-      .getField("stringLikeField").getType === stringDataSchema)
+    assert(
+      schemaToFix
+        .getField("unionChild")
+        .getType
+        .asInstanceOf[UnionDataSchema]
+        .getTypeByName("NestedChild")
+        .asInstanceOf[RecordDataSchema]
+        .getField("stringLikeField")
+        .getType === stringDataSchema)
   }
 
 }

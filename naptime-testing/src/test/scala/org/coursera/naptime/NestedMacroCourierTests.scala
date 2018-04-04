@@ -36,9 +36,10 @@ object NestedMacroCourierTests {
     val ID = ResourceName("courses", 1)
   }
 
-  class CoursesResource @Inject()
-      (implicit executionContext: ExecutionContext, materializer: Materializer)
-    extends CourierCollectionResource[String, Course] {
+  class CoursesResource @Inject()(
+      implicit executionContext: ExecutionContext,
+      materializer: Materializer)
+      extends CourierCollectionResource[String, Course] {
     override def resourceName: String = CoursesResource.ID.topLevelName
 
     override implicit lazy val Fields: Fields[Course] = BaseFields
@@ -58,7 +59,7 @@ object NestedMacroCourierTests {
         case "abc" => List("123")
         case "xyz" => List.empty
         case "qrs" => List("456", "789")
-        case _ => List.empty
+        case _     => List.empty
       }
     }
 
@@ -86,15 +87,14 @@ object NestedMacroCourierTests {
         case "123" => List("xyz")
         case "456" => List("xyz", "abc")
         case "789" => List("qrs")
-        case _ => List.empty
+        case _     => List.empty
       }
       Ok(ids.map(id => makeCourse(id)))
     }
   }
 
-  class InstructorsResource @Inject()
-      (implicit ec: ExecutionContext, mat: Materializer)
-    extends CourierCollectionResource[String, Instructor]() {
+  class InstructorsResource @Inject()(implicit ec: ExecutionContext, mat: Materializer)
+      extends CourierCollectionResource[String, Instructor]() {
     override def resourceName: String = "instructors"
 
     def multiGet(ids: Set[String]) = Nap.multiGet { ctx =>
@@ -107,8 +107,11 @@ object NestedMacroCourierTests {
   val instructorRouter = Router.build[InstructorsResource]
 }
 
-class NestedMacroCourierTests extends AssertionsForJUnit with ScalaFutures with ResourceTestImplicits with IntegrationPatience {
-
+class NestedMacroCourierTests
+    extends AssertionsForJUnit
+    with ScalaFutures
+    with ResourceTestImplicits
+    with IntegrationPatience {
 
   val implicitsModule = new Module {
     override def configure(binder: Binder): Unit = {
@@ -121,7 +124,8 @@ class NestedMacroCourierTests extends AssertionsForJUnit with ScalaFutures with 
   def checkCoursesMergedType(): Unit = {
     val types = NestedMacroCourierTests.courseRouter.types
     assert(3 === types.size, s"Got $types")
-    val mergedTypeOpt = types.find(_.key == "org.coursera.naptime.NestedMacroCourierTests.CoursesResource.Model")
+    val mergedTypeOpt =
+      types.find(_.key == "org.coursera.naptime.NestedMacroCourierTests.CoursesResource.Model")
     assert(mergedTypeOpt.isDefined)
     val mergedType = mergedTypeOpt.get
     assert(!mergedType.value.hasError)
@@ -143,14 +147,19 @@ class NestedMacroCourierTests extends AssertionsForJUnit with ScalaFutures with 
   @Test
   def checkMergedCourseModelSchema(): Unit = {
     val types = NestedMacroCourierTests.courseRouter.types
-    val mergedType = types.find(_.key == "org.coursera.naptime.NestedMacroCourierTests.CoursesResource.Model").get
-    assert(ExpectedMergedCourse.SCHEMA.getFields === mergedType.value.asInstanceOf[RecordDataSchema].getFields)
+    val mergedType =
+      types.find(_.key == "org.coursera.naptime.NestedMacroCourierTests.CoursesResource.Model").get
+    assert(
+      ExpectedMergedCourse.SCHEMA.getFields === mergedType.value
+        .asInstanceOf[RecordDataSchema]
+        .getFields)
   }
 
   @Test
   def coursesLocalFetcher_Get(): Unit = {
     val injector = Guice.createInjector(implicitsModule)
-    val routerBuilders = Set(NestedMacroCourierTests.courseRouter, NestedMacroCourierTests.instructorRouter)
+    val routerBuilders =
+      Set(NestedMacroCourierTests.courseRouter, NestedMacroCourierTests.instructorRouter)
     val naptimeRoutes = NaptimeRoutes(injector, routerBuilders)
     val fetcher = new LocalFetcher(naptimeRoutes)
 
@@ -161,16 +170,18 @@ class NestedMacroCourierTests extends AssertionsForJUnit with ScalaFutures with 
 
     val response = fetcher.data(request, isDebugMode = false).futureValue
 
-    assert(response.left.get === FetcherError(
-      code = 404,
-      message = "Handler was not a RestAction, or Get attempted",
-      url = Some("/api/courses.v1?id=abc")))
+    assert(
+      response.left.get === FetcherError(
+        code = 404,
+        message = "Handler was not a RestAction, or Get attempted",
+        url = Some("/api/courses.v1?id=abc")))
   }
 
   @Test
   def coursesLocalFetcher_MultiGet(): Unit = {
     val injector = Guice.createInjector(implicitsModule)
-    val routerBuilders = Set(NestedMacroCourierTests.courseRouter, NestedMacroCourierTests.instructorRouter)
+    val routerBuilders =
+      Set(NestedMacroCourierTests.courseRouter, NestedMacroCourierTests.instructorRouter)
     val naptimeRoutes = NaptimeRoutes(injector, routerBuilders)
     val fetcher = new LocalFetcher(naptimeRoutes)
 
@@ -181,7 +192,6 @@ class NestedMacroCourierTests extends AssertionsForJUnit with ScalaFutures with 
 
     val response = fetcher.data(request, isDebugMode = false).futureValue
 
-
     assert(2 === response.right.get.data.size)
     assert(response.right.get.data.exists(_.get("id") == "abc"))
     assert("course-abc" === response.right.get.data.find(_.get("id") == "abc").get.get("name"))
@@ -190,7 +200,8 @@ class NestedMacroCourierTests extends AssertionsForJUnit with ScalaFutures with 
   @Test
   def coursesLocalFetcher_Finder(): Unit = {
     val injector = Guice.createInjector(implicitsModule)
-    val routerBuilders = Set(NestedMacroCourierTests.courseRouter, NestedMacroCourierTests.instructorRouter)
+    val routerBuilders =
+      Set(NestedMacroCourierTests.courseRouter, NestedMacroCourierTests.instructorRouter)
     val naptimeRoutes = NaptimeRoutes(injector, routerBuilders)
     val fetcher = new LocalFetcher(naptimeRoutes)
 

@@ -30,23 +30,22 @@ import scala.concurrent.Future
  * Implementation of [[HeaderAccessControl]] with more structure, separating the authentication
  * and authorization phases of access control to promote reusability.
  */
-case class StructuredAccessControl[A](
-    authenticator: Authenticator[A],
-    authorizer: Authorizer[A])
-  extends HeaderAccessControl[A] {
+case class StructuredAccessControl[A](authenticator: Authenticator[A], authorizer: Authorizer[A])
+    extends HeaderAccessControl[A] {
 
-  override def run(
-      requestHeader: RequestHeader)
-      (implicit executionContext: ExecutionContext): Future[Either[NaptimeActionException, A]] = {
+  override def run(requestHeader: RequestHeader)(
+      implicit executionContext: ExecutionContext): Future[Either[NaptimeActionException, A]] = {
 
     Authenticator.authenticateAndRecover(authenticator, requestHeader).map { decoratedOption =>
-      decoratedOption.map { either =>
-        either.right.flatMap { decorated =>
-          Authorizer.toResponse(authorizer.authorize(decorated), decorated)
+      decoratedOption
+        .map { either =>
+          either.right.flatMap { decorated =>
+            Authorizer.toResponse(authorizer.authorize(decorated), decorated)
+          }
         }
-      }.getOrElse {
-        StructuredAccessControl.missingResponse
-      }
+        .getOrElse {
+          StructuredAccessControl.missingResponse
+        }
     }
   }
 
@@ -58,10 +57,11 @@ case class StructuredAccessControl[A](
 object StructuredAccessControl {
 
   private[access] val missingResponse = {
-    Left(NaptimeActionException(
-      Status.UNAUTHORIZED,
-      Some("auth.perms"),
-      Some("Missing authentication")))
+    Left(
+      NaptimeActionException(
+        Status.UNAUTHORIZED,
+        Some("auth.perms"),
+        Some("Missing authentication")))
   }
 
 }
