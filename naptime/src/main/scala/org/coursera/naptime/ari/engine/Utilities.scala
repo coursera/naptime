@@ -38,12 +38,15 @@ import scala.collection.JavaConverters._
 object Utilities extends StrictLogging {
   private val TYPED_DEFINITION_KEY = "typedDefinition"
   private def getTypedDefinitionMappings(elements: Iterator[DataElement]): Map[String, String] = {
-    val typedDefinitionMappings = elements.flatMap { element =>
+    val typedDefinitionMappings: List[Map[String, String]] = elements.map { element =>
       Option(element.getSchema.getProperties.get(TYPED_DEFINITION_KEY)).collect {
-        case definitions: java.util.Map[String@unchecked, String@unchecked] => definitions.asScala.toList
-      }.getOrElse(List.empty)
-    }
-    typedDefinitionMappings.toMap
+        case definitions: java.util.Map[String@unchecked, String@unchecked] =>
+          definitions.asScala.toMap // toMap as the .asScala map is default mutable.
+      }.getOrElse(Map.empty[String, String])
+    }.toList
+
+    val typedDefinitionsFlattened = typedDefinitionMappings.flatten
+    typedDefinitionsFlattened.toMap
   }
 
   /**
