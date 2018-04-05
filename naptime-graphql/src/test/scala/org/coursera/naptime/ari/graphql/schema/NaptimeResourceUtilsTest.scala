@@ -50,6 +50,22 @@ class NaptimeResourceUtilsTest extends AssertionsForJUnit with MockitoSugar {
   }
 
   @Test
+  def interpolateArgumentsMultipleIds(): Unit = {
+    val testCourse = DataMapWithParent(
+      Models.COURSE_A.data(),
+      ParentModel(ResourceName("courses", 1), Models.COURSE_A.data(), MergedCourse.SCHEMA))
+
+    val getRelation = ReverseRelationAnnotation(
+      resourceName = "coursePartners.v1",
+      arguments = StringMap(Map("id" -> "$id~$partnerId")),
+      relationType = RelationType.GET)
+
+    val interpolatedArguments =
+      NaptimeResourceUtils.interpolateArguments(testCourse, getRelation).toMap
+    assert(interpolatedArguments("id") === JsString(s"${Models.COURSE_A.id}~${Models.COURSE_A.partnerId}"))
+  }
+
+  @Test
   def interpolateArgumentsMultipleElementsFromArray(): Unit = {
 
     val testCourse = DataMapWithParent(
@@ -65,6 +81,27 @@ class NaptimeResourceUtilsTest extends AssertionsForJUnit with MockitoSugar {
       NaptimeResourceUtils.interpolateArguments(testCourse, finderRelation).toMap
     val expectedInstructorIds = Models.COURSE_A.instructorIds.map(id => JsString(s"INSTRUCTOR~$id"))
     assert(interpolatedArguments("ids") === JsArray(expectedInstructorIds))
+  }
+
+  @Test
+  def interpolateArgumentsMultipleElementsAndMultipleIds(): Unit = {
+    val testCourse = DataMapWithParent(
+      Models.COURSE_A.data(),
+      ParentModel(ResourceName("courseInstructors", 1), Models.COURSE_A.data(), MergedCourse.SCHEMA))
+
+    val multiGetRelation = ReverseRelationAnnotation(
+      resourceName = "courseInstructors.v1",
+      arguments = StringMap(Map("ids" -> "COURSE~${id}~INSTRUCTOR~${instructorIds}")),
+      relationType = RelationType.MULTI_GET)
+
+
+    val interpolatedArguments =
+      NaptimeResourceUtils.interpolateArguments(testCourse, multiGetRelation).toMap
+    val expectedIds = JsArray(List(
+      JsString(s"COURSE~${Models.COURSE_A.id}~INSTRUCTOR~${Models.COURSE_A.instructorIds(0)}"),
+      JsString(s"COURSE~${Models.COURSE_A.id}~INSTRUCTOR~${Models.COURSE_A.instructorIds(1)}")
+    ))
+    assert(interpolatedArguments("ids") === expectedIds)
   }
 
   @Test
