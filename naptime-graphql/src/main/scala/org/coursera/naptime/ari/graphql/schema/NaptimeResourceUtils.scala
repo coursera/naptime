@@ -39,6 +39,8 @@ import sangria.schema.OptionInputType
 import sangria.schema.StringType
 
 import scala.collection.JavaConverters._
+import scala.util.Failure
+import scala.util.Success
 import scala.util.Try
 import scala.util.matching.Regex
 
@@ -156,29 +158,35 @@ object NaptimeResourceUtils extends StrictLogging {
     }
   }
 
+  case class VariableNameWithInterpolatedIds(matchedLiteral: String, interpolatedIds: List[String])
   def interpolateArguments(
       data: DataMapWithParent,
       relation: ReverseRelationAnnotation): Set[(String, JsValue)] = {
 
     relation.arguments
       .mapValues { value =>
-        val interpolatedIds: List[String] = InterpolationRegex.findAllMatchIn(value).flatMap { regexMatch =>
-          val withoutBraces = Option(regexMatch.group("withoutBraces"))
-          val withBraces = Option(regexMatch.group("withBraces"))
-          val variableName = withoutBraces.orElse(withBraces).getOrElse("")
-          Utilities.getValuesAtPath(
-            data.parentModel.value,
-            data.parentModel.schema,
-            variableName.split(INTERPOLATION_PATH_SPLIT_REGEX))
-        }.toList
-        if (interpolatedIds.isEmpty) {
+        val matches = InterpolationRegex.findAllMatchIn(value).toList
+        val variableNameToInterpolatedIds: Map[String, List[String]] =
+          matches.map { regexMatch =>
+            val withoutBraces = Option(regexMatch.group("withoutBraces"))
+            val withBraces = Option(regexMatch.group("withBraces"))
+            val variableName = withoutBraces.orElse(withBraces).getOrElse("")
+            val interpolatedIds = Utilities.getValuesAtPath(
+              data.parentModel.value,
+              data.parentModel.schema,
+              variableName.split(INTERPOLATION_PATH_SPLIT_REGEX))
+            variableName -> interpolatedIds
+          }.toMap
+        if (variableNameToInterpolatedIds.values.flatten.isEmpty) {
           logger.debug(s"Arguments: $value did not result in id interpolation")
-          List(value)
+          // If we wanted to interpolate but no value is found for the data, then return an empty list.
+          // Else, return the original value, which we take to be a hard coded constant.
+          if (matches.nonEmpty) List.empty else List(value)
         } else {
-          val interpolatedIdsWithNonIdParts = interpolatedIds.map { id => InterpolationRegex.replaceAllIn(value, id) }
-          logger.debug(s"Arguments: $value\tInterpolated ids: $interpolatedIds" +
-            s"\tArguments with interpolation: $interpolatedIdsWithNonIdParts")
-          interpolatedIdsWithNonIdParts
+          interpolate(
+            argumentValue = value,
+            variableNameToInterpolatedIds = variableNameToInterpolatedIds
+          )
         }
       }
       .mapValues { value =>
@@ -191,4 +199,45 @@ object NaptimeResourceUtils extends StrictLogging {
       }
       .toSet
     }
+
+  private[schema] def interpolate(
+      argumentValue: String,
+      variableNameToInterpolatedIds: Map[String, List[String]]): List[String] = {
+
+    // Note: For simplicity, we do not support cross product of ids. Instead, we
+    // will create as many ids as the variable with the most ids. The other variables will
+    // be cycled around modulo the current index.
+    // For instance, if `variableNameToInterpolatedIds` =
+    // {
+    //   "id": ["id1", "id2", "id3"],
+    //   "partnerId": ["partner1"]
+    // }
+    // , and the argument value is `$id~$partnerId`, then we will return 3 ids:
+    // ["id1~partner1", "id2~partner1", "id3~partner1"]
+    val numInterpolatedIds = variableNameToInterpolatedIds.values.map(_.length).max
+
+    val fullyInterpolatedIds = (0 until numInterpolatedIds).map(i => {
+      InterpolationRegex.replaceAllIn(argumentValue, (regexMatch) => {
+        val withoutBraces = Option(regexMatch.group("withoutBraces"))
+        val withBraces = Option(regexMatch.group("withBraces"))
+        val variableName = withoutBraces.orElse(withBraces).getOrElse("")
+        Try {
+          val interpolatedIds = variableNameToInterpolatedIds(variableName)
+          interpolatedIds(i % interpolatedIds.size)
+        } match {
+          case Success(v) => v
+          case Failure(f) =>
+            logger.warn(s"Could not interpolate, given argument value: $argumentValue, " +
+              s"regexMatch: $regexMatch, current index: $i, " +
+              s"numInterpolatedIds: $numInterpolatedIds, and " +
+              s"variable name to interpolated ids map: $variableNameToInterpolatedIds")
+            throw f
+        }
+      })
+    })
+    logger.debug(s"Arguments value: $argumentValue\t " +
+      s"Variable names with interpolated ids: $fullyInterpolatedIds\t" +
+      s"After interpolation: $fullyInterpolatedIds")
+    fullyInterpolatedIds.toList
+  }
 }

@@ -33,13 +33,14 @@ import play.api.libs.json.JsValue
 import play.api.libs.json.Json
 
 import scala.collection.JavaConverters._
+import scala.util.Try
 
 
 object Utilities extends StrictLogging {
   private val TYPED_DEFINITION_KEY = "typedDefinition"
   private def getTypedDefinitionMappings(elements: Iterator[DataElement]): Map[String, String] = {
     val typedDefinitionMappings: List[Map[String, String]] = elements.map { element =>
-      Option(element.getSchema.getProperties.get(TYPED_DEFINITION_KEY)).collect {
+      Try(element.getSchema.getProperties.get(TYPED_DEFINITION_KEY)).toOption.collect {
         case definitions: java.util.Map[String@unchecked, String@unchecked] =>
           definitions.asScala.toMap // toMap as the .asScala map is default mutable.
       }.getOrElse(Map.empty[String, String])
@@ -84,17 +85,16 @@ object Utilities extends StrictLogging {
 
     logger.trace(s"getValuesAtPath for path: $path with typedDefinitionMappings: $typedDefinitionMappings")
     getIterator()
-      // Filter out non-value types, so the below logic can focus on computing whether a value
-      // should be included because it satisfies the path.
       .filterNot(dataElement => {
-        val filteredSchemaTypes = Set(DataSchema.Type.ARRAY, DataSchema.Type.RECORD, DataSchema.Type.UNION)
-        filteredSchemaTypes.contains(dataElement.getSchema.getType)
+        logInfoAboutDataElement(dataElement)
+        // Filter out non-value types, so the below logic can focus on computing whether a value
+        // should be included because it satisfies the path. NOTE: Records can potentially be
+        // value types, as they may be coerced to string ids.
+        val filteredSchemaTypes = Set(DataSchema.Type.ARRAY, DataSchema.Type.UNION)
+        dataElement.getSchema != null &&
+          filteredSchemaTypes.contains(dataElement.getSchema.getType)
       })
       .filter(dataElement => {
-        logger.trace(s"Checking if value: `${dataElement.getValue.toString}` " +
-          s"(${dataElement.getSchema.getType}) at " +
-          s"${dataElement.pathAsString()} should be included...")
-
         // Substitute with typed definition names.
         // e.g `org.coursera.naptime.ari.graphql.models.OldPlatformData -> old` allows
         // for users to substitute the fully qualified path for a readable and stable path.
@@ -117,7 +117,8 @@ object Utilities extends StrictLogging {
           // path that contains the type information of the union [e.g `path = /myUnionedId`,
           // and `myUnionedId = union[int, string]`, then
           // the data for the provided path is under `/myUnionedId/string` or `/myUnionedId/int`.
-          (dataElement.getParent.getSchema.getType == DataSchema.Type.UNION &&
+          (Try(dataElement.getParent.getSchema.getType).isSuccess &&
+            dataElement.getParent.getSchema.getType == DataSchema.Type.UNION &&
             withArrayIndicesRemoved.dropRight(1) == path)
 
         logger.trace(s"Data element to be included? $shouldBeIncluded " +
@@ -160,6 +161,19 @@ object Utilities extends StrictLogging {
         false
       case JsNull =>
         true
+    }
+  }
+
+  // Why is this function needed? `dataElement.getSchema` may return NULL.
+  private def logInfoAboutDataElement(dataElement: DataElement): Unit = {
+    if (dataElement.getSchema != null) {
+      logger.trace(s"Encountered DataElement at ${dataElement.pathAsString} " +
+        s"with value: `${dataElement.getValue.toString}`\t" +
+        s"Schema: ${dataElement.getSchema}\t" +
+        s"Type: ${dataElement.getSchema.getType}")
+    } else {
+      logger.debug(s"Encountered DataElement at ${dataElement.pathAsString} " +
+        s"with value: `${dataElement.getValue.toString}` and NULL SCHEMA...")
     }
   }
 }
