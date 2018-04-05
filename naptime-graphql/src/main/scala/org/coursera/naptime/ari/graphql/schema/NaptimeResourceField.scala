@@ -116,9 +116,15 @@ object NaptimeResourceField extends StrictLogging {
       val isForwardRelationButMissingId =
         fieldRelationOpt.exists(_.relationType == RelationType.GET) &&
           idArg.forall(Utilities.jsValueIsEmpty)
+      // This is possible if we are attempting to get the resolver for the root request, and we
+      // put in an empty string for the id. Naptime will translate this to a GETALL behind the
+      // scenes, which results in a very slow API returning non data.
+      val isRequestWithNoArgumentValues = args
+        .map { case (_, jsValue) => jsValue }
+        .forall(Utilities.jsValueIsEmpty)
 
 
-      if (isForwardRelationButMissingId) {
+      if (isForwardRelationButMissingId || isRequestWithNoArgumentValues) {
         Value(null)
       } else {
         DeferredValue(DeferredNaptimeElement(resourceName, idArg, nonIdArgs, resourceMergedType))
