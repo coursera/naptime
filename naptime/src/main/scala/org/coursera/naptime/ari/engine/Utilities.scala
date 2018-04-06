@@ -41,7 +41,6 @@ object Utilities extends StrictLogging {
   private val TYPED_DEFINITION_KEY = "typedDefinition"
   private def getTypedDefinitionMappings(elements: Iterator[DataElement]): Map[String, String] = {
     val typedDefinitionMappings: List[Map[String, String]] = elements.map { element =>
-      logger.info(s"element: $element\telement.getSchema: ${element.getSchema}")
       Try(element.getSchema.getProperties.get(TYPED_DEFINITION_KEY)).toOption.collect {
         case definitions: java.util.Map[String@unchecked, String@unchecked] =>
           definitions.asScala.toMap // toMap as the .asScala map is default mutable.
