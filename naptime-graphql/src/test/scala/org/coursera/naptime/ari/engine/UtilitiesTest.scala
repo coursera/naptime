@@ -1,10 +1,10 @@
 package org.coursera.naptime.ari.engine
 
+import org.coursera.naptime.actions.NaptimeSerializer
 import org.coursera.naptime.ari.graphql.Models
 import org.coursera.naptime.ari.graphql.models.MergedCourse
-import org.coursera.naptime.ari.graphql.models.MergedCourse.OriginalId.StringMember
 import org.coursera.naptime.ari.graphql.models.MergedCourses
-import org.junit.Ignore
+import org.coursera.naptime.courier.CourierFormats
 import org.junit.Test
 import org.scalatest.junit.AssertionsForJUnit
 import org.scalatest.mockito.MockitoSugar
@@ -48,6 +48,20 @@ class UtilitiesTest extends AssertionsForJUnit with MockitoSugar {
   def getValuesAtPathUnionWithTypedDefinitionValue(): Unit = {
     val courseSchema = MergedCourse.SCHEMA
     val course = Models.COURSE_A.data()
+
+    val path = List("platformSpecificData", "old", "notAvailableMessage")
+    val retrievedValue = Utilities.getValuesAtPath(course, courseSchema, path)
+    val expectedValue = List(Models.oldPlatformNotAvailableMessageA)
+    assert(retrievedValue === expectedValue)
+  }
+
+  // This tests the case when the Courier model is serialized by Naptime's PlayJSON layer.
+  // This is useful when we get untyped JsObjects.
+  @Test
+  def getValuesAtPathUnionWithNaptimePlayJsonSerializerAndTypedDefinitionValue(): Unit = {
+    val courseSchema = MergedCourse.SCHEMA
+    val courierFormat = CourierFormats.recordTemplateFormats[MergedCourse]
+    val course = NaptimeSerializer.playJsonFormats(courierFormat).serialize(Models.COURSE_A)
 
     val path = List("platformSpecificData", "old", "notAvailableMessage")
     val retrievedValue = Utilities.getValuesAtPath(course, courseSchema, path)
