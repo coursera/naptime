@@ -60,7 +60,7 @@ object RestActionCategoryEngineTest {
     }
 
     def get2(id: Int) = Nap.get { ctx =>
-      Errors.BadRequest("bad", "You lose!")
+      throw Errors.BadRequest("bad", "You lose!")
     }
 
     def create1 = Nap.create { ctx =>

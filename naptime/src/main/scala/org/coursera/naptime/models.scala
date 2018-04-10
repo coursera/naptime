@@ -101,7 +101,7 @@ case class RequestPagination(limit: Int, start: Option[String], isDefault: Boole
       start.map(_.toInt)
     } catch {
       case _: NumberFormatException =>
-        Errors.BadRequest(msg = s"Paging start should be an integer, was $start")
+        throw Errors.BadRequest(msg = s"Paging start should be an integer, was $start")
     }
   }
 
