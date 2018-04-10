@@ -221,6 +221,10 @@ object CourierFormats extends StrictLogging {
 
   /* serialization helpers */
 
+  def recordToJsObject(dataMap: DataMap, recordSchema: RecordDataSchema): JsObject = {
+    recordToJsObject(emptyPath, dataMap, recordSchema)
+  }
+
   private[this] def recordToJsObject(
     schemaPath: SchemaPath,
     dataMap: DataMap,
