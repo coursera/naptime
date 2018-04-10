@@ -506,6 +506,10 @@ object CourierFormats extends StrictLogging {
     }
   }
 
+  def jsObjectToRecord(jsObject: JsObject, recordSchema: RecordDataSchema): DataMap = {
+    jsObjectToRecord(emptyPath, jsObject, recordSchema)
+  }
+
   private[this] def jsObjectToRecord(
     schemaPath: SchemaPath,
     jsObject: JsObject,
