@@ -94,7 +94,7 @@ object RestActionCategoryEngine2Test {
     }
 
     def get2(id: Int) = Nap.get { ctx =>
-      Errors.NotFound(errorCode = "id", msg = s"Bad id $id")
+      throw Errors.NotFound(errorCode = "id", msg = s"Bad id $id")
     }
 
     def multiGet(ids: Set[Int]) = Nap.multiGet { ctx =>
@@ -151,7 +151,7 @@ object RestActionCategoryEngine2Test {
     }
 
     def get2(id: String) = Nap.get { ctx =>
-      Errors.NotFound(errorCode = "id", msg = s"Bad id: $id")
+      throw Errors.NotFound(errorCode = "id", msg = s"Bad id: $id")
     }
 
     def multiGet(ids: Set[String]) = Nap.multiGet { ctx =>
@@ -207,7 +207,7 @@ object RestActionCategoryEngine2Test {
     }
 
     def get2(id: EnrollmentId) = Nap.get { ctx =>
-      Errors.NotFound(errorCode = "id", msg = s"Bad id: $id")
+      throw Errors.NotFound(errorCode = "id", msg = s"Bad id: $id")
     }
 
     def multiGet(ids: Set[EnrollmentId]) = Nap.multiGet { ctx =>
