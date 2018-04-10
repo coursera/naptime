@@ -221,6 +221,10 @@ object CourierFormats extends StrictLogging {
 
   /* serialization helpers */
 
+  def recordToJsObject(dataMap: DataMap, recordSchema: RecordDataSchema): JsObject = {
+    recordToJsObject(emptyPath, dataMap, recordSchema)
+  }
+
   private[this] def recordToJsObject(
     schemaPath: SchemaPath,
     dataMap: DataMap,
@@ -504,6 +508,10 @@ object CourierFormats extends StrictLogging {
         val dataMap = codec.bytesToMap(stringKey.getBytes("UTF-8"))
         dataMap
     }
+  }
+
+  def jsObjectToRecord(jsObject: JsObject, recordSchema: RecordDataSchema): DataMap = {
+    jsObjectToRecord(emptyPath, jsObject, recordSchema)
   }
 
   private[this] def jsObjectToRecord(
