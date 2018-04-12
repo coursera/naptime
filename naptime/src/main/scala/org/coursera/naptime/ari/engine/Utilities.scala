@@ -220,7 +220,7 @@ object Utilities extends StrictLogging {
    * when doing path lookups.
    */
   private def makeDataMapWithTypedDefinitionsEasyToReplace(element: DataMap, schema: RecordDataSchema): DataMap = {
-    val typedDefinitionCoercer = new TypedDefinitionDataCoercer(schema)
+    val typedDefinitionCoercer = new TypedDefinitionDataCoercer(schema, true /* passthroughEnabled */)
     Try(typedDefinitionCoercer.convertTypedDefinitionToUnion(element)).getOrElse(element)
   }
 }
