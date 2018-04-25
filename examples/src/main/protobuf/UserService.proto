@@ -1,0 +1,45 @@
+// user service definition.
+service UserService {
+  rpc GetUser (GetUserRequest) returns (UserReply) {}
+  rpc GetUsers (GetUsersRequest) returns (UsersReply) {}
+  rpc CreateUser (CreateUserRequest) returns (UserCreatedReply) {}
+  rpc GetUserByEmail (GetUserByEmailRequest) returns (UserReply) {}
+}
+
+// The request message containing the user's id.
+message GetUserRequest {
+  string id = 1;
+}
+
+// The request message containing user ids.
+// note: Not sure that this is the right way to pass though.
+message GetUsersRequest {
+  repeated string id = 1;
+}
+
+message CreateUserRequest {
+  required string name = 1;
+  required string email = 2;
+  optional string selfDescription = 3;
+}
+
+message GetUserByEmailRequest {
+  string email = 1;
+}
+
+// -------- replies
+
+// The response message containing the user
+message UserReply {
+  User user = 1;
+}
+
+// The response message containing users list
+message UsersReply {
+  repeated User user = 1;
+}
+
+// The response message containing id of created user
+message UserCreatedReply {
+  string id = 1;
+}
