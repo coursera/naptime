@@ -15,3 +15,7 @@ libraryDependencies += { "org.scala-sbt" % "scripted-plugin" % sbtVersion.value 
 
 // addSbtPlugin("de.heikoseeberger" % "sbt-header" % "1.5.1")
 addSbtPlugin("de.heikoseeberger" % "sbt-header" % "1.5.1-2-g8b57b53")
+
+
+addSbtPlugin("com.thesamet" % "sbt-protoc" % "0.99.18")
+libraryDependencies += "com.thesamet.scalapb" %% "compilerplugin" % "0.7.1"

@@ -1,0 +1,44 @@
+syntax = "proto2";
+
+message FindUserRequest {
+    oneof find_data {
+        UserData userData = 1;
+        UserIdentifier identifier = 11;
+    }
+}
+
+message CreateUserRequest {
+    optional UserMetaData userMetaData = 1;
+}
+
+message MultiUserRequest {
+    repeated FindUserRequest users = 2;
+    optional int32 page_number = 3;
+    optional int32 result_per_page = 4;
+}
+
+message UserMetaData {
+    // Going with optional here for backward compatibilty safety
+    optional string name = 5;
+    optional string email = 6;
+    optional string selfDescription = 7;
+}
+
+message UserIdentifier {
+    required uint32 id = 1;
+}
+
+message UserData {
+    required UserIdentifier id = 9;
+    optional UserMetaData userData = 10;
+}
+
+message UserResponse {
+    repeated UserData users = 8;
+}
+
+service UserService {
+    rpc User (FindUserRequest) returns (UserResponse);
+    rpc Users (MultiUserRequest) returns (UserResponse);
+    rpc CreateUser (CreateUserRequest) returns (UserResponse);
+}
