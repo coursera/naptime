@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Coursera Inc.
+ * Copyright 2018 Coursera Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -42,8 +42,9 @@ object CustomResponse {
     Json.format[CustomResponse]
 }
 
-class AsymmetricResource(implicit val executionContext: ExecutionContext,
-                         val materializer: Materializer)
+class AsymmetricResource(
+    implicit val executionContext: ExecutionContext,
+    val materializer: Materializer)
     extends TopLevelCollectionResource[String, Item] {
 
   override def keyFormat: KeyFormat[String] = KeyFormat.stringKeyFormat
@@ -114,8 +115,7 @@ class CustomRequestResponseMacroTests
   def actionTest(): Unit = {
     val handler = schema.handlers.find(_.name === "action").get
     assert(handler.inputBody.contains("org.coursera.naptime.CustomRequest"))
-    assert(
-      handler.customOutputBody.contains("org.coursera.naptime.CustomResponse"))
+    assert(handler.customOutputBody.contains("org.coursera.naptime.CustomResponse"))
   }
 
   @Test

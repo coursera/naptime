@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Coursera Inc.
+ * Copyright 2018 Coursera Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -36,8 +36,9 @@ object CustomAuthorizer extends HeaderAccessControl[CustomAuth] {
   override private[naptime] def check(authInfo: CustomAuth) = ???
 }
 
-class AuthorizedResource(implicit val executionContext: ExecutionContext,
-                         val materializer: Materializer)
+class AuthorizedResource(
+    implicit val executionContext: ExecutionContext,
+    val materializer: Materializer)
     extends TopLevelCollectionResource[String, Item] {
 
   override def keyFormat: KeyFormat[String] = KeyFormat.stringKeyFormat
@@ -49,7 +50,8 @@ class AuthorizedResource(implicit val executionContext: ExecutionContext,
   implicit val fields = Fields.withDefaultFields("name")
 
   def get(id: String) =
-    Nap.auth(CustomAuthorizer)
+    Nap
+      .auth(CustomAuthorizer)
       .get { ctx =>
         ???
       }
@@ -60,17 +62,14 @@ object AuthorizedResource {
   val routerBuilder = Router.build[AuthorizedResource]
 }
 
-class AuthMacroTest
-    extends AssertionsForJUnit
-    with MockitoSugar
-    with ResourceTestImplicits {
+class AuthMacroTest extends AssertionsForJUnit with MockitoSugar with ResourceTestImplicits {
 
   val schema = AuthorizedResource.routerBuilder.schema
 
   @Test
   def get(): Unit = {
     val handler = schema.handlers.find(_.name === "get").get
-    assert(handler.authType.contains("org.coursera.naptime.CustomAuth"))
+    assert(handler.authType === Some("org.coursera.naptime.CustomAuth"))
   }
 
 }
