@@ -146,9 +146,9 @@ class MacroImpls(val c: blackbox.Context) {
         case (tpe, methods) if ACTION_PATCH =:= tpe =>
           buildPatchTree(methods)
         case (tpe, methods) if ACTION_FINDER =:= tpe =>
-          buildFinderTree(methods, tpe)
+          buildFinderTree(methods)
         case (tpe, methods) if ACTION_ACTION =:= tpe =>
-          buildActionTree(methods, tpe)
+          buildActionTree(methods)
       }.flatMap { treeEither =>
         treeEither.fold(
           err => {
@@ -385,6 +385,7 @@ class MacroImpls(val c: blackbox.Context) {
     private[this] def handlerSchemaForMethod(
         method: c.universe.MethodSymbol,
         category: RestActionCategory): c.Tree = {
+
       if (method.paramLists.length > 1) {
         c.error(method.pos, "Naptime does not support curried argument lists at this time.")
       }
@@ -460,14 +461,42 @@ class MacroImpls(val c: blackbox.Context) {
             org.coursera.courier.templates.DataTemplates.DataConversion.SetReadOnly)
         """
       }
-      // TODO: handle input, custom output bodies, and attributes
+
+      val vagueTypes = List("Unit", "play.api.mvc.AnyContent", "Any")
+      val inputBody = category match {
+        case CreateRestActionCategory | UpdateRestActionCategory | ActionRestActionCategory | DeleteRestActionCategory =>
+          q"""
+           val paramName = ${method.returnType.typeArgs(2).toString}
+           Some(paramName).filterNot($vagueTypes.contains)
+         """
+        case _ => q"None"
+      }
+
+      val customOutputBody = category match {
+        case ActionRestActionCategory =>
+          q"""
+           val paramName = ${method.returnType.typeArgs(5).toString}
+           Some(paramName).filterNot($vagueTypes.contains)
+         """
+        case _ => q"None"
+      }
+
+      val authType =
+        q"""
+           val paramName = ${method.returnType.typeArgs(1).toString}
+           Some(paramName).filterNot($vagueTypes.contains)
+         """
+
       q"""
       org.coursera.naptime.schema.Handler(
         kind = ${handlerKind(category)},
         name = ${method.name.toString},
         parameters = List(..$parameterTrees),
         attributes = org.coursera.naptime.router2.AttributesProvider
-            .getMethodAttributes(resourceClass.getName, ${method.name.toString}))
+            .getMethodAttributes(resourceClass.getName, ${method.name.toString}),
+        inputBody = $inputBody,
+        customOutputBody = $customOutputBody,
+        authType = $authType)
       """
     }
 
@@ -715,9 +744,9 @@ class MacroImpls(val c: blackbox.Context) {
     }
 
     private[this] def buildFinderTree(
-        methods: Iterable[c.universe.MethodSymbol],
-        keyType: c.universe.Type): OptionalTree = {
-      val methodBranches = methods.map(buildSingleNamedActionTree(FinderRestActionCategory))
+        methods: Iterable[c.universe.MethodSymbol]): OptionalTree = {
+      val methodBranches = methods
+        .map(buildSingleNamedActionTree(FinderRestActionCategory))
       val tree = q"""
       override def executeFinder(
           requestHeader: $REQUEST_HEADER,
@@ -733,8 +762,7 @@ class MacroImpls(val c: blackbox.Context) {
     }
 
     private[this] def buildActionTree(
-        methods: Iterable[c.universe.MethodSymbol],
-        keyType: c.universe.Type): OptionalTree = {
+        methods: Iterable[c.universe.MethodSymbol]): OptionalTree = {
       val methodBranches = methods.map(buildSingleNamedActionTree(ActionRestActionCategory))
       val tree = q"""
       override def executeAction(
