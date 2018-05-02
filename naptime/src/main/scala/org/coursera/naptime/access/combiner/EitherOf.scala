@@ -35,14 +35,11 @@ private[access] trait EitherOf {
    */
   def eitherOf[A, B](
       controlA: HeaderAccessControl[A],
-      controlB: HeaderAccessControl[B]):
-    HeaderAccessControl[Either[A, B]] = {
+      controlB: HeaderAccessControl[B]): HeaderAccessControl[Either[A, B]] = {
 
     new HeaderAccessControl[Either[A, B]] {
-      override def run(
-          requestHeader: RequestHeader)
-          (implicit ec: ExecutionContext):
-        Future[Either[NaptimeActionException, Either[A, B]]] = {
+      override def run(requestHeader: RequestHeader)(
+          implicit ec: ExecutionContext): Future[Either[NaptimeActionException, Either[A, B]]] = {
 
         val futureA = Futures.safelyCall(controlA.run(requestHeader))
         val futureB = Futures.safelyCall(controlB.run(requestHeader))
@@ -54,8 +51,8 @@ private[access] trait EitherOf {
           (resultA, resultB) match {
             case (_, Right(authentication)) => Right(Right(authentication))
             case (Right(authentication), _) => Right(Left(authentication))
-            case (_, Left(error)) => Left(error)
-            case (Left(error), _) => Left(error)
+            case (_, Left(error))           => Left(error)
+            case (Left(error), _)           => Left(error)
           }
         }
       }

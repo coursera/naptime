@@ -36,9 +36,10 @@ trait Decorator[-I, +O] {
       override def apply(input: I)(implicit ec: ExecutionContext): Future[Either[String, O2]] = {
         for {
           eitherO <- self.apply(input)
-          eitherO2 <- eitherO
-            .left.map(error => Future.successful(Left(error)))
-            .right.map(other.apply)
+          eitherO2 <- eitherO.left
+            .map(error => Future.successful(Left(error)))
+            .right
+            .map(other.apply)
             .merge
         } yield eitherO2
       }
@@ -79,10 +80,11 @@ object Decorator {
   /**
    * Build a decorator from a function `f` that doesn't require an [[ExecutionContext]].
    */
-  def function[I, O](f: I => Future[Either[String, O]]): Decorator[I, O] = new Decorator[I, O] {
-    override def apply(input: I)(implicit ec: ExecutionContext): Future[Either[String, O]] = {
-      f(input)
+  def function[I, O](f: I => Future[Either[String, O]]): Decorator[I, O] =
+    new Decorator[I, O] {
+      override def apply(input: I)(implicit ec: ExecutionContext): Future[Either[String, O]] = {
+        f(input)
+      }
     }
-  }
 
 }

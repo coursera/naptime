@@ -24,7 +24,12 @@ object NaptimeRecordField extends StrictLogging {
 
     Field.apply[SangriaGraphQlContext, DataMapWithParent, Any, Any](
       name = FieldBuilder.formatName(fieldName),
-      fieldType = getType(schemaMetadata, recordDataSchema, namespace, resourceName, currentPath :+ fieldName),
+      fieldType = getType(
+        schemaMetadata,
+        recordDataSchema,
+        namespace,
+        resourceName,
+        currentPath :+ fieldName),
       resolve = context => {
         context.value.element.get(fieldName) match {
           case dataMap: DataMap =>
@@ -36,7 +41,8 @@ object NaptimeRecordField extends StrictLogging {
             Value(null)
         }
 
-      })
+      }
+    )
   }
 
   private[schema] def getType(
@@ -46,13 +52,19 @@ object NaptimeRecordField extends StrictLogging {
       resourceName: ResourceName,
       currentPath: List[String]): ObjectType[SangriaGraphQlContext, DataMapWithParent] = {
 
-    val formattedResourceName = NaptimeResourceUtils.formatResourceName(resourceName)
+    val formattedResourceName =
+      NaptimeResourceUtils.formatResourceName(resourceName)
     ObjectType[SangriaGraphQlContext, DataMapWithParent](
       FieldBuilder.formatName(s"${formattedResourceName}_${recordDataSchema.getFullName}"),
       recordDataSchema.getDoc,
       fieldsFn = () => {
         val fields = recordDataSchema.getFields.asScala.map { field =>
-          FieldBuilder.buildField(schemaMetadata, field, namespace, resourceName = resourceName, currentPath = currentPath)
+          FieldBuilder.buildField(
+            schemaMetadata,
+            field,
+            namespace,
+            resourceName = resourceName,
+            currentPath = currentPath)
         }.toList
         if (fields.isEmpty) {
           // TODO(bryan): Handle this case better
@@ -60,7 +72,8 @@ object NaptimeRecordField extends StrictLogging {
         } else {
           fields
         }
-      })
+      }
+    )
   }
 
   val EMPTY_FIELDS_FALLBACK = List(
@@ -68,6 +81,5 @@ object NaptimeRecordField extends StrictLogging {
       "ArbitraryField",
       StringType,
       resolve = context => null))
-
 
 }

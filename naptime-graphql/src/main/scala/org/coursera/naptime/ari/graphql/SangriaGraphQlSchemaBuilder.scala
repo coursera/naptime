@@ -30,32 +30,32 @@ import sangria.schema.Value
 import sangria.schema.Field
 import sangria.schema.ObjectType
 
-class SangriaGraphQlSchemaBuilder(
-    resources: Set[Resource],
-    schemas: Map[String, RecordDataSchema])
-  extends StrictLogging {
+class SangriaGraphQlSchemaBuilder(resources: Set[Resource], schemas: Map[String, RecordDataSchema])
+    extends StrictLogging {
 
   val schemaMetadata = SchemaMetadata(resources, schemas)
 
   /**
-    * Generates a GraphQL schema for the provided set of resources to this class
-    * Returns a "root" object that has one field available for each Naptime Resource provided.
-    *
-    * @return a Sangria GraphQL Schema with all resources defined,
-    *         and a list of errors that came up while generating the schema
-    */
+   * Generates a GraphQL schema for the provided set of resources to this class
+   * Returns a "root" object that has one field available for each Naptime Resource provided.
+   *
+   * @return a Sangria GraphQL Schema with all resources defined,
+   *         and a list of errors that came up while generating the schema
+   */
   def generateSchema(): WithSchemaErrors[Schema[SangriaGraphQlContext, DataMap]] = {
     val topLevelResourceObjectsAndErrors = resources.map { resource =>
       val lookupTypeAndErrors =
         NaptimeTopLevelResourceField.generateLookupTypeForResource(resource, schemaMetadata)
       val fields = lookupTypeAndErrors.data.flatMap { resourceObject =>
         if (resourceObject.fields.nonEmpty) {
-          Some(Field.apply[SangriaGraphQlContext, DataMap, DataMap, Any](
-            NaptimeTopLevelResourceField.formatResourceTopLevelName(resource),
-            resourceObject,
-            resolve = (_: Context[SangriaGraphQlContext, DataMap]) => {
-              Value(new DataMap())
-            }))
+          Some(
+            Field.apply[SangriaGraphQlContext, DataMap, DataMap, Any](
+              NaptimeTopLevelResourceField.formatResourceTopLevelName(resource),
+              resourceObject,
+              resolve = (_: Context[SangriaGraphQlContext, DataMap]) => {
+                Value(new DataMap())
+              }
+            ))
         } else {
           None
         }
@@ -63,10 +63,12 @@ class SangriaGraphQlSchemaBuilder(
       lookupTypeAndErrors.copy(data = fields)
     }
 
-    val topLevelResourceObjects = topLevelResourceObjectsAndErrors.flatMap(_.data)
+    val topLevelResourceObjects =
+      topLevelResourceObjectsAndErrors.flatMap(_.data)
     val schemaErrors = topLevelResourceObjectsAndErrors.foldLeft(SchemaErrors.empty)(_ ++ _.errors)
 
-    val dedupedResources = topLevelResourceObjects.groupBy(_.name).map(_._2.head).toList
+    val dedupedResources =
+      topLevelResourceObjects.groupBy(_.name).map(_._2.head).toList
     val rootObject = ObjectType[SangriaGraphQlContext, DataMap](
       name = "root",
       description = "Top-level accessor for Naptime resources",

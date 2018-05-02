@@ -52,6 +52,4 @@ package org.coursera.naptime
  *
  * BEWARE: This code is currently in a high state of flux. Do not depend upon it unless you are prepared for breakages!
  */
-package object ari {
-
-}
+package object ari {}

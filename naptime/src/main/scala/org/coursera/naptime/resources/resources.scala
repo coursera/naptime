@@ -62,7 +62,8 @@ sealed trait RootResource extends Resource[Unit] {
   override type PathKey = RootParsedPathKey
   override type PathParser = RootPathParser
   private[naptime] def pathParser = RootPathParser
-  def resourceFormat: OFormat[Unit] = ??? // TODO(saeta): remove this from here for courier-engines
+  def resourceFormat: OFormat[Unit] =
+    ??? // TODO(saeta): remove this from here for courier-engines
   override def resourceName: String = ""
 }
 object RootResource extends RootResource
@@ -77,7 +78,8 @@ trait CollectionResource[ParentResource <: Resource[_], K, M] extends Resource[M
    * Provide a default pagination configuration for the resource that users can override and
    * configure as needed.
    */
-  implicit val paginationConfiguration: PaginationConfiguration = PaginationConfiguration()
+  implicit val paginationConfiguration: PaginationConfiguration =
+    PaginationConfiguration()
   // TODO how to fetch associations?
   // TODO Efficient field projection at model level (not just filtered on the way out)
 
@@ -131,20 +133,21 @@ trait CollectionResource[ParentResource <: Resource[_], K, M] extends Resource[M
    */
   def Nap[RACType, ResponseType] =
     new RestActionBuilder[RACType, Unit, AnyContent, K, M, ResponseType](
-      HeaderAccessControl.allowAll, BodyParsers.parse.default, PartialFunction.empty)(
-        keyFormat, resourceFormat, executionContext, materializer)
-
+      HeaderAccessControl.allowAll,
+      BodyParsers.parse.default,
+      PartialFunction.empty)(keyFormat, resourceFormat, executionContext, materializer)
 
   def OkIfPresent[T](a: Option[T]): RestResponse[T] = {
-    a.map(Ok(_)).getOrElse(
-      RestError(NaptimeActionException(404, Some("notFound"), Some("not found"), None)))
+    a.map(Ok(_))
+      .getOrElse(RestError(NaptimeActionException(404, Some("notFound"), Some("not found"), None)))
   }
 
   def OkIfPresent(key: K, maybeElement: Option[M]): RestResponse[Keyed[K, M]] = {
-    maybeElement.map {
-      element =>
+    maybeElement
+      .map { element =>
         Ok(Keyed(key, element))
-    }.getOrElse(RestError(NaptimeActionException(404, Some("notFound"), Some("not found"), None)))
+      }
+      .getOrElse(RestError(NaptimeActionException(404, Some("notFound"), Some("not found"), None)))
   }
 
   /**
@@ -195,12 +198,15 @@ trait TopLevelCollectionResource[K, M] extends CollectionResource[RootResource, 
  * @tparam K The key type of the resource.
  * @tparam M The "value" type of the resource.
  */
-abstract class NestedCourierCollectionResource[ParentResource <: Resource[_], K, M <: ScalaRecordTemplate]()(
+abstract class NestedCourierCollectionResource[
+    ParentResource <: Resource[_],
+    K,
+    M <: ScalaRecordTemplate]()(
     implicit kf: KeyFormat[K],
     classTag: ClassTag[M],
     ec: ExecutionContext,
     mat: Materializer)
-  extends CollectionResource[ParentResource, K, M] {
+    extends CollectionResource[ParentResource, K, M] {
 
   final override implicit val keyFormat = kf
 
@@ -209,11 +215,13 @@ abstract class NestedCourierCollectionResource[ParentResource <: Resource[_], K,
 
   // When we use the serializer constructor, the classTag parameter is never initialized, and
   // thus, we get NPEs when working with schemas. Because the OFormat isn't actually needed
-  final override implicit lazy val resourceFormat: OFormat[M] = Option(classTag).map { ct =>
-    CourierFormats.recordTemplateFormats[M](ct)
-  }.orNull // TODO: consider making a fake formatter.
+  final override implicit lazy val resourceFormat: OFormat[M] =
+    Option(classTag).map { ct =>
+      CourierFormats.recordTemplateFormats[M](ct)
+    }.orNull // TODO: consider making a fake formatter.
 
-  protected[this] final lazy val BaseFields: Fields[M] = org.coursera.naptime.Fields(resourceFormat)
+  protected[this] final lazy val BaseFields: Fields[M] =
+    org.coursera.naptime.Fields(resourceFormat)
 
   implicit override def Fields: Fields[M] = BaseFields
 }
@@ -234,7 +242,7 @@ abstract class CourierCollectionResource[K, M <: ScalaRecordTemplate](
     classTag: ClassTag[M],
     ec: ExecutionContext,
     mat: Materializer)
-  extends NestedCourierCollectionResource[RootResource, K, M]()(kf, classTag, ec, mat) {
+    extends NestedCourierCollectionResource[RootResource, K, M]()(kf, classTag, ec, mat) {
 
   final override val parentResource: RootResource = RootResource
 }

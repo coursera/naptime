@@ -64,11 +64,13 @@ import scala.util.control.NonFatal
  * TODO(saeta): Enforce RACType extends from RestActionCategory.
  */
 trait RestAction[RACType, AuthType, BodyType, KeyType, ResourceType, ResponseType]
-  extends EssentialAction with RequestTaggingHandler {
+    extends EssentialAction
+    with RequestTaggingHandler {
 
   protected[actions] def restAuth: HeaderAccessControl[AuthType]
   protected def restBodyParser: BodyParser[BodyType]
-  protected[naptime] def restEngine: RestActionCategoryEngine[RACType, KeyType, ResourceType, ResponseType]
+  protected[naptime] def restEngine
+    : RestActionCategoryEngine[RACType, KeyType, ResourceType, ResponseType]
   protected[naptime] def fieldsEngine: Fields[ResourceType]
   protected def paginationConfiguration: PaginationConfiguration
   protected def errorHandler: PartialFunction[Throwable, RestError]
@@ -80,9 +82,11 @@ trait RestAction[RACType, AuthType, BodyType, KeyType, ResourceType, ResponseTyp
   /**
    * High level API, also used for testing.
    */
-  private[naptime] def apply(context: RestContext[AuthType, BodyType]): Future[RestResponse[ResponseType]]
+  private[naptime] def apply(
+      context: RestContext[AuthType, BodyType]): Future[RestResponse[ResponseType]]
 
-  private[naptime] def safeApply(context: RestContext[AuthType, BodyType]): Future[RestResponse[ResponseType]] = {
+  private[naptime] def safeApply(
+      context: RestContext[AuthType, BodyType]): Future[RestResponse[ResponseType]] = {
     try {
       apply(context) recover errorHandler
     } catch {
@@ -91,69 +95,89 @@ trait RestAction[RACType, AuthType, BodyType, KeyType, ResourceType, ResponseTyp
     }
   }
 
-  private[naptime] def localRun(
-      rh: RequestHeader,
-      resourceName: ResourceName): Future[Response] = {
+  private[naptime] def localRun(rh: RequestHeader, resourceName: ResourceName): Future[Response] = {
     val authResult = restAuth.run(rh) // Kick off the authentication check in parallel
-    restBodyParser(rh).mapFuture[Response] {
-      case Left(bodyError) =>
-        // If it was an auth error, override with that. Otherwise serve the body error.
-        authResult.flatMap { authResult =>
-          authResult.fold(
-            error => Future.failed(error),
-            // TODO: keep as an exception.
-            successAuth => {
-              val bodyAsBytesEventually = bodyError.body.consumeData
-              val bodyAsStrEventually = bodyAsBytesEventually.map(byteStr => byteStr.utf8String)
-              bodyAsStrEventually.map { bodyAsStr =>
-                throw new IllegalArgumentException(s"${rh.headers} Encountered body error: $bodyAsStr")
+    restBodyParser(rh)
+      .mapFuture[Response] {
+        case Left(bodyError) =>
+          // If it was an auth error, override with that. Otherwise serve the body error.
+          authResult.flatMap { authResult =>
+            authResult.fold(
+              error => Future.failed(error),
+              // TODO: keep as an exception.
+              successAuth => {
+                val bodyAsBytesEventually = bodyError.body.consumeData
+                val bodyAsStrEventually =
+                  bodyAsBytesEventually.map(byteStr => byteStr.utf8String)
+                bodyAsStrEventually.map { bodyAsStr =>
+                  throw new IllegalArgumentException(
+                    s"${rh.headers} Encountered body error: $bodyAsStr")
+                }
               }
-            })
-        }
-      case Right(a) =>
-        authResult.flatMap[Response] { authResult =>
-          authResult.fold[Future[Response]](
-            error => Future.failed(error), // TODO: log?
-            auth => {
-              val responseTry = for {
-                fields <- fieldsEngine.computeFields(rh)
-                includes <- fieldsEngine.computeIncludes(rh)
-              } yield {
-                val pagination = RequestPagination(rh, paginationConfiguration)
-                val playRequest = Request(rh, a)
-                val ctx = new RestContext(a, auth, playRequest, pagination, includes, fields)
-                def run(): Future[Response] = {
-                  val highLevelResponse = safeApply(ctx)
-                  highLevelResponse.flatMap { resp =>
-                    restEngine match {
-                      case engine2: RestActionCategoryEngine2[RACType, KeyType, ResourceType, ResponseType] =>
-                        engine2.mkResponse(rh, fieldsEngine, fields, includes, pagination, resp, resourceName)
-                      case _ =>
-                        Future.failed(new IllegalArgumentException("Was not an engine2 resource.")) // TODO: better msg
+            )
+          }
+        case Right(a) =>
+          authResult.flatMap[Response] { authResult =>
+            authResult.fold[Future[Response]](
+              error => Future.failed(error), // TODO: log?
+              auth => {
+                val responseTry = for {
+                  fields <- fieldsEngine.computeFields(rh)
+                  includes <- fieldsEngine.computeIncludes(rh)
+                } yield {
+                  val pagination =
+                    RequestPagination(rh, paginationConfiguration)
+                  val playRequest = Request(rh, a)
+                  val ctx = new RestContext(a, auth, playRequest, pagination, includes, fields)
+                  def run(): Future[Response] = {
+                    val highLevelResponse = safeApply(ctx)
+                    highLevelResponse.flatMap { resp =>
+                      restEngine match {
+                        case engine2: RestActionCategoryEngine2[
+                              RACType,
+                              KeyType,
+                              ResourceType,
+                              ResponseType] =>
+                          engine2.mkResponse(
+                            rh,
+                            fieldsEngine,
+                            fields,
+                            includes,
+                            pagination,
+                            resp,
+                            resourceName)
+                        case _ =>
+                          Future.failed(new IllegalArgumentException(
+                            "Was not an engine2 resource.")) // TODO: better msg
+                      }
+                    } recoverWith {
+                      case e: NaptimeActionException => Future.failed(e)
                     }
-                  } recoverWith {
-                    case e: NaptimeActionException => Future.failed(e)
                   }
-                }
 
-                // Implementation below borrowed from Play's Action.scala
-                Play.maybeApplication.map { app =>
-                  play.utils.Threads.withContextClassLoader(app.classloader) {
-                    run()
-                  }
-                }.getOrElse {
-                  // Run without the app class loader. This is important if we're running low-level
-                  // tests (e.g. router tests)
-                  run()
+                  // Implementation below borrowed from Play's Action.scala
+                  Play.maybeApplication
+                    .map { app =>
+                      play.utils.Threads
+                        .withContextClassLoader(app.classloader) {
+                          run()
+                        }
+                    }
+                    .getOrElse {
+                      // Run without the app class loader. This is important if we're running low-level
+                      // tests (e.g. router tests)
+                      run()
+                    }
                 }
+                responseTry.recover {
+                  case e: NaptimeParseError      => Future.failed(e)
+                  case e: NaptimeActionException => Future.failed(e)
+                }.get
               }
-              responseTry.recover {
-                case e: NaptimeParseError => Future.failed(e)
-                case e: NaptimeActionException => Future.failed(e)
-              }.get
-            })
-        }
-    }.run()
+            )
+          }
+      }
+      .run()
   }
 
   /**
@@ -191,26 +215,30 @@ trait RestAction[RACType, AuthType, BodyType, KeyType, ResourceType, ResponseTyp
                 }
 
                 // Implementation below borrowed from Play's Action.scala
-                Play.maybeApplication.map { app =>
-                  play.utils.Threads.withContextClassLoader(app.classloader) {
+                Play.maybeApplication
+                  .map { app =>
+                    play.utils.Threads.withContextClassLoader(app.classloader) {
+                      run()
+                    }
+                  }
+                  .getOrElse {
+                    // Run without the app class loader. This is important if we're running low-level
+                    // tests (e.g. router tests)
                     run()
                   }
-                }.getOrElse {
-                  // Run without the app class loader. This is important if we're running low-level
-                  // tests (e.g. router tests)
-                  run()
-                }
               }
               responseTry.recover {
-                case e: NaptimeParseError => Future.successful(e.result)
+                case e: NaptimeParseError      => Future.successful(e.result)
                 case e: NaptimeActionException => Future.successful(e.result)
               }.get
-            })
+            }
+          )
         }
     }
   }
 
-  override def toString() = s"RestAction(engine=$restEngine, auth=$restAuth, body=$restBodyParser)"
+  override def toString() =
+    s"RestAction(engine=$restEngine, auth=$restAuth, body=$restBodyParser)"
 
   /**
    * A set of tags to add to all requests that are processed by this RestAction.
@@ -226,14 +254,16 @@ trait RestAction[RACType, AuthType, BodyType, KeyType, ResourceType, ResponseTyp
    *
    * This will permit us to remove the trace modifications that the old router needed to annotate
    * the traces appropriately.
- *
+   *
    * @param request The request to tag.
    * @return The tagged request.
    */
   override def tagRequest(request: RequestHeader): RequestHeader = {
-    tags.map { tags =>
-      request.addAttr(RequestAttrKey.Tags, tags)
-    }.getOrElse(request)
+    tags
+      .map { tags =>
+        request.addAttr(RequestAttrKey.Tags, tags)
+      }
+      .getOrElse(request)
   }
 
   /**

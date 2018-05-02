@@ -29,12 +29,13 @@ object NaptimeEnumField {
     }
     EnumType(
       name = FieldBuilder.formatName(enumDataSchema.getFullName),
-      values = enumSymbols.map(symbol =>
-        EnumValue(
-          name = FieldBuilder.formatName(symbol),
-          description = enumDataSchema.getSymbolDocs.asScala.get(symbol),
-          value = symbol)))
+      values = enumSymbols.map(
+        symbol =>
+          EnumValue(
+            name = FieldBuilder.formatName(symbol),
+            description = enumDataSchema.getSymbolDocs.asScala.get(symbol),
+            value = symbol))
+    )
   }
-
 
 }

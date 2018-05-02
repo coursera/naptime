@@ -38,8 +38,8 @@ private[authenticator] trait FirstOf {
   def firstOf[A](authenticators: immutable.Seq[Authenticator[A]]): Authenticator[A] = {
     new Authenticator[A] {
 
-      override def maybeAuthenticate(requestHeader: RequestHeader)(implicit ec: ExecutionContext):
-        Future[Option[Either[NaptimeActionException, A]]] = {
+      override def maybeAuthenticate(requestHeader: RequestHeader)(
+          implicit ec: ExecutionContext): Future[Option[Either[NaptimeActionException, A]]] = {
 
         val authenticationResponses = authenticators
           .map(Authenticator.authenticateAndRecover(_, requestHeader))
@@ -50,8 +50,8 @@ private[authenticator] trait FirstOf {
          * @return the first non-`None` element from the list of `Future`s, or `None` if all
          * elements are `None`.
          */
-        def takeFirstDefined(futures: List[Future[Option[Either[NaptimeActionException, A]]]]):
-          Future[Option[Either[NaptimeActionException, A]]] = {
+        def takeFirstDefined(futures: List[Future[Option[Either[NaptimeActionException, A]]]])
+          : Future[Option[Either[NaptimeActionException, A]]] = {
 
           futures match {
             case head :: tail =>
@@ -68,7 +68,7 @@ private[authenticator] trait FirstOf {
           val successesOrSkips = authenticationResponses.map { future =>
             future.map {
               case success @ Some(Right(_)) => success
-              case _ => None
+              case _                        => None
             }
           }
           takeFirstDefined(successesOrSkips.toList)
@@ -78,7 +78,7 @@ private[authenticator] trait FirstOf {
           val errorsOrSkips = authenticationResponses.map { future =>
             future.map {
               case error @ Some(Left(_)) => error
-              case _ => None
+              case _                     => None
             }
           }
           takeFirstDefined(errorsOrSkips.toList)
@@ -91,46 +91,48 @@ private[authenticator] trait FirstOf {
 
   }
 
-  def firstOf[A, A1, A2](
-      authenticator1: Authenticator[A1],
-      authenticator2: Authenticator[A2])
-      (implicit transformer1: AuthenticationTransformer[A1, A],
+  def firstOf[A, A1, A2](authenticator1: Authenticator[A1], authenticator2: Authenticator[A2])(
+      implicit transformer1: AuthenticationTransformer[A1, A],
       transformer2: AuthenticationTransformer[A2, A]): Authenticator[A] = {
 
-    firstOf(List(
-      authenticator1.collect(transformer1.partial),
-      authenticator2.collect(transformer2.partial)))
+    firstOf(
+      List(
+        authenticator1.collect(transformer1.partial),
+        authenticator2.collect(transformer2.partial)))
   }
 
   def firstOf[A, A1, A2, A3](
       authenticator1: Authenticator[A1],
       authenticator2: Authenticator[A2],
-      authenticator3: Authenticator[A3])
-      (implicit transformer1: AuthenticationTransformer[A1, A],
+      authenticator3: Authenticator[A3])(
+      implicit transformer1: AuthenticationTransformer[A1, A],
       transformer2: AuthenticationTransformer[A2, A],
       transformer3: AuthenticationTransformer[A3, A]): Authenticator[A] = {
 
-    firstOf(List(
-      authenticator1.collect(transformer1.partial),
-      authenticator2.collect(transformer2.partial),
-      authenticator3.collect(transformer3.partial)))
+    firstOf(
+      List(
+        authenticator1.collect(transformer1.partial),
+        authenticator2.collect(transformer2.partial),
+        authenticator3.collect(transformer3.partial)))
   }
 
   def firstOf[A, A1, A2, A3, A4](
       authenticator1: Authenticator[A1],
       authenticator2: Authenticator[A2],
       authenticator3: Authenticator[A3],
-      authenticator4: Authenticator[A4])
-      (implicit transformer1: AuthenticationTransformer[A1, A],
+      authenticator4: Authenticator[A4])(
+      implicit transformer1: AuthenticationTransformer[A1, A],
       transformer2: AuthenticationTransformer[A2, A],
       transformer3: AuthenticationTransformer[A3, A],
       transformer4: AuthenticationTransformer[A4, A]): Authenticator[A] = {
 
-    firstOf(List(
-      authenticator1.collect(transformer1.partial),
-      authenticator2.collect(transformer2.partial),
-      authenticator3.collect(transformer3.partial),
-      authenticator4.collect(transformer4.partial)))
+    firstOf(
+      List(
+        authenticator1.collect(transformer1.partial),
+        authenticator2.collect(transformer2.partial),
+        authenticator3.collect(transformer3.partial),
+        authenticator4.collect(transformer4.partial)
+      ))
   }
 
   def firstOf[A, A1, A2, A3, A4, A5](
@@ -138,19 +140,21 @@ private[authenticator] trait FirstOf {
       authenticator2: Authenticator[A2],
       authenticator3: Authenticator[A3],
       authenticator4: Authenticator[A4],
-      authenticator5: Authenticator[A5])
-      (implicit transformer1: AuthenticationTransformer[A1, A],
+      authenticator5: Authenticator[A5])(
+      implicit transformer1: AuthenticationTransformer[A1, A],
       transformer2: AuthenticationTransformer[A2, A],
       transformer3: AuthenticationTransformer[A3, A],
       transformer4: AuthenticationTransformer[A4, A],
       transformer5: AuthenticationTransformer[A5, A]): Authenticator[A] = {
 
-    firstOf(List(
-      authenticator1.collect(transformer1.partial),
-      authenticator2.collect(transformer2.partial),
-      authenticator3.collect(transformer3.partial),
-      authenticator4.collect(transformer4.partial),
-      authenticator5.collect(transformer5.partial)))
+    firstOf(
+      List(
+        authenticator1.collect(transformer1.partial),
+        authenticator2.collect(transformer2.partial),
+        authenticator3.collect(transformer3.partial),
+        authenticator4.collect(transformer4.partial),
+        authenticator5.collect(transformer5.partial)
+      ))
   }
 
   // TODO(josh): Generate for remaining arities.

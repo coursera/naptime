@@ -34,7 +34,8 @@ import collection.JavaConverters._
 
 object NaptimeTopLevelResourceField extends StrictLogging {
 
-  private[this] val EMPTY_JS_VALUE = JsValue.build(new DataMap(), DataConversion.SetReadOnly)
+  private[this] val EMPTY_JS_VALUE =
+    JsValue.build(new DataMap(), DataConversion.SetReadOnly)
 
   val MUTATION_HANDLERS: Set[HandlerKind] = Set(
     HandlerKind.ACTION,
@@ -44,17 +45,15 @@ object NaptimeTopLevelResourceField extends StrictLogging {
     HandlerKind.UPSERT)
 
   /**
-    * Generates an object-type for a given resource name, with each field on the merged output
-    * schema available on this object-type.
-    *
-    * @param resource Resource to generate lookup type for
-    * @return WithSchemaErrors[ObjectType] including the ObjectType for the resource,
-    *         if we were able to generate it, and any errors generated while creating the type.
-    */
-  def generateLookupTypeForResource(
-      resource: Resource,
-      schemaMetadata: SchemaMetadata):
-    WithSchemaErrors[Option[ObjectType[SangriaGraphQlContext, DataMapWithParent]]] = {
+   * Generates an object-type for a given resource name, with each field on the merged output
+   * schema available on this object-type.
+   *
+   * @param resource Resource to generate lookup type for
+   * @return WithSchemaErrors[ObjectType] including the ObjectType for the resource,
+   *         if we were able to generate it, and any errors generated while creating the type.
+   */
+  def generateLookupTypeForResource(resource: Resource, schemaMetadata: SchemaMetadata)
+    : WithSchemaErrors[Option[ObjectType[SangriaGraphQlContext, DataMapWithParent]]] = {
 
     val resourceName = ResourceName.fromResource(resource)
 
@@ -69,7 +68,8 @@ object NaptimeTopLevelResourceField extends StrictLogging {
           case unknownHandler: HandlerKind =>
             Left(UnknownHandlerType(resourceName, unknownHandler.name))
         }
-    }.toList
+      }
+      .toList
 
     val fields = fieldsAndErrors.flatMap(_.right.toOption)
     val errors = SchemaErrors(fieldsAndErrors.flatMap(_.left.toOption))
@@ -78,17 +78,22 @@ object NaptimeTopLevelResourceField extends StrictLogging {
       .find(_.name == "doc")
       .map { attribute =>
         val data = attribute.value.getOrElse(EMPTY_JS_VALUE).data()
-        data.keySet.asScala.map { key =>
-          val valueStr = Option(data.get(key)).map(_.toString).getOrElse("???")
-          s"$key -> $valueStr"
-        }.mkString("Attributes:\n", "\n", "")
-      }.getOrElse("???")
+        data.keySet.asScala
+          .map { key =>
+            val valueStr =
+              Option(data.get(key)).map(_.toString).getOrElse("???")
+            s"$key -> $valueStr"
+          }
+          .mkString("Attributes:\n", "\n", "")
+      }
+      .getOrElse("???")
 
     if (fields.nonEmpty) {
-      val resourceObjectType = ObjectType[SangriaGraphQlContext, DataMapWithParent](
-        name = formatResourceTopLevelName(resource),
-        fieldsFn = () => fields,
-        description = description)
+      val resourceObjectType =
+        ObjectType[SangriaGraphQlContext, DataMapWithParent](
+          name = formatResourceTopLevelName(resource),
+          fieldsFn = () => fields,
+          description = description)
       WithSchemaErrors(Some(resourceObjectType), errors)
     } else {
       WithSchemaErrors(None, errors + NoHandlersAvailable(resourceName))
@@ -98,8 +103,8 @@ object NaptimeTopLevelResourceField extends StrictLogging {
   private[this] def generateGetHandler(
       resource: Resource,
       handler: Handler,
-      schemaMetadata: SchemaMetadata):
-    Either[SchemaError, Field[SangriaGraphQlContext, DataMapWithParent]] = {
+      schemaMetadata: SchemaMetadata)
+    : Either[SchemaError, Field[SangriaGraphQlContext, DataMapWithParent]] = {
 
     // We use MultiGets under the hood for all Gets,
     // so only add a Get handler if there's also a MultiGet available
@@ -107,16 +112,19 @@ object NaptimeTopLevelResourceField extends StrictLogging {
       val arguments = NaptimeResourceUtils.generateHandlerArguments(handler)
       val resourceName = ResourceName.fromResource(resource)
 
-      NaptimeResourceField.build(
-        schemaMetadata = schemaMetadata,
-        resourceName = resourceName,
-        fieldName = "get",
-        fieldRelation = None,
-        currentPath = List.empty)
+      NaptimeResourceField
+        .build(
+          schemaMetadata = schemaMetadata,
+          resourceName = resourceName,
+          fieldName = "get",
+          fieldRelation = None,
+          currentPath = List.empty)
         .right
         .map { field =>
-          val newArguments = field.arguments.filterNot(newArg => arguments.map(_.name).contains(newArg.name))
-          logger.debug(s"existing arguments: ${arguments.map(_.name)}\tnewArguments: ${newArguments.map(_.name)}")
+          val newArguments =
+            field.arguments.filterNot(newArg => arguments.map(_.name).contains(newArg.name))
+          logger.debug(s"existing arguments: ${arguments
+            .map(_.name)}\tnewArguments: ${newArguments.map(_.name)}")
           field.copy(arguments = arguments ++ newArguments)
         }
     } else {
@@ -127,52 +135,56 @@ object NaptimeTopLevelResourceField extends StrictLogging {
   private[this] def generateListHandler(
       resource: Resource,
       handler: Handler,
-      schemaMetadata: SchemaMetadata):
-    Either[SchemaError, Field[SangriaGraphQlContext, DataMapWithParent]] = {
+      schemaMetadata: SchemaMetadata)
+    : Either[SchemaError, Field[SangriaGraphQlContext, DataMapWithParent]] = {
 
-    val resourceName = ResourceName(resource.name, resource.version.getOrElse(0L).toInt)
+    val resourceName =
+      ResourceName(resource.name, resource.version.getOrElse(0L).toInt)
     val arguments = NaptimeResourceUtils.generateHandlerArguments(handler)
 
     val fieldName = handler.kind match {
-      case HandlerKind.FINDER => handler.name
-      case HandlerKind.GET_ALL => "getAll"
+      case HandlerKind.FINDER    => handler.name
+      case HandlerKind.GET_ALL   => "getAll"
       case HandlerKind.MULTI_GET => "multiGet"
-      case _ => "error"
+      case _                     => "error"
     }
 
-    NaptimePaginatedResourceField.build(
-      schemaMetadata = schemaMetadata,
-      resourceName = resourceName,
-      fieldName = fieldName,
-      handlerOverride = Some(handler),
-      fieldRelationOpt = None,
-      currentPath = List.empty).right.map { field =>
-
-      val mergedArguments = (field.arguments ++ arguments)
-        .groupBy(_.name)
-        .map(_._2.head)
-        .map(_.asInstanceOf[Argument[Any]])
-        .toList
-      field.copy(arguments = mergedArguments)
-    }
+    NaptimePaginatedResourceField
+      .build(
+        schemaMetadata = schemaMetadata,
+        resourceName = resourceName,
+        fieldName = fieldName,
+        handlerOverride = Some(handler),
+        fieldRelationOpt = None,
+        currentPath = List.empty
+      )
+      .right
+      .map { field =>
+        val mergedArguments = (field.arguments ++ arguments)
+          .groupBy(_.name)
+          .map(_._2.head)
+          .map(_.asInstanceOf[Argument[Any]])
+          .toList
+        field.copy(arguments = mergedArguments)
+      }
   }
 
   /**
-    * Converts a resource name to a GraphQL compatible name. (i.e. 'courses.v1' to 'CoursesV1')
-    *
-    * @param resource Naptime resource
-    * @return GraphQL-safe resource name
-    */
+   * Converts a resource name to a GraphQL compatible name. (i.e. 'courses.v1' to 'CoursesV1')
+   *
+   * @param resource Naptime resource
+   * @return GraphQL-safe resource name
+   */
   def formatResourceName(resource: Resource): String = {
     s"${resource.name.capitalize}V${resource.version.getOrElse(0)}"
   }
 
   /**
-    * Converts a resource to a GraphQL top-level name. (i.e. 'courses.v1' to 'CoursesV1Resource')
-    *
-    * @param resource Naptime resource
-    * @return GraphQL-safe top-level resource name
-    */
+   * Converts a resource to a GraphQL top-level name. (i.e. 'courses.v1' to 'CoursesV1Resource')
+   *
+   * @param resource Naptime resource
+   * @return GraphQL-safe top-level resource name
+   */
   def formatResourceTopLevelName(resource: Resource): String = {
     s"${formatResourceName(resource)}Resource"
   }

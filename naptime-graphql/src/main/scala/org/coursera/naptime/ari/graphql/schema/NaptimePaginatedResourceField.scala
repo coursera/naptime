@@ -50,8 +50,8 @@ object NaptimePaginatedResourceField extends StrictLogging {
       fieldName: String,
       handlerOverride: Option[Handler] = None,
       fieldRelationOpt: Option[ReverseRelationAnnotation],
-      currentPath: List[String]):
-    Either[SchemaError, Field[SangriaGraphQlContext, DataMapWithParent]] = {
+      currentPath: List[String])
+    : Either[SchemaError, Field[SangriaGraphQlContext, DataMapWithParent]] = {
     (for {
       resource <- schemaMetadata.getResourceOpt(resourceName)
       resourceMergedType <- schemaMetadata.getSchema(resource)
@@ -62,11 +62,14 @@ object NaptimePaginatedResourceField extends StrictLogging {
         case (None, Some(annotation)) =>
           annotation.relationType match {
             case RelationType.FINDER =>
-              annotation.arguments.get("q").flatMap { finderName =>
-                resource.handlers.find(_.name == finderName)
-              }.toRight {
-                MissingQParameterOnFinderRelation(resourceName, fieldName)
-              }
+              annotation.arguments
+                .get("q")
+                .flatMap { finderName =>
+                  resource.handlers.find(_.name == finderName)
+                }
+                .toRight {
+                  MissingQParameterOnFinderRelation(resourceName, fieldName)
+                }
 
             case RelationType.MULTI_GET =>
               resource.handlers.find(_.kind == HandlerKind.MULTI_GET).toRight {
@@ -74,8 +77,10 @@ object NaptimePaginatedResourceField extends StrictLogging {
               }
 
             case RelationType.GET | RelationType.SINGLE_ELEMENT_FINDER | RelationType.$UNKNOWN =>
-              Left(UnhandledSchemaError(resourceName,
-                s"Cannot use a paginated field for a single-element relationship: $fieldName"))
+              Left(
+                UnhandledSchemaError(
+                  resourceName,
+                  s"Cannot use a paginated field for a single-element relationship: $fieldName"))
           }
         case _ =>
           resource.handlers.find(_.kind == HandlerKind.MULTI_GET).toRight {
@@ -84,8 +89,8 @@ object NaptimePaginatedResourceField extends StrictLogging {
       }
 
       handlerOpt.right.map { handler =>
-
-        val providedArguments = fieldRelationOpt.map(_.arguments.keySet).getOrElse(Set[String]())
+        val providedArguments =
+          fieldRelationOpt.map(_.arguments.keySet).getOrElse(Set[String]())
 
         val arguments = NaptimeResourceUtils
           .generateHandlerArguments(handler, includePagination = true)
@@ -96,27 +101,36 @@ object NaptimePaginatedResourceField extends StrictLogging {
           fieldType = OptionType(getType(schemaMetadata, resourceName, fieldName)),
           resolve = context => {
 
-            val extraArguments = fieldRelationOpt.map { fieldRelation =>
-              NaptimeResourceUtils.interpolateArguments(context.value, fieldRelation)
-            }.getOrElse{
-              handler.kind match {
-                case HandlerKind.FINDER => Set(("q", JsString(handler.name)))
-                case _ => Set.empty
+            val extraArguments = fieldRelationOpt
+              .map { fieldRelation =>
+                NaptimeResourceUtils.interpolateArguments(context.value, fieldRelation)
               }
-            }
+              .getOrElse {
+                handler.kind match {
+                  case HandlerKind.FINDER => Set(("q", JsString(handler.name)))
+                  case _                  => Set.empty
+                }
+              }
 
-            val args = context.args.raw.mapValues(NaptimeResourceUtils.parseToJson).toSet ++
+            val args = context.args.raw
+              .mapValues(NaptimeResourceUtils.parseToJson)
+              .toSet ++
               extraArguments
 
             val hasIds = fieldRelationOpt.exists(_.relationType == RelationType.MULTI_GET) ||
               fieldRelationOpt.exists(_.relationType == RelationType.GET)
             val (updatedArgs, paginationOverride, isEmpty) = if (hasIds) {
-              val startOption = context.arg(NaptimePaginationField.startArgument)
+              val startOption =
+                context.arg(NaptimePaginationField.startArgument)
               val limit = context.arg(NaptimePaginationField.limitArgument)
-              val ids = args.find(_._1 == "ids").map(_._2).collect {
-                case JsArray(i) => i
-                case value: JsValue => List(value)
-              }.getOrElse(List.empty)
+              val ids = args
+                .find(_._1 == "ids")
+                .map(_._2)
+                .collect {
+                  case JsArray(i)     => i
+                  case value: JsValue => List(value)
+                }
+                .getOrElse(List.empty)
 
               val paginatedIds = JsArray {
                 startOption
@@ -128,14 +142,19 @@ object NaptimePaginatedResourceField extends StrictLogging {
               val idsAfterStart = startOption
                 .map(s => ids.dropWhile(_ != NaptimeResourceUtils.parseToJson(s)))
                 .getOrElse(ids)
-              val next = idsAfterStart.drop(limit).headOption.map(Utilities.stringifyArg)
+              val next =
+                idsAfterStart.drop(limit).headOption.map(Utilities.stringifyArg)
 
-              val paginationResponse = ResponsePagination(next, Some(ids.size.toLong))
+              val paginationResponse =
+                ResponsePagination(next, Some(ids.size.toLong))
 
               if (paginatedIds.value.isEmpty || Utilities.jsValueIsEmpty(paginatedIds)) {
                 (args, Some(paginationResponse), true)
               } else {
-                (args.filterNot(_._1 == "ids") + ("ids" -> paginatedIds), Some(paginationResponse), false)
+                (
+                  args.filterNot(_._1 == "ids") + ("ids" -> paginatedIds),
+                  Some(paginationResponse),
+                  false)
               }
             } else {
               (args, None, false)
@@ -146,24 +165,33 @@ object NaptimePaginatedResourceField extends StrictLogging {
             } else {
               DeferredValue(
                 DeferredNaptimeRequest(
-                  resourceName, updatedArgs, resourceMergedType, paginationOverride))
+                  resourceName,
+                  updatedArgs,
+                  resourceMergedType,
+                  paginationOverride))
                 .map {
                   case Left(error) =>
-                    NaptimeResponse(List.empty, None, error.url, error.status, Some(error.errorMessage))
+                    NaptimeResponse(
+                      List.empty,
+                      None,
+                      error.url,
+                      error.status,
+                      Some(error.errorMessage))
                   case Right(response) =>
-                    val limit = context.arg(NaptimePaginationField.limitArgument)
+                    val limit =
+                      context.arg(NaptimePaginationField.limitArgument)
                     response.copy(elements = response.elements.take(limit))
                 }(context.ctx.executionContext)
             }
           },
-          complexity = Some(
-            (ctx, args, childScore) => {
-              // API calls should count 10x, and we take limit into account because there could be
-              // N child API calls for each response here
-              val limit = args.arg(NaptimePaginationField.limitArgument)
-              Math.max(limit / 10, 1) * COMPLEXITY_COST * childScore
-            }),
-          arguments = arguments)
+          complexity = Some((ctx, args, childScore) => {
+            // API calls should count 10x, and we take limit into account because there could be
+            // N child API calls for each response here
+            val limit = args.arg(NaptimePaginationField.limitArgument)
+            Math.max(limit / 10, 1) * COMPLEXITY_COST * childScore
+          }),
+          arguments = arguments
+        )
       }
     }).getOrElse(Left(SchemaNotFound(resourceName)))
   }
@@ -183,31 +211,40 @@ object NaptimePaginatedResourceField extends StrictLogging {
     ObjectType[SangriaGraphQlContext, NaptimeResponse](
       name = formatPaginatedResourceName(resource),
       fieldsFn = () => {
-        NaptimeResourceField.getType(schemaMetadata, resourceName).right.toOption.map { elementType =>
-          val listType = ListType(elementType)
-          List(
-            Field.apply[SangriaGraphQlContext, NaptimeResponse, Any, Any](
-              name = "elements",
-              fieldType = listType,
-              resolve = _.value.elements),
-            Field.apply[SangriaGraphQlContext, NaptimeResponse, Any, Any](
-              name = "paging",
-              fieldType = NaptimePaginationField.getField(resourceName, fieldName),
-              resolve = (ctx) => {
-                val pagination = ctx.value.pagination.getOrElse(ResponsePagination.empty)
-                Value(pagination)
-              }))
-        }.getOrElse(List.empty)
-      })
+        NaptimeResourceField
+          .getType(schemaMetadata, resourceName)
+          .right
+          .toOption
+          .map {
+            elementType =>
+              val listType = ListType(elementType)
+              List(
+                Field.apply[SangriaGraphQlContext, NaptimeResponse, Any, Any](
+                  name = "elements",
+                  fieldType = listType,
+                  resolve = _.value.elements),
+                Field.apply[SangriaGraphQlContext, NaptimeResponse, Any, Any](
+                  name = "paging",
+                  fieldType = NaptimePaginationField.getField(resourceName, fieldName),
+                  resolve = (ctx) => {
+                    val pagination =
+                      ctx.value.pagination.getOrElse(ResponsePagination.empty)
+                    Value(pagination)
+                  }
+                )
+              )
+          }
+          .getOrElse(List.empty)
+      }
+    )
   }
 
-
   /**
-    * Converts a resource name to a GraphQL compatible name. (i.e. 'courses.v1' to 'CoursesV1')
-    *
-    * @param resource Naptime resource
-    * @return GraphQL-safe resource name
-    */
+   * Converts a resource name to a GraphQL compatible name. (i.e. 'courses.v1' to 'CoursesV1')
+   *
+   * @param resource Naptime resource
+   * @return GraphQL-safe resource name
+   */
   private[this] def formatPaginatedResourceName(resource: Resource): String = {
     s"${resource.name.capitalize}V${resource.version.getOrElse(0)}Connection"
   }

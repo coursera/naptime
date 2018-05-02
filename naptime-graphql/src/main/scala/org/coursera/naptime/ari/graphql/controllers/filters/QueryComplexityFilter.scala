@@ -24,42 +24,39 @@ import scala.concurrent.ExecutionContext
 import scala.concurrent.Future
 
 @Singleton
-class QueryComplexityFilter @Inject() (
+class QueryComplexityFilter @Inject()(
     graphqlSchemaProvider: GraphqlSchemaProvider,
-    configuration: ComplexityFilterConfiguration)
-    (implicit executionContext: ExecutionContext)
-  extends Filter
-  with Results
-  with StrictLogging {
+    configuration: ComplexityFilterConfiguration)(implicit executionContext: ExecutionContext)
+    extends Filter
+    with Results
+    with StrictLogging {
 
   val MAX_COMPLEXITY = configuration.maxComplexity
 
   def apply(nextFilter: FilterFn): FilterFn = { incoming =>
-    computeComplexity(incoming.document, incoming.variables).flatMap { complexity =>
-      if (complexity > MAX_COMPLEXITY) {
-        Future.successful(
-          OutgoingQuery(
-            response = Json.obj(
-                "error" -> "Query is too complex.",
-                "complexity" -> complexity),
-            ariResponse = None))
-      } else {
-        nextFilter.apply(incoming)
+    computeComplexity(incoming.document, incoming.variables)
+      .flatMap { complexity =>
+        if (complexity > MAX_COMPLEXITY) {
+          Future.successful(
+            OutgoingQuery(
+              response = Json.obj("error" -> "Query is too complex.", "complexity" -> complexity),
+              ariResponse = None))
+        } else {
+          nextFilter.apply(incoming)
+        }
       }
-    }.recover {
-      case error: QueryAnalysisError =>
-        OutgoingQuery(error.resolveError.as[JsObject], None)
-      case error: ErrorWithResolver =>
-        OutgoingQuery(error.resolveError.as[JsObject], None)
-      case error: Exception =>
-        OutgoingQuery(Json.obj("errors" -> Json.arr(error.getMessage)), None)
-    }
+      .recover {
+        case error: QueryAnalysisError =>
+          OutgoingQuery(error.resolveError.as[JsObject], None)
+        case error: ErrorWithResolver =>
+          OutgoingQuery(error.resolveError.as[JsObject], None)
+        case error: Exception =>
+          OutgoingQuery(Json.obj("errors" -> Json.arr(error.getMessage)), None)
+      }
   }
 
-  private[graphql] def computeComplexity(
-      queryAst: Document,
-      variables: JsObject)
-      (implicit executionContext: ExecutionContext): Future[Double] = {
+  private[graphql] def computeComplexity(queryAst: Document, variables: JsObject)(
+      implicit executionContext: ExecutionContext): Future[Double] = {
     // TODO(bryan): is there a way around this var?
     var complexity = 0D
     val complReducer = QueryReducer.measureComplexity[SangriaGraphQlContext] { (c, ctx) =>
@@ -73,7 +70,8 @@ class QueryComplexityFilter @Inject() (
       variables = variables,
       exceptionHandler = GraphQLController.exceptionHandler(logger),
       queryReducers = List(complReducer),
-      deferredResolver = new NoopResolver())
+      deferredResolver = new NoopResolver()
+    )
 
     executorFut.map { _ =>
       complexity

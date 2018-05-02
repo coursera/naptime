@@ -14,8 +14,8 @@ object FieldsTestModel {
 
 class FieldsTest extends AssertionsForJUnit {
 
-  val sampleFields = Fields[FieldsTestModel].withDefaultFields("a").withRelated(
-    "author" -> ResourceName("user", 6))
+  val sampleFields =
+    Fields[FieldsTestModel].withDefaultFields("a").withRelated("author" -> ResourceName("user", 6))
 
   @Test
   def simpleComputeFields(): Unit = {
@@ -29,7 +29,9 @@ class FieldsTest extends AssertionsForJUnit {
 
   @Test
   def testNestedResources(): Unit = {
-    testSuccess("/foo/bar?fields=foo.v1(z)", QueryFields(Set("a"), Map(ResourceName("foo", 1) -> Set("z"))))
+    testSuccess(
+      "/foo/bar?fields=foo.v1(z)",
+      QueryFields(Set("a"), Map(ResourceName("foo", 1) -> Set("z"))))
   }
 
   @Test
@@ -82,8 +84,9 @@ class FieldsTest extends AssertionsForJUnit {
     val related = sampleFields
       .withRelated("comments" -> ResourceName("qaComments", 1, List("history")))
       .withRelated("relatedItem" -> ResourceName("relations", 203))
-    assert(related.makeMetaRelationsMap(Set("author", "comments")) ===
-      Json.obj("author" -> "user.v6", "comments" -> "qaComments.v1/history"))
+    assert(
+      related.makeMetaRelationsMap(Set("author", "comments")) ===
+        Json.obj("author" -> "user.v6", "comments" -> "qaComments.v1/history"))
   }
 
   @Test

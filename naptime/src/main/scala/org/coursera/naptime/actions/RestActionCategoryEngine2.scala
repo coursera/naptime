@@ -60,19 +60,20 @@ import scala.concurrent.Future
 object RestActionCategoryEngine2 extends RestActionCategoryEngine2Impls
 
 trait RestActionCategoryEngine2[Category, Key, Resource, Response]
-  extends RestActionCategoryEngine[Category, Key, Resource, Response] {
+    extends RestActionCategoryEngine[Category, Key, Resource, Response] {
 
   /**
    * Engine2's support this additional method for response construction to support the
    * local fetcher for ARI.
    */
-  def mkResponse(request: RequestHeader,
-    resourceFields: Fields[Resource],
-    requestFields: RequestFields,
-    requestIncludes: QueryIncludes,
-    pagination: RequestPagination,
-    response: RestResponse[Response],
-    resourceName: ResourceName): Future[AriResponse]
+  def mkResponse(
+      request: RequestHeader,
+      resourceFields: Fields[Resource],
+      requestFields: RequestFields,
+      requestIncludes: QueryIncludes,
+      pagination: RequestPagination,
+      response: RestResponse[Response],
+      resourceName: ResourceName): Future[AriResponse]
 }
 
 /**
@@ -83,16 +84,16 @@ trait RestActionCategoryEngine2Impls {
 
   private[this] def mkOkResult[T](r: RestResponse[T])(fn: Ok[T] => Result) = {
     r match {
-      case ok: Ok[T] => fn(ok)
-      case error: RestError => error.error.result
+      case ok: Ok[T]          => fn(ok)
+      case error: RestError   => error.error.result
       case redirect: Redirect => redirect.result
     }
   }
 
-  private[this] def mkOkResponse[T](r: RestResponse[T])
-      (fn: Ok[T] => Future[AriResponse]): Future[AriResponse] = {
+  private[this] def mkOkResponse[T](r: RestResponse[T])(
+      fn: Ok[T] => Future[AriResponse]): Future[AriResponse] = {
     r match {
-      case ok: Ok[T] => fn(ok)
+      case ok: Ok[T]        => fn(ok)
       case error: RestError => Future.failed(error.error)
       case redirect: Redirect =>
         Future.failed(new IllegalArgumentException("ARI Response cannot handle redirect responses"))
@@ -115,25 +116,26 @@ trait RestActionCategoryEngine2Impls {
       schema <- serializer.schema(headElem.value)
     } yield schema
 
-    schemaOpt.map { schema =>
-      val wireConverter = Some(new TypedDefinitionDataCoercer(schema))
-      val data = things.map { elem =>
-        val dataMap = new DataMap()
-        serializeItem(dataMap, elem, keyFormat, serializer, wireConverter)
-        dataMap
-      }.toList
-      val response = AriResponse(
-        data,
-        ok.pagination.getOrElse(ResponsePagination.empty),
-        None)
-      Future.successful(response)
-    }.getOrElse {
-      if (things.isEmpty) {
-        Future.successful(AriResponse.empty)
-      } else {
-        Future.failed(new IllegalArgumentException("Could not compute schema for resource value."))
+    schemaOpt
+      .map { schema =>
+        val wireConverter = Some(new TypedDefinitionDataCoercer(schema))
+        val data = things.map { elem =>
+          val dataMap = new DataMap()
+          serializeItem(dataMap, elem, keyFormat, serializer, wireConverter)
+          dataMap
+        }.toList
+        val response =
+          AriResponse(data, ok.pagination.getOrElse(ResponsePagination.empty), None)
+        Future.successful(response)
       }
-    }
+      .getOrElse {
+        if (things.isEmpty) {
+          Future.successful(AriResponse.empty)
+        } else {
+          Future.failed(
+            new IllegalArgumentException("Could not compute schema for resource value."))
+        }
+      }
   }
 
   private[this] object ETagHelpers {
@@ -147,34 +149,43 @@ trait RestActionCategoryEngine2Impls {
       }
     }
 
-    private[naptime] def computeETag(dataMap: DataMap,
-      pagination: RequestPagination): (String, String) = {
+    private[naptime] def computeETag(
+        dataMap: DataMap,
+        pagination: RequestPagination): (String, String) = {
       // For now, use Play!'s built-in hashcode implementations. This should be good enough for now.
       // Note: upgrading Play! versions (even point releases) could change the output of hashCode.
       // Because ETags are just an optimization, we are okay with that for now.
       // Note: for pagination, we explicitly call the eTagHashCode that excludes some fields.
-      val hashCode = Set(dataMap.hashCode(), pagination.eTagHashCode()).hashCode()
+      val hashCode =
+        Set(dataMap.hashCode(), pagination.eTagHashCode()).hashCode()
 
       constructEtagHeader(ETag(hashCode.toString))
     }
 
   }
 
-  private[naptime] def mkETagHeader[T](pagination: RequestPagination, ok: Ok[T],
-    jsRepresentation: DataMap): (String, String) =
-    ETagHelpers.addProvidedETag(ok).getOrElse(ETagHelpers.computeETag(jsRepresentation, pagination))
+  private[naptime] def mkETagHeader[T](
+      pagination: RequestPagination,
+      ok: Ok[T],
+      jsRepresentation: DataMap): (String, String) =
+    ETagHelpers
+      .addProvidedETag(ok)
+      .getOrElse(ETagHelpers.computeETag(jsRepresentation, pagination))
 
-  private[naptime] def mkETagHeaderOpt[T](pagination: RequestPagination, ok: Ok[T],
-    jsRepresentation: Option[DataMap]): Option[(String, String)] =
-    ETagHelpers.addProvidedETag(ok).orElse(
-      jsRepresentation.map(ETagHelpers.computeETag(_, pagination)))
+  private[naptime] def mkETagHeaderOpt[T](
+      pagination: RequestPagination,
+      ok: Ok[T],
+      jsRepresentation: Option[DataMap]): Option[(String, String)] =
+    ETagHelpers
+      .addProvidedETag(ok)
+      .orElse(jsRepresentation.map(ETagHelpers.computeETag(_, pagination)))
 
   private[naptime] def serializeItem[K, V](
-    into: DataMap,
-    thing: Keyed[K, V],
-    keyFormat: KeyFormat[K],
-    serializer: NaptimeSerializer[V],
-    wireConverter: Option[TypedDefinitionDataCoercer]): scala.collection.Set[String] = {
+      into: DataMap,
+      thing: Keyed[K, V],
+      keyFormat: KeyFormat[K],
+      serializer: NaptimeSerializer[V],
+      wireConverter: Option[TypedDefinitionDataCoercer]): scala.collection.Set[String] = {
     val key = keyFormat.format.writes(thing.key)
     // Make a new dataMap and copy other things into it, because the others are locked.
     val valueDataMap = serializer.serialize(thing.value)
@@ -263,7 +274,8 @@ trait RestActionCategoryEngine2Impls {
     } yield {
       val dataList = new DataList()
       linked.put(relationName.identifier, dataList)
-      val relationFields = requestFields.forResource(relationName).getOrElse(RequestFields.empty)
+      val relationFields =
+        requestFields.forResource(relationName).getOrElse(RequestFields.empty)
       relationName -> relation.toPegasus(relationFields, dataList)
     }
     DelegateFields(requestFields, updatedRelatedFields.toMap)
@@ -292,7 +304,8 @@ trait RestActionCategoryEngine2Impls {
       if (ifNoneMatchHeader.contains(etag._2)) {
         Results.NotModified.withHeaders(etag)
       } else {
-        Results.Status(code)(codec.mapToBytes(response))
+        Results
+          .Status(code)(codec.mapToBytes(response))
           .as(ContentTypes.JSON)
           .withHeaders(etag)
       }
@@ -332,12 +345,14 @@ trait RestActionCategoryEngine2Impls {
     if (request.includeFieldsRelatedResource("_links")) {
       val links = new DataMap()
       response.put("links", links)
-      val visibleIncludes = ok.related.filterKeys(requestFields.forResource(_).isDefined)
-      visibleIncludes.foreach { case (name, related) =>
-        related.fields.makeLinksRelationsMap(
-          links,
-          name.identifier,
-          request.forResource(name).getOrElse(QueryIncludes.empty))
+      val visibleIncludes =
+        ok.related.filterKeys(requestFields.forResource(_).isDefined)
+      visibleIncludes.foreach {
+        case (name, related) =>
+          related.fields.makeLinksRelationsMap(
+            links,
+            name.identifier,
+            request.forResource(name).getOrElse(QueryIncludes.empty))
       }
       fields.makeLinksRelationsMap(links, "elements", request)
     }
@@ -353,8 +368,8 @@ trait RestActionCategoryEngine2Impls {
       fields: Fields[V],
       pagination: RequestPagination): ProcessedResponse = {
     val (response, elements, paging, linked) = mkDataCollections()
-    val elementsFields = serializeCollection(
-      elements, things, keyFormat, serializer, requestFields, fields)
+    val elementsFields =
+      serializeCollection(elements, things, keyFormat, serializer, requestFields, fields)
     ok.pagination.foreach { pagination =>
       pagination.next.foreach { next =>
         paging.put("next", next)
@@ -368,7 +383,8 @@ trait RestActionCategoryEngine2Impls {
         serializeFacets(facetsMap, facets)
       }
     }
-    val newFields = serializeRelated(linked, ok, fields, requestIncludes, elementsFields)
+    val newFields =
+      serializeRelated(linked, ok, fields, requestIncludes, elementsFields)
     val codec = new FlattenedFilteringJacksonDataCodec(newFields)
     val etag = mkETagHeader(pagination, ok, response)
     addLinks(response, requestIncludes, newFields, fields, ok)
@@ -376,8 +392,9 @@ trait RestActionCategoryEngine2Impls {
   }
 
   implicit def getActionCategoryEngine[Key, Resource](
-      implicit naptimeSerializer: NaptimeSerializer[Resource], keyFormat: KeyFormat[Key]):
-    RestActionCategoryEngine2[GetRestActionCategory, Key, Resource, Keyed[Key, Resource]] = {
+      implicit naptimeSerializer: NaptimeSerializer[Resource],
+      keyFormat: KeyFormat[Key])
+    : RestActionCategoryEngine2[GetRestActionCategory, Key, Resource, Keyed[Key, Resource]] = {
     new RestActionCategoryEngine2[GetRestActionCategory, Key, Resource, Keyed[Key, Resource]] {
       override def mkResult(
           request: RequestHeader,
@@ -387,8 +404,15 @@ trait RestActionCategoryEngine2Impls {
           pagination: RequestPagination,
           response: RestResponse[Keyed[Key, Resource]]): Result = {
         mkOkResult(response) { ok =>
-          val response = buildOkResult(List(ok.content), ok, keyFormat, naptimeSerializer,
-            requestFields, requestIncludes, resourceFields, pagination)
+          val response = buildOkResult(
+            List(ok.content),
+            ok,
+            keyFormat,
+            naptimeSerializer,
+            requestFields,
+            requestIncludes,
+            resourceFields,
+            pagination)
           response.playResponse(Status.OK, request.headers.get(HeaderNames.IF_NONE_MATCH))
         }
       }
@@ -401,20 +425,35 @@ trait RestActionCategoryEngine2Impls {
           response: RestResponse[Keyed[Key, Resource]],
           resourceName: ResourceName): Future[AriResponse] = {
         mkOkResponse(response) { ok =>
-          buildOkResponse(List(ok.content), ok, keyFormat, naptimeSerializer, requestFields,
-            requestIncludes, resourceFields, pagination, resourceName, request.uri)
+          buildOkResponse(
+            List(ok.content),
+            ok,
+            keyFormat,
+            naptimeSerializer,
+            requestFields,
+            requestIncludes,
+            resourceFields,
+            pagination,
+            resourceName,
+            request.uri)
         }
       }
     }
   }
 
   implicit def createActionCategoryEngine[Key, Resource](
-      implicit naptimeSerializer: NaptimeSerializer[Resource], keyFormat: KeyFormat[Key]):
-    RestActionCategoryEngine[CreateRestActionCategory, Key, Resource,
-      Keyed[Key, Option[Resource]]] = {
+      implicit naptimeSerializer: NaptimeSerializer[Resource],
+      keyFormat: KeyFormat[Key]): RestActionCategoryEngine[
+    CreateRestActionCategory,
+    Key,
+    Resource,
+    Keyed[Key, Option[Resource]]] = {
 
-    new RestActionCategoryEngine[CreateRestActionCategory, Key, Resource,
-        Keyed[Key, Option[Resource]]] {
+    new RestActionCategoryEngine[
+      CreateRestActionCategory,
+      Key,
+      Resource,
+      Keyed[Key, Option[Resource]]] {
       override def mkResult(
           request: RequestHeader,
           resourceFields: Fields[Resource],
@@ -429,29 +468,47 @@ trait RestActionCategoryEngine2Impls {
           } else {
             request.path + "/" + key
           }
-          val baseHeaders = List(HeaderNames.LOCATION -> newLocation, "X-Coursera-Id" -> key)
+          val baseHeaders =
+            List(HeaderNames.LOCATION -> newLocation, "X-Coursera-Id" -> key)
 
-          ok.content.value.map { value =>
-            val response = buildOkResult(List(Keyed(ok.content.key, value)), ok, keyFormat,
-              naptimeSerializer, requestFields, requestIncludes, resourceFields, pagination)
-            response.playResponse(Status.CREATED, None).withHeaders(baseHeaders: _*)
-          }.getOrElse {
-            // No body, just a 201 Created.
-            Results.Created.withHeaders(mkETagHeaderOpt(pagination, ok, None).toList ++
-              baseHeaders: _*)
-          }
+          ok.content.value
+            .map { value =>
+              val response = buildOkResult(
+                List(Keyed(ok.content.key, value)),
+                ok,
+                keyFormat,
+                naptimeSerializer,
+                requestFields,
+                requestIncludes,
+                resourceFields,
+                pagination)
+              response
+                .playResponse(Status.CREATED, None)
+                .withHeaders(baseHeaders: _*)
+            }
+            .getOrElse {
+              // No body, just a 201 Created.
+              Results.Created.withHeaders(mkETagHeaderOpt(pagination, ok, None).toList ++
+                baseHeaders: _*)
+            }
         }
       }
     }
   }
 
   implicit def updateActionCategoryEngine[Key, Resource](
-      implicit naptimeSerializer: NaptimeSerializer[Resource], keyFormat: KeyFormat[Key]):
-    RestActionCategoryEngine[UpdateRestActionCategory, Key, Resource,
-      Option[Keyed[Key, Resource]]] = {
+      implicit naptimeSerializer: NaptimeSerializer[Resource],
+      keyFormat: KeyFormat[Key]): RestActionCategoryEngine[
+    UpdateRestActionCategory,
+    Key,
+    Resource,
+    Option[Keyed[Key, Resource]]] = {
 
-    new RestActionCategoryEngine[UpdateRestActionCategory, Key, Resource,
-        Option[Keyed[Key, Resource]]] {
+    new RestActionCategoryEngine[
+      UpdateRestActionCategory,
+      Key,
+      Resource,
+      Option[Keyed[Key, Resource]]] {
       override def mkResult(
           request: RequestHeader,
           resourceFields: Fields[Resource],
@@ -460,21 +517,31 @@ trait RestActionCategoryEngine2Impls {
           pagination: RequestPagination,
           response: RestResponse[Option[Keyed[Key, Resource]]]): Result = {
         mkOkResult(response) { ok =>
-          ok.content.map { result =>
-            val response = buildOkResult(List(result), ok, keyFormat,
-              naptimeSerializer, requestFields, requestIncludes, resourceFields, pagination)
-            response.playResponse(Status.OK, None)
-          }.getOrElse {
-            Results.NoContent.withHeaders(mkETagHeaderOpt(pagination, ok, None).toList: _*)
-          }
+          ok.content
+            .map { result =>
+              val response = buildOkResult(
+                List(result),
+                ok,
+                keyFormat,
+                naptimeSerializer,
+                requestFields,
+                requestIncludes,
+                resourceFields,
+                pagination)
+              response.playResponse(Status.OK, None)
+            }
+            .getOrElse {
+              Results.NoContent.withHeaders(mkETagHeaderOpt(pagination, ok, None).toList: _*)
+            }
         }
       }
     }
   }
 
   implicit def patchActionCategoryEngine[Key, Resource](
-      implicit naptimeSerializer: NaptimeSerializer[Resource], keyFormat: KeyFormat[Key]):
-    RestActionCategoryEngine[PatchRestActionCategory, Key, Resource, Keyed[Key, Resource]] = {
+      implicit naptimeSerializer: NaptimeSerializer[Resource],
+      keyFormat: KeyFormat[Key])
+    : RestActionCategoryEngine[PatchRestActionCategory, Key, Resource, Keyed[Key, Resource]] = {
 
     new RestActionCategoryEngine[PatchRestActionCategory, Key, Resource, Keyed[Key, Resource]] {
       override def mkResult(
@@ -485,8 +552,15 @@ trait RestActionCategoryEngine2Impls {
           pagination: RequestPagination,
           response: RestResponse[Keyed[Key, Resource]]): Result = {
         mkOkResult(response) { ok =>
-          val response = buildOkResult(List(ok.content), ok, keyFormat, naptimeSerializer,
-            requestFields, requestIncludes, resourceFields, pagination)
+          val response = buildOkResult(
+            List(ok.content),
+            ok,
+            keyFormat,
+            naptimeSerializer,
+            requestFields,
+            requestIncludes,
+            resourceFields,
+            pagination)
           response.playResponse(Status.OK, None)
         }
       }
@@ -494,8 +568,9 @@ trait RestActionCategoryEngine2Impls {
   }
 
   implicit def deleteActionCategoryEngine[Key, Resource](
-      implicit naptimeSerializer: NaptimeSerializer[Resource], keyFormat: KeyFormat[Key]):
-    RestActionCategoryEngine[DeleteRestActionCategory, Key, Resource, Unit] = {
+      implicit naptimeSerializer: NaptimeSerializer[Resource],
+      keyFormat: KeyFormat[Key])
+    : RestActionCategoryEngine[DeleteRestActionCategory, Key, Resource, Unit] = {
 
     new RestActionCategoryEngine[DeleteRestActionCategory, Key, Resource, Unit] {
       override def mkResult(
@@ -513,47 +588,17 @@ trait RestActionCategoryEngine2Impls {
   }
 
   implicit def multiGetActionCategoryEngine[Key, Resource](
-      implicit naptimeSerializer: NaptimeSerializer[Resource], keyFormat: KeyFormat[Key]):
-    RestActionCategoryEngine2[
-      MultiGetRestActionCategory, Key, Resource, Seq[Keyed[Key, Resource]]] = {
+      implicit naptimeSerializer: NaptimeSerializer[Resource],
+      keyFormat: KeyFormat[Key]): RestActionCategoryEngine2[
+    MultiGetRestActionCategory,
+    Key,
+    Resource,
+    Seq[Keyed[Key, Resource]]] = {
 
     new RestActionCategoryEngine2[
-      MultiGetRestActionCategory, Key, Resource, Seq[Keyed[Key, Resource]]] {
-      override def mkResult(
-          request: RequestHeader,
-          resourceFields: Fields[Resource],
-          requestFields: RequestFields,
-          requestIncludes: QueryIncludes,
-          pagination: RequestPagination,
-          response: RestResponse[Seq[Keyed[Key, Resource]]]): Result = {
-        mkOkResult(response) { ok =>
-          val response = buildOkResult(ok.content, ok, keyFormat, naptimeSerializer, requestFields,
-            requestIncludes, resourceFields, pagination)
-          response.playResponse(Status.OK, request.headers.get(HeaderNames.IF_NONE_MATCH))
-        }
-      }
-      override def mkResponse(
-          request: RequestHeader,
-          resourceFields: Fields[Resource],
-          requestFields: RequestFields,
-          requestIncludes: QueryIncludes,
-          pagination: RequestPagination,
-          response: RestResponse[Seq[Keyed[Key, Resource]]],
-          resourceName: ResourceName): Future[AriResponse] = {
-        mkOkResponse(response) { ok =>
-          buildOkResponse(ok.content, ok, keyFormat, naptimeSerializer, requestFields,
-            requestIncludes, resourceFields, pagination, resourceName, request.uri)
-        }
-      }
-    }
-  }
-
-  implicit def getAllActionCategoryEngine[Key, Resource](
-      implicit naptimeSerializer: NaptimeSerializer[Resource], keyFormat: KeyFormat[Key]):
-    RestActionCategoryEngine2[GetAllRestActionCategory, Key, Resource,
-      Seq[Keyed[Key, Resource]]] = {
-
-    new RestActionCategoryEngine2[GetAllRestActionCategory, Key, Resource,
+      MultiGetRestActionCategory,
+      Key,
+      Resource,
       Seq[Keyed[Key, Resource]]] {
       override def mkResult(
           request: RequestHeader,
@@ -563,8 +608,15 @@ trait RestActionCategoryEngine2Impls {
           pagination: RequestPagination,
           response: RestResponse[Seq[Keyed[Key, Resource]]]): Result = {
         mkOkResult(response) { ok =>
-          val response = buildOkResult(ok.content, ok, keyFormat, naptimeSerializer, requestFields,
-            requestIncludes, resourceFields, pagination)
+          val response = buildOkResult(
+            ok.content,
+            ok,
+            keyFormat,
+            naptimeSerializer,
+            requestFields,
+            requestIncludes,
+            resourceFields,
+            pagination)
           response.playResponse(Status.OK, request.headers.get(HeaderNames.IF_NONE_MATCH))
         }
       }
@@ -577,19 +629,35 @@ trait RestActionCategoryEngine2Impls {
           response: RestResponse[Seq[Keyed[Key, Resource]]],
           resourceName: ResourceName): Future[AriResponse] = {
         mkOkResponse(response) { ok =>
-          buildOkResponse(ok.content, ok, keyFormat, naptimeSerializer, requestFields,
-            requestIncludes, resourceFields, pagination, resourceName, request.uri)
+          buildOkResponse(
+            ok.content,
+            ok,
+            keyFormat,
+            naptimeSerializer,
+            requestFields,
+            requestIncludes,
+            resourceFields,
+            pagination,
+            resourceName,
+            request.uri)
         }
       }
     }
   }
 
-  implicit def finderActionCategoryEngine[Key, Resource](
-      implicit naptimeSerializer: NaptimeSerializer[Resource], keyFormat: KeyFormat[Key]):
-    RestActionCategoryEngine2[FinderRestActionCategory, Key, Resource, Seq[Keyed[Key, Resource]]] = {
+  implicit def getAllActionCategoryEngine[Key, Resource](
+      implicit naptimeSerializer: NaptimeSerializer[Resource],
+      keyFormat: KeyFormat[Key]): RestActionCategoryEngine2[
+    GetAllRestActionCategory,
+    Key,
+    Resource,
+    Seq[Keyed[Key, Resource]]] = {
 
     new RestActionCategoryEngine2[
-      FinderRestActionCategory, Key, Resource, Seq[Keyed[Key, Resource]]] {
+      GetAllRestActionCategory,
+      Key,
+      Resource,
+      Seq[Keyed[Key, Resource]]] {
       override def mkResult(
           request: RequestHeader,
           resourceFields: Fields[Resource],
@@ -598,8 +666,15 @@ trait RestActionCategoryEngine2Impls {
           pagination: RequestPagination,
           response: RestResponse[Seq[Keyed[Key, Resource]]]): Result = {
         mkOkResult(response) { ok =>
-          val response = buildOkResult(ok.content, ok, keyFormat, naptimeSerializer, requestFields,
-            requestIncludes, resourceFields, pagination)
+          val response = buildOkResult(
+            ok.content,
+            ok,
+            keyFormat,
+            naptimeSerializer,
+            requestFields,
+            requestIncludes,
+            resourceFields,
+            pagination)
           response.playResponse(Status.OK, request.headers.get(HeaderNames.IF_NONE_MATCH))
         }
       }
@@ -612,16 +687,83 @@ trait RestActionCategoryEngine2Impls {
           response: RestResponse[Seq[Keyed[Key, Resource]]],
           resourceName: ResourceName): Future[AriResponse] = {
         mkOkResponse(response) { ok =>
-          buildOkResponse(ok.content, ok, keyFormat, naptimeSerializer, requestFields,
-            requestIncludes, resourceFields, pagination, resourceName, request.uri)
+          buildOkResponse(
+            ok.content,
+            ok,
+            keyFormat,
+            naptimeSerializer,
+            requestFields,
+            requestIncludes,
+            resourceFields,
+            pagination,
+            resourceName,
+            request.uri)
+        }
+      }
+    }
+  }
+
+  implicit def finderActionCategoryEngine[Key, Resource](
+      implicit naptimeSerializer: NaptimeSerializer[Resource],
+      keyFormat: KeyFormat[Key]): RestActionCategoryEngine2[
+    FinderRestActionCategory,
+    Key,
+    Resource,
+    Seq[Keyed[Key, Resource]]] = {
+
+    new RestActionCategoryEngine2[
+      FinderRestActionCategory,
+      Key,
+      Resource,
+      Seq[Keyed[Key, Resource]]] {
+      override def mkResult(
+          request: RequestHeader,
+          resourceFields: Fields[Resource],
+          requestFields: RequestFields,
+          requestIncludes: QueryIncludes,
+          pagination: RequestPagination,
+          response: RestResponse[Seq[Keyed[Key, Resource]]]): Result = {
+        mkOkResult(response) { ok =>
+          val response = buildOkResult(
+            ok.content,
+            ok,
+            keyFormat,
+            naptimeSerializer,
+            requestFields,
+            requestIncludes,
+            resourceFields,
+            pagination)
+          response.playResponse(Status.OK, request.headers.get(HeaderNames.IF_NONE_MATCH))
+        }
+      }
+      override def mkResponse(
+          request: RequestHeader,
+          resourceFields: Fields[Resource],
+          requestFields: RequestFields,
+          requestIncludes: QueryIncludes,
+          pagination: RequestPagination,
+          response: RestResponse[Seq[Keyed[Key, Resource]]],
+          resourceName: ResourceName): Future[AriResponse] = {
+        mkOkResponse(response) { ok =>
+          buildOkResponse(
+            ok.content,
+            ok,
+            keyFormat,
+            naptimeSerializer,
+            requestFields,
+            requestIncludes,
+            resourceFields,
+            pagination,
+            resourceName,
+            request.uri)
         }
       }
     }
   }
 
   implicit def actionActionCategoryEngine[Key, Resource, Response](
-      implicit responseWrites: NaptimeActionSerializer[Response]):
-    RestActionCategoryEngine[ActionRestActionCategory, Key, Resource, Response] = {
+      implicit responseWrites: NaptimeActionSerializer[Response])
+    : RestActionCategoryEngine[ActionRestActionCategory, Key, Resource, Response] = {
 
     new RestActionCategoryEngine[ActionRestActionCategory, Key, Resource, Response] {
       override def mkResult(
@@ -643,7 +785,7 @@ trait RestActionCategoryEngine2Impls {
     }
   }
   private[naptime] class FlattenedFilteringJacksonDataCodec(fields: RequestFields)
-    extends JacksonDataCodec {
+      extends JacksonDataCodec {
 
     override def writeObject(`object`: scala.Any, generator: JsonGenerator): Unit = {
       try {
@@ -667,7 +809,7 @@ trait RestActionCategoryEngine2Impls {
     }
 
     private[this] class FilteringJsonTraverseCallback(jsonGenerator: JsonGenerator)
-      extends JsonTraverseCallback(jsonGenerator) {
+        extends JsonTraverseCallback(jsonGenerator) {
       private[this] var inElements = false
       private[this] var levelsDeep = 0
       private[this] var inLinked = false
@@ -692,14 +834,16 @@ trait RestActionCategoryEngine2Impls {
           }.asJava
         } else if (inLinked && levelsDeep == 3 && linkedResourceName != null) {
           val unfiltered = super.orderMap(map)
-          linkedFieldsFilter.map { fields =>
-            // Use Scala's filtering, as by code inspection it is very efficient.
-            unfiltered.asScala.filter { entry =>
-              fields.hasField(entry.getKey)
-            }.asJava
-          }.getOrElse {
-            unfiltered
-          }
+          linkedFieldsFilter
+            .map { fields =>
+              // Use Scala's filtering, as by code inspection it is very efficient.
+              unfiltered.asScala.filter { entry =>
+                fields.hasField(entry.getKey)
+              }.asJava
+            }
+            .getOrElse {
+              unfiltered
+            }
         } else {
           super.orderMap(map)
         }

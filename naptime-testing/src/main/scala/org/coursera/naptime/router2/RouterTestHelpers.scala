@@ -24,16 +24,19 @@ trait RouterTestHelpers {
   def setupParentMockCalls[T <: CollectionResource[_, _, _]](mock: T, instanceImpl: T): Unit = {
     when(mock.resourceName).thenReturn(instanceImpl.resourceName)
     when(mock.resourceVersion).thenReturn(instanceImpl.resourceVersion)
-    when(mock.pathParser).thenReturn(instanceImpl.pathParser.asInstanceOf[mock.PathParser])
+    when(mock.pathParser)
+      .thenReturn(instanceImpl.pathParser.asInstanceOf[mock.PathParser])
   }
 
   def assertRouted(resource: CollectionResource[_, _, _], urlFragment: String): Unit = {
-    assert(!resource.optParse(urlFragment).isEmpty,
+    assert(
+      !resource.optParse(urlFragment).isEmpty,
       s"Resource: ${resource.getClass.getName} did not accept url fragment: $urlFragment")
   }
 
   def assertNotRouted(resource: CollectionResource[_, _, _], urlFragment: String): Unit = {
-    assert(resource.optParse(urlFragment).isEmpty,
+    assert(
+      resource.optParse(urlFragment).isEmpty,
       s"Resource: ${resource.getClass.getName} did accept url fragment: $urlFragment")
   }
 }

@@ -35,7 +35,9 @@ import scala.annotation.implicitNotFound
 /**
  * Marshaller for resource id types.
  */
-@implicitNotFound(msg ="Implicit `KeyFormat` not found for {K}. Create one in ${K}'s companion object with a method in `KeyFormat`.")
+@implicitNotFound(
+  msg =
+    "Implicit `KeyFormat` not found for {K}. Create one in ${K}'s companion object with a method in `KeyFormat`.")
 sealed trait KeyFormat[K] extends Format[K] {
 
   /** Marshals resource id into a string that can be used in URLs. */
@@ -73,8 +75,8 @@ object KeyFormat extends PrimitiveFormats {
    * See [[idAsStringOnly]].
    */
   def idAsStringWithFields[K](
-      idWrites: OWrites[K])  // Intentionally not implicit, to avoid accidental format use.
-      (implicit stringKeyFormat: StringKeyFormat[K]): KeyFormat[K] = {
+      idWrites: OWrites[K]) // Intentionally not implicit, to avoid accidental format use.
+  (implicit stringKeyFormat: StringKeyFormat[K]): KeyFormat[K] = {
     new CompositeKeyFormat[K]()(stringKeyFormat, idWrites)
   }
 
@@ -83,10 +85,9 @@ object KeyFormat extends PrimitiveFormats {
    * will contain the natural JSON representation for primitive type `P`.
    * (JSON number for `Int`, etc.)
    */
-  def idAsPrimitive[K, P](
-      apply: P => K,
-      unapply: K => Option[P])
-      (implicit primitiveFormat: KeyFormat[P]): KeyFormat[K] = caseClassFormat(apply, unapply)
+  def idAsPrimitive[K, P](apply: P => K, unapply: K => Option[P])(
+      implicit primitiveFormat: KeyFormat[P]): KeyFormat[K] =
+    caseClassFormat(apply, unapply)
 
   /**
    * Conveniently construct a format for a `case class` type.
@@ -101,10 +102,8 @@ object KeyFormat extends PrimitiveFormats {
    *   }
    * }}}
    */
-  def caseClassFormat[K, L](
-      apply: L => K,
-      unapply: K => Option[L])
-      (implicit delegateFormat: KeyFormat[L]): KeyFormat[K] = {
+  def caseClassFormat[K, L](apply: L => K, unapply: K => Option[L])(
+      implicit delegateFormat: KeyFormat[L]): KeyFormat[K] = {
 
     new KeyFormat[K] {
       override implicit val stringKeyFormat: StringKeyFormat[K] =
@@ -112,18 +111,20 @@ object KeyFormat extends PrimitiveFormats {
       override implicit val format: OFormat[K] =
         JsonFormats.caseClassOFormat(apply, unapply)(delegateFormat.format)
 
-      override def reads(json: JsValue): JsResult[K] = delegateFormat.reads(json).map(apply)
-      override def writes(o: K): JsValue = delegateFormat.writes(Function.unlift(unapply).apply(o))
+      override def reads(json: JsValue): JsResult[K] =
+        delegateFormat.reads(json).map(apply)
+      override def writes(o: K): JsValue =
+        delegateFormat.writes(Function.unlift(unapply).apply(o))
     }
   }
 
   /**
    * Format for composite keys that adds key parts to js objects (in addition to the id).
    */
-  private[this] class CompositeKeyFormat[K]()
-      (override implicit val stringKeyFormat: StringKeyFormat[K],
+  private[this] class CompositeKeyFormat[K]()(
+      override implicit val stringKeyFormat: StringKeyFormat[K],
       baseJsonWrites: OWrites[K])
-    extends KeyFormat[K] {
+      extends KeyFormat[K] {
 
     override def format: OFormat[K] = {
       val reads = (__ \ ID_FIELD).read(JsonFormats.stringKeyFormat[K])
@@ -154,7 +155,8 @@ object KeyFormat extends PrimitiveFormats {
   def withFallbackReads[K](altReads: Reads[K])(keyFormat: KeyFormat[K]): KeyFormat[K] = {
     new KeyFormat[K] {
 
-      override implicit def stringKeyFormat: StringKeyFormat[K] = keyFormat.stringKeyFormat
+      override implicit def stringKeyFormat: StringKeyFormat[K] =
+        keyFormat.stringKeyFormat
 
       override implicit def format: OFormat[K] = keyFormat.format
 
@@ -201,10 +203,9 @@ sealed trait PrimitiveFormats {
    *
    * It can read both primitives and strings, though.
    */
-  private[this] class PrimitiveKeyFormat[P](
-      primitiveJsonFormat: Format[P])
-      (override implicit val stringKeyFormat: StringKeyFormat[P])
-    extends KeyFormat[P] {
+  private[this] class PrimitiveKeyFormat[P](primitiveJsonFormat: Format[P])(
+      override implicit val stringKeyFormat: StringKeyFormat[P])
+      extends KeyFormat[P] {
 
     override implicit def format: OFormat[P] = {
       val reads: Reads[P] = (__ \ KeyFormat.ID_FIELD)
@@ -217,7 +218,8 @@ sealed trait PrimitiveFormats {
 
     override def writes(o: P): JsValue = primitiveJsonFormat.writes(o)
 
-    override def reads(json: JsValue): JsResult[P] = primitiveJsonFormat.reads(json)
+    override def reads(json: JsValue): JsResult[P] =
+      primitiveJsonFormat.reads(json)
 
   }
 

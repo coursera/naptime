@@ -27,7 +27,7 @@ object NaptimeModuleTest {
     implicit val oFormat: OFormat[User] = Json.format[User]
   }
   class MyResource(implicit val executionContext: ExecutionContext, val materializer: Materializer)
-    extends TopLevelCollectionResource[String, User] {
+      extends TopLevelCollectionResource[String, User] {
     override implicit def resourceFormat: OFormat[User] = User.oFormat
     override def keyFormat: KeyFormat[KeyType] = KeyFormat.stringKeyFormat
     override def resourceName: String = "myResource"
@@ -43,7 +43,7 @@ object NaptimeModuleTest {
     }
   }
 
-  class OverrideTypesHelper @Inject() (val schemaOverrideTypes: NaptimeModule.SchemaTypeOverrides)
+  class OverrideTypesHelper @Inject()(val schemaOverrideTypes: NaptimeModule.SchemaTypeOverrides)
 }
 
 class NaptimeModuleTest extends AssertionsForJUnit {
@@ -67,14 +67,18 @@ class NaptimeModuleTest extends AssertionsForJUnit {
     val routes = injector.getInstance(classOf[NaptimeRoutes])
     assert(1 === routes.routerBuilders.size)
     val routerBuilder = routes.routerBuilders.head
-    val inferredSchemaKeyed = routerBuilder.types.find(
-      _.key == "org.coursera.naptime.NaptimeModuleTest.User").get
+    val inferredSchemaKeyed =
+      routerBuilder.types.find(_.key == "org.coursera.naptime.NaptimeModuleTest.User").get
     assert(inferredSchemaKeyed.value.isInstanceOf[RecordDataSchema])
     val userSchema = inferredSchemaKeyed.value.asInstanceOf[RecordDataSchema]
     assert(2 === userSchema.getFields.size())
     val initialCreatedAtSchema = userSchema.getField("createdAt").getType.getDereferencedDataSchema
     assert(initialCreatedAtSchema.isInstanceOf[RecordDataSchema])
-    assert(initialCreatedAtSchema.asInstanceOf[RecordDataSchema].getDoc.contains("Unable to infer schema"))
+    assert(
+      initialCreatedAtSchema
+        .asInstanceOf[RecordDataSchema]
+        .getDoc
+        .contains("Unable to infer schema"))
     SchemaUtils.fixupInferredSchemas(userSchema, overrides.schemaOverrideTypes)
     val fixedCreatedAtSchema = userSchema.getField("createdAt").getType.getDereferencedDataSchema
     assert(fixedCreatedAtSchema.isInstanceOf[PrimitiveDataSchema])

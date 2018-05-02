@@ -31,7 +31,10 @@ import play.api.http.Status
 import play.api.mvc.RequestHeader
 import play.api.test.FakeRequest
 
-class HeaderAccessControlCombinersTest extends AssertionsForJUnit with ScalaFutures with ResourceTestImplicits {
+class HeaderAccessControlCombinersTest
+    extends AssertionsForJUnit
+    with ScalaFutures
+    with ResourceTestImplicits {
 
   import HeaderAccessControlCombinersTest._
 
@@ -39,8 +42,8 @@ class HeaderAccessControlCombinersTest extends AssertionsForJUnit with ScalaFutu
 
   def runEither(
       left: StructuredAccessControl[String] = leftSuccess,
-      right: StructuredAccessControl[String] = rightSuccess)
-      (checks: Either[NaptimeActionException, Either[String, String]] => Unit): Unit = {
+      right: StructuredAccessControl[String] = rightSuccess)(
+      checks: Either[NaptimeActionException, Either[String, String]] => Unit): Unit = {
     val either = HeaderAccessControl.eitherOf(left, right)
     val result = either.run(FakeRequest())
     checks(result.futureValue)
@@ -48,8 +51,8 @@ class HeaderAccessControlCombinersTest extends AssertionsForJUnit with ScalaFutu
 
   def runAnyOf(
       left: StructuredAccessControl[String] = leftSuccess,
-      right: StructuredAccessControl[String] = rightSuccess)
-      (checks: Either[NaptimeActionException, (Option[String], Option[String])] => Unit): Unit = {
+      right: StructuredAccessControl[String] = rightSuccess)(
+      checks: Either[NaptimeActionException, (Option[String], Option[String])] => Unit): Unit = {
     val anyOf = HeaderAccessControl.anyOf(left, right)
     val result = anyOf.run(FakeRequest())
     checks(result.futureValue)
@@ -57,8 +60,8 @@ class HeaderAccessControlCombinersTest extends AssertionsForJUnit with ScalaFutu
 
   def runAnd(
       left: StructuredAccessControl[String] = leftSuccess,
-      right: StructuredAccessControl[String] = rightSuccess)
-      (checks: Either[NaptimeActionException, (String, String)] => Unit): Unit = {
+      right: StructuredAccessControl[String] = rightSuccess)(
+      checks: Either[NaptimeActionException, (String, String)] => Unit): Unit = {
     val and = HeaderAccessControl.and(left, right)
     val result = and.run(FakeRequest())
     checks(result.futureValue)
@@ -66,8 +69,8 @@ class HeaderAccessControlCombinersTest extends AssertionsForJUnit with ScalaFutu
 
   def runSuccessfulOf(
       left: StructuredAccessControl[String] = leftSuccess,
-      right: StructuredAccessControl[String] = rightSuccess)
-      (checks: Either[NaptimeActionException, Set[String]] => Unit): Unit = {
+      right: StructuredAccessControl[String] = rightSuccess)(
+      checks: Either[NaptimeActionException, Set[String]] => Unit): Unit = {
     val successfulOf = HeaderAccessControl.successfulOf(List(left, right))
     val result = successfulOf.run(FakeRequest())
     checks(result.futureValue)
@@ -217,7 +220,7 @@ class HeaderAccessControlCombinersTest extends AssertionsForJUnit with ScalaFutu
   def anyOfFailAndSkip(): Unit = {
     runAnyOf(leftFail, rightDeny) { result =>
       assert(result.isLeft)
-      // Behavior is unspecified as to the response code returned.
+    // Behavior is unspecified as to the response code returned.
     }
   }
 
@@ -226,7 +229,7 @@ class HeaderAccessControlCombinersTest extends AssertionsForJUnit with ScalaFutu
     val left = StructuredAccessControl(Authenticators.parseError[String](), Authorizers.allowed)
     runAnyOf(left, rightDeny) { result =>
       assert(result.isLeft)
-      // Behavior is unspecified as to the response code.
+    // Behavior is unspecified as to the response code.
     }
   }
 
@@ -318,10 +321,13 @@ class HeaderAccessControlCombinersTest extends AssertionsForJUnit with ScalaFutu
 
   @Test
   def complexTest(): Unit = {
-    val acceptingParser = StructuredAccessControl(Authenticators.constant(true), Authorizers.allowed)
-    val notParsing = StructuredAccessControl(Authenticators.parseMissing[String], Authorizers.deny())
+    val acceptingParser =
+      StructuredAccessControl(Authenticators.constant(true), Authorizers.allowed)
+    val notParsing =
+      StructuredAccessControl(Authenticators.parseMissing[String], Authorizers.deny())
     val innerEither = HeaderAccessControl.eitherOf(acceptingParser, notParsing)
-    val acceptingOuter = StructuredAccessControl(Authenticators.constant("foo"), Authorizers.allowed)
+    val acceptingOuter =
+      StructuredAccessControl(Authenticators.constant("foo"), Authorizers.allowed)
     val denyingOuter = StructuredAccessControl(Authenticators.constant("foo"), Authorizers.deny())
     val wrapped = HeaderAccessControl.anyOf(
       HeaderAccessControl.and(innerEither, acceptingOuter),

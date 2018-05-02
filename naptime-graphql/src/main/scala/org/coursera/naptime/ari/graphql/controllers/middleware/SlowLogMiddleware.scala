@@ -28,10 +28,10 @@ import scala.util.Try
  * and instantiate the SlowLog directly to pass into `Executor.execute`
  */
 class SlowLogMiddleware(logger: Logger, isDebugMode: Boolean)
-  extends Middleware[SangriaGraphQlContext]
-  with MiddlewareExtension[SangriaGraphQlContext]
-  with MiddlewareAfterField[SangriaGraphQlContext]
-  with MiddlewareErrorField[SangriaGraphQlContext] {
+    extends Middleware[SangriaGraphQlContext]
+    with MiddlewareExtension[SangriaGraphQlContext]
+    with MiddlewareAfterField[SangriaGraphQlContext]
+    with MiddlewareErrorField[SangriaGraphQlContext] {
 
   type QueryVal = QueryMetrics
   type FieldVal = Long
@@ -44,27 +44,43 @@ class SlowLogMiddleware(logger: Logger, isDebugMode: Boolean)
     }
   }
 
-  override def beforeQuery(context: MiddlewareQueryContext[SangriaGraphQlContext, _, _]): QueryMetrics =
+  override def beforeQuery(
+      context: MiddlewareQueryContext[SangriaGraphQlContext, _, _]): QueryMetrics =
     underlying.beforeQuery(context)
 
-  override def afterQuery(queryVal: QueryMetrics, context: MiddlewareQueryContext[SangriaGraphQlContext, _, _]): Unit =
+  override def afterQuery(
+      queryVal: QueryMetrics,
+      context: MiddlewareQueryContext[SangriaGraphQlContext, _, _]): Unit =
     underlying.afterQuery(queryVal, context)
 
-  override def afterQueryExtensions(queryVal: QueryMetrics, context: MiddlewareQueryContext[SangriaGraphQlContext, _, _]): Vector[Extension[_]] =
+  override def afterQueryExtensions(
+      queryVal: QueryMetrics,
+      context: MiddlewareQueryContext[SangriaGraphQlContext, _, _]): Vector[Extension[_]] =
     underlying.afterQueryExtensions(queryVal, context)
 
   // The next 2 functions are parametrized on `SangriaGraphQlContext` which makes them not usable
   // when directly passed into the delegate. Instead, we have to do a (safe) typecast. It is
   // wrapped as a `Try` to avoid future runtime errors.
-  override def afterField(queryVal: QueryMetrics, fieldVal: Long, value: Any, mctx: MiddlewareQueryContext[SangriaGraphQlContext, _, _], ctx: Context[SangriaGraphQlContext, _]): Option[Any] = {
+  override def afterField(
+      queryVal: QueryMetrics,
+      fieldVal: Long,
+      value: Any,
+      mctx: MiddlewareQueryContext[SangriaGraphQlContext, _, _],
+      ctx: Context[SangriaGraphQlContext, _]): Option[Any] = {
     val safeContext = Try(ctx.asInstanceOf[Context[Any, _]])
     safeContext match {
-      case Success(c) => underlying.afterField(queryVal, fieldVal, value, mctx, c)
+      case Success(c) =>
+        underlying.afterField(queryVal, fieldVal, value, mctx, c)
       case Failure(_) => None
     }
   }
 
-  override def fieldError(queryVal: QueryMetrics, fieldVal: Long, error: Throwable, mctx: MiddlewareQueryContext[SangriaGraphQlContext, _, _], ctx: Context[SangriaGraphQlContext, _]): Unit = {
+  override def fieldError(
+      queryVal: QueryMetrics,
+      fieldVal: Long,
+      error: Throwable,
+      mctx: MiddlewareQueryContext[SangriaGraphQlContext, _, _],
+      ctx: Context[SangriaGraphQlContext, _]): Unit = {
     val safeContext = Try(ctx.asInstanceOf[Context[Any, _]])
     safeContext match {
       case Success(c) =>
@@ -76,6 +92,9 @@ class SlowLogMiddleware(logger: Logger, isDebugMode: Boolean)
   // We cannot use the same type casting method as the above 2 classes because the return type
   // is parametrized, so we just copy the underlying impl. It is very straightforward [just
   // recording the timestamp] so we don't think it will change.
-  override def beforeField(queryVal: QueryMetrics, mctx: MiddlewareQueryContext[SangriaGraphQlContext, _, _], ctx: Context[SangriaGraphQlContext, _]): BeforeFieldResult[SangriaGraphQlContext, Long] =
+  override def beforeField(
+      queryVal: QueryMetrics,
+      mctx: MiddlewareQueryContext[SangriaGraphQlContext, _, _],
+      ctx: Context[SangriaGraphQlContext, _]): BeforeFieldResult[SangriaGraphQlContext, Long] =
     continue(System.nanoTime())
 }

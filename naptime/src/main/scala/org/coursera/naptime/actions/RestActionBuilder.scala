@@ -46,9 +46,10 @@ import scala.util.control.NonFatal
  * A builder that helps build Rest Actions.
  */
 class RestActionBuilder[RACType, AuthType, BodyType, ResourceKeyType, ResourceType, ResponseType](
-    auth: HeaderAccessControl[AuthType], bodyParser: BodyParser[BodyType],
-    errorHandler: PartialFunction[Throwable, RestError])
-    (implicit keyFormat: KeyFormat[ResourceKeyType],
+    auth: HeaderAccessControl[AuthType],
+    bodyParser: BodyParser[BodyType],
+    errorHandler: PartialFunction[Throwable, RestError])(
+    implicit keyFormat: KeyFormat[ResourceKeyType],
     resourceFormat: OFormat[ResourceType],
     ec: ExecutionContext,
     mat: Materializer) {
@@ -56,15 +57,25 @@ class RestActionBuilder[RACType, AuthType, BodyType, ResourceKeyType, ResourceTy
   /**
    * Set the authentication framework.
    */
-  def auth[NewAuthType](auth: HeaderAccessControl[NewAuthType]):
-    RestActionBuilder[RACType, NewAuthType, BodyType, ResourceKeyType, ResourceType, ResponseType] =
+  def auth[NewAuthType](auth: HeaderAccessControl[NewAuthType]): RestActionBuilder[
+    RACType,
+    NewAuthType,
+    BodyType,
+    ResourceKeyType,
+    ResourceType,
+    ResponseType] =
     new RestActionBuilder(auth, bodyParser, errorHandler)
 
   /**
    * Set the body type.
    */
-  def body[NewBodyType](bodyParser: BodyParser[NewBodyType]):
-    RestActionBuilder[RACType, AuthType, NewBodyType, ResourceKeyType, ResourceType, ResponseType] =
+  def body[NewBodyType](bodyParser: BodyParser[NewBodyType]): RestActionBuilder[
+    RACType,
+    AuthType,
+    NewBodyType,
+    ResourceKeyType,
+    ResourceType,
+    ResponseType] =
     new RestActionBuilder(auth, bodyParser, errorHandler)
 
   /**
@@ -76,32 +87,48 @@ class RestActionBuilder[RACType, AuthType, BodyType, ResourceKeyType, ResourceTy
    * @param errorHandler Error handling partial function.
    * @return the immutable RestActionBuilder to be used to build the naptime resource action.
    */
-  def catching(errorHandler: PartialFunction[Throwable, RestError]):
-    RestActionBuilder[RACType, AuthType, BodyType, ResourceKeyType, ResourceType, ResponseType] =
+  def catching(errorHandler: PartialFunction[Throwable, RestError])
+    : RestActionBuilder[RACType, AuthType, BodyType, ResourceKeyType, ResourceType, ResponseType] =
     new RestActionBuilder(auth, bodyParser, errorHandler.orElse(this.errorHandler))
 
   /**
    * Set the response type.
    * TODO: is this necessary?
    */
-  def returning[NewResponseType]():
-    RestActionBuilder[RACType, AuthType, BodyType, ResourceKeyType, ResourceType, NewResponseType] =
+  def returning[NewResponseType](): RestActionBuilder[
+    RACType,
+    AuthType,
+    BodyType,
+    ResourceKeyType,
+    ResourceType,
+    NewResponseType] =
     new RestActionBuilder(auth, bodyParser, errorHandler)
 
-  def rawJsonBody(maxLength: Int = 100 * 1024) = body(BodyParsers.parse.tolerantJson(maxLength))
+  def rawJsonBody(maxLength: Int = 100 * 1024) =
+    body(BodyParsers.parse.tolerantJson(maxLength))
 
-  def jsonBody[NewBodyType](implicit reads: Reads[NewBodyType]):
-    RestActionBuilder[
-      RACType, AuthType, NewBodyType, ResourceKeyType, ResourceType, ResponseType] = {
+  def jsonBody[NewBodyType](implicit reads: Reads[NewBodyType]): RestActionBuilder[
+    RACType,
+    AuthType,
+    NewBodyType,
+    ResourceKeyType,
+    ResourceType,
+    ResponseType] = {
     jsonBody[NewBodyType]()
   }
 
-  def jsonBody[NewBodyType](maxLength: Int = 100 * 1024)(implicit reads: Reads[NewBodyType]):
-    RestActionBuilder[
-      RACType, AuthType, NewBodyType, ResourceKeyType, ResourceType, ResponseType] = {
+  def jsonBody[NewBodyType](maxLength: Int = 100 * 1024)(
+      implicit reads: Reads[NewBodyType]): RestActionBuilder[
+    RACType,
+    AuthType,
+    NewBodyType,
+    ResourceKeyType,
+    ResourceType,
+    ResponseType] = {
 
     val parser: BodyParser[NewBodyType] = new BodyParser[NewBodyType] with StrictLogging {
-      override def apply(rh: RequestHeader): Accumulator[ByteString, Either[Result, NewBodyType]] = {
+      override def apply(
+          rh: RequestHeader): Accumulator[ByteString, Either[Result, NewBodyType]] = {
         val innerParser = BodyParsers.parse.tolerantJson(maxLength)
         innerParser(rh).map(_.right.map(toJsObj).joinRight)
       }
@@ -122,7 +149,10 @@ class RestActionBuilder[RACType, AuthType, BodyType, ResourceKeyType, ResourceTy
                 })
               })
               val response = NaptimeActionException(
-                Status.BAD_REQUEST, None, Some("JSON didn't validate"), Some(errorDetails))
+                Status.BAD_REQUEST,
+                None,
+                Some("JSON didn't validate"),
+                Some(errorDetails))
               Left(response.result)
           }
         } catch {
@@ -148,9 +178,13 @@ class RestActionBuilder[RACType, AuthType, BodyType, ResourceKeyType, ResourceTy
     RestActionBodyBuilder[Category, AuthType, BodyType, ResourceKeyType, ResourceType, Response]
 
   private[this] def bodyBuilder[Category, Response](): BodyBuilder[Category, Response] = {
-    new RestActionBodyBuilder
-      [Category, AuthType, BodyType, ResourceKeyType, ResourceType, Response](
-        auth, bodyParser, errorHandler)
+    new RestActionBodyBuilder[
+      Category,
+      AuthType,
+      BodyType,
+      ResourceKeyType,
+      ResourceType,
+      Response](auth, bodyParser, errorHandler)
   }
 
   // Define all the available REST action types and categories.
@@ -167,7 +201,8 @@ class RestActionBuilder[RACType, AuthType, BodyType, ResourceKeyType, ResourceTy
    * Underlying HTTP request (id = "1"):
    * {{{ GET /api/myResource/1 }}}
    */
-  type GetBuilder = BodyBuilder[GetRestActionCategory, Keyed[ResourceKeyType, ResourceType]]
+  type GetBuilder =
+    BodyBuilder[GetRestActionCategory, Keyed[ResourceKeyType, ResourceType]]
   def get: GetBuilder = bodyBuilder()
 
   /**
@@ -276,7 +311,8 @@ class RestActionBuilder[RACType, AuthType, BodyType, ResourceKeyType, ResourceTy
    * Underlying HTTP request (id=10, body elided):
    * {{{ PATCH /api/myResource/10 }}}
    */
-  type PatchBuilder = BodyBuilder[PatchRestActionCategory, Keyed[ResourceKeyType, ResourceType]]
+  type PatchBuilder =
+    BodyBuilder[PatchRestActionCategory, Keyed[ResourceKeyType, ResourceType]]
   def patch: PatchBuilder = bodyBuilder()
 
   /**

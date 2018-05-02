@@ -28,16 +28,17 @@ import sangria.marshalling.ToInput
 import scala.util.Try
 
 /**
-  * Modified from https://github.com/sangria-graphql/sangria-play-json,
-  * with added support for DataMaps
-  */
+ * Modified from https://github.com/sangria-graphql/sangria-play-json,
+ * with added support for DataMaps
+ */
 object NaptimeMarshaller extends PlayJsonSupportLowPrioImplicits {
   implicit object PlayJsonResultMarshaller extends ResultMarshaller {
     type Node = JsValue
     type MapBuilder = ArrayMapBuilder[Node]
 
     def emptyMapNode(keys: Seq[String]) = new ArrayMapBuilder[Node](keys)
-    def addMapNodeElem(builder: MapBuilder, key: String, value: Node, optional: Boolean) = builder.add(key, value)
+    def addMapNodeElem(builder: MapBuilder, key: String, value: Node, optional: Boolean) =
+      builder.add(key, value)
 
     def mapNode(builder: MapBuilder) = JsObject(builder.toSeq)
     def mapNode(keyValues: Seq[(String, JsValue)]) = JsObject(keyValues)
@@ -46,20 +47,22 @@ object NaptimeMarshaller extends PlayJsonSupportLowPrioImplicits {
 
     def optionalArrayNodeValue(value: Option[JsValue]) = value match {
       case Some(v) => v
-      case None => nullNode
+      case None    => nullNode
     }
 
-    def scalarNode(value: Any, typeName: String, info: Set[ScalarValueInfo]) = value match {
-      case v: String => JsString(v)
-      case v: Boolean => JsBoolean(v)
-      case v: Int => JsNumber(v)
-      case v: Long => JsNumber(v)
-      case v: Double => JsNumber(v)
-      case v: BigInt => JsNumber(BigDecimal(v))
-      case v: BigDecimal => JsNumber(v)
-      case v: DataMap => NaptimeSerializer.PlayJson.deserialize(v)
-      case v => throw new IllegalArgumentException("Unsupported scalar value: " + v)
-    }
+    def scalarNode(value: Any, typeName: String, info: Set[ScalarValueInfo]) =
+      value match {
+        case v: String     => JsString(v)
+        case v: Boolean    => JsBoolean(v)
+        case v: Int        => JsNumber(v)
+        case v: Long       => JsNumber(v)
+        case v: Double     => JsNumber(v)
+        case v: BigInt     => JsNumber(BigDecimal(v))
+        case v: BigDecimal => JsNumber(v)
+        case v: DataMap    => NaptimeSerializer.PlayJson.deserialize(v)
+        case v =>
+          throw new IllegalArgumentException("Unsupported scalar value: " + v)
+      }
 
     def enumNode(value: String, typeName: String) = JsString(value)
 
@@ -74,21 +77,23 @@ object NaptimeMarshaller extends PlayJsonSupportLowPrioImplicits {
   }
 
   implicit object PlayJsonInputUnmarshaller extends InputUnmarshaller[JsValue] {
-    def getRootMapValue(node: JsValue, key: String) = node.asInstanceOf[JsObject].value get key
+    def getRootMapValue(node: JsValue, key: String) =
+      node.asInstanceOf[JsObject].value get key
 
     def isListNode(node: JsValue) = node.isInstanceOf[JsArray]
     def getListValue(node: JsValue) = node.asInstanceOf[JsArray].value
 
     def isMapNode(node: JsValue) = node.isInstanceOf[JsObject]
-    def getMapValue(node: JsValue, key: String) = node.asInstanceOf[JsObject].value get key
+    def getMapValue(node: JsValue, key: String) =
+      node.asInstanceOf[JsObject].value get key
     def getMapKeys(node: JsValue) = node.asInstanceOf[JsObject].keys
 
     def isDefined(node: JsValue) = node != JsNull
     def getScalarValue(node: JsValue) = node match {
       case JsBoolean(b) => b
-      case JsNumber(d) => d.toBigIntExact getOrElse d
-      case JsString(s) => s
-      case _ => throw new IllegalStateException(s"$node is not a scalar value")
+      case JsNumber(d)  => d.toBigIntExact getOrElse d
+      case JsString(s)  => s
+      case _            => throw new IllegalStateException(s"$node is not a scalar value")
     }
 
     def getScalaScalarValue(node: JsValue) = getScalarValue(node)
@@ -97,11 +102,12 @@ object NaptimeMarshaller extends PlayJsonSupportLowPrioImplicits {
 
     def isScalarNode(node: JsValue) = node match {
       case _: JsBoolean | _: JsNumber | _: JsString => true
-      case _ => false
+      case _                                        => false
     }
 
     def isVariableNode(node: JsValue) = false
-    def getVariableName(node: JsValue) = throw new IllegalArgumentException("variables are not supported")
+    def getVariableName(node: JsValue) =
+      throw new IllegalArgumentException("variables are not supported")
 
     def render(node: JsValue) = Json.stringify(node)
   }
@@ -113,9 +119,10 @@ object NaptimeMarshaller extends PlayJsonSupportLowPrioImplicits {
   implicit def playJsonToInput[T <: JsValue]: ToInput[T, JsValue] =
     PlayJsonToInput.asInstanceOf[ToInput[T, JsValue]]
 
-  implicit def playJsonWriterToInput[T : Writes]: ToInput[T, JsValue] =
+  implicit def playJsonWriterToInput[T: Writes]: ToInput[T, JsValue] =
     new ToInput[T, JsValue] {
-      def toInput(value: T) = implicitly[Writes[T]].writes(value) → PlayJsonInputUnmarshaller
+      def toInput(value: T) =
+        implicitly[Writes[T]].writes(value) → PlayJsonInputUnmarshaller
     }
 
   private object PlayJsonFromInput extends FromInput[JsValue] {
@@ -126,18 +133,20 @@ object NaptimeMarshaller extends PlayJsonSupportLowPrioImplicits {
   implicit def playJsonFromInput[T <: JsValue]: FromInput[T] =
     PlayJsonFromInput.asInstanceOf[FromInput[T]]
 
-  implicit def playJsonReaderFromInput[T : Reads]: FromInput[T] =
+  implicit def playJsonReaderFromInput[T: Reads]: FromInput[T] =
     new FromInput[T] {
       val marshaller = PlayJsonResultMarshaller
-      def fromResult(node: marshaller.Node) = implicitly[Reads[T]].reads(node) match {
-        case JsSuccess(v, _) => v
-        case JsError(errors) =>
-          val formattedErrors = errors.toVector.flatMap {
-            case (JsPath(nodes), es) => es.map(e => s"At path '${nodes.mkString(".")}': ${e.message}")
-          }
+      def fromResult(node: marshaller.Node) =
+        implicitly[Reads[T]].reads(node) match {
+          case JsSuccess(v, _) => v
+          case JsError(errors) =>
+            val formattedErrors = errors.toVector.flatMap {
+              case (JsPath(nodes), es) =>
+                es.map(e => s"At path '${nodes.mkString(".")}': ${e.message}")
+            }
 
-          throw InputParsingError(formattedErrors)
-      }
+            throw InputParsingError(formattedErrors)
+        }
     }
 
   implicit object PlayJsonInputParser extends InputParser[JsValue] {
@@ -147,5 +156,6 @@ object NaptimeMarshaller extends PlayJsonSupportLowPrioImplicits {
 
 trait PlayJsonSupportLowPrioImplicits {
   implicit val PlayJsonInputUnmarshallerJObject =
-    NaptimeMarshaller.PlayJsonInputUnmarshaller.asInstanceOf[InputUnmarshaller[JsObject]]
+    NaptimeMarshaller.PlayJsonInputUnmarshaller
+      .asInstanceOf[InputUnmarshaller[JsObject]]
 }

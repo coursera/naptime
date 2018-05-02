@@ -59,18 +59,22 @@ object CollectionResourceRouter {
         Left(errorRoute(s"Missing required parameter '$paramName'", resourceClass))
       } else if (queryStringResults.get.tail.isEmpty) {
         // Hack around broken iOS clients for namespace parameter. TODO(saeta): Remove on Feb 12
-        val stringValue = if (paramName == "namespaces" &&
-            queryStringResults.get.head.startsWith(",")) {
-          queryStringResults.get.head.substring(1)
-        } else {
-          queryStringResults.get.head
-        }
+        val stringValue =
+          if (paramName == "namespaces" &&
+              queryStringResults.get.head.startsWith(",")) {
+            queryStringResults.get.head.substring(1)
+          } else {
+            queryStringResults.get.head
+          }
         val parsed = stringKeyFormat.reads(StringKey(stringValue))
-        parsed.map { parsed =>
-          Right(parsed)
-        }.getOrElse {
-          Left(errorRoute(s"Improperly formatted value for parameter '$paramName'", resourceClass))
-        }
+        parsed
+          .map { parsed =>
+            Right(parsed)
+          }
+          .getOrElse {
+            Left(
+              errorRoute(s"Improperly formatted value for parameter '$paramName'", resourceClass))
+          }
       } else {
         Left(errorRoute(s"Too many query parameters for '$paramName", resourceClass))
       }
@@ -88,11 +92,14 @@ object CollectionResourceRouter {
       } else if (queryStringResults.get.tail.isEmpty) {
         val stringValue = queryStringResults.get.head
         val parsed = stringKeyFormat.reads(StringKey(stringValue))
-        parsed.map { parsed =>
-          Right(Some(parsed))
-        }.getOrElse {
-          Left(errorRoute(s"Improperly formatted value for parameter '$paramName'", resourceClass))
-        }
+        parsed
+          .map { parsed =>
+            Right(Some(parsed))
+          }
+          .getOrElse {
+            Left(
+              errorRoute(s"Improperly formatted value for parameter '$paramName'", resourceClass))
+          }
       } else {
         Left(errorRoute(s"Too many query parameters for '$paramName", resourceClass))
       }
@@ -107,13 +114,14 @@ object CollectionResourceRouter {
       } else if (queryStringResults.get.tail.isEmpty) {
         val stringValue = queryStringResults.get.head
         stringValue match {
-          case "true" => Right(true)
+          case "true"  => Right(true)
           case "false" => Right(false)
           case unknown: String =>
-            Left(errorRoute(
-              s"Improperly formatted value for parameter '$paramName'." +
-                s" Expected 'true' or 'false' but found '$unknown'.",
-              resourceClass))
+            Left(
+              errorRoute(
+                s"Improperly formatted value for parameter '$paramName'." +
+                  s" Expected 'true' or 'false' but found '$unknown'.",
+                resourceClass))
         }
       } else {
         Left(errorRoute(s"Too many query parameters for '$paramName", resourceClass))
@@ -129,13 +137,14 @@ object CollectionResourceRouter {
       } else if (queryStringResults.get.tail.isEmpty) {
         val stringValue = queryStringResults.get.head
         stringValue match {
-          case "true" => Right(Some(true))
+          case "true"  => Right(Some(true))
           case "false" => Right(Some(false))
           case unknown: String =>
-            Left(errorRoute(
-              s"Improperly formatted value for parameter '$paramName'. " +
-                s"Expected 'true' or 'false' but found '$unknown'.",
-              resourceClass))
+            Left(
+              errorRoute(
+                s"Improperly formatted value for parameter '$paramName'. " +
+                  s"Expected 'true' or 'false' but found '$unknown'.",
+                resourceClass))
         }
       } else {
         Left(errorRoute(s"Too many query parameters for '$paramName", resourceClass))

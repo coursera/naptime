@@ -35,9 +35,10 @@ import scala.annotation.tailrec
 import scala.collection.immutable
 
 @Singleton
-private[naptime] case class NaptimeRoutes @Inject() (
+private[naptime] case class NaptimeRoutes @Inject()(
     injector: Injector,
     routerBuilders: immutable.Set[ResourceRouterBuilder]) {
+
   /**
    * Helper function to filter out those resource router builders that don't provide schemas.
    */
@@ -56,10 +57,13 @@ private[naptime] case class NaptimeRoutes @Inject() (
     routerBuilder.resourceClass().getName.replace("$", ".")
   }
 
-  lazy val schemaMap = routerBuilders.filter(hasDefinedSchema)
-    .toList.map { routerBuilder =>
-    className(routerBuilder) -> routerBuilder.schema
-  }.toMap
+  lazy val schemaMap = routerBuilders
+    .filter(hasDefinedSchema)
+    .toList
+    .map { routerBuilder =>
+      className(routerBuilder) -> routerBuilder.schema
+    }
+    .toMap
 
   // TODO(saeta): Check to ensure there are not 2 resources with the same name / version.
   lazy val buildersToRouters = routerBuilders.map { routerBuilder =>
@@ -87,9 +91,11 @@ private[naptime] case class NaptimeRoutes @Inject() (
  *               `/api`).
  */
 @Singleton
-case class NaptimePlayRouter (
+case class NaptimePlayRouter(
     private[naptime] val naptimeRoutes: NaptimeRoutes,
-    private[naptime] val prefix: String) extends play.api.routing.Router with StrictLogging {
+    private[naptime] val prefix: String)
+    extends play.api.routing.Router
+    with StrictLogging {
 
   @Inject
   def this(naptimeRoutes: NaptimeRoutes) = this(naptimeRoutes, "")
@@ -104,7 +110,8 @@ case class NaptimePlayRouter (
    */
   override lazy val routes: Routes = Function.unlift(handlerFor)
 
-  override def withPrefix(prefix: String): routing.Router = copy(prefix = prefix)
+  override def withPrefix(prefix: String): routing.Router =
+    copy(prefix = prefix)
 
   /**
    * Includes the Naptime resources into Play's dev mode not-found handler that lists all routes.
@@ -132,7 +139,7 @@ case class NaptimePlayRouter (
         case HandlerKind.GET | HandlerKind.UPSERT | HandlerKind.DELETE | HandlerKind.PATCH =>
           true
         case HandlerKind.CREATE | HandlerKind.MULTI_GET | HandlerKind.GET_ALL | HandlerKind.FINDER |
-          HandlerKind.ACTION =>
+            HandlerKind.ACTION =>
           false
         case HandlerKind.$UNKNOWN =>
           false
@@ -147,15 +154,18 @@ case class NaptimePlayRouter (
      */
     def computeFullPath(resourceSchema: schema.Resource): (String, String) = {
       val hasNonRootParent = resourceSchema.parentClass.isDefined &&
-          !resourceSchema.parentClass.contains("org.coursera.naptime.resources.RootResource") 
+        !resourceSchema.parentClass.contains("org.coursera.naptime.resources.RootResource")
       val previous = if (hasNonRootParent) {
         try {
           computeFullPath(naptimeRoutes.schemaMap(resourceSchema.parentClass.get))._2
         } catch {
           case e: NoSuchElementException =>
-            logger.error(s"Problem computing schema for resource ${resourceSchema.className}. " +
-              s"Parent class ${resourceSchema.parentClass} not found in schema map keys: " +
-              s"${naptimeRoutes.schemaMap.keys}", e)
+            logger.error(
+              s"Problem computing schema for resource ${resourceSchema.className}. " +
+                s"Parent class ${resourceSchema.parentClass} not found in schema map keys: " +
+                s"${naptimeRoutes.schemaMap.keys}",
+              e
+            )
             prefix
         }
       } else {
@@ -183,7 +193,8 @@ case class NaptimePlayRouter (
       (path, pathWithKey) = computeFullPath(routerBuilder.schema)
       handler <- routerBuilder.schema.handlers.sortBy(h => handlerOrder(h.kind))
     } yield {
-      val method = s"${handlerKindToHttpMethod(handler.kind)} --- ${handler.kind}"
+      val method =
+        s"${handlerKindToHttpMethod(handler.kind)} --- ${handler.kind}"
       val documentationPath = if (shouldUsePathWithKey(handler.kind)) {
         pathWithKey
       } else {
@@ -199,13 +210,16 @@ case class NaptimePlayRouter (
         param <- handler.parameters
       } yield {
         val default = Option(param.data().get("default"))
-        default.map { default =>
-          s"${param.name}: ${param.`type`} = $default"
-        }.getOrElse {
-          s"${param.name}: ${param.`type`}"
-        }
+        default
+          .map { default =>
+            s"${param.name}: ${param.`type`} = $default"
+          }
+          .getOrElse {
+            s"${param.name}: ${param.`type`}"
+          }
       }
-      val baseMethod = s"[NAPTIME] ${routerBuilder.schema.className}.${handler.name}"
+      val baseMethod =
+        s"[NAPTIME] ${routerBuilder.schema.className}.${handler.name}"
       val scalaMethod = if (queryParamInfo.isEmpty) {
         baseMethod
       } else {
@@ -224,7 +238,8 @@ case class NaptimePlayRouter (
     HandlerKind.DELETE,
     HandlerKind.PATCH,
     HandlerKind.FINDER,
-    HandlerKind.ACTION).zipWithIndex.toMap
+    HandlerKind.ACTION
+  ).zipWithIndex.toMap
 
   /**
    * Route the request to one of the naptime resources, invoking the (macro-generated) router.
@@ -245,9 +260,9 @@ case class NaptimePlayRouter (
        */
       @tailrec
       def routeRequestHelper(
-        resourceRouters: immutable.Seq[ResourceRouter],
-        requestHeader: RequestHeader,
-        path: String): Option[RouteAction] = {
+          resourceRouters: immutable.Seq[ResourceRouter],
+          requestHeader: RequestHeader,
+          path: String): Option[RouteAction] = {
         if (resourceRouters.isEmpty) {
           None
         } else {

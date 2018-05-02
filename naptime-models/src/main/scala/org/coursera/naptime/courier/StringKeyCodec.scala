@@ -279,9 +279,9 @@ object StringKeyCodec {
     }
 
     def generateList(
-      dataList: DataList,
-      schema: ArrayDataSchema,
-      outputStream: OutputStream): Unit = {
+        dataList: DataList,
+        schema: ArrayDataSchema,
+        outputStream: OutputStream): Unit = {
       val items = dataList.iterator().asScala
       val itemsSchema = schema.getItems
 
@@ -305,7 +305,10 @@ object StringKeyCodec {
       new String(out.toByteArray, charset)
     }
 
-    def generateMap(dataMap: DataMap, schema: RecordDataSchema, outputStream: OutputStream): Unit = {
+    def generateMap(
+        dataMap: DataMap,
+        schema: RecordDataSchema,
+        outputStream: OutputStream): Unit = {
       val entries = dataMap.entrySet().asScala
 
       if (prefix.isDefined) {
@@ -327,7 +330,9 @@ object StringKeyCodec {
               }
               val valueString = generateData(value, field.getType)
               outputStream.write(
-                tupleParser.escape(valueString).getBytes(StringKeyCodec.charset))
+                tupleParser
+                  .escape(valueString)
+                  .getBytes(StringKeyCodec.charset))
 
               if (idx < fields.size - 1) {
                 outputStream.write(tupleParser.separatorBytes)
@@ -364,10 +369,10 @@ object StringKeyCodec {
    * list. If false, an empty string is parsed as a list containing a single empty string.
    */
   private[this] class StringListParser(
-    val escapeChar: Char,
-    val separator: Char,
-    val interpretEmptyInputAsEmptyList: Boolean = false)
-    extends RegexParsers {
+      val escapeChar: Char,
+      val separator: Char,
+      val interpretEmptyInputAsEmptyList: Boolean = false)
+      extends RegexParsers {
 
     val separatorBytes = separator.toString.getBytes(StringKeyCodec.charset)
 
@@ -393,7 +398,8 @@ object StringKeyCodec {
       handleParseErrors(parseAll(listParser, input))
     }
 
-    private[this] val itemRegex = s"""([^$reservedChars]|$escapeChar[$reservedChars])*""".r
+    private[this] val itemRegex =
+      s"""([^$reservedChars]|$escapeChar[$reservedChars])*""".r
 
     private[this] val itemParser: Parser[String] = {
       itemRegex ^^ { value =>

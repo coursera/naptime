@@ -33,10 +33,8 @@ import scala.concurrent.Future
  */
 trait FetcherApi {
   type FetcherResponse = Either[FetcherError, Response]
-  def data(
-      request: Request,
-      isDebugMode: Boolean)
-      (implicit executionContext: ExecutionContext): Future[FetcherResponse]
+  def data(request: Request, isDebugMode: Boolean)(
+      implicit executionContext: ExecutionContext): Future[FetcherResponse]
 }
 
 case class FetcherError(code: Int, message: String, url: Option[String])
@@ -84,9 +82,9 @@ object FullSchema {
  *                  differentiate between various endpoints (i.e. multiget, finder, etc.).
  */
 case class Request(
-  requestHeader: RequestHeader,
-  resource: ResourceName,
-  arguments: Set[(String, JsValue)])
+    requestHeader: RequestHeader,
+    resource: ResourceName,
+    arguments: Set[(String, JsValue)])
 
 /**
  * This model represents a response from a [[Request]], including elements and pagination
@@ -94,12 +92,9 @@ case class Request(
  * @param data A list of elements in the response, in the order that they're returned
  * @param pagination The response pagination information (including total and next)
  * @param url The source url that was used to make the request.
-  *            This is implementation specific by the fetcher, so it cannot be part of the Request.
+ *            This is implementation specific by the fetcher, so it cannot be part of the Request.
  */
-case class Response(
-  data: List[DataMap],
-  pagination: ResponsePagination,
-  url: Option[String])
+case class Response(data: List[DataMap], pagination: ResponsePagination, url: Option[String])
 
 object Response {
   def empty = Response(List.empty, ResponsePagination.empty, None)

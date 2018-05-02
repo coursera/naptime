@@ -69,9 +69,11 @@ sealed trait UrlParseResult[+T] {
 case object ParseFailure extends UrlParseResult[Nothing] {
   override def isEmpty: Boolean = true
 
-  protected[this] override def get = throw new NoSuchElementException("ParseFailure.get")
+  protected[this] override def get =
+    throw new NoSuchElementException("ParseFailure.get")
 
-  protected[this] override def getUrl = throw new NoSuchElementException("ParseFailure.getUrl")
+  protected[this] override def getUrl =
+    throw new NoSuchElementException("ParseFailure.getUrl")
 }
 
 // TODO: consider returning an offset into the original URL to avoid all the string copying.

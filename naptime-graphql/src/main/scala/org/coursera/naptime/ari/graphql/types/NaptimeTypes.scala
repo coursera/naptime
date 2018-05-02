@@ -15,22 +15,22 @@ object NaptimeTypes {
   private[this] val dataCodec = new JacksonDataCodec()
 
   private[this] def stringToDataMapEither(string: String): Either[Violation, DataMap] = {
-    Try(dataCodec.stringToMap(string))
-      .toOption
+    Try(dataCodec.stringToMap(string)).toOption
       .map(Right(_))
       .getOrElse(Left(DataMapCoercionViolation))
   }
 
-
-  val DataMapType = ScalarType[DataMap]("DataMap",
+  val DataMapType = ScalarType[DataMap](
+    "DataMap",
     description = Some("Pegasus DataMap, with an arbitrary JSON-like value"),
     coerceOutput = (value, _) ⇒ value,
     coerceUserInput = {
       case string: String => stringToDataMapEither(string)
-      case _ => Left(DataMapCoercionViolation)
+      case _              => Left(DataMapCoercionViolation)
     },
     coerceInput = {
       case StringValue(string, _, _, _, _) => stringToDataMapEither(string)
-      case _ => Left(DataMapCoercionViolation)
-    })
+      case _                               => Left(DataMapCoercionViolation)
+    }
+  )
 }

@@ -17,8 +17,9 @@ class ResourceNameTest extends AssertionsForJUnit {
 
   @Test
   def deeplyNestedResourceNameIdenfier(): Unit = {
-    assert(ResourceName("fooBarBaz", 103, List("history", "author")).identifier ===
-      "fooBarBaz.v103/history/author")
+    assert(
+      ResourceName("fooBarBaz", 103, List("history", "author")).identifier ===
+        "fooBarBaz.v103/history/author")
   }
 
   @Test
@@ -33,7 +34,8 @@ class ResourceNameTest extends AssertionsForJUnit {
 
   @Test
   def parseDeeplyNested(): Unit = {
-    assert(ResourceName("fooBar", 3, List("sub", "superSub")) ===
-      ResourceName.parse("fooBar.v3/sub/superSub").get)
+    assert(
+      ResourceName("fooBar", 3, List("sub", "superSub")) ===
+        ResourceName.parse("fooBar.v3/sub/superSub").get)
   }
 }

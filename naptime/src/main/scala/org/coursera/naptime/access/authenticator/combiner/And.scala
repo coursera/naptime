@@ -25,16 +25,13 @@ import scala.concurrent.Future
 
 private[authenticator] trait And {
 
-  def and[A, A1, A2](
-      authenticator1: Authenticator[A1],
-      authenticator2: Authenticator[A2])
-      (partialCombine: PartialFunction[(Option[A1], Option[A2]), A]): Authenticator[A] = {
+  def and[A, A1, A2](authenticator1: Authenticator[A1], authenticator2: Authenticator[A2])(
+      partialCombine: PartialFunction[(Option[A1], Option[A2]), A]): Authenticator[A] = {
     new Authenticator[A] {
 
-      override def maybeAuthenticate(
-          requestHeader: RequestHeader)
-          (implicit executionContext: ExecutionContext):
-        Future[Option[Either[NaptimeActionException, A]]] = {
+      override def maybeAuthenticate(requestHeader: RequestHeader)(
+          implicit executionContext: ExecutionContext)
+        : Future[Option[Either[NaptimeActionException, A]]] = {
 
         for {
           response1 <- Authenticator.authenticateAndRecover(authenticator1, requestHeader)

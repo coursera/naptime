@@ -35,14 +35,16 @@ trait Authorizer[-A] {
   /**
    * Construct an `Authorizer` for new type [[AA]], given a function to compute [[A]] from [[AA]].
    */
-  def on[AA](f: AA => A): Authorizer[AA] = Authorizer[AA](aa => authorize(f(aa)))
+  def on[AA](f: AA => A): Authorizer[AA] =
+    Authorizer[AA](aa => authorize(f(aa)))
 
 }
 
 object Authorizer {
 
   def apply[A](f: A => AuthorizeResult): Authorizer[A] = new Authorizer[A] {
-    override def authorize(authentication: A): AuthorizeResult = f(authentication)
+    override def authorize(authentication: A): AuthorizeResult =
+      f(authentication)
   }
 
   def toResponse[T](result: AuthorizeResult, rawResponse: T): Either[NaptimeActionException, T] = {
@@ -51,8 +53,8 @@ object Authorizer {
       case AuthorizeResult.Rejected(message, details) =>
         Left(NaptimeActionException(FORBIDDEN, Some("auth.perms"), Some(message), details))
       case AuthorizeResult.Failed(message, details) =>
-        Left(NaptimeActionException(
-          INTERNAL_SERVER_ERROR, Some("auth.perms"), Some(message), details))
+        Left(
+          NaptimeActionException(INTERNAL_SERVER_ERROR, Some("auth.perms"), Some(message), details))
     }
   }
 
@@ -66,7 +68,6 @@ object Authorizer {
    * TODO(josh): Write unit tests.
    */
   def anyOf[A](authorizers: Set[Authorizer[A]]): Authorizer[A] = apply { authentication: A =>
-
     val authorizeResults = authorizers.map(_.authorize(authentication))
 
     lazy val authorizedOption = authorizeResults.find(_.isAuthorized)
@@ -75,9 +76,9 @@ object Authorizer {
 
     (authorizedOption, rejectedOption, failedOption) match {
       case (Some(authorized), _, _) => authorized
-      case (_, Some(rejected), _) => rejected
-      case (_, _, Some(failed)) => failed
-      case _ => AuthorizeResult.Failed("Invalid authorization configuration")
+      case (_, Some(rejected), _)   => rejected
+      case (_, _, Some(failed))     => failed
+      case _                        => AuthorizeResult.Failed("Invalid authorization configuration")
     }
   }
 
@@ -90,7 +91,6 @@ object Authorizer {
    * TODO(josh): Unit tests.
    */
   def and[A](authorizers: Set[Authorizer[A]]): Authorizer[A] = apply { authentication: A =>
-
     val authorizeResults = authorizers.map(_.authorize(authentication))
 
     lazy val rejectedOption = authorizeResults.find(_.isRejected)
@@ -99,9 +99,9 @@ object Authorizer {
 
     (rejectedOption, failedOption, areAllAuthorized) match {
       case (Some(rejected), _, _) => rejected
-      case (_, Some(failed), _) => failed
-      case (None, None, true) => AuthorizeResult.Authorized
-      case _ => AuthorizeResult.Failed("Invalid authorization configuration")
+      case (_, Some(failed), _)   => failed
+      case (None, None, true)     => AuthorizeResult.Authorized
+      case _                      => AuthorizeResult.Failed("Invalid authorization configuration")
     }
   }
 

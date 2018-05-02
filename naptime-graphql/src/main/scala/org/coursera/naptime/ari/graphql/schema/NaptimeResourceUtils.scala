@@ -65,14 +65,16 @@ object NaptimeResourceUtils extends StrictLogging {
         val (optionalInputType, optionalFromInputType: FromInput[Any]) =
           (inputType, parameter.required) match {
             case (_: OptionInputType[Any], _) => (inputType, fromInputType)
-            case (_, false) => (OptionInputType(inputType), FromInput.optionInput(fromInputType))
+            case (_, false) =>
+              (OptionInputType(inputType), FromInput.optionInput(fromInputType))
             case (_, true) => (inputType, fromInputType)
           }
-        Argument(
-          name = parameter.name,
-          argumentType = optionalInputType)(optionalFromInputType, implicitly)
-            .asInstanceOf[Argument[Any]]
-      }.toList
+        Argument(name = parameter.name, argumentType = optionalInputType)(
+          optionalFromInputType,
+          implicitly)
+          .asInstanceOf[Argument[Any]]
+      }
+      .toList
     val paginationParameters = if (includePagination) {
       NaptimePaginationField.paginationArguments
     } else {
@@ -92,12 +94,14 @@ object NaptimeResourceUtils extends StrictLogging {
     val optionPattern = "(Option)\\[(.*)\\]".r
     // TODO(bryan): Fill in the missing types here
     typeName match {
-      case listPattern(_, innerType) => ListInputType(scalaTypeToSangria(innerType))
-      case optionPattern(_, innerType) => OptionInputType(scalaTypeToSangria(innerType))
-      case "string" | "String" => StringType
-      case "int" | "Int" => IntType
-      case "long" | "Long" => LongType
-      case "float" | "Float" => FloatType
+      case listPattern(_, innerType) =>
+        ListInputType(scalaTypeToSangria(innerType))
+      case optionPattern(_, innerType) =>
+        OptionInputType(scalaTypeToSangria(innerType))
+      case "string" | "String"   => StringType
+      case "int" | "Int"         => IntType
+      case "long" | "Long"       => LongType
+      case "float" | "Float"     => FloatType
       case "decimal" | "Decimal" => BigDecimalType
       case "boolean" | "Boolean" => BooleanType
       case _ => {
@@ -117,44 +121,48 @@ object NaptimeResourceUtils extends StrictLogging {
     typeName.toLowerCase match {
       case listPattern(outerType, innerType) =>
         val listType = scalaTypeToFromInput(innerType)
-        sangria.marshalling.FromInput.seqInput(listType).asInstanceOf[FromInput[Any]]
+        sangria.marshalling.FromInput
+          .seqInput(listType)
+          .asInstanceOf[FromInput[Any]]
       case "string" | "int" | "long" | "float" | "decimal" | "boolean" =>
-        sangria.marshalling.FromInput.coercedScalaInput.asInstanceOf[FromInput[Any]]
+        sangria.marshalling.FromInput.coercedScalaInput
+          .asInstanceOf[FromInput[Any]]
       case _ =>
-        sangria.marshalling.FromInput.coercedScalaInput.asInstanceOf[FromInput[Any]]
+        sangria.marshalling.FromInput.coercedScalaInput
+          .asInstanceOf[FromInput[Any]]
     }
   }
 
   /**
-    * Converts a resource name to a GraphQL compatible name. (i.e. 'courses.v1' to 'CoursesV1')
-    *
-    * @param resourceName Naptime resource name
-    * @return GraphQL-safe resource name
-    */
+   * Converts a resource name to a GraphQL compatible name. (i.e. 'courses.v1' to 'CoursesV1')
+   *
+   * @param resourceName Naptime resource name
+   * @return GraphQL-safe resource name
+   */
   def formatResourceName(resourceName: ResourceName): String = {
     s"${resourceName.topLevelName.capitalize}V${resourceName.version}"
   }
 
-
   /**
-    * This regex is used to match both "$instructorIds" and "${instructorDetails/instructorIds}"
-    */
+   * This regex is used to match both "$instructorIds" and "${instructorDetails/instructorIds}"
+   */
   private[this] val InterpolationRegex =
     new Regex("""\$(?:([a-zA-Z0-9_]+)|\{([^\}]+)\})""", "withoutBraces", "withBraces")
-
 
   // TODO(bryan): Fix the number parsing here
   def parseToJson(value: Any): JsValue = {
     value match {
-      case None => JsNull
+      case None            => JsNull
       case Some(someValue) => parseToJson(someValue)
-      case str: String => Try(JsNumber(str.toInt)).toOption.getOrElse(JsString(str))
-      case traversable: Traversable[Any] => JsArray(traversable.map(parseToJson).toSeq)
-      case int: Int => JsNumber(int)
-      case long: Long => JsNumber(long)
-      case float: Float => JsNumber(float.toLong)
+      case str: String =>
+        Try(JsNumber(str.toInt)).toOption.getOrElse(JsString(str))
+      case traversable: Traversable[Any] =>
+        JsArray(traversable.map(parseToJson).toSeq)
+      case int: Int       => JsNumber(int)
+      case long: Long     => JsNumber(long)
+      case float: Float   => JsNumber(float.toLong)
       case double: Double => JsNumber(double)
-      case _ => JsString(value.toString)
+      case _              => JsString(value.toString)
     }
   }
 
@@ -198,7 +206,7 @@ object NaptimeResourceUtils extends StrictLogging {
         }
       }
       .toSet
-    }
+  }
 
   private[schema] def interpolate(
       argumentValue: String,
@@ -227,17 +235,19 @@ object NaptimeResourceUtils extends StrictLogging {
         } match {
           case Success(v) => v
           case Failure(f) =>
-            logger.warn(s"Could not interpolate, given argument value: $argumentValue, " +
-              s"regexMatch: $regexMatch, current index: $i, " +
-              s"numInterpolatedIds: $numInterpolatedIds, and " +
-              s"variable name to interpolated ids map: $variableNameToInterpolatedIds")
+            logger.warn(
+              s"Could not interpolate, given argument value: $argumentValue, " +
+                s"regexMatch: $regexMatch, current index: $i, " +
+                s"numInterpolatedIds: $numInterpolatedIds, and " +
+                s"variable name to interpolated ids map: $variableNameToInterpolatedIds")
             throw f
         }
       })
     })
-    logger.debug(s"Arguments value: $argumentValue\t " +
-      s"Variable names with interpolated ids: $fullyInterpolatedIds\t" +
-      s"After interpolation: $fullyInterpolatedIds")
+    logger.debug(
+      s"Arguments value: $argumentValue\t " +
+        s"Variable names with interpolated ids: $fullyInterpolatedIds\t" +
+        s"After interpolation: $fullyInterpolatedIds")
     fullyInterpolatedIds.toList
   }
 }

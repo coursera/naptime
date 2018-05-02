@@ -46,12 +46,10 @@ sealed trait PathKeyParser[+ParseAsType <: ParsedPathKey] {
  * @tparam H The type the head of the chain will parse as.
  * @tparam TailParseAsType The tail of the chain will parse as this type
  */
-final case class NestedPathKeyParser[
-    +H,
-    TailParseAsType <: ParsedPathKey](
+final case class NestedPathKeyParser[+H, TailParseAsType <: ParsedPathKey](
     head: ResourcePathParser[H],
     tail: PathKeyParser[TailParseAsType])
-  extends PathKeyParser[H ::: TailParseAsType] {
+    extends PathKeyParser[H ::: TailParseAsType] {
 
   override def toString = s"$head :: $tail"
 
@@ -66,7 +64,7 @@ final case class NestedPathKeyParser[
 
   def parseFinalLevel(path: String): UrlParseResult[Option[H] ::: TailParseAsType] = {
     tail.parse(path) match {
-      case ParseFailure => ParseFailure
+      case ParseFailure          => ParseFailure
       case ParseSuccess(None, _) => ParseFailure // Nothing left to parse; fail.
       case ParseSuccess(Some(urlThroughParent), tailParse) =>
         head.parseOptUrl(urlThroughParent) match {
