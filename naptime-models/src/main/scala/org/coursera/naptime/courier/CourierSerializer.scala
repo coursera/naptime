@@ -66,7 +66,8 @@ object CourierSerializer {
     val dataMap = readDataMap(json, tag.runtimeClass.asInstanceOf[Class[T]])
     CourierSerializer.builder(clazz).validateAndBuild(dataMap) match {
       case Right(template) => template
-      case Left(validationResult) => throw new DataValidationException(validationResult)
+      case Left(validationResult) =>
+        throw new DataValidationException(validationResult)
     }
   }
 
@@ -84,7 +85,8 @@ object CourierSerializer {
     val dataMap = readUnion(json, clazz)
     CourierSerializer.builder(clazz).validateAndBuild(dataMap) match {
       case Right(template) => template
-      case Left(validationResult) => throw new DataValidationException(validationResult)
+      case Left(validationResult) =>
+        throw new DataValidationException(validationResult)
     }
   }
 
@@ -112,19 +114,25 @@ object CourierSerializer {
     }
 
     def build(dataMap: DataMap): T = {
-      buildMethod.invoke(companionInstance, dataMap, DataConversion.SetReadOnly).asInstanceOf[T]
+      buildMethod
+        .invoke(companionInstance, dataMap, DataConversion.SetReadOnly)
+        .asInstanceOf[T]
     }
 
     def validateAndBuild(dataMap: DataMap): Either[ValidationResult, T] = {
       val validationResult =
         ValidateDataAgainstSchema.validate(
-          dataMap, schema, recordValidationOptions, annotationValidator)
+          dataMap,
+          schema,
+          recordValidationOptions,
+          annotationValidator)
       if (!validationResult.isValid) {
         Left(validationResult)
       } else {
         Right(
-          buildMethod.invoke(
-            companionInstance, dataMap, DataConversion.SetReadOnly).asInstanceOf[T])
+          buildMethod
+            .invoke(companionInstance, dataMap, DataConversion.SetReadOnly)
+            .asInstanceOf[T])
       }
     }
   }
@@ -155,10 +163,14 @@ object CourierSerializer {
   }
 
   private[this] def getSchema[T <: DataTemplate[_]](
-      clazz: Class[T], fieldName: String): DataSchema = {
+      clazz: Class[T],
+      fieldName: String): DataSchema = {
     val companionInstance = companion(clazz)
     val companionClass = companionInstance.getClass
-    companionClass.getDeclaredMethod(fieldName).invoke(companionInstance).asInstanceOf[DataSchema]
+    companionClass
+      .getDeclaredMethod(fieldName)
+      .invoke(companionInstance)
+      .asInstanceOf[DataSchema]
   }
 
   private[this] val schemaFieldName = "SCHEMA"
@@ -176,22 +188,24 @@ object CourierSerializer {
   private[this] val underlyingCodec = new JacksonDataCodec()
 
   private[this] def readDataMap[T <: DataTemplate[DataMap]](
-      json: String, clazz: Class[T]): DataMap = {
+      json: String,
+      clazz: Class[T]): DataMap = {
     codec(clazz).stringToMap(json)
   }
 
-  private[this] def readUnion[T <: UnionTemplate](
-      json: String, clazz: Class[T]): DataMap = {
+  private[this] def readUnion[T <: UnionTemplate](json: String, clazz: Class[T]): DataMap = {
     codec(clazz).stringToMap(json)
   }
 
   private[this] def writeDataMap[T <: DataTemplate[DataMap]](
-      dataMap: DataMap, clazz: Class[T]): String = {
+      dataMap: DataMap,
+      clazz: Class[T]): String = {
     codec(clazz).mapToString(dataMap)
   }
 
   private[this] def writeUnion[T <: DataTemplate[AnyRef]](
-      dataMap: DataMap, clazz: Class[T]): String = {
+      dataMap: DataMap,
+      clazz: Class[T]): String = {
     codec(clazz).mapToString(dataMap)
   }
 

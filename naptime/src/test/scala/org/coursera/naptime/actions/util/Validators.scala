@@ -107,7 +107,8 @@ object Validators extends AssertionsForJUnit {
   def assertBodyIsJson(result: Result): JsValue = {
     val contentType = result.body.contentType
     assert(contentType.isDefined)
-    assert(contentType.get.startsWith(MimeTypes.JSON),
+    assert(
+      contentType.get.startsWith(MimeTypes.JSON),
       s"Content-Type must be json. Found ${contentType.get}")
     contentAsJson(Future.successful(result))
   }
@@ -127,7 +128,8 @@ object Validators extends AssertionsForJUnit {
 
   def assertSuccessHasOnlyAllowedFields(body: JsObject): Unit = {
     val allowedFields = Set("elements", "paging", "linked", "meta")
-    assert(body.keys.diff(allowedFields).size === 0,
+    assert(
+      body.keys.diff(allowedFields).size === 0,
       s"Body had extra keys that it shouldn't have: ${body.keys.diff(allowedFields)}")
   }
 
@@ -137,7 +139,8 @@ object Validators extends AssertionsForJUnit {
     assert(elements.validate[JsArray].isSuccess, "Elements should be an array.")
     val arr = elements.as[JsArray]
     arr.value.foreach { entry =>
-      assert(entry.validate[JsObject].isSuccess,
+      assert(
+        entry.validate[JsObject].isSuccess,
         s"Entries inside elements must be objects. Found: $entry")
     }
   }
@@ -146,7 +149,6 @@ object Validators extends AssertionsForJUnit {
     assert(result.header.headers.contains(HeaderNames.LOCATION))
     assert(result.header.headers.contains("X-Coursera-Id"))
   }
-
 
   def assertClientErrorResponse(result: Result): Unit = {
 
@@ -165,9 +167,10 @@ object Validators extends AssertionsForJUnit {
     assertObjectHasStringField(bodyObj, "message", allowNull = true)
   }
 
-  def assertObjectHasStringField(body: JsObject,
-    fieldName: String,
-    allowNull: Boolean = false): String = {
+  def assertObjectHasStringField(
+      body: JsObject,
+      fieldName: String,
+      allowNull: Boolean = false): String = {
     assert(body.keys.contains(fieldName), s"Body should have field: $fieldName: $body")
     val obj = body.value.get(fieldName).get
     if (!allowNull) {
@@ -175,7 +178,8 @@ object Validators extends AssertionsForJUnit {
       val str = obj.as[JsString]
       str.value
     } else {
-      assert(obj.validate[JsString].isSuccess || obj == JsNull,
+      assert(
+        obj.validate[JsString].isSuccess || obj == JsNull,
         s"Field $fieldName should be string or null. Found: $obj")
       if (obj.validate[JsString].isSuccess) {
         obj.as[JsString].value

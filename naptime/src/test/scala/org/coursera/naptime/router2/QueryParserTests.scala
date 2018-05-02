@@ -25,14 +25,16 @@ class QueryParserTests extends AssertionsForJUnit {
 
   @Test
   def checkTrueParsing(): Unit = {
-    assert(CollectionResourceRouter.BooleanFlagParser("bool1", getClass).evaluate(request) ===
-      Right(true))
+    assert(
+      CollectionResourceRouter.BooleanFlagParser("bool1", getClass).evaluate(request) ===
+        Right(true))
   }
 
   @Test
   def checkFalseParsing(): Unit = {
-    assert(CollectionResourceRouter.BooleanFlagParser("bool2", getClass).evaluate(request) ===
-      Right(false))
+    assert(
+      CollectionResourceRouter.BooleanFlagParser("bool2", getClass).evaluate(request) ===
+        Right(false))
   }
 
   @Test

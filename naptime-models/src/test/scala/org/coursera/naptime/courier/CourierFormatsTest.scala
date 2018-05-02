@@ -254,13 +254,14 @@ class CourierFormatsTest extends AssertionsForJUnit {
     val string = "1!~2~3!~4,5!~6"
     val stringKey = StringKey(string)
     val recordOption = stringKey.asOpt[TestPositiveIntComplex]
-    assert(recordOption.contains(
-      TestPositiveIntComplex(
-        TestPositiveIntPair(TestPositiveInt(1), TestPositiveInt(2)),
-        TestPositiveIntPairArray(
-          List(
-            TestPositiveIntPair(TestPositiveInt(3), TestPositiveInt(4)),
-            TestPositiveIntPair(TestPositiveInt(5), TestPositiveInt(6)))))))
+    assert(
+      recordOption.contains(
+        TestPositiveIntComplex(
+          TestPositiveIntPair(TestPositiveInt(1), TestPositiveInt(2)),
+          TestPositiveIntPairArray(
+            List(
+              TestPositiveIntPair(TestPositiveInt(3), TestPositiveInt(4)),
+              TestPositiveIntPair(TestPositiveInt(5), TestPositiveInt(6)))))))
 
     val string2 = "-1!~2~3!~4,5!~6"
     val stringKey2 = StringKey(string2)
@@ -283,7 +284,8 @@ class CourierFormatsTest extends AssertionsForJUnit {
     val string = "3~4,5~6"
     val stringKey = StringKey(string)
     val recordOption = stringKey.asOpt[TestPositiveIntPairArray]
-    assert(recordOption.contains(
+    assert(
+      recordOption.contains(
         TestPositiveIntPairArray(
           List(
             TestPositiveIntPair(TestPositiveInt(3), TestPositiveInt(4)),
@@ -315,8 +317,9 @@ class CourierFormatsTest extends AssertionsForJUnit {
     error.errors(1) match {
       case (path, Seq(vError)) =>
         assert(path.toString() === "/string")
-        assert(vError.message ===
-          "ERROR :: /string :: field is required but not found and has no default value")
+        assert(
+          vError.message ===
+            "ERROR :: /string :: field is required but not found and has no default value")
     }
   }
 
@@ -348,7 +351,7 @@ class CourierFormatsTest extends AssertionsForJUnit {
 
 object CourierFormatsTest {
   private class MockRecord(private val dataMap: DataMap)
-    extends RecordTemplate(dataMap, MockRecord.SCHEMA) {
+      extends RecordTemplate(dataMap, MockRecord.SCHEMA) {
     dataMap.makeReadOnly()
   }
 
@@ -375,11 +378,10 @@ object CourierFormatsTest {
     implicit val jsonFormat: OFormat[Wrapper] = Json.format[Wrapper]
   }
 
-  private class MockUnion(private val obj: AnyRef)
-    extends UnionTemplate(obj, MockUnion.SCHEMA) {
+  private class MockUnion(private val obj: AnyRef) extends UnionTemplate(obj, MockUnion.SCHEMA) {
     obj match {
-      case complex: DataComplex => complex.makeReadOnly ()
-      case _ =>
+      case complex: DataComplex => complex.makeReadOnly()
+      case _                    =>
     }
   }
 
@@ -388,17 +390,20 @@ object CourierFormatsTest {
       new MockUnion(dataMap)
     }
 
-    val SCHEMA = DataTemplateUtil.parseSchema("""
+    val SCHEMA = DataTemplateUtil
+      .parseSchema(
+        """
       |[
       |  "string",
       |  "int",
       |  { "name": "Example", "namespace": "org.example", "type": "record", "fields": [] }
       |]
-      |""".stripMargin).asInstanceOf[UnionDataSchema]
+      |""".stripMargin)
+      .asInstanceOf[UnionDataSchema]
   }
 
   private class MockWithFlatTypedDefinition(val dataMap: DataMap)
-    extends RecordTemplate(dataMap, MockWithFlatTypedDefinition.SCHEMA) {
+      extends RecordTemplate(dataMap, MockWithFlatTypedDefinition.SCHEMA) {
     dataMap.makeReadOnly()
   }
 
@@ -448,7 +453,7 @@ object CourierFormatsTest {
   }
 
   private class MockWithTypedDefinition(val dataMap: DataMap)
-    extends RecordTemplate(dataMap, MockWithTypedDefinition.SCHEMA) {
+      extends RecordTemplate(dataMap, MockWithTypedDefinition.SCHEMA) {
     dataMap.makeReadOnly()
   }
 
@@ -498,7 +503,7 @@ object CourierFormatsTest {
   }
 
   private class MockTypedDefinition(val dataMap: DataMap)
-    extends UnionTemplate(dataMap, MockTypedDefinition.SCHEMA) {
+      extends UnionTemplate(dataMap, MockTypedDefinition.SCHEMA) {
     dataMap.makeReadOnly()
   }
 

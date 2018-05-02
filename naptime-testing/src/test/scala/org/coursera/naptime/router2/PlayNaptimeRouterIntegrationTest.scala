@@ -47,9 +47,7 @@ import scala.concurrent.ExecutionContext
 
 // TODO(saeta): De-dupe the test resources to share amongst tests.
 object PlayNaptimeRouterIntegrationTest {
-  case class Person(
-    name: String,
-    email: String = "a@b.c")
+  case class Person(name: String, email: String = "a@b.c")
 
   object Person {
     implicit val jsonFormat: OFormat[Person] = Json.format[Person]
@@ -58,12 +56,12 @@ object PlayNaptimeRouterIntegrationTest {
   /**
    * The top level resource in our fledgling social network.
    */
-  class PersonResource
-      (implicit val executionContext: ExecutionContext, val materializer: Materializer)
-    extends TopLevelCollectionResource[String, Person] {
+  class PersonResource(
+      implicit val executionContext: ExecutionContext,
+      val materializer: Materializer)
+      extends TopLevelCollectionResource[String, Person] {
 
     val PATH_KEY: PathKey = ("myPathKeyId" ::: RootParsedPathKey).asInstanceOf[PathKey]
-
 
     override def keyFormat: KeyFormat[String] = KeyFormat.stringKeyFormat
 
@@ -104,17 +102,16 @@ object PlayNaptimeRouterIntegrationTest {
     def parameterless() = Nap.action(ctx => ???)
   }
 
-  case class FriendshipInfo(
-    friendshipQuality: String,
-    friendsSince: DateTime)
+  case class FriendshipInfo(friendshipQuality: String, friendsSince: DateTime)
 
   object FriendshipInfo {
     implicit val jsonFormat: OFormat[FriendshipInfo] = Json.format[FriendshipInfo]
   }
 
-  class FriendsResource(val parentResource: PersonResource)
-      (implicit val executionContext: ExecutionContext, val materializer: Materializer)
-    extends CollectionResource[PersonResource, String, FriendshipInfo] {
+  class FriendsResource(val parentResource: PersonResource)(
+      implicit val executionContext: ExecutionContext,
+      val materializer: Materializer)
+      extends CollectionResource[PersonResource, String, FriendshipInfo] {
     override def keyFormat: KeyFormat[KeyType] = KeyFormat.stringKeyFormat
 
     override implicit def resourceFormat: OFormat[FriendshipInfo] = FriendshipInfo.jsonFormat
@@ -142,25 +139,25 @@ object PlayNaptimeRouterIntegrationTest {
 
     def byEmail(optPathKey: OptPathKey, email: String) = Nap.finder(ctx => ???)
 
-    def byUsernameAndDomain(
-      ancestorKeys: AncestorKeys,
-      userName: String,
-      domain: String) = Nap.finder(ctx => ???)
+    def byUsernameAndDomain(ancestorKeys: AncestorKeys, userName: String, domain: String) =
+      Nap.finder(ctx => ???)
 
     def withDefaults(
-      ancestorKeys: AncestorKeys,
-      userName: String,
-      domain: String = "defaultDomain") = Nap.finder(ctx => ???)
+        ancestorKeys: AncestorKeys,
+        userName: String,
+        domain: String = "defaultDomain") = Nap.finder(ctx => ???)
 
     def complex(complex: ComplexEmailType, extra: Option[String]) = Nap.finder(ctx => ???)
 
-    def batchModify(
-      ancestorKeys: AncestorKeys,
-      someParam: Option[ComplexEmailType]) = Nap.action(ctx => ???)
+    def batchModify(ancestorKeys: AncestorKeys, someParam: Option[ComplexEmailType]) =
+      Nap.action(ctx => ???)
   }
 }
 
-class PlayNaptimeRouterIntegrationTest extends AssertionsForJUnit with MockitoSugar with ResourceTestImplicits {
+class PlayNaptimeRouterIntegrationTest
+    extends AssertionsForJUnit
+    with MockitoSugar
+    with ResourceTestImplicits {
   import PlayNaptimeRouterIntegrationTest._
 
   val peopleInstanceImpl = new PersonResource
@@ -177,8 +174,8 @@ class PlayNaptimeRouterIntegrationTest extends AssertionsForJUnit with MockitoSu
   when(peopleInstance.create).thenReturn(peopleInstanceImpl.create)
   when(peopleInstance.batchModify(any())).thenReturn(peopleInstanceImpl.batchModify(None))
   when(peopleInstance.byEmail(any())).thenReturn(peopleInstanceImpl.byEmail("asdf"))
-  when(peopleInstance.byUsernameAndDomain(any(), any())).thenReturn(
-    peopleInstanceImpl.byUsernameAndDomain("", ""))
+  when(peopleInstance.byUsernameAndDomain(any(), any()))
+    .thenReturn(peopleInstanceImpl.byUsernameAndDomain("", ""))
   when(peopleInstance.complex(any(), any())).thenReturn(peopleInstanceImpl.complex(null, None))
   when(peopleInstance.parameterless()).thenReturn(peopleInstanceImpl.parameterless())
 
@@ -189,25 +186,25 @@ class PlayNaptimeRouterIntegrationTest extends AssertionsForJUnit with MockitoSu
   when(friendsInstance.keyFormat).thenReturn(KeyFormat.stringKeyFormat)
 
   when(friendsInstance.get(any())).thenReturn(friendsInstanceImpl.get(friendsInstanceImpl.PATH_KEY))
-  when(friendsInstance.multiGet(any(), any())).thenReturn(
-    friendsInstanceImpl.multiGet(Set.empty, friendsInstanceImpl.ANCESTOR_KEY))
-  when(friendsInstance.getAll(any())).thenReturn(
-    friendsInstanceImpl.getAll(friendsInstanceImpl.ANCESTOR_KEY))
-  when(friendsInstance.update(any(), any())).thenReturn(
-    friendsInstanceImpl.update("fakeId", friendsInstanceImpl.ANCESTOR_KEY))
-  when(friendsInstance.delete(any(), any())).thenReturn(
-    friendsInstanceImpl.delete("fakeId", friendsInstanceImpl.PATH_KEY))
-  when(friendsInstance.create(any())).thenReturn(
-    friendsInstanceImpl.create(friendsInstanceImpl.ANCESTOR_KEY))
-  when(friendsInstance.batchModify(any(), any())).thenReturn(
-    friendsInstanceImpl.batchModify(friendsInstanceImpl.ANCESTOR_KEY, None))
-  when(friendsInstance.byEmail(any(), any())).thenReturn(
-    friendsInstanceImpl.byEmail(friendsInstanceImpl.OPT_PATH_KEY, "fakeEmail"))
-  when(friendsInstance.byUsernameAndDomain(any(), any(), any())).thenReturn(
-    friendsInstanceImpl.byUsernameAndDomain(friendsInstanceImpl.ANCESTOR_KEY, "", ""))
+  when(friendsInstance.multiGet(any(), any()))
+    .thenReturn(friendsInstanceImpl.multiGet(Set.empty, friendsInstanceImpl.ANCESTOR_KEY))
+  when(friendsInstance.getAll(any()))
+    .thenReturn(friendsInstanceImpl.getAll(friendsInstanceImpl.ANCESTOR_KEY))
+  when(friendsInstance.update(any(), any()))
+    .thenReturn(friendsInstanceImpl.update("fakeId", friendsInstanceImpl.ANCESTOR_KEY))
+  when(friendsInstance.delete(any(), any()))
+    .thenReturn(friendsInstanceImpl.delete("fakeId", friendsInstanceImpl.PATH_KEY))
+  when(friendsInstance.create(any()))
+    .thenReturn(friendsInstanceImpl.create(friendsInstanceImpl.ANCESTOR_KEY))
+  when(friendsInstance.batchModify(any(), any()))
+    .thenReturn(friendsInstanceImpl.batchModify(friendsInstanceImpl.ANCESTOR_KEY, None))
+  when(friendsInstance.byEmail(any(), any()))
+    .thenReturn(friendsInstanceImpl.byEmail(friendsInstanceImpl.OPT_PATH_KEY, "fakeEmail"))
+  when(friendsInstance.byUsernameAndDomain(any(), any(), any()))
+    .thenReturn(friendsInstanceImpl.byUsernameAndDomain(friendsInstanceImpl.ANCESTOR_KEY, "", ""))
   when(friendsInstance.complex(any(), any())).thenReturn(friendsInstanceImpl.complex(null, None))
-  when(friendsInstance.withDefaults(any(), any(), any())).thenReturn(
-    friendsInstanceImpl.withDefaults(friendsInstanceImpl.ANCESTOR_KEY, "", ""))
+  when(friendsInstance.withDefaults(any(), any(), any()))
+    .thenReturn(friendsInstanceImpl.withDefaults(friendsInstanceImpl.ANCESTOR_KEY, "", ""))
 
   object TestModule extends NaptimeModule {
     override def configure(): Unit = {
@@ -222,9 +219,9 @@ class PlayNaptimeRouterIntegrationTest extends AssertionsForJUnit with MockitoSu
   val playNaptimeRouter = injector.getInstance(classOf[NaptimePlayRouter]).withPrefix("/api")
 
   private[this] def mkPeopleRequest(
-    id: Option[String],
-    method: String = "GET",
-    query: Map[String, String] = Map.empty): FakeRequest[AnyContentAsEmpty.type] = {
+      id: Option[String],
+      method: String = "GET",
+      query: Map[String, String] = Map.empty): FakeRequest[AnyContentAsEmpty.type] = {
     var path = "/api/people.v1"
     id.foreach { id =>
       path = s"$path/$id"
@@ -234,9 +231,12 @@ class PlayNaptimeRouterIntegrationTest extends AssertionsForJUnit with MockitoSu
         .asInstanceOf[ParseSuccess[peopleInstance.OptPathKey]])
     when(friendsInstance.optParse(path.substring("/api".length))).thenReturn(ParseFailure)
     if (query.nonEmpty) {
-      val queryStr = query.map { param =>
-        s"${param._1}=${param._2}"
-      }.toList.mkString("?", "&", "")
+      val queryStr = query
+        .map { param =>
+          s"${param._1}=${param._2}"
+        }
+        .toList
+        .mkString("?", "&", "")
       path = s"$path$queryStr"
     }
     val request = FakeRequest(method, path)
@@ -244,10 +244,10 @@ class PlayNaptimeRouterIntegrationTest extends AssertionsForJUnit with MockitoSu
   }
 
   private[this] def mkFriendRequest(
-    id: Option[String],
-    method: String = "GET",
-    query: Map[String, String] = Map.empty,
-    personId: String = "zyx"): FakeRequest[AnyContentAsEmpty.type] = {
+      id: Option[String],
+      method: String = "GET",
+      query: Map[String, String] = Map.empty,
+      personId: String = "zyx"): FakeRequest[AnyContentAsEmpty.type] = {
     var suffix = "/friends"
     id.foreach { id =>
       suffix = s"$suffix/$id"
@@ -261,9 +261,12 @@ class PlayNaptimeRouterIntegrationTest extends AssertionsForJUnit with MockitoSu
         .asInstanceOf[ParseSuccess[peopleInstance.OptPathKey]]
     )
     if (query.nonEmpty) {
-      val queryStr = query.map { param =>
-        s"${param._1}=${param._2}"
-      }.toList.mkString("?", "&", "")
+      val queryStr = query
+        .map { param =>
+          s"${param._1}=${param._2}"
+        }
+        .toList
+        .mkString("?", "&", "")
       path = s"$path$queryStr"
     }
     val request = FakeRequest(method, path)
@@ -370,10 +373,11 @@ class PlayNaptimeRouterIntegrationTest extends AssertionsForJUnit with MockitoSu
     assert(deleteFriends.length === 1, s"Could not find a unique delete friends method:\n$docs")
     assert(deleteFriends.head._1 === "DELETE --- DELETE")
     assert(deleteFriends.head._2 === "/api/people.v1/$id/friends/$id")
-    assert(deleteFriends.head._3 ===
-      "[NAPTIME] org.coursera.naptime.router2.PlayNaptimeRouterIntegrationTest." +
-        "FriendsResource.delete(" +
-        "id: FriendsResource.this.KeyType, fullId: FriendsResource.this.PathKey)")
+    assert(
+      deleteFriends.head._3 ===
+        "[NAPTIME] org.coursera.naptime.router2.PlayNaptimeRouterIntegrationTest." +
+          "FriendsResource.delete(" +
+          "id: FriendsResource.this.KeyType, fullId: FriendsResource.this.PathKey)")
 
     val parameterless = docs.filter { docLine =>
       docLine._1.contains("ACTION") && docLine._2.contains("parameterless")
@@ -381,8 +385,9 @@ class PlayNaptimeRouterIntegrationTest extends AssertionsForJUnit with MockitoSu
     assert(parameterless.length === 1, s"Could not find a unique parameterless action:\n$docs")
     assert(parameterless.head._1 === "POST --- ACTION")
     assert(parameterless.head._2 === "/api/people.v1?action=parameterless")
-    assert(parameterless.head._3 === "[NAPTIME] org.coursera.naptime.router2." +
-      "PlayNaptimeRouterIntegrationTest.PersonResource.parameterless")
+    assert(
+      parameterless.head._3 === "[NAPTIME] org.coursera.naptime.router2." +
+        "PlayNaptimeRouterIntegrationTest.PersonResource.parameterless")
   }
 
 }

@@ -94,7 +94,8 @@ class StringKeyCodecTest extends AssertionsForJUnit {
   @Test
   def testComplexTypeComposition(): Unit = {
     // tuples of tuples
-    assertTuples("a!~b~c!~d",
+    assertTuples(
+      "a!~b~c!~d",
       """
         |{
         |  "first": { "first": "a", "second": "b" },
@@ -104,7 +105,8 @@ class StringKeyCodecTest extends AssertionsForJUnit {
       schema = tupleInTupleSchema)
 
     // tuples of seq
-    assertSeq("a~b,c~d",
+    assertSeq(
+      "a~b,c~d",
       """
         |[
         |  { "first": "a", "second": "b" },
@@ -114,7 +116,8 @@ class StringKeyCodecTest extends AssertionsForJUnit {
       schema = tupleInSeqSchema)
 
     // seqs in tuples
-    assertTuples("a,b~c,d",
+    assertTuples(
+      "a,b~c,d",
       """
         |{
         |  "first": [ "a", "b" ],
@@ -124,7 +127,8 @@ class StringKeyCodecTest extends AssertionsForJUnit {
       schema = seqInTupleSchema)
 
     // seqs in seq
-    assertSeq("a!,b,c!,d",
+    assertSeq(
+      "a!,b,c!,d",
       """
         |[
         |  [ "a", "b" ],
@@ -135,7 +139,10 @@ class StringKeyCodecTest extends AssertionsForJUnit {
   }
 
   def assertTuples(
-      stringKey: String, json: String, schema: DataSchema, prefix: Option[String] = None): Unit = {
+      stringKey: String,
+      json: String,
+      schema: DataSchema,
+      prefix: Option[String] = None): Unit = {
     val codec = new StringKeyCodec(schema, prefix)
     val stringKeyDataMap = codec.bytesToMap(stringKey.getBytes(StringKeyCodec.charset))
     val jsonDataMap = DataTemplates.readDataMap(json)
@@ -146,7 +153,10 @@ class StringKeyCodecTest extends AssertionsForJUnit {
   }
 
   def assertSeq(
-      stringKey: String, json: String, schema: DataSchema, prefix: Option[String] = None): Unit = {
+      stringKey: String,
+      json: String,
+      schema: DataSchema,
+      prefix: Option[String] = None): Unit = {
     val codec = new StringKeyCodec(schema, prefix)
     val stringKeyDataList = codec.bytesToList(stringKey.getBytes(StringKeyCodec.charset))
     val jsonDataList = DataTemplates.readDataList(json)
@@ -236,7 +246,8 @@ class StringKeyCodecTest extends AssertionsForJUnit {
    """.stripMargin).asInstanceOf[TyperefDataSchema]
 
   val seqInTupleSchema =
-    DataTemplateUtil.parseSchema("""
+    DataTemplateUtil
+      .parseSchema("""
      |{
      |  "name": "SeqInTuple", "type": "record",
      |  "fields": [
@@ -248,7 +259,8 @@ class StringKeyCodecTest extends AssertionsForJUnit {
      |    }
      |  ]
      |}
-   """.stripMargin).asInstanceOf[RecordDataSchema]
+   """.stripMargin)
+      .asInstanceOf[RecordDataSchema]
 
   val seqInSeqSchema =
     DataTemplateUtil.parseSchema("""

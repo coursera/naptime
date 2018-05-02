@@ -36,12 +36,11 @@ private[access] trait AnyOf {
   /** See [[AnyOf]]. */
   def anyOf[A, B](
       controlA: HeaderAccessControl[A],
-      controlB: HeaderAccessControl[B]):
-    HeaderAccessControl[(Option[A], Option[B])] = {
+      controlB: HeaderAccessControl[B]): HeaderAccessControl[(Option[A], Option[B])] = {
 
     new HeaderAccessControl[(Option[A], Option[B])] {
-      override def run(requestHeader: RequestHeader)(implicit ec: ExecutionContext):
-        Future[Either[NaptimeActionException, (Option[A], Option[B])]] = {
+      override def run(requestHeader: RequestHeader)(implicit ec: ExecutionContext)
+        : Future[Either[NaptimeActionException, (Option[A], Option[B])]] = {
 
         val futureA = Futures.safelyCall(controlA.run(requestHeader))
         val futureB = Futures.safelyCall(controlB.run(requestHeader))
@@ -51,15 +50,16 @@ private[access] trait AnyOf {
           resultB <- futureB
         } yield {
           (resultA, resultB) match {
-            case (Left(errorA), Left(_)) => Left(errorA)  // Ignore the other error.
+            case (Left(errorA), Left(_)) =>
+              Left(errorA) // Ignore the other error.
             case _ =>
               Right((resultA.right.toOption, resultB.right.toOption))
           }
         }
       }
 
-      override private[naptime] def check(
-          authInfo: (Option[A], Option[B])): Either[NaptimeActionException, (Option[A], Option[B])] = {
+      override private[naptime] def check(authInfo: (Option[A], Option[B]))
+        : Either[NaptimeActionException, (Option[A], Option[B])] = {
         val resultA = computeCheckResult(authInfo._1, controlA)
         val resultB = computeCheckResult(authInfo._2, controlB)
 
@@ -76,12 +76,11 @@ private[access] trait AnyOf {
   def anyOf[A, B, C](
       controlA: HeaderAccessControl[A],
       controlB: HeaderAccessControl[B],
-      controlC: HeaderAccessControl[C]):
-    HeaderAccessControl[(Option[A], Option[B], Option[C])] = {
+      controlC: HeaderAccessControl[C]): HeaderAccessControl[(Option[A], Option[B], Option[C])] = {
 
     new HeaderAccessControl[(Option[A], Option[B], Option[C])] {
-      override def run(requestHeader: RequestHeader)(implicit ec: ExecutionContext):
-        Future[Either[NaptimeActionException, (Option[A], Option[B], Option[C])]] = {
+      override def run(requestHeader: RequestHeader)(implicit ec: ExecutionContext)
+        : Future[Either[NaptimeActionException, (Option[A], Option[B], Option[C])]] = {
 
         val futureA = Futures.safelyCall(controlA.run(requestHeader))
         val futureB = Futures.safelyCall(controlB.run(requestHeader))
@@ -93,17 +92,16 @@ private[access] trait AnyOf {
           resultC <- futureC
         } yield {
           (resultA, resultB, resultC) match {
-            case (Left(errorA), Left(_), Left(_)) => Left(errorA)  // Ignore the other errors.
+            case (Left(errorA), Left(_), Left(_)) =>
+              Left(errorA) // Ignore the other errors.
             case _ =>
               Right((resultA.right.toOption, resultB.right.toOption, resultC.right.toOption))
           }
         }
       }
 
-      override private[naptime] def check(
-          authInfo: (Option[A], Option[B], Option[C])):
-          Either[NaptimeActionException, (Option[A], Option[B], Option[C])] = {
-
+      override private[naptime] def check(authInfo: (Option[A], Option[B], Option[C]))
+        : Either[NaptimeActionException, (Option[A], Option[B], Option[C])] = {
 
         val resultA = computeCheckResult(authInfo._1, controlA)
         val resultB = computeCheckResult(authInfo._2, controlB)
@@ -124,7 +122,9 @@ private[access] trait AnyOf {
   private[this] def computeCheckResult[T](
       elem: Option[T],
       accessControl: HeaderAccessControl[T]): Either[NaptimeActionException, T] = {
-    elem.map(e => accessControl.check(e)).getOrElse(StructuredAccessControl.missingResponse)
+    elem
+      .map(e => accessControl.check(e))
+      .getOrElse(StructuredAccessControl.missingResponse)
   }
 
 }

@@ -46,12 +46,12 @@ object Item {
 case class ComplexEmailType(user: String, domain: String)
 
 object ComplexEmailType {
-  implicit val stringKeyFormat = StringKeyFormat.caseClassFormat(
-    (ComplexEmailType.apply _).tupled,
-    ComplexEmailType.unapply)
+  implicit val stringKeyFormat =
+    StringKeyFormat.caseClassFormat((ComplexEmailType.apply _).tupled, ComplexEmailType.unapply)
 }
 
-class Resource(implicit val executionContext: ExecutionContext, val materializer: Materializer) extends TopLevelCollectionResource[String, Item] {
+class Resource(implicit val executionContext: ExecutionContext, val materializer: Materializer)
+    extends TopLevelCollectionResource[String, Item] {
 
   override def keyFormat: KeyFormat[String] = KeyFormat.stringKeyFormat
 
@@ -78,7 +78,7 @@ class Resource(implicit val executionContext: ExecutionContext, val materializer
   def multiGet(ids: Set[String]) = Nap.multiGet { ctx =>
     Ok(allItems.filter(item => ids.contains(item.key)))
   }
-  
+
   def update(id: String) = Nap.update { ctx =>
     ???
   }
@@ -132,14 +132,14 @@ class NonNestedMacroTests extends AssertionsForJUnit with MockitoSugar with Reso
   when(instance.delete(any())).thenReturn(instanceImpl.delete("someId"))
   when(instance.update(any())).thenReturn(instanceImpl.update("someId"))
   when(instance.byEmail(any())).thenReturn(instanceImpl.byEmail("emailAddr"))
-  when(instance.byUsernameAndDomain(any(), any())).thenReturn(
-    instanceImpl.byUsernameAndDomain("user", "domain"))
+  when(instance.byUsernameAndDomain(any(), any()))
+    .thenReturn(instanceImpl.byUsernameAndDomain("user", "domain"))
   when(instance.actionWithoutParams()).thenReturn(instanceImpl.actionWithoutParams())
   when(instance.actionWithParams(any())).thenReturn(instanceImpl.actionWithParams(None))
   when(instance.complex(any(), any())).thenReturn(instanceImpl.complex(null, None))
 
-  val router = Resource.routerBuilder.build(
-    instance.asInstanceOf[Resource.routerBuilder.ResourceClass])
+  val router =
+    Resource.routerBuilder.build(instance.asInstanceOf[Resource.routerBuilder.ResourceClass])
 
   private[this] def mkRequest(
       id: Option[String],
@@ -152,9 +152,12 @@ class NonNestedMacroTests extends AssertionsForJUnit with MockitoSugar with Reso
     when(instance.optParse(path.substring("/api".length))).thenReturn(
       ParseSuccess(None, id ::: RootParsedPathKey).asInstanceOf[ParseSuccess[instance.OptPathKey]])
     if (query.nonEmpty) {
-      val queryStr = query.map { param =>
-        s"${param._1}=${param._2}"
-      }.toList.mkString("?", "&", "")
+      val queryStr = query
+        .map { param =>
+          s"${param._1}=${param._2}"
+        }
+        .toList
+        .mkString("?", "&", "")
       path = s"$path$queryStr"
     }
     FakeRequest(method, path)
@@ -169,7 +172,7 @@ class NonNestedMacroTests extends AssertionsForJUnit with MockitoSugar with Reso
     assert(taggedRequest.tags.get(Router.NAPTIME_METHOD_NAME).contains(methodName))
   }
 
-  private[this] def checkNoCustomTypes(methodName: String): Unit = {
+  private[this] def noCustomInputOutputAuthTypes(methodName: String): Unit = {
     val handler = Resource.routerBuilder.schema.handlers.find(_.name === methodName).get
     assert(handler.inputBody.isEmpty)
     assert(handler.customOutputBody.isEmpty)
@@ -220,31 +223,35 @@ class NonNestedMacroTests extends AssertionsForJUnit with MockitoSugar with Reso
 
   @Test
   def finderByEmailTest(): Unit = {
-    val finderRequest = mkRequest(None,
-      query = Map("q" -> "byEmail", "email" -> "user@example.com"))
+    val finderRequest =
+      mkRequest(None, query = Map("q" -> "byEmail", "email" -> "user@example.com"))
     checkRouter(finderRequest, "byEmail")
     verify(instance).byEmail("user@example.com")
   }
 
   @Test
   def finderByUsernameAndDomainTest(): Unit = {
-    val finderRequest = mkRequest(None,
-      query = Map("q" -> "byUsernameAndDomain", "userName" -> "daphne", "domain" -> "coursera.org"))
+    val finderRequest =
+      mkRequest(
+        None,
+        query =
+          Map("q" -> "byUsernameAndDomain", "userName" -> "daphne", "domain" -> "coursera.org"))
     checkRouter(finderRequest, "byUsernameAndDomain")
     verify(instance).byUsernameAndDomain("daphne", "coursera.org")
   }
 
   @Test
   def finderComplexTest(): Unit = {
-    val finderRequest = mkRequest(None,
-      query = Map("q" -> "complex", "complex" -> "daphne~coursera.org"))
+    val finderRequest =
+      mkRequest(None, query = Map("q" -> "complex", "complex" -> "daphne~coursera.org"))
     checkRouter(finderRequest, "complex")
     verify(instance).complex(ComplexEmailType("daphne", "coursera.org"), None)
   }
 
   @Test
   def finderComplexTypes2(): Unit = {
-    val finderRequest2 = mkRequest(None,
+    val finderRequest2 = mkRequest(
+      None,
       query = Map("q" -> "complex", "complex" -> "daphne~coursera.org", "extra" -> "foo"))
     checkRouter(finderRequest2, "complex")
     verify(instance).complex(ComplexEmailType("daphne", "coursera.org"), Some("foo"))
@@ -252,7 +259,9 @@ class NonNestedMacroTests extends AssertionsForJUnit with MockitoSugar with Reso
 
   @Test
   def actionTest(): Unit = {
-    val actionRequest = mkRequest(None, "POST",
+    val actionRequest = mkRequest(
+      None,
+      "POST",
       query = Map("action" -> "actionWithParams", "someParam" -> "daphne~coursera.org"))
     checkRouter(actionRequest, "actionWithParams")
     verify(instance).actionWithParams(Some(ComplexEmailType("daphne", "coursera.org")))
@@ -267,14 +276,14 @@ class NonNestedMacroTests extends AssertionsForJUnit with MockitoSugar with Reso
 
   @Test
   def noCustomTypes(): Unit = {
-    checkNoCustomTypes("getAll")
-    checkNoCustomTypes("get")
-    checkNoCustomTypes("multiGet")
-    checkNoCustomTypes("create")
-    checkNoCustomTypes("update")
-    checkNoCustomTypes("delete")
-    checkNoCustomTypes("complex")
-    checkNoCustomTypes("actionWithoutParams")
+    noCustomInputOutputAuthTypes("getAll")
+    noCustomInputOutputAuthTypes("get")
+    noCustomInputOutputAuthTypes("multiGet")
+    noCustomInputOutputAuthTypes("create")
+    noCustomInputOutputAuthTypes("update")
+    noCustomInputOutputAuthTypes("delete")
+    noCustomInputOutputAuthTypes("complex")
+    noCustomInputOutputAuthTypes("actionWithoutParams")
   }
 
 }

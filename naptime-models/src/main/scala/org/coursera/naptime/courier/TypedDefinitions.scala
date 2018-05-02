@@ -70,7 +70,7 @@ object TypedDefinitions {
     val schema = member.declaringTyperefSchema.getOrElse {
       throw new IllegalArgumentException(
         "Union must be declared within a typeref and the typeref must have a 'typedDefinition' " +
-        s"(or 'flatTypedDefinition') schema property, for union member: ${member.getClass}")
+          s"(or 'flatTypedDefinition') schema property, for union member: ${member.getClass}")
     }
     val memberKey = member.memberType().getUnionMemberKey
     typeName(schema, memberKey)
@@ -92,7 +92,8 @@ object TypedDefinitions {
   def typeName[K <: ScalaUnionTemplate](memberCompanion: UnionMemberCompanion[K]): String = {
     val unionCompanion = memberCompanion.unionCompanion
     val schema = unionCompanion match {
-      case withTyperef: UnionWithTyperefCompanion[K] => withTyperef.TYPEREF_SCHEMA
+      case withTyperef: UnionWithTyperefCompanion[K] =>
+        withTyperef.TYPEREF_SCHEMA
       case withoutTyperef: UnionCompanion[K] =>
         throw new IllegalArgumentException(
           "Union must be declared within a typeref and the typeref must have a 'typedDefinition' " +
@@ -108,7 +109,7 @@ object TypedDefinitions {
       case unknown: AnyRef =>
         throw new IllegalArgumentException(
           s"Schema must contain a '$memberKey' entry in the 'typedDefinition' (or " +
-          s"'flatTypedDefinition') schema property, but one was not found, for schema: $schema")
+            s"'flatTypedDefinition') schema property, but one was not found, for schema: $schema")
     }
   }
 
@@ -118,7 +119,7 @@ object TypedDefinitions {
       Option(properties.get("flatTypedDefinition")).getOrElse {
         throw new IllegalArgumentException(
           "Union's declaring typeref schema must have a 'typedDefinition' " +
-          s"(or 'flatTypedDefinition') schema property, but neither found, for schema $schema")
+            s"(or 'flatTypedDefinition') schema property, but neither found, for schema $schema")
       }
     }
     mapping match {
@@ -126,7 +127,7 @@ object TypedDefinitions {
       case unknown: AnyRef =>
         throw new IllegalArgumentException(
           "Union's declaring typeref schema must have a 'typedDefinition' (or " +
-          s"'flatTypedDefinition') schema property of type map, but was: ${unknown.getClass}")
+            s"'flatTypedDefinition') schema property of type map, but was: ${unknown.getClass}")
     }
   }
 }

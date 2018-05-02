@@ -46,14 +46,15 @@ object Keyed {
       implicit keyFormat: KeyFormat[Key],
       valueWrites: OWrites[Value]): OWrites[Keyed[Key, Value]] = {
 
-    OWrites[Keyed[Key, Value]] { case Keyed(key, value) =>
-      val keyObject = keyFormat.format.writes(key)
-      val valueObject = valueWrites.writes(value)
+    OWrites[Keyed[Key, Value]] {
+      case Keyed(key, value) =>
+        val keyObject = keyFormat.format.writes(key)
+        val valueObject = valueWrites.writes(value)
 
-      val conflictingKeys = keyObject.keys.intersect(valueObject.keys)
-      require(conflictingKeys.isEmpty, s"Conflicting key and value fields: $conflictingKeys")
+        val conflictingKeys = keyObject.keys.intersect(valueObject.keys)
+        require(conflictingKeys.isEmpty, s"Conflicting key and value fields: $conflictingKeys")
 
-      keyObject ++ valueObject
+        keyObject ++ valueObject
     }
   }
 

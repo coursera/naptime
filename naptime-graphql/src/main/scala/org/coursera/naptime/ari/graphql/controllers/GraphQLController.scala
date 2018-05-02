@@ -53,33 +53,31 @@ import scala.concurrent.ExecutionContext
 import scala.concurrent.Future
 import scala.util.Failure
 import scala.util.Success
-
-
 @Singleton
-class GraphQLController @Inject() (
+class GraphQLController @Inject()(
     graphqlSchemaProvider: GraphqlSchemaProvider,
     schemaProvider: GraphqlSchemaProvider,
     fetcher: FetcherApi,
     filterList: FilterList,
-    metricsCollector: GraphQLMetricsCollector)
-    (implicit ec: ExecutionContext)
-  extends InjectedController
-  with StrictLogging {
+    metricsCollector: GraphQLMetricsCollector)(implicit ec: ExecutionContext)
+    extends InjectedController
+    with StrictLogging {
 
   def renderSchema = Action {
     Ok(SchemaRenderer.renderSchema(graphqlSchemaProvider.schema))
   }
 
   def graphqlBody: Action[JsValue] = Action.async(parse.json) { request =>
-
     val query = (request.body \ "query").as[String]
     val operation = (request.body \ "operationName").asOpt[String]
 
-    val variables = (request.body \ "variables").toOption.flatMap {
-      case JsString(vars) => Some(parseVariables(vars))
-      case obj: JsObject => Some(obj)
-      case _ => None
-    }.getOrElse(Json.obj())
+    val variables = (request.body \ "variables").toOption
+      .flatMap {
+        case JsString(vars) => Some(parseVariables(vars))
+        case obj: JsObject  => Some(obj)
+        case _              => None
+      }
+      .getOrElse(Json.obj())
 
     executeQuery(query, request, variables, operation).map { res =>
       Ok(res.response)
@@ -87,17 +85,18 @@ class GraphQLController @Inject() (
   }
 
   def graphqlBatch: Action[JsValue] = Action.async(parse.json) { request =>
-
     val queries = request.body.as[List[JsObject]]
     val resultsFut = Future.traverse(queries) { queryObj =>
       val query = (queryObj \ "query").as[String]
       val operation = (queryObj \ "operationName").asOpt[String]
 
-      val variables = (queryObj \ "variables").toOption.flatMap {
-        case JsString(vars) => Some(parseVariables(vars))
-        case obj: JsObject => Some(obj)
-        case _ => None
-      }.getOrElse(Json.obj())
+      val variables = (queryObj \ "variables").toOption
+        .flatMap {
+          case JsString(vars) => Some(parseVariables(vars))
+          case obj: JsObject  => Some(obj)
+          case _              => None
+        }
+        .getOrElse(Json.obj())
 
       executeQuery(query, request, variables, operation)
     }
@@ -128,33 +127,36 @@ class GraphQLController @Inject() (
       }
       parsedQuery match {
         case Success(queryAst) =>
-          val baseFilter: IncomingQuery => Future[OutgoingQuery] = (incoming: IncomingQuery) => {
-            val context = SangriaGraphQlContext(fetcher, requestHeader, ec, incoming.debugMode)
-            Executor.execute(
-              graphqlSchemaProvider.schema,
-              queryAst,
-              context,
-              variables = variables,
-              middleware = List(
-                new ResponseMetadataMiddleware(),
-                metricsCollectionMiddleware,
-                new SlowLogMiddleware(logger, incoming.debugMode)),
-              exceptionHandler = GraphQLController.exceptionHandler(logger),
-              deferredResolver = naptimeResolver)
-              .map { executionResponse =>
-                OutgoingQuery(executionResponse.as[JsObject], Some(Response.empty))
-              }
-          }.recover {
-            case error: QueryAnalysisError =>
-              OutgoingQuery(error.resolveError.as[JsObject], None)
-            case error: ErrorWithResolver =>
-              OutgoingQuery(error.resolveError.as[JsObject], None)
-            case error: Exception =>
-              logger.error("GraphQL execution error", error)
-              OutgoingQuery(Json.obj("errors" -> Json.arr(error.getMessage)), None)
-          }
-          val incomingQuery = IncomingQuery(
-            queryAst, requestHeader, variables, operation, debugMode = false)
+          val baseFilter: IncomingQuery => Future[OutgoingQuery] =
+            (incoming: IncomingQuery) => {
+              val context = SangriaGraphQlContext(fetcher, requestHeader, ec, incoming.debugMode)
+              Executor
+                .execute(
+                  graphqlSchemaProvider.schema,
+                  queryAst,
+                  context,
+                  variables = variables,
+                  middleware = List(
+                    new ResponseMetadataMiddleware(),
+                    metricsCollectionMiddleware,
+                    new SlowLogMiddleware(logger, incoming.debugMode)),
+                  exceptionHandler = GraphQLController.exceptionHandler(logger),
+                  deferredResolver = naptimeResolver
+                )
+                .map { executionResponse =>
+                  OutgoingQuery(executionResponse.as[JsObject], Some(Response.empty))
+                }
+            }.recover {
+              case error: QueryAnalysisError =>
+                OutgoingQuery(error.resolveError.as[JsObject], None)
+              case error: ErrorWithResolver =>
+                OutgoingQuery(error.resolveError.as[JsObject], None)
+              case error: Exception =>
+                logger.error("GraphQL execution error", error)
+                OutgoingQuery(Json.obj("errors" -> Json.arr(error.getMessage)), None)
+            }
+          val incomingQuery =
+            IncomingQuery(queryAst, requestHeader, variables, operation, debugMode = false)
 
           val filterFn = filterList.filters.reverse.foldLeft(baseFilter) {
             case (accumulatedFilters, filter) =>
@@ -171,7 +173,10 @@ class GraphQLController @Inject() (
                 "locations" -> Json.arr(
                   Json.obj(
                     "line" -> error.originalError.position.line,
-                    "column" -> error.originalError.position.column))), None))
+                    "column" -> error.originalError.position.column))
+              ),
+              None
+            ))
 
         case Failure(error) =>
           throw error
@@ -184,9 +189,9 @@ object GraphQLController {
   def exceptionHandler(logger: Logger): ExceptionHandler = {
     // TODO(bryan): Check superuser status here before returning message
     ExceptionHandler(onException = {
-        case (m, e: Exception) =>
-          logger.error("Uncaught query execution error", e)
-          HandledException(e.getMessage)
+      case (m, e: Exception) =>
+        logger.error("Uncaught query execution error", e)
+        HandledException(e.getMessage)
     })
   }
 }

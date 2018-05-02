@@ -48,8 +48,10 @@ private[naptime] abstract class BinderExposer extends AbstractModule {
  */
 trait NaptimeModule extends BinderExposer with ScalaModule {
 
-  private[this] def resourceBinder = NaptimeModuleHelpers.multibinder(exposedBinder())
-  private[this] def schemaTypesBinder = NaptimeModuleHelpers.schemaTypesBinder(exposedBinder())
+  private[this] def resourceBinder =
+    NaptimeModuleHelpers.multibinder(exposedBinder())
+  private[this] def schemaTypesBinder =
+    NaptimeModuleHelpers.schemaTypesBinder(exposedBinder())
 
   protected[this] def bindResourceRouterBuilder(
       resourceRouterBuilder: ResourceRouterBuilder): Unit = {
@@ -83,7 +85,8 @@ trait NaptimeModule extends BinderExposer with ScalaModule {
    * }}}
    * @tparam Type The type to register.
    */
-  protected[this] def bindSchemaType[Type](schema: DataSchema)(implicit ct: ClassTag[Type]): Unit = {
+  protected[this] def bindSchemaType[Type](schema: DataSchema)(
+      implicit ct: ClassTag[Type]): Unit = {
     schemaTypesBinder.addBinding(ct.runtimeClass.getName).toInstance(schema)
   }
 }
@@ -102,12 +105,11 @@ private[naptime] object NaptimeModuleHelpers {
   private[naptime] def schemaTypesBinder(binder: Binder) =
     ScalaMapBinder.newMapBinder[String, DataSchema](binder)
 
-
   /**
    * Macro implementation for the [[NaptimeModule.bindResource]] function.
    */
-  def bindResourceImpl[Resource <: CollectionResource[_, _, _]](c: blackbox.Context)
-    (implicit wtt: c.WeakTypeTag[Resource]): c.Tree = {
+  def bindResourceImpl[Resource <: CollectionResource[_, _, _]](c: blackbox.Context)(
+      implicit wtt: c.WeakTypeTag[Resource]): c.Tree = {
     import c.universe._
     val routerObject = typeOf[Router.type]
     q"""bindResourceRouterBuilder($routerObject.build[$wtt])

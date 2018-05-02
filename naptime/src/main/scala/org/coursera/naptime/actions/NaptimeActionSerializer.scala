@@ -52,7 +52,8 @@ object NaptimeActionSerializer {
   }
 
   implicit object PlayJson extends NaptimeActionSerializer[JsValue] {
-    override def serialize(t: JsValue): Array[Byte] = Json.stringify(t).getBytes(StandardCharsets.UTF_8)
+    override def serialize(t: JsValue): Array[Byte] =
+      Json.stringify(t).getBytes(StandardCharsets.UTF_8)
 
     override def schema(t: JsValue): Option[DataSchema] = None
 
@@ -61,7 +62,8 @@ object NaptimeActionSerializer {
 
   implicit def playJson[T](implicit playJsonWrites: Writes[T]): NaptimeActionSerializer[T] = {
     new NaptimeActionSerializer[T] {
-      override def serialize(t: T): Array[Byte] = PlayJson.serialize(Json.toJson(t))
+      override def serialize(t: T): Array[Byte] =
+        PlayJson.serialize(Json.toJson(t))
 
       override def contentType(t: T): String = ContentTypes.JSON
 
@@ -70,9 +72,11 @@ object NaptimeActionSerializer {
   }
 
   implicit object Strings extends NaptimeActionSerializer[String] {
-    override def serialize(t: String): Array[Byte] = t.getBytes(StandardCharsets.UTF_8)
+    override def serialize(t: String): Array[Byte] =
+      t.getBytes(StandardCharsets.UTF_8)
 
-    override def schema(t: String): Option[DataSchema] = Some(new StringDataSchema)
+    override def schema(t: String): Option[DataSchema] =
+      Some(new StringDataSchema)
 
     override def contentType(t: String): String = ContentTypes.TEXT
   }
@@ -90,14 +94,16 @@ object NaptimeActionSerializer {
     new NaptimeActionSerializer[Option[T]] {
       override def serialize(t: Option[T]): Array[Byte] = {
         t.map { elem =>
-          objSerializer.serialize(elem)
-        }.getOrElse(Array.emptyByteArray)
+            objSerializer.serialize(elem)
+          }
+          .getOrElse(Array.emptyByteArray)
       }
 
       override def contentType(t: Option[T]): String = {
         t.map { elem =>
-          objSerializer.contentType(elem)
-        }.getOrElse(ContentTypes.TEXT)
+            objSerializer.contentType(elem)
+          }
+          .getOrElse(ContentTypes.TEXT)
       }
 
       override def schema(t: Option[T]): Option[DataSchema] = {
@@ -110,7 +116,8 @@ object NaptimeActionSerializer {
 
   object AnyWrites {
     implicit object AnyWrites extends NaptimeActionSerializer[Any] {
-      override def serialize(t: Any): Array[Byte] = t.toString.getBytes(StandardCharsets.UTF_8)
+      override def serialize(t: Any): Array[Byte] =
+        t.toString.getBytes(StandardCharsets.UTF_8)
 
       override def contentType(t: Any): String = ContentTypes.TEXT
 

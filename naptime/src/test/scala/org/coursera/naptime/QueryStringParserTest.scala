@@ -24,64 +24,96 @@ class QueryStringParserTest extends AssertionsForJUnit {
 
   @Test
   def simpleTest(): Unit = {
-    test("a,b,c", QueryFields(Set("a", "b", "c"), Map.empty),
+    test(
+      "a,b,c",
+      QueryFields(Set("a", "b", "c"), Map.empty),
       QueryIncludes(Set("a", "b", "c"), Map.empty))
   }
 
   @Test
   def handleSpaces(): Unit = {
-    test("a, b, d", QueryFields(Set("a", "b", "d"), Map.empty),
+    test(
+      "a, b, d",
+      QueryFields(Set("a", "b", "d"), Map.empty),
       QueryIncludes(Set("a", "b", "d"), Map.empty))
   }
 
   @Test
   def resourceTest(): Unit = {
-    test("foo.v3(a,b,c)", QueryFields(Set.empty, Map(ResourceName("foo", 3) -> Set("a", "b", "c"))),
+    test(
+      "foo.v3(a,b,c)",
+      QueryFields(Set.empty, Map(ResourceName("foo", 3) -> Set("a", "b", "c"))),
       QueryIncludes(Set.empty, Map(ResourceName("foo", 3) -> Set("a", "b", "c"))))
   }
 
   @Test
   def subResourceTest(): Unit = {
-    test("foo.v20/history(name,comment)", QueryFields(Set.empty,
-      Map(ResourceName("foo", 20, List("history")) -> Set("name", "comment"))),
-      QueryIncludes(Set.empty, Map(ResourceName("foo", 20,
-        List("history")) -> Set("name", "comment"))))
+    test(
+      "foo.v20/history(name,comment)",
+      QueryFields(
+        Set.empty,
+        Map(ResourceName("foo", 20, List("history")) -> Set("name", "comment"))),
+      QueryIncludes(
+        Set.empty,
+        Map(ResourceName("foo", 20, List("history")) -> Set("name", "comment"))))
   }
 
   @Test
   def mixed(): Unit = {
-    test("name,related.v2(author),postedTimestamp,related.v2/history(author,date),votes",
-      QueryFields(Set("name", "postedTimestamp", "votes"),
-        Map(ResourceName("related", 2) -> Set("author"),
+    test(
+      "name,related.v2(author),postedTimestamp,related.v2/history(author,date),votes",
+      QueryFields(
+        Set("name", "postedTimestamp", "votes"),
+        Map(
+          ResourceName("related", 2) -> Set("author"),
           ResourceName("related", 2, List("history")) -> Set("author", "date"))),
-    QueryIncludes(Set("name", "postedTimestamp", "votes"),
-      Map(ResourceName("related", 2) -> Set("author"),
-        ResourceName("related", 2, List("history")) -> Set("author", "date"))))
+      QueryIncludes(
+        Set("name", "postedTimestamp", "votes"),
+        Map(
+          ResourceName("related", 2) -> Set("author"),
+          ResourceName("related", 2, List("history")) -> Set("author", "date"))))
   }
 
   @Test
   def deepNesting(): Unit = {
-    test("name,related.v100/history/authorizations(issuer,time)", QueryFields(Set("name"),
-      Map(ResourceName("related", 100, List("history", "authorizations")) -> Set("issuer", "time"))),
-      QueryIncludes(Set("name"), Map(ResourceName("related", 100,
-        List("history", "authorizations")) -> Set("issuer", "time"))))
+    test(
+      "name,related.v100/history/authorizations(issuer,time)",
+      QueryFields(
+        Set("name"),
+        Map(
+          ResourceName("related", 100, List("history", "authorizations")) -> Set(
+            "issuer",
+            "time"))),
+      QueryIncludes(
+        Set("name"),
+        Map(
+          ResourceName("related", 100, List("history", "authorizations")) -> Set(
+            "issuer",
+            "time"))))
   }
 
   @Test
   def negatedQueries(): Unit = {
-    test("-a,b,-c", QueryFields(Set("-a", "b", "-c"), Map.empty),
+    test(
+      "-a,b,-c",
+      QueryFields(Set("-a", "b", "-c"), Map.empty),
       QueryIncludes(Set("-a", "b", "-c"), Map.empty))
   }
 
   @Test
   def fieldsWithDots(): Unit = {
-    test("a.b.c,x,y,z", QueryFields(Set("a.b.c", "x", "y", "z"), Map.empty),
+    test(
+      "a.b.c,x,y,z",
+      QueryFields(Set("a.b.c", "x", "y", "z"), Map.empty),
       QueryIncludes(Set("a.b.c", "x", "y", "z"), Map.empty))
   }
 
   // Should the semantics of the following be replace or merge: 'related.v1(a),related.v1(b)'?
 
-  private[this] def test(queryString: String, parsedFields: QueryFields, parsedInclude: QueryIncludes): Unit = {
+  private[this] def test(
+      queryString: String,
+      parsedFields: QueryFields,
+      parsedInclude: QueryIncludes): Unit = {
     val resultFields = QueryStringParser.parseQueryFields(queryString)
     assert(resultFields.successful, s"Unsuccessful parse of '$queryString': $resultFields")
     assert(resultFields.get === parsedFields)
@@ -91,7 +123,7 @@ class QueryStringParserTest extends AssertionsForJUnit {
   }
 
   @Test
-  @Ignore  // INFRA-1986
+  @Ignore // INFRA-1986
   def perfTest(): Unit = {
     val start = System.currentTimeMillis()
     val ops = 10000
@@ -102,6 +134,6 @@ class QueryStringParserTest extends AssertionsForJUnit {
     }
     val end = System.currentTimeMillis()
     // 10,000 operations in less than 1 second is okay
-    assert(end - start < 1000, s"Did 10,000 operations in ${end-start}ms. Should be < 1000 msec.")
+    assert(end - start < 1000, s"Did 10,000 operations in ${end - start}ms. Should be < 1000 msec.")
   }
 }

@@ -44,28 +44,30 @@ import scala.concurrent.Future
  *
  * @param naptimeRoutes The routing data structures required for handling requests.
  */
-class LocalFetcher @Inject() (naptimeRoutes: NaptimeRoutes)
-  extends FetcherApi with StrictLogging {
+class LocalFetcher @Inject()(naptimeRoutes: NaptimeRoutes) extends FetcherApi with StrictLogging {
 
   private[this] val schemas = naptimeRoutes.routerBuilders.map(_.schema)
-  private[this] val models = naptimeRoutes.routerBuilders.flatMap(_.types).map(_.tuple).toMap
+  private[this] val models =
+    naptimeRoutes.routerBuilders.flatMap(_.types).map(_.tuple).toMap
 
-  private[this] val routers = naptimeRoutes.buildersToRouters.map { case (builder, router) =>
-    naptimeRoutes.className(builder) -> router
+  private[this] val routers = naptimeRoutes.buildersToRouters.map {
+    case (builder, router) =>
+      naptimeRoutes.className(builder) -> router
   }
 
-  override def data(
-      request: Request,
-      isDebugMode: Boolean)
-      (implicit executionContext: ExecutionContext): Future[FetcherResponse] = {
+  override def data(request: Request, isDebugMode: Boolean)(
+      implicit executionContext: ExecutionContext): Future[FetcherResponse] = {
     val resourceSchemaOpt = schemas.find { resourceSchema =>
       // TODO: Handle nested resources.
       resourceSchema.name == request.resource.topLevelName &&
-        resourceSchema.version.contains(request.resource.version)
+      resourceSchema.version.contains(request.resource.version)
     }
-    val queryString = request.arguments.toMap.mapValues(arg => List(stringifyArg(arg)))
+    val queryString =
+      request.arguments.toMap.mapValues(arg => List(stringifyArg(arg)))
     val url = s"/api/${request.resource.identifier}?" +
-      queryString.map { case (key, value) => key + "=" + value.mkString(",") }.mkString("&")
+      queryString
+        .map { case (key, value) => key + "=" + value.mkString(",") }
+        .mkString("&")
     (for {
       resourceSchema <- resourceSchemaOpt
       router <- routers.get(resourceSchema.className)
@@ -89,11 +91,13 @@ class LocalFetcher @Inject() (naptimeRoutes: NaptimeRoutes)
       // TODO: handle header filtering more properly
       handler <- router.routeRequest(path, fakePlayRequest)
     } yield {
-      logger.info(s"Making local request to ${request.resource.identifier} / ${fakePlayRequest.queryString}")
+      logger.info(
+        s"Making local request to ${request.resource.identifier} / ${fakePlayRequest.queryString}")
       val taggedRequest = handler.tagRequest(fakePlayRequest)
       handler match {
         case naptimeAction: RestAction[_, _, _, _, _, _] =>
-          naptimeAction.localRun(fakePlayRequest, request.resource)
+          naptimeAction
+            .localRun(fakePlayRequest, request.resource)
             .map(response => Right(response.copy(url = Some(url))))
             .recoverWith {
               case actionException: NaptimeActionException =>

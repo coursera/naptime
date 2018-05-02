@@ -20,10 +20,10 @@ import sangria.schema.Schema
 import scala.concurrent.Future
 
 trait FilterTest
-  extends AssertionsForJUnit
-  with MockitoSugar
-  with ScalaFutures
-  with IntegrationPatience {
+    extends AssertionsForJUnit
+    with MockitoSugar
+    with ScalaFutures
+    with IntegrationPatience {
 
   val baseOutgoingQuery = OutgoingQuery(Json.obj(), None)
 
@@ -58,7 +58,6 @@ trait FilterTest
     "org.coursera.naptime.ari.graphql.models.MergedPartner" -> MergedPartner.SCHEMA,
     "org.coursera.naptime.ari.graphql.models.MergedInstructor" -> MergedInstructor.SCHEMA)
   val builder = new SangriaGraphQlSchemaBuilder(allResources, schemaTypes)
-
 
   val schema = builder.generateSchema().data.asInstanceOf[Schema[SangriaGraphQlContext, Any]]
   when(graphqlSchemaProvider.schema).thenReturn(schema)

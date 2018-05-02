@@ -27,8 +27,8 @@ object DataMapUtils {
   def ensureMutable(obj: AnyRef): AnyRef = {
     obj match {
       case list: DataList => ensureMutableList(list)
-      case map: DataMap => ensureMutableMap(map)
-      case _ => obj
+      case map: DataMap   => ensureMutableMap(map)
+      case _              => obj
     }
   }
 

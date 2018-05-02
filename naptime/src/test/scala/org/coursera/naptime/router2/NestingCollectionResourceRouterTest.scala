@@ -49,9 +49,8 @@ object NestingCollectionResourceRouterTest {
   /**
    * A sample top-level resource, with very standard / normal Naptime operations.
    */
-  class MyResource
-      (implicit val executionContext: ExecutionContext, val materializer: Materializer)
-    extends TopLevelCollectionResource[String, Person] {
+  class MyResource(implicit val executionContext: ExecutionContext, val materializer: Materializer)
+      extends TopLevelCollectionResource[String, Person] {
     override def keyFormat: KeyFormat[KeyType] = KeyFormat.stringKeyFormat
     override implicit def resourceFormat: OFormat[Person] = Person.jsonFormat
     override def resourceName: String = "myResource"
@@ -97,7 +96,7 @@ object NestingCollectionResourceRouterTest {
    * A hand-written implementation of a router. Normally, a macro is used to generate this binding.
    */
   class MyResourceRouter(myResource: MyResource)
-    extends NestingCollectionResourceRouter(myResource) {
+      extends NestingCollectionResourceRouter(myResource) {
 
     override def executeGet(
         requestHeader: RequestHeader,
@@ -155,9 +154,9 @@ object NestingCollectionResourceRouterTest {
     }
 
     override def executeAction(
-      requestHeader: RequestHeader,
-      optPathKey: resourceInstance.OptPathKey,
-      actionName: String): RouteAction = {
+        requestHeader: RequestHeader,
+        optPathKey: resourceInstance.OptPathKey,
+        actionName: String): RouteAction = {
       actionName match {
         case "myAwesomeAction" =>
           resourceInstance.myAwesomeAction.setTags(mkRequestTags("myAwesomeAction"))
@@ -170,9 +169,10 @@ object NestingCollectionResourceRouterTest {
    * A nested resource that has more sophisticated parameters to its Naptime operations to test the
    * capabilities of the routing system.
    */
-  class MyNestedResource(val parentResource: MyResource)
-      (implicit val executionContext: ExecutionContext, val materializer: Materializer)
-    extends CollectionResource[MyResource, String, Person] {
+  class MyNestedResource(val parentResource: MyResource)(
+      implicit val executionContext: ExecutionContext,
+      val materializer: Materializer)
+      extends CollectionResource[MyResource, String, Person] {
 
     override def keyFormat: KeyFormat[KeyType] = KeyFormat.stringKeyFormat
     override implicit def resourceFormat: OFormat[Person] = Person.jsonFormat
@@ -223,7 +223,7 @@ object NestingCollectionResourceRouterTest {
    * A hand-written implementation of a router. Normally, a macro is used to generate this binding.
    */
   class MyNestedResourceRouter(myNestedResource: MyNestedResource)
-    extends NestingCollectionResourceRouter(myNestedResource) {
+      extends NestingCollectionResourceRouter(myNestedResource) {
     override def executeGet(
         requestHeader: RequestHeader,
         pathKey: resourceInstance.PathKey): RouteAction = {
@@ -238,8 +238,8 @@ object NestingCollectionResourceRouterTest {
     }
 
     override def executeGetAll(
-      requestHeader: RequestHeader,
-      optPathKey: resourceInstance.OptPathKey): RouteAction = {
+        requestHeader: RequestHeader,
+        optPathKey: resourceInstance.OptPathKey): RouteAction = {
       resourceInstance.getAll(optPathKey.tail).setTags(mkRequestTags("getAll"))
     }
 
@@ -280,19 +280,22 @@ object NestingCollectionResourceRouterTest {
     }
 
     override def executeAction(
-      requestHeader: RequestHeader,
-      optPathKey: resourceInstance.OptPathKey,
-      actionName: String): RouteAction = {
+        requestHeader: RequestHeader,
+        optPathKey: resourceInstance.OptPathKey,
+        actionName: String): RouteAction = {
       actionName match {
-        case "myAwesomeAction" => resourceInstance.myAwesomeAction.setTags(
-          mkRequestTags("myAwesomeAction"))
+        case "myAwesomeAction" =>
+          resourceInstance.myAwesomeAction.setTags(mkRequestTags("myAwesomeAction"))
         case _ => super.executeAction(requestHeader, optPathKey, actionName)
       }
     }
   }
 }
 
-class NestingCollectionResourceRouterTest extends AssertionsForJUnit with MockitoSugar with ResourceTestImplicits {
+class NestingCollectionResourceRouterTest
+    extends AssertionsForJUnit
+    with MockitoSugar
+    with ResourceTestImplicits {
   import NestingCollectionResourceRouterTest._
 
   val resourceInstance = new MyResource
@@ -312,20 +315,20 @@ class NestingCollectionResourceRouterTest extends AssertionsForJUnit with Mockit
   val subResourceInstance = new MyNestedResource(resourceInstance)
   val mockSubResource = mock[MyNestedResource]
   when(mockSubResource.keyFormat).thenReturn(subResourceInstance.keyFormat)
-  when(mockSubResource.get(any(), any())).thenReturn(
-    subResourceInstance.get("fooId", subResourceInstance.ANCESTOR_KEY))
-  when(mockSubResource.getAll(any())).thenReturn(
-    subResourceInstance.getAll(subResourceInstance.ANCESTOR_KEY))
-  when(mockSubResource.multiGet(any(), any())).thenReturn(
-    subResourceInstance.multiGet(Set("id1", "id2"), subResourceInstance.ANCESTOR_KEY))
-  when(mockSubResource.create(any())).thenReturn(
-    subResourceInstance.create(subResourceInstance.ANCESTOR_KEY))
-  when(mockSubResource.update(any())).thenReturn(
-    subResourceInstance.update(subResourceInstance.PATH_KEY))
-  when(mockSubResource.delete(any(), any())).thenReturn(
-    subResourceInstance.delete("someId", subResourceInstance.PATH_KEY))
-  when(mockSubResource.patch(any(), any())).thenReturn(
-    subResourceInstance.patch("fakeId", subResourceInstance.ANCESTOR_KEY))
+  when(mockSubResource.get(any(), any()))
+    .thenReturn(subResourceInstance.get("fooId", subResourceInstance.ANCESTOR_KEY))
+  when(mockSubResource.getAll(any()))
+    .thenReturn(subResourceInstance.getAll(subResourceInstance.ANCESTOR_KEY))
+  when(mockSubResource.multiGet(any(), any()))
+    .thenReturn(subResourceInstance.multiGet(Set("id1", "id2"), subResourceInstance.ANCESTOR_KEY))
+  when(mockSubResource.create(any()))
+    .thenReturn(subResourceInstance.create(subResourceInstance.ANCESTOR_KEY))
+  when(mockSubResource.update(any()))
+    .thenReturn(subResourceInstance.update(subResourceInstance.PATH_KEY))
+  when(mockSubResource.delete(any(), any()))
+    .thenReturn(subResourceInstance.delete("someId", subResourceInstance.PATH_KEY))
+  when(mockSubResource.patch(any(), any()))
+    .thenReturn(subResourceInstance.patch("fakeId", subResourceInstance.ANCESTOR_KEY))
   when(mockSubResource.me).thenReturn(subResourceInstance.me)
   when(mockSubResource.myAwesomeAction).thenReturn(subResourceInstance.myAwesomeAction)
   val subRouter = new MyNestedResourceRouter(mockSubResource)
@@ -338,22 +341,29 @@ class NestingCollectionResourceRouterTest extends AssertionsForJUnit with Mockit
       queryParams: Map[String, String] = Map.empty): String = {
 
     val resourcePath = s"/${resourceInstance.resourceName}.v${resourceInstance.resourceVersion}"
-    val subPath = Option(id).map { id =>
-      val p = s"$resourcePath/$id"
-      when(mockResource.optParse(p)).thenReturn(
-        ParseSuccess(None, (Some(id) ::: RootParsedPathKey).asInstanceOf[mockResource.OptPathKey]))
-      p
-    }.getOrElse {
-      when(mockResource.optParse(resourcePath)).thenReturn(
-        ParseSuccess(None, (None ::: RootParsedPathKey).asInstanceOf[mockResource.OptPathKey]))
-      resourcePath
-    }
+    val subPath = Option(id)
+      .map { id =>
+        val p = s"$resourcePath/$id"
+        when(mockResource.optParse(p)).thenReturn(
+          ParseSuccess(
+            None,
+            (Some(id) ::: RootParsedPathKey).asInstanceOf[mockResource.OptPathKey]))
+        p
+      }
+      .getOrElse {
+        when(mockResource.optParse(resourcePath)).thenReturn(
+          ParseSuccess(None, (None ::: RootParsedPathKey).asInstanceOf[mockResource.OptPathKey]))
+        resourcePath
+      }
     val queryStr = if (queryParams.isEmpty) {
       ""
     } else {
-      queryParams.toSeq.map { case (key, value) =>
-        s"$key=$value"
-      }.mkString("?", "&", "")
+      queryParams.toSeq
+        .map {
+          case (key, value) =>
+            s"$key=$value"
+        }
+        .mkString("?", "&", "")
     }
     s"/api$subPath$queryStr"
   }
@@ -367,24 +377,31 @@ class NestingCollectionResourceRouterTest extends AssertionsForJUnit with Mockit
       parentId: String = "parentId"): String = {
     val resourcePath = s"/${resourceInstance.resourceName}.v${resourceInstance.resourceVersion}/" +
       s"$parentId/${subResourceInstance.resourceName}.v${subResourceInstance.resourceVersion}"
-    val subPath = Option(id).map { id =>
-      val p = s"$resourcePath/$id"
-      when(mockSubResource.optParse(p)).thenReturn(
-        ParseSuccess(None,
-          (Some(id) ::: parentId ::: RootParsedPathKey).asInstanceOf[mockSubResource.OptPathKey]))
-      p
-    }.getOrElse {
-      when(mockSubResource.optParse(resourcePath)).thenReturn(
-        ParseSuccess(None,
-          (None ::: parentId ::: RootParsedPathKey).asInstanceOf[mockSubResource.OptPathKey]))
-      resourcePath
-    }
+    val subPath = Option(id)
+      .map { id =>
+        val p = s"$resourcePath/$id"
+        when(mockSubResource.optParse(p)).thenReturn(
+          ParseSuccess(
+            None,
+            (Some(id) ::: parentId ::: RootParsedPathKey).asInstanceOf[mockSubResource.OptPathKey]))
+        p
+      }
+      .getOrElse {
+        when(mockSubResource.optParse(resourcePath)).thenReturn(
+          ParseSuccess(
+            None,
+            (None ::: parentId ::: RootParsedPathKey).asInstanceOf[mockSubResource.OptPathKey]))
+        resourcePath
+      }
     val queryStr = if (queryParams.isEmpty) {
       ""
     } else {
-      queryParams.toSeq.map { case (key, value) =>
-        s"$key=$value"
-      }.mkString("?", "&", "")
+      queryParams.toSeq
+        .map {
+          case (key, value) =>
+            s"$key=$value"
+        }
+        .mkString("?", "&", "")
     }
     s"/api$subPath$queryStr"
   }
@@ -400,10 +417,12 @@ class NestingCollectionResourceRouterTest extends AssertionsForJUnit with Mockit
     val result = router.routeRequest(routePath, request)
     assert(result.isDefined, s"Router did not correctly route $request")
     val taggedRequest = result.get.tagRequest(request)
-    assert(taggedRequest.tags.contains(Router.NAPTIME_RESOURCE_NAME),
+    assert(
+      taggedRequest.tags.contains(Router.NAPTIME_RESOURCE_NAME),
       "Router result (typically a RestAction) did not tag the request properly.")
     Option(expectedMethodName).foreach { methodName =>
-      assert(taggedRequest.tags.get(Router.NAPTIME_METHOD_NAME).contains(methodName),
+      assert(
+        taggedRequest.tags.get(Router.NAPTIME_METHOD_NAME).contains(methodName),
         "method names did not match.")
     }
   }
@@ -418,10 +437,12 @@ class NestingCollectionResourceRouterTest extends AssertionsForJUnit with Mockit
     val result = subRouter.routeRequest(routePath, request)
     assert(result.isDefined, s"Router did not correctly route $request")
     val taggedRequest = result.get.tagRequest(request)
-    assert(taggedRequest.tags.contains(Router.NAPTIME_RESOURCE_NAME),
+    assert(
+      taggedRequest.tags.contains(Router.NAPTIME_RESOURCE_NAME),
       "Router result (typically a RestAction) did not tag the request properly.")
     Option(expectedMethodName).foreach { methodName =>
-      assert(taggedRequest.tags.get(Router.NAPTIME_METHOD_NAME).contains(methodName),
+      assert(
+        taggedRequest.tags.get(Router.NAPTIME_METHOD_NAME).contains(methodName),
         "method names did not match.")
     }
   }
@@ -542,12 +563,15 @@ class NestingCollectionResourceRouterTest extends AssertionsForJUnit with Mockit
 
   @Test
   def checkParseIds(): Unit = {
-    assert(Right(Set("a", "b", "c")) ===
-      router.parseIds[String]("a,b,c", StringKeyFormat.stringFormat))
+    assert(
+      Right(Set("a", "b", "c")) ===
+        router.parseIds[String]("a,b,c", StringKeyFormat.stringFormat))
     // Note: including the slashes in the output might not be the right answer.
-    assert(Right(Set("a\\,b\\,c")) ===
-      router.parseIds[String]("a\\,b\\,c", StringKeyFormat.stringFormat))
-    assert(Right(Set("a\\,b" ,"c")) ===
-      router.parseIds[String]("a\\,b,c", StringKeyFormat.stringFormat))
+    assert(
+      Right(Set("a\\,b\\,c")) ===
+        router.parseIds[String]("a\\,b\\,c", StringKeyFormat.stringFormat))
+    assert(
+      Right(Set("a\\,b", "c")) ===
+        router.parseIds[String]("a\\,b,c", StringKeyFormat.stringFormat))
   }
 }
