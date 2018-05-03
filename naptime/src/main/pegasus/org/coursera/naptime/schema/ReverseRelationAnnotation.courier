@@ -20,4 +20,10 @@ record ReverseRelationAnnotation {
    */
   relationType: enum RelationType { FINDER, MULTI_GET, GET, SINGLE_ELEMENT_FINDER }
 
+  /**
+   * This is an optional field which will override the normal auth strategy used to make the
+   * related resource request if present.
+   */
+  authOverride: AuthOverride?
+
 }

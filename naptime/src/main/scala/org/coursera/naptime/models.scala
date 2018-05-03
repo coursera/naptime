@@ -18,6 +18,7 @@ package org.coursera.naptime
 
 import com.linkedin.data.DataMap
 import org.coursera.naptime.QueryStringParser.NaptimeParseError
+import org.coursera.naptime.schema.AuthOverride
 import org.coursera.naptime.schema.RelationType
 import org.coursera.naptime.schema.Resource
 import org.coursera.naptime.schema.ReverseRelationAnnotation
@@ -629,6 +630,7 @@ trait ReverseRelation {
   val resourceName: ResourceName
   val arguments: Map[String, String]
   val description: String
+  val authOverride: Option[AuthOverride]
 
   def toAnnotation: ReverseRelationAnnotation
 }
@@ -637,46 +639,8 @@ case class FinderReverseRelation(
     resourceName: ResourceName,
     finderName: String,
     arguments: Map[String, String] = Map.empty,
-    description: String = "")
-    extends ReverseRelation {
-
-  def toAnnotation: ReverseRelationAnnotation = {
-    val mergedArguments = arguments + ("q" -> finderName)
-    ReverseRelationAnnotation(resourceName.identifier, mergedArguments, RelationType.FINDER)
-  }
-}
-
-case class MultiGetReverseRelation(
-    resourceName: ResourceName,
-    ids: String,
-    arguments: Map[String, String] = Map.empty,
-    description: String = "")
-    extends ReverseRelation {
-
-  def toAnnotation: ReverseRelationAnnotation = {
-    val mergedArguments = arguments + ("ids" -> ids)
-    ReverseRelationAnnotation(resourceName.identifier, mergedArguments, RelationType.MULTI_GET)
-  }
-}
-
-case class GetReverseRelation(
-    resourceName: ResourceName,
-    id: String,
-    arguments: Map[String, String] = Map.empty,
-    description: String = "")
-    extends ReverseRelation {
-
-  def toAnnotation: ReverseRelationAnnotation = {
-    val mergedArguments = arguments + ("ids" -> id)
-    ReverseRelationAnnotation(resourceName.identifier, mergedArguments, RelationType.GET)
-  }
-}
-
-case class SingleElementFinderReverseRelation(
-    resourceName: ResourceName,
-    finderName: String,
-    arguments: Map[String, String] = Map.empty,
-    description: String = "")
+    description: String = "",
+    authOverride: Option[AuthOverride] = None)
     extends ReverseRelation {
 
   def toAnnotation: ReverseRelationAnnotation = {
@@ -684,6 +648,61 @@ case class SingleElementFinderReverseRelation(
     ReverseRelationAnnotation(
       resourceName.identifier,
       mergedArguments,
-      RelationType.SINGLE_ELEMENT_FINDER)
+      RelationType.FINDER,
+      authOverride)
+  }
+}
+
+case class MultiGetReverseRelation(
+    resourceName: ResourceName,
+    ids: String,
+    arguments: Map[String, String] = Map.empty,
+    description: String = "",
+    authOverride: Option[AuthOverride] = None)
+    extends ReverseRelation {
+
+  def toAnnotation: ReverseRelationAnnotation = {
+    val mergedArguments = arguments + ("ids" -> ids)
+    ReverseRelationAnnotation(
+      resourceName.identifier,
+      mergedArguments,
+      RelationType.MULTI_GET,
+      authOverride)
+  }
+}
+
+case class GetReverseRelation(
+    resourceName: ResourceName,
+    id: String,
+    arguments: Map[String, String] = Map.empty,
+    description: String = "",
+    authOverride: Option[AuthOverride] = None)
+    extends ReverseRelation {
+
+  def toAnnotation: ReverseRelationAnnotation = {
+    val mergedArguments = arguments + ("ids" -> id)
+    ReverseRelationAnnotation(
+      resourceName.identifier,
+      mergedArguments,
+      RelationType.GET,
+      authOverride)
+  }
+}
+
+case class SingleElementFinderReverseRelation(
+    resourceName: ResourceName,
+    finderName: String,
+    arguments: Map[String, String] = Map.empty,
+    description: String = "",
+    authOverride: Option[AuthOverride] = None)
+    extends ReverseRelation {
+
+  def toAnnotation: ReverseRelationAnnotation = {
+    val mergedArguments = arguments + ("q" -> finderName)
+    ReverseRelationAnnotation(
+      resourceName.identifier,
+      mergedArguments,
+      RelationType.SINGLE_ELEMENT_FINDER,
+      authOverride)
   }
 }

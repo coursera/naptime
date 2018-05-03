@@ -92,6 +92,8 @@ object NaptimePaginatedResourceField extends StrictLogging {
         val providedArguments =
           fieldRelationOpt.map(_.arguments.keySet).getOrElse(Set[String]())
 
+        val authOverride = fieldRelationOpt.flatMap(_.authOverride)
+
         val arguments = NaptimeResourceUtils
           .generateHandlerArguments(handler, includePagination = true)
           .filterNot(_.name == "ids")
@@ -168,7 +170,8 @@ object NaptimePaginatedResourceField extends StrictLogging {
                   resourceName,
                   updatedArgs,
                   resourceMergedType,
-                  paginationOverride))
+                  paginationOverride,
+                  authOverride))
                 .map {
                   case Left(error) =>
                     NaptimeResponse(
