@@ -10,6 +10,7 @@ import org.coursera.naptime.ari.graphql.SangriaGraphQlContext
 import org.coursera.naptime.ari.graphql.schema.DataMapWithParent
 import org.coursera.naptime.ari.graphql.schema.NaptimeResourceUtils
 import org.coursera.naptime.ari.graphql.schema.ParentModel
+import org.coursera.naptime.schema.AuthOverride
 import play.api.libs.json.JsArray
 import play.api.libs.json.JsNull
 import play.api.libs.json.JsValue
@@ -25,7 +26,8 @@ case class NaptimeRequest(
     resourceName: ResourceName,
     arguments: Set[(String, JsValue)],
     resourceSchema: RecordDataSchema,
-    paginationOverride: Option[ResponsePagination] = None)
+    paginationOverride: Option[ResponsePagination] = None,
+    authOverride: Option[AuthOverride] = None)
 
 case class NaptimeResponse(
     elements: List[DataMapWithParent],
@@ -44,12 +46,19 @@ case class DeferredNaptimeRequest(
     resourceName: ResourceName,
     arguments: Set[(String, JsValue)],
     resourceSchema: RecordDataSchema,
-    paginationOverride: Option[ResponsePagination] = None)
+    paginationOverride: Option[ResponsePagination] = None,
+    authOverride: Option[AuthOverride] = None)
     extends Deferred[Either[NaptimeError, NaptimeResponse]]
     with DeferredNaptime {
 
   def toNaptimeRequest(idx: Int): NaptimeRequest = {
-    NaptimeRequest(RequestId(idx), resourceName, arguments, resourceSchema, paginationOverride)
+    NaptimeRequest(
+      RequestId(idx),
+      resourceName,
+      arguments,
+      resourceSchema,
+      paginationOverride,
+      authOverride)
   }
 }
 
@@ -57,7 +66,8 @@ case class DeferredNaptimeElement(
     resourceName: ResourceName,
     idOpt: Option[JsValue],
     arguments: Set[(String, JsValue)],
-    resourceSchema: RecordDataSchema)
+    resourceSchema: RecordDataSchema,
+    authOverride: Option[AuthOverride] = None)
     extends Deferred[Either[NaptimeError, NaptimeResponse]]
     with DeferredNaptime {
 
@@ -68,7 +78,9 @@ case class DeferredNaptimeElement(
       arguments ++ idOpt
         .map(id => List("ids" -> JsArray(List(id))))
         .getOrElse(List.empty),
-      resourceSchema)
+      resourceSchema,
+      paginationOverride = None,
+      authOverride)
   }
 }
 
@@ -86,19 +98,27 @@ class NaptimeResolver extends DeferredResolver[SangriaGraphQlContext] with Stric
       .groupBy(_.resourceName)
       .map {
         case (resourceName, requests) =>
+          // Handle MultiGet and Non-Multigets differently, since multigets can be batched
           val (forwardRequests, reverseRequests) =
             requests.partition(_.arguments.exists(_._1 == "ids"))
 
-          // Handle MultiGet and Non-Multigets differently, since multigets can be batched
-          val forwardRelations =
-            fetchForwardRelations(forwardRequests, resourceName, ctx)
-          val reverseRelations =
-            fetchReverseRelations(reverseRequests, resourceName, ctx)
-          Future
-            .sequence(List(forwardRelations, reverseRelations))
+          // partition forward requests by auth type. it will make a separate batched request for
+          // each distinct auth override type found.
+          val forwardRelations = Future
+            .sequence(forwardRequests.groupBy(_.authOverride).map {
+              case (authOverride, selectedRequests) =>
+                fetchForwardRelations(selectedRequests, resourceName, ctx, authOverride)
+            })
             .map(_.flatten.toMap)
 
+          val reverseRelations =
+            fetchReverseRelations(reverseRequests, resourceName, ctx)
+
+          val allRelations = List(forwardRelations, reverseRelations)
+
+          Future.sequence(allRelations).map(_.flatten.toMap)
       }
+
     val allData = Future.sequence(dataByResource).map(_.flatten.toMap)
 
     deferred.zipWithIndex.map {
@@ -123,15 +143,15 @@ class NaptimeResolver extends DeferredResolver[SangriaGraphQlContext] with Stric
    * @return Map of request ids (indexes from the deferred request batching) to either a
    *         NaptimeError or NaptimeResponse
    */
-  def fetchForwardRelations(
+  private[this] def fetchForwardRelations(
       requests: Vector[NaptimeRequest],
       resourceName: ResourceName,
-      context: SangriaGraphQlContext)(implicit ec: ExecutionContext)
+      context: SangriaGraphQlContext,
+      authOverride: Option[AuthOverride])(implicit ec: ExecutionContext)
     : Future[Map[RequestId, Either[NaptimeError, NaptimeResponse]]] = {
-
     Future
       .sequence {
-        mergeMultigetRequests(context.requestHeader, requests, resourceName)
+        mergeMultigetRequests(context.requestHeader, requests, resourceName, authOverride)
           .map {
             case (request, sourceRequests) =>
               context.fetcher.data(request, context.debugMode).map {
@@ -146,9 +166,7 @@ class NaptimeResolver extends DeferredResolver[SangriaGraphQlContext] with Stric
                   }.toMap
                   sourceRequests.map { sourceRequest =>
                     // TODO(bryan): Clean this up
-                    val elements = parseIds(sourceRequest)
-                      .flatMap(parsedElementsMap.get)
-                      .toList
+                    val elements = parseIds(sourceRequest).flatMap(parsedElementsMap.get).toList
                     val url = successfulResponse.url.getOrElse("???")
                     sourceRequest.idx ->
                       Right[NaptimeError, NaptimeResponse](
@@ -173,11 +191,11 @@ class NaptimeResolver extends DeferredResolver[SangriaGraphQlContext] with Stric
    * @param requests A list of NaptimeRequests specifying the resource and arguments
    * @return a map of TopLevelRequests -> list of NaptimeRequests that it fulfills
    */
-  def mergeMultigetRequests(
+  private[this] def mergeMultigetRequests(
       header: RequestHeader,
       requests: Vector[NaptimeRequest],
-      resourceName: ResourceName): Map[Request, Vector[NaptimeRequest]] = {
-
+      resourceName: ResourceName,
+      authOverride: Option[AuthOverride]): Map[Request, Vector[NaptimeRequest]] = {
     requests
       .groupBy(_.arguments.filterNot(_._1 == "ids"))
       .map {
@@ -186,7 +204,8 @@ class NaptimeResolver extends DeferredResolver[SangriaGraphQlContext] with Stric
           Request(
             header,
             resourceName,
-            nonIdArguments + ("ids" -> JsArray(parseAndMergeIds(innerRequests)))) -> innerRequests
+            nonIdArguments + ("ids" -> JsArray(parseAndMergeIds(innerRequests))),
+            authOverride) -> innerRequests
       }
   }
 
@@ -226,7 +245,7 @@ class NaptimeResolver extends DeferredResolver[SangriaGraphQlContext] with Stric
       .sequence {
         requests.map { request =>
           val fetcherRequest =
-            Request(context.requestHeader, resourceName, request.arguments)
+            Request(context.requestHeader, resourceName, request.arguments, request.authOverride)
           context.fetcher
             .data(fetcherRequest, context.debugMode)
             .map {
@@ -279,5 +298,4 @@ class NaptimeResolver extends DeferredResolver[SangriaGraphQlContext] with Stric
       byResourceName.headOption.map(_._1)
     }
   }
-
 }

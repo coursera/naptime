@@ -1,0 +1,6 @@
+namespace org.coursera.naptime.schema
+
+typeref AuthOverride = union [
+  record InternalAuth {}
+]
+

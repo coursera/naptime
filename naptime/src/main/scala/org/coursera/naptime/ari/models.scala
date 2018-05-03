@@ -21,6 +21,7 @@ import com.linkedin.data.schema.DataSchema
 import com.linkedin.data.schema.RecordDataSchema
 import org.coursera.naptime.ResourceName
 import org.coursera.naptime.ResponsePagination
+import org.coursera.naptime.schema.AuthOverride
 import org.coursera.naptime.schema.Resource
 import play.api.libs.json.JsValue
 import play.api.mvc.RequestHeader
@@ -84,7 +85,8 @@ object FullSchema {
 case class Request(
     requestHeader: RequestHeader,
     resource: ResourceName,
-    arguments: Set[(String, JsValue)])
+    arguments: Set[(String, JsValue)],
+    authOverride: Option[AuthOverride])
 
 /**
  * This model represents a response from a [[Request]], including elements and pagination
