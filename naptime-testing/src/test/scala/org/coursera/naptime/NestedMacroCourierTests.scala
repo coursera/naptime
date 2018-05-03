@@ -166,7 +166,8 @@ class NestedMacroCourierTests
     val request = Request(
       requestHeader = FakeRequest(),
       resource = CoursesResource.ID,
-      arguments = Set("id" -> JsString("abc")))
+      arguments = Set("id" -> JsString("abc")),
+      authOverride = None)
 
     val response = fetcher.data(request, isDebugMode = false).futureValue
 
@@ -188,7 +189,8 @@ class NestedMacroCourierTests
     val request = Request(
       requestHeader = FakeRequest(),
       resource = CoursesResource.ID,
-      arguments = Set("ids" -> JsString("abc,qrs")))
+      arguments = Set("ids" -> JsString("abc,qrs")),
+      authOverride = None)
 
     val response = fetcher.data(request, isDebugMode = false).futureValue
 
@@ -208,7 +210,8 @@ class NestedMacroCourierTests
     val request = Request(
       requestHeader = FakeRequest(),
       resource = CoursesResource.ID,
-      arguments = Set("q" -> JsString("search"), "query" -> JsString("xyz")))
+      arguments = Set("q" -> JsString("search"), "query" -> JsString("xyz")),
+      authOverride = None)
 
     val response = fetcher.data(request, isDebugMode = false).futureValue
 

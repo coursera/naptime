@@ -119,9 +119,8 @@ object NaptimeResourceField extends StrictLogging {
           .getOrElse {
             Set("ids" -> NaptimeResourceUtils.parseToJson(context.arg("id")))
           }
-        val args = context.args.raw
-          .mapValues(NaptimeResourceUtils.parseToJson)
-          .toSet ++ extraArguments
+        val args = context.args.raw.mapValues(NaptimeResourceUtils.parseToJson).toSet ++
+          extraArguments
         val idArg = args.find(_._1 == "ids").map(_._2)
         val nonIdArgs = args.filter(_._1 != "ids")
 
@@ -134,10 +133,18 @@ object NaptimeResourceField extends StrictLogging {
             fieldRelationOpt.isEmpty) &&
             idArg.forall(Utilities.jsValueIsEmpty)
 
+        val authOverride = fieldRelationOpt.flatMap(_.authOverride)
+
         if (isForwardRelationButMissingId) {
           Value(null)
         } else {
-          DeferredValue(DeferredNaptimeElement(resourceName, idArg, nonIdArgs, resourceMergedType))
+          DeferredValue(
+            DeferredNaptimeElement(
+              resourceName,
+              idArg,
+              nonIdArgs,
+              resourceMergedType,
+              authOverride))
             .map {
               case Left(error) =>
                 throw NaptimeResolveException(error)
