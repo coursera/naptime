@@ -43,8 +43,7 @@ final case class Ok[+T](
      * Optional ETag to be returned in the response. Note that quotes required for ETag response
      * header are added by Naptime, so `eTag` should be without quotes.
      */
-    eTag: Option[ETag] = None)
-    extends RestResponse[T] {
+    eTag: Option[ETag] = None) extends RestResponse[T] {
 
   override val isOk = true
   override val isError = false
@@ -67,8 +66,10 @@ final case class Ok[+T](
     copy(pagination = Some(pagination))
   }
 
-  def withRelated[K, A](name: ResourceName, objects: Seq[Keyed[K, A]])(
-      implicit valueFormat: OFormat[A],
+  def withRelated[K, A](
+      name: ResourceName,
+      objects: Seq[Keyed[K, A]])
+      (implicit valueFormat: OFormat[A],
       keyFormat: KeyFormat[K],
       fields: Fields[A]): Ok[T] = {
     val newRelated = related + (name -> Ok.Related(name, objects, valueFormat, keyFormat, fields))
@@ -91,9 +92,7 @@ object Ok {
       keyFormat: KeyFormat[K],
       fields: Fields[A]) {
     def toJson(requestFields: RequestFields): Seq[JsValue] = {
-      val finalFields = requestFields
-        .forResource(resourceName)
-        .getOrElse(RequestFields.empty)
+      val finalFields = requestFields.forResource(resourceName).getOrElse(RequestFields.empty)
         .mergeWithDefaults(fields.defaultFields)
       JsonUtilities.outputSeq(objects, finalFields)(jsonFormat, keyFormat)
     }

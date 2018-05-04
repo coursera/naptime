@@ -33,11 +33,10 @@ trait HeaderAuthenticationParser[+P] {
 object HeaderAuthenticationParser {
 
   /** A no-op parser that always returns `value`. */
-  def constant[P](value: P): HeaderAuthenticationParser[P] =
-    new HeaderAuthenticationParser[P] {
-      override def parseHeader(requestHeader: RequestHeader): ParseResult[P] = {
-        ParseResult.Success(value)
-      }
+  def constant[P](value: P): HeaderAuthenticationParser[P] = new HeaderAuthenticationParser[P] {
+    override def parseHeader(requestHeader: RequestHeader): ParseResult[P] = {
+      ParseResult.Success(value)
     }
+  }
 
 }

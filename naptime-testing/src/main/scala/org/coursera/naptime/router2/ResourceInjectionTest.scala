@@ -23,6 +23,7 @@ import com.google.inject.ProvisionException
 import com.typesafe.scalalogging.StrictLogging
 import org.junit.Test
 
+
 trait ResourceInjectionTest extends StrictLogging {
   def injector: Injector
 

@@ -44,8 +44,7 @@ import scala.annotation.implicitNotFound
 /**
  * Maps a high-level REST response to a low-level HTTP response.
  */
-@implicitNotFound(
-  """No RestActionCategoryEngine found for category: ${Category},
+@implicitNotFound("""No RestActionCategoryEngine found for category: ${Category},
     key type: ${Key} and resource type: ${Resource} and response type: ${Response}.
     Most likely, you have an inappropriate response type for your action. Please ensure you are
     returning the right type for this action.""")
@@ -74,8 +73,8 @@ trait PlayJsonRestActionCategoryEngine {
 
   private[this] def mkOkResponse[T](r: RestResponse[T])(fn: Ok[T] => Result) = {
     r match {
-      case ok: Ok[T]          => fn(ok)
-      case error: RestError   => error.error.result
+      case ok: Ok[T] => fn(ok)
+      case error: RestError => error.error.result
       case redirect: Redirect => redirect.result
     }
   }
@@ -102,34 +101,25 @@ trait PlayJsonRestActionCategoryEngine {
       // Note: JsObject's `fieldSet` (used to compute `hashCode`) does not guarantee single values
       // for a particular key.
       // Note: for pagination, we explicitly call the eTagHashCode that excludes some fields.
-      val hashCode =
-        Set(jsValue.hashCode(), pagination.eTagHashCode()).hashCode()
+      val hashCode = Set(jsValue.hashCode(), pagination.eTagHashCode()).hashCode()
 
       constructEtagHeader(ETag(hashCode.toString))
     }
 
   }
 
-  private[naptime] def mkETagHeader[T](
-      pagination: RequestPagination,
-      ok: Ok[T],
-      jsRepresentation: JsValue): (String, String) =
-    ETagHelpers
-      .addProvidedETag(ok)
-      .getOrElse(ETagHelpers.computeETag(jsRepresentation, pagination))
+  private[naptime] def mkETagHeader[T](pagination: RequestPagination, ok: Ok[T],
+    jsRepresentation: JsValue): (String, String) =
+    ETagHelpers.addProvidedETag(ok).getOrElse(ETagHelpers.computeETag(jsRepresentation, pagination))
 
-  private[naptime] def mkETagHeaderOpt[T](
-      pagination: RequestPagination,
-      ok: Ok[T],
-      jsRepresentation: Option[JsValue]): Option[(String, String)] =
-    ETagHelpers
-      .addProvidedETag(ok)
-      .orElse(jsRepresentation.map(ETagHelpers.computeETag(_, pagination)))
+  private[naptime] def mkETagHeaderOpt[T](pagination: RequestPagination, ok: Ok[T],
+    jsRepresentation: Option[JsValue]): Option[(String, String)] =
+    ETagHelpers.addProvidedETag(ok).orElse(
+      jsRepresentation.map(ETagHelpers.computeETag(_, pagination)))
 
   implicit def getActionCategoryEngine[Key, Resource](
-      implicit writes: OWrites[Resource],
-      keyWrites: KeyFormat[Key])
-    : RestActionCategoryEngine[GetRestActionCategory, Key, Resource, Keyed[Key, Resource]] = {
+      implicit writes: OWrites[Resource], keyWrites: KeyFormat[Key]):
+    RestActionCategoryEngine[GetRestActionCategory, Key, Resource, Keyed[Key, Resource]] = {
     new RestActionCategoryEngine[GetRestActionCategory, Key, Resource, Keyed[Key, Resource]] {
       override def mkResult(
           request: RequestHeader,
@@ -139,15 +129,9 @@ trait PlayJsonRestActionCategoryEngine {
           pagination: RequestPagination,
           response: RestResponse[Keyed[Key, Resource]]): Result = {
         mkOkResponse(response) { ok =>
-          val elements =
-            JsArray(Seq(JsonUtilities.outputOneObj(ok.content, requestFields)))
+          val elements = JsArray(Seq(JsonUtilities.outputOneObj(ok.content, requestFields)))
           val body = JsonUtilities.formatSuccessfulResponseBody(
-            ok,
-            elements,
-            resourceFields,
-            request,
-            requestFields,
-            requestIncludes)
+            ok, elements, resourceFields, request, requestFields, requestIncludes)
           val etag = mkETagHeader(pagination, ok, elements)
           if (request.headers.get(HeaderNames.IF_NONE_MATCH) == Some(etag._2)) {
             Results.NotModified.withHeaders(etag)
@@ -160,18 +144,12 @@ trait PlayJsonRestActionCategoryEngine {
   }
 
   implicit def createActionCategoryEngine[Key, Resource](
-      implicit writes: OWrites[Resource],
-      keyWrites: KeyFormat[Key]): RestActionCategoryEngine[
-    CreateRestActionCategory,
-    Key,
-    Resource,
-    Keyed[Key, Option[Resource]]] = {
+      implicit writes: OWrites[Resource], keyWrites: KeyFormat[Key]):
+    RestActionCategoryEngine[CreateRestActionCategory, Key, Resource,
+      Keyed[Key, Option[Resource]]] = {
 
-    new RestActionCategoryEngine[
-      CreateRestActionCategory,
-      Key,
-      Resource,
-      Keyed[Key, Option[Resource]]] {
+    new RestActionCategoryEngine[CreateRestActionCategory, Key, Resource,
+        Keyed[Key, Option[Resource]]] {
       override def mkResult(
           request: RequestHeader,
           resourceFields: Fields[Resource],
@@ -186,48 +164,32 @@ trait PlayJsonRestActionCategoryEngine {
           } else {
             request.path + "/" + key
           }
-          val baseHeaders =
-            List(HeaderNames.LOCATION -> newLocation, "X-Coursera-Id" -> key)
+          val baseHeaders = List(HeaderNames.LOCATION -> newLocation, "X-Coursera-Id" -> key)
 
-          ok.content.value
-            .map { value =>
-              val keyedResource = Keyed(ok.content.key, value)
-              val elements = JsArray(Seq(JsonUtilities.outputOneObj(keyedResource, requestFields)))
-              val body =
-                JsonUtilities.formatSuccessfulResponseBody(
-                  ok,
-                  elements,
-                  resourceFields,
-                  request,
-                  requestFields,
-                  requestIncludes)
-              Results
-                .Created(body)
-                .withHeaders(mkETagHeader(pagination, ok, elements) :: baseHeaders: _*)
-            }
-            .getOrElse {
-              // No body, just a 201 Created.
-              Results.Created.withHeaders(mkETagHeaderOpt(pagination, ok, None).toList ++
-                baseHeaders: _*)
-            }
+          ok.content.value.map { value =>
+            val keyedResource = Keyed(ok.content.key, value)
+            val elements = JsArray(Seq(JsonUtilities.outputOneObj(keyedResource, requestFields)))
+            val body = JsonUtilities.formatSuccessfulResponseBody(
+              ok, elements, resourceFields, request, requestFields, requestIncludes)
+            Results.Created(body).withHeaders(
+              mkETagHeader(pagination, ok, elements) :: baseHeaders: _*)
+          }.getOrElse {
+            // No body, just a 201 Created.
+            Results.Created.withHeaders(mkETagHeaderOpt(pagination, ok, None).toList ++
+              baseHeaders: _*)
+          }
         }
       }
     }
   }
 
   implicit def updateActionCategoryEngine[Key, Resource](
-      implicit writes: OWrites[Resource],
-      keyWrites: KeyFormat[Key]): RestActionCategoryEngine[
-    UpdateRestActionCategory,
-    Key,
-    Resource,
-    Option[Keyed[Key, Resource]]] = {
+      implicit writes: OWrites[Resource], keyWrites: KeyFormat[Key]):
+    RestActionCategoryEngine[UpdateRestActionCategory, Key, Resource,
+      Option[Keyed[Key, Resource]]] = {
 
-    new RestActionCategoryEngine[
-      UpdateRestActionCategory,
-      Key,
-      Resource,
-      Option[Keyed[Key, Resource]]] {
+    new RestActionCategoryEngine[UpdateRestActionCategory, Key, Resource,
+        Option[Keyed[Key, Resource]]] {
       override def mkResult(
           request: RequestHeader,
           resourceFields: Fields[Resource],
@@ -236,34 +198,22 @@ trait PlayJsonRestActionCategoryEngine {
           pagination: RequestPagination,
           response: RestResponse[Option[Keyed[Key, Resource]]]): Result = {
         mkOkResponse(response) { ok =>
-          ok.content
-            .map { result =>
-              val elements =
-                JsArray(Seq(JsonUtilities.outputOneObj(result, requestFields)))
-              val body =
-                JsonUtilities.formatSuccessfulResponseBody(
-                  ok,
-                  elements,
-                  resourceFields,
-                  request,
-                  requestFields,
-                  requestIncludes)
-              Results
-                .Ok(body)
-                .withHeaders(mkETagHeader(pagination, ok, elements))
-            }
-            .getOrElse {
-              Results.NoContent.withHeaders(mkETagHeaderOpt(pagination, ok, None).toList: _*)
-            }
+          ok.content.map { result =>
+            val elements = JsArray(Seq(JsonUtilities.outputOneObj(result, requestFields)))
+            val body = JsonUtilities.formatSuccessfulResponseBody(
+              ok, elements, resourceFields, request, requestFields, requestIncludes)
+            Results.Ok(body).withHeaders(mkETagHeader(pagination, ok, elements))
+          }.getOrElse {
+            Results.NoContent.withHeaders(mkETagHeaderOpt(pagination, ok, None).toList: _*)
+          }
         }
       }
     }
   }
 
   implicit def patchActionCategoryEngine[Key, Resource](
-      implicit writes: OWrites[Resource],
-      keyWrites: KeyFormat[Key])
-    : RestActionCategoryEngine[PatchRestActionCategory, Key, Resource, Keyed[Key, Resource]] = {
+      implicit writes: OWrites[Resource], keyWrites: KeyFormat[Key]):
+    RestActionCategoryEngine[PatchRestActionCategory, Key, Resource, Keyed[Key, Resource]] = {
 
     new RestActionCategoryEngine[PatchRestActionCategory, Key, Resource, Keyed[Key, Resource]] {
       override def mkResult(
@@ -274,15 +224,9 @@ trait PlayJsonRestActionCategoryEngine {
           pagination: RequestPagination,
           response: RestResponse[Keyed[Key, Resource]]): Result = {
         mkOkResponse(response) { ok =>
-          val elements =
-            JsArray(Seq(JsonUtilities.outputOneObj(ok.content, requestFields)))
+          val elements = JsArray(Seq(JsonUtilities.outputOneObj(ok.content, requestFields)))
           val body = JsonUtilities.formatSuccessfulResponseBody(
-            ok,
-            elements,
-            resourceFields,
-            request,
-            requestFields,
-            requestIncludes)
+            ok, elements, resourceFields, request, requestFields, requestIncludes)
           Results.Ok(body).withHeaders(mkETagHeader(pagination, ok, elements))
         }
       }
@@ -290,9 +234,8 @@ trait PlayJsonRestActionCategoryEngine {
   }
 
   implicit def deleteActionCategoryEngine[Key, Resource](
-      implicit writes: OWrites[Resource],
-      keyWrites: KeyFormat[Key])
-    : RestActionCategoryEngine[DeleteRestActionCategory, Key, Resource, Unit] = {
+      implicit writes: OWrites[Resource], keyWrites: KeyFormat[Key]):
+    RestActionCategoryEngine[DeleteRestActionCategory, Key, Resource, Unit] = {
 
     new RestActionCategoryEngine[DeleteRestActionCategory, Key, Resource, Unit] {
       override def mkResult(
@@ -310,18 +253,10 @@ trait PlayJsonRestActionCategoryEngine {
   }
 
   implicit def multiGetActionCategoryEngine[Key, Resource](
-      implicit writes: OWrites[Resource],
-      keyWrites: KeyFormat[Key]): RestActionCategoryEngine[
-    MultiGetRestActionCategory,
-    Key,
-    Resource,
-    Seq[Keyed[Key, Resource]]] = {
+      implicit writes: OWrites[Resource], keyWrites: KeyFormat[Key]):
+    RestActionCategoryEngine[MultiGetRestActionCategory, Key, Resource, Seq[Keyed[Key, Resource]]] = {
 
-    new RestActionCategoryEngine[
-      MultiGetRestActionCategory,
-      Key,
-      Resource,
-      Seq[Keyed[Key, Resource]]] {
+    new RestActionCategoryEngine[MultiGetRestActionCategory, Key, Resource, Seq[Keyed[Key, Resource]]] {
       override def mkResult(
           request: RequestHeader,
           resourceFields: Fields[Resource],
@@ -330,15 +265,9 @@ trait PlayJsonRestActionCategoryEngine {
           pagination: RequestPagination,
           response: RestResponse[Seq[Keyed[Key, Resource]]]): Result = {
         mkOkResponse(response) { ok =>
-          val elements =
-            Json.toJson(JsonUtilities.outputSeq(ok.content, requestFields))
+          val elements = Json.toJson(JsonUtilities.outputSeq(ok.content, requestFields))
           val body = JsonUtilities.formatSuccessfulResponseBody(
-            ok,
-            elements,
-            resourceFields,
-            request,
-            requestFields,
-            requestIncludes)
+            ok, elements, resourceFields, request, requestFields, requestIncludes)
           val etag = mkETagHeader(pagination, ok, elements)
           if (request.headers.get(HeaderNames.IF_NONE_MATCH) == Some(etag._2)) {
             Results.NotModified.withHeaders(etag)
@@ -351,14 +280,12 @@ trait PlayJsonRestActionCategoryEngine {
   }
 
   implicit def getAllActionCategoryEngine[Key, Resource](
-      implicit writes: OWrites[Resource],
-      keyWrites: KeyFormat[Key]): RestActionCategoryEngine[
-    GetAllRestActionCategory,
-    Key,
-    Resource,
-    Seq[Keyed[Key, Resource]]] = {
+      implicit writes: OWrites[Resource], keyWrites: KeyFormat[Key]):
+    RestActionCategoryEngine[GetAllRestActionCategory, Key, Resource,
+      Seq[Keyed[Key, Resource]]] = {
 
-    new RestActionCategoryEngine[GetAllRestActionCategory, Key, Resource, Seq[Keyed[Key, Resource]]] {
+    new RestActionCategoryEngine[GetAllRestActionCategory, Key, Resource,
+      Seq[Keyed[Key, Resource]]] {
       override def mkResult(
           request: RequestHeader,
           resourceFields: Fields[Resource],
@@ -367,15 +294,9 @@ trait PlayJsonRestActionCategoryEngine {
           pagination: RequestPagination,
           response: RestResponse[Seq[Keyed[Key, Resource]]]): Result = {
         mkOkResponse(response) { ok =>
-          val elements =
-            Json.toJson(JsonUtilities.outputSeq(ok.content, requestFields))
+          val elements = Json.toJson(JsonUtilities.outputSeq(ok.content, requestFields))
           val body = JsonUtilities.formatSuccessfulResponseBody(
-            ok,
-            elements,
-            resourceFields,
-            request,
-            requestFields,
-            requestIncludes)
+            ok, elements, resourceFields, request, requestFields, requestIncludes)
           val etag = mkETagHeader(pagination, ok, elements)
           if (request.headers.get(HeaderNames.IF_NONE_MATCH) == Some(etag._2)) {
             Results.NotModified.withHeaders(etag)
@@ -388,12 +309,8 @@ trait PlayJsonRestActionCategoryEngine {
   }
 
   implicit def finderActionCategoryEngine[Key, Resource](
-      implicit writes: OWrites[Resource],
-      keyWrites: KeyFormat[Key]): RestActionCategoryEngine[
-    FinderRestActionCategory,
-    Key,
-    Resource,
-    Seq[Keyed[Key, Resource]]] = {
+      implicit writes: OWrites[Resource], keyWrites: KeyFormat[Key]):
+    RestActionCategoryEngine[FinderRestActionCategory, Key, Resource, Seq[Keyed[Key, Resource]]] = {
 
     new RestActionCategoryEngine[FinderRestActionCategory, Key, Resource, Seq[Keyed[Key, Resource]]] {
       override def mkResult(
@@ -404,15 +321,9 @@ trait PlayJsonRestActionCategoryEngine {
           pagination: RequestPagination,
           response: RestResponse[Seq[Keyed[Key, Resource]]]): Result = {
         mkOkResponse(response) { ok =>
-          val elements =
-            Json.toJson(JsonUtilities.outputSeq(ok.content, requestFields))
+          val elements = Json.toJson(JsonUtilities.outputSeq(ok.content, requestFields))
           val body = JsonUtilities.formatSuccessfulResponseBody(
-            ok,
-            elements,
-            resourceFields,
-            request,
-            requestFields,
-            requestIncludes)
+            ok, elements, resourceFields, request, requestFields, requestIncludes)
           val etag = mkETagHeader(pagination, ok, elements)
           if (request.headers.get(HeaderNames.IF_NONE_MATCH) == Some(etag._2)) {
             Results.NotModified.withHeaders(etag)
@@ -424,11 +335,10 @@ trait PlayJsonRestActionCategoryEngine {
     }
   }
 
-  implicit def actionActionCategoryEngine[Key, Resource, Response](
-      implicit responseWrites: Writes[Response],
-      writes: OWrites[Resource],
-      keyWrites: KeyFormat[Key])
-    : RestActionCategoryEngine[ActionRestActionCategory, Key, Resource, Response] = {
+  implicit def actionActionCategoryEngine[Key, Resource, Response]
+      (implicit responseWrites: Writes[Response], writes: OWrites[Resource],
+        keyWrites: KeyFormat[Key]):
+    RestActionCategoryEngine[ActionRestActionCategory, Key, Resource, Response] = {
 
     new RestActionCategoryEngine[ActionRestActionCategory, Key, Resource, Response] {
       override def mkResult(

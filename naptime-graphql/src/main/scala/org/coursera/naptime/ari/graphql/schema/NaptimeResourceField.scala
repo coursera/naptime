@@ -44,21 +44,18 @@ object NaptimeResourceField extends StrictLogging {
       resourceName: ResourceName,
       fieldName: String,
       fieldRelation: Option[ReverseRelationAnnotation],
-      currentPath: List[String])
-    : Either[SchemaError, Field[SangriaGraphQlContext, DataMapWithParent]] = {
+      currentPath: List[String]):
+    Either[SchemaError, Field[SangriaGraphQlContext, DataMapWithParent]] = {
 
     (for {
       resource <- schemaMetadata.getResourceOpt(resourceName)
       resourceMergedType <- schemaMetadata.getSchema(resource)
     } yield {
-      val arguments = resource.handlers
-        .find(_.kind == HandlerKind.MULTI_GET)
-        .map { handler =>
-          NaptimeResourceUtils
-            .generateHandlerArguments(handler)
-            .filterNot(_.name == "ids")
-        }
-        .getOrElse(List.empty)
+      val arguments = resource.handlers.find(_.kind == HandlerKind.MULTI_GET).map { handler =>
+        NaptimeResourceUtils
+          .generateHandlerArguments(handler)
+          .filterNot(_.name == "ids")
+      }.getOrElse(List.empty)
 
       getType(schemaMetadata, resourceName).right.map { fieldType =>
         Field.apply[SangriaGraphQlContext, DataMapWithParent, Any, Any](
@@ -66,10 +63,10 @@ object NaptimeResourceField extends StrictLogging {
           fieldType = OptionType(fieldType),
           resolve = getResolver(resourceName, fieldName, fieldRelation, resourceMergedType),
           arguments = arguments,
-          complexity = Some((_, _, childScore) => {
-            COMPLEXITY_COST * childScore
-          })
-        )
+          complexity = Some(
+            (_, _, childScore) => {
+              COMPLEXITY_COST * childScore
+            }))
       }
     }).getOrElse(Left(SchemaNotFound(resourceName)))
   }
@@ -78,29 +75,25 @@ object NaptimeResourceField extends StrictLogging {
       schemaMetadata: SchemaMetadata,
       resourceName: ResourceName): Either[SchemaError, OptionType[DataMapWithParent]] = {
     val resource = schemaMetadata.getResource(resourceName)
-    schemaMetadata
-      .getSchema(resource)
-      .map { schema =>
-        val resourceObjectType = OptionType(
-          ObjectType[SangriaGraphQlContext, DataMapWithParent](
-            name = formatResourceName(resource),
-            description = schema.getDoc,
-            fieldsFn = () => {
-              Option(schema.getFields)
-                .map(_.asScala.map { field =>
-                  FieldBuilder.buildField(
-                    schemaMetadata,
-                    field,
-                    Option(schema.getNamespace),
-                    resourceName = ResourceName.fromResource(resource),
-                    currentPath = List(field.getName))
-                }.toList)
-                .getOrElse(List.empty)
-            }
-          ))
-        resourceObjectType
-      }
-      .toRight(SchemaNotFound(resourceName))
+    schemaMetadata.getSchema(resource).map { schema =>
+
+      val resourceObjectType = OptionType(
+        ObjectType[SangriaGraphQlContext, DataMapWithParent](
+          name = formatResourceName(resource),
+          description = schema.getDoc,
+          fieldsFn = () => {
+            Option(schema.getFields).map(
+              _.asScala.map { field =>
+                FieldBuilder.buildField(
+                  schemaMetadata,
+                  field,
+                  Option(schema.getNamespace),
+                  resourceName = ResourceName.fromResource(resource),
+                  currentPath = List(field.getName))
+              }.toList).getOrElse(List.empty)
+          }))
+      resourceObjectType
+    }.toRight(SchemaNotFound(resourceName))
   }
 
   private[this] def getResolver(
@@ -156,15 +149,15 @@ object NaptimeResourceField extends StrictLogging {
                   .orNull[DataMapWithParent]
             }(context.ctx.executionContext)
         }
-      }
+    }
   }
 
   /**
-   * Converts a resource name to a GraphQL compatible name. (i.e. 'courses.v1' to 'CoursesV1')
-   *
-   * @param resource Naptime resource
-   * @return GraphQL-safe resource name
-   */
+    * Converts a resource name to a GraphQL compatible name. (i.e. 'courses.v1' to 'CoursesV1')
+    *
+    * @param resource Naptime resource
+    * @return GraphQL-safe resource name
+    */
   private[this] def formatResourceName(resource: Resource): String = {
     s"${resource.name.capitalize}V${resource.version.getOrElse(0)}"
   }

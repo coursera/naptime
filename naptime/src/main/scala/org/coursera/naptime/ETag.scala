@@ -30,8 +30,7 @@ object ETag {
   def apply(weakValidator: String): Weak = Weak(weakValidator)
 
   implicit val stringKeyFormat: StringKeyFormat[ETag] = {
-    StringKeyFormat
-      .unimplementedFormat[ETag]
+    StringKeyFormat.unimplementedFormat[ETag]
       .orFormat[Weak]
       .orFormat[Strong]
   }
@@ -41,7 +40,9 @@ object ETag {
    */
   case class Weak(weakValidator: String) extends ETag {
     // See https://tools.ietf.org/html/rfc7232#section-2.3.
-    require(!weakValidator.contains("\"\\"), """Characters '"' and '\' not allowed in ETags""")
+    require(
+      !weakValidator.contains("\"\\"),
+      """Characters '"' and '\' not allowed in ETags""")
   }
 
   object Weak {
@@ -51,7 +52,7 @@ object ETag {
     implicit val stringKeyFormat: StringKeyFormat[Weak] = {
       def from(s: String): Option[Weak] = s match {
         case weakValidatorRegex(tag) => Some(Weak(tag))
-        case _                       => None
+        case _ => None
       }
       StringKeyFormat.delegateFormat(from, weak => s"""W/"${weak.weakValidator}"""")
     }
@@ -64,7 +65,9 @@ object ETag {
   @deprecated(message = "Use weak validators; see `ETag`'s Scaladoc", since = "0.1.6")
   case class Strong(strongValidator: String) extends ETag {
     // See https://tools.ietf.org/html/rfc7232#section-2.3.
-    require(!strongValidator.contains("\"\\"), """Characters '"' and '\' not allowed in ETags""")
+    require(
+      !strongValidator.contains("\"\\"),
+      """Characters '"' and '\' not allowed in ETags""")
   }
 
   object Strong {
@@ -74,7 +77,7 @@ object ETag {
     implicit val stringKeyFormat: StringKeyFormat[Strong] = {
       def from(s: String): Option[Strong] = s match {
         case strongValidatorRegex(tag) => Some(Strong(tag))
-        case _                         => None
+        case _ => None
       }
       StringKeyFormat.delegateFormat(from, strong => s""""${strong.strongValidator}"""")
     }
@@ -82,3 +85,4 @@ object ETag {
   }
 
 }
+

@@ -7,8 +7,9 @@ import sangria.execution.MiddlewareErrorField
 import sangria.execution.MiddlewareQueryContext
 import sangria.schema.Context
 
-class MetricsCollectionMiddleware(metricsCollector: GraphQLMetricsCollector)
-    extends MiddlewareErrorField[SangriaGraphQlContext] {
+class MetricsCollectionMiddleware(
+    metricsCollector: GraphQLMetricsCollector)
+  extends MiddlewareErrorField[SangriaGraphQlContext] {
 
   override type QueryVal = Unit
   override type FieldVal = Unit

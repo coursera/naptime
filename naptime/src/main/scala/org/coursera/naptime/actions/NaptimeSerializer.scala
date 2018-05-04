@@ -41,7 +41,6 @@ trait NaptimeSerializer[T] {
 }
 
 object NaptimeSerializer {
-
   /**
    * Retrieves the underlying DataMap from a RecordTemplate from a [Courier generated] object.
    *
@@ -60,7 +59,6 @@ object NaptimeSerializer {
    */
   implicit object PlayJson extends NaptimeSerializer[JsObject] {
     override def serialize(t: JsObject): DataMap = {
-
       /**
        * Structured in this manner to avoid the DataMap's cycle checker from wasting a bunch of time
        */
@@ -90,8 +88,7 @@ object NaptimeSerializer {
           } catch {
             case e: NullPointerException =>
               throw new RuntimeException(
-                s"Null encountered when serializing field $name -> $value in object $obj",
-                e)
+                s"Null encountered when serializing field $name -> $value in object $obj", e)
           }
         }
       }
@@ -157,17 +154,16 @@ object NaptimeSerializer {
    * Useful for mocking tests / etc.
    */
   object AnyWrites {
-    implicit val anyWrites: NaptimeSerializer[Any] =
-      new NaptimeSerializer[Any] {
-        override def serialize(t: Any): DataMap = {
-          val m = new DataMap()
-          m.put("id", t.toString)
-          m
-        }
-
-        override def schema(t: Any): Option[DataSchema] = {
-          None
-        }
+    implicit val anyWrites: NaptimeSerializer[Any] = new NaptimeSerializer[Any] {
+      override def serialize(t: Any): DataMap = {
+        val m = new DataMap()
+        m.put("id", t.toString)
+        m
       }
+
+      override def schema(t: Any): Option[DataSchema] = {
+        None
+      }
+    }
   }
 }

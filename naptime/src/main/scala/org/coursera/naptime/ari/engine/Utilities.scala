@@ -36,16 +36,15 @@ import play.api.libs.json.Json
 import scala.collection.JavaConverters._
 import scala.util.Try
 
+
 object Utilities extends StrictLogging {
   private val TYPED_DEFINITION_KEY = "typedDefinition"
   private def getTypedDefinitionMappings(elements: Iterator[DataElement]): Map[String, String] = {
     val typedDefinitionMappings: List[Map[String, String]] = elements.map { element =>
-      Try(element.getSchema.getProperties.get(TYPED_DEFINITION_KEY)).toOption
-        .collect {
-          case definitions: java.util.Map[String @unchecked, String @unchecked] =>
-            definitions.asScala.toMap // toMap as the .asScala map is default mutable.
-        }
-        .getOrElse(Map.empty[String, String])
+      Try(element.getSchema.getProperties.get(TYPED_DEFINITION_KEY)).toOption.collect {
+        case definitions: java.util.Map[String@unchecked, String@unchecked] =>
+          definitions.asScala.toMap // toMap as the .asScala map is default mutable.
+      }.getOrElse(Map.empty[String, String])
     }.toList
 
     val typedDefinitionsFlattened = typedDefinitionMappings.flatten
@@ -79,17 +78,15 @@ object Utilities extends StrictLogging {
 
     val elementToIterateOver = makeDataMapWithTypedDefinitionsEasyToReplace(element, schema)
     def getIterator() = {
-      val dataIterator =
-        Builder.create(elementToIterateOver, schema, IterationOrder.PRE_ORDER).dataIterator()
+      val dataIterator = Builder.create(elementToIterateOver, schema, IterationOrder.PRE_ORDER).dataIterator()
 
       Iterator
-        .continually(dataIterator.next)
-        .takeWhile(_ != null)
+      .continually(dataIterator.next)
+      .takeWhile(_ != null)
     }
     val typedDefinitionMappings = getTypedDefinitionMappings(getIterator())
 
-    logger.trace(
-      s"getValuesAtPath for path: $path with typedDefinitionMappings: $typedDefinitionMappings")
+    logger.trace(s"getValuesAtPath for path: $path with typedDefinitionMappings: $typedDefinitionMappings")
     getIterator()
       .filterNot(dataElement => {
         logInfoAboutDataElement(dataElement)
@@ -98,7 +95,7 @@ object Utilities extends StrictLogging {
         // value types, as they may be coerced to string ids.
         val filteredSchemaTypes = Set(DataSchema.Type.ARRAY, DataSchema.Type.UNION)
         dataElement.getSchema != null &&
-        filteredSchemaTypes.contains(dataElement.getSchema.getType)
+          filteredSchemaTypes.contains(dataElement.getSchema.getType)
       })
       .filter(dataElement => {
         // Replace the user interpolation name with fully typed definition names.
@@ -107,8 +104,7 @@ object Utilities extends StrictLogging {
         // e.g `org.coursera.naptime.ari.graphql.models.OldPlatformData -> old` allows
         // for users to substitute the fully qualified path for a readable and stable path when
         // interpolating.
-        val withTypedDefinitionNameReplacementPath = dataElement
-          .path()
+        val withTypedDefinitionNameReplacementPath = dataElement.path()
           .map { p =>
             val path = p.toString
             val replacementPath = typedDefinitionMappings.get(path)
@@ -131,9 +127,8 @@ object Utilities extends StrictLogging {
             dataElement.getParent.getSchema.getType == DataSchema.Type.UNION &&
             withArrayIndicesRemoved.dropRight(1) == path)
 
-        logger.trace(
-          s"Data element to be included? $shouldBeIncluded " +
-            s"[checked path: $withArrayIndicesRemoved not equal to $path]")
+        logger.trace(s"Data element to be included? $shouldBeIncluded " +
+          s"[checked path: $withArrayIndicesRemoved not equal to $path]")
         shouldBeIncluded
       })
       .map(_.getValue.toString)
@@ -178,15 +173,13 @@ object Utilities extends StrictLogging {
   // Why is this function needed? `dataElement.getSchema` may return NULL.
   private def logInfoAboutDataElement(dataElement: DataElement): Unit = {
     if (dataElement.getSchema != null) {
-      logger.trace(
-        s"Encountered DataElement at ${dataElement.pathAsString} " +
-          s"with value: `${dataElement.getValue.toString}`\t" +
-          s"Schema: ${dataElement.getSchema}\t" +
-          s"Type: ${dataElement.getSchema.getType}")
+      logger.trace(s"Encountered DataElement at ${dataElement.pathAsString} " +
+        s"with value: `${dataElement.getValue.toString}`\t" +
+        s"Schema: ${dataElement.getSchema}\t" +
+        s"Type: ${dataElement.getSchema.getType}")
     } else {
-      logger.debug(
-        s"Encountered DataElement at ${dataElement.pathAsString} " +
-          s"with value: `${dataElement.getValue.toString}` and NULL SCHEMA...")
+      logger.debug(s"Encountered DataElement at ${dataElement.pathAsString} " +
+        s"with value: `${dataElement.getValue.toString}` and NULL SCHEMA...")
     }
   }
 
@@ -226,10 +219,8 @@ object Utilities extends StrictLogging {
    * for which we can do simple string replacement of `old` by `org.coursera.naptime.ari.graphql.models.OldPlatformData`
    * when doing path lookups.
    */
-  private def makeDataMapWithTypedDefinitionsEasyToReplace(
-      element: DataMap,
-      schema: RecordDataSchema): DataMap = {
-    val typedDefinitionCoercer = new TypedDefinitionDataCoercer(schema)
+  private def makeDataMapWithTypedDefinitionsEasyToReplace(element: DataMap, schema: RecordDataSchema): DataMap = {
+    val typedDefinitionCoercer = new TypedDefinitionDataCoercer(schema, true /* passthroughEnabled */)
     Try(typedDefinitionCoercer.convertTypedDefinitionToUnion(element)).getOrElse(element)
   }
 }

@@ -41,9 +41,10 @@ import scala.concurrent.ExecutionContext
 
 class PrimitiveFieldTest extends AssertionsForJUnit with MockitoSugar {
 
-  private[this] def createContext[Val](value: Val, args: Map[String, Any] = Map("limit" -> 100))(
-      implicit ctxManifest: Manifest[SangriaGraphQlContext],
-      valManifest: Manifest[Val]) = {
+  private[this] def createContext[Val](
+      value: Val,
+      args: Map[String, Any] = Map("limit" -> 100))
+      (implicit ctxManifest: Manifest[SangriaGraphQlContext], valManifest: Manifest[Val]) = {
     Context[SangriaGraphQlContext, Val](
       value = value,
       ctx = SangriaGraphQlContext(null, null, ExecutionContext.global, debugMode = false),
@@ -117,8 +118,7 @@ class PrimitiveFieldTest extends AssertionsForJUnit with MockitoSugar {
   @Test
   def fieldWithInnerDoubleUnderscore(): Unit = {
     val longDataSchema = new LongDataSchema()
-    val field =
-      FieldBuilder.buildPrimitiveField[Long](validDoubleUnderscoreName, longDataSchema, LongType)
+    val field = FieldBuilder.buildPrimitiveField[Long](validDoubleUnderscoreName, longDataSchema, LongType)
     assert(field.name === validDoubleUnderscoreName)
   }
 

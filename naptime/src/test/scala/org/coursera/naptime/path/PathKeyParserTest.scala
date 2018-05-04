@@ -27,9 +27,8 @@ class PathKeyParserTest extends AssertionsForJUnit {
 
   @Test
   def rootParser(): Unit = {
-    assert(
-      ParseSuccess(Some("/foo.v3/asdf"), RootParsedPathKey) ===
-        RootPathParser.parse("/foo.v3/asdf"))
+    assert(ParseSuccess(Some("/foo.v3/asdf"), RootParsedPathKey) ===
+      RootPathParser.parse("/foo.v3/asdf"))
   }
 
   @Test
@@ -43,14 +42,12 @@ class PathKeyParserTest extends AssertionsForJUnit {
   @Test
   def multiLevelNesting(): Unit = {
     val parser = CollectionResourcePathParser[Int]("bar", 3) ::
-      CollectionResourcePathParser[String]("foo", 1) ::
-      RootPathParser
-    assert(
-      ParseSuccess(None, 3 ::: "asdf" ::: RootParsedPathKey) ===
-        parser.parse("/foo.v1/asdf/bar.v3/3"))
-    assert(
-      ParseSuccess(None, 3 ::: "asdf" ::: RootParsedPathKey) ===
-        parser.parse("/foo.v1/asdf/bar.v3/3/"))
+        CollectionResourcePathParser[String]("foo", 1) ::
+        RootPathParser
+    assert(ParseSuccess(None, 3 ::: "asdf" ::: RootParsedPathKey) ===
+      parser.parse("/foo.v1/asdf/bar.v3/3"))
+    assert(ParseSuccess(None, 3 ::: "asdf" ::: RootParsedPathKey) ===
+      parser.parse("/foo.v1/asdf/bar.v3/3/"))
     assert(ParseFailure === parser.parse("/bar.v3/3"))
     assert(ParseFailure === parser.parse("/bar.v3/3/"))
     assert(ParseFailure === parser.parse("/foo.v1/asdf"))
@@ -60,21 +57,17 @@ class PathKeyParserTest extends AssertionsForJUnit {
   @Test
   def finalOptParser(): Unit = {
     val parser = CollectionResourcePathParser[Int]("bar", 3) ::
-      CollectionResourcePathParser[String]("foo", 1) ::
-      RootPathParser
+        CollectionResourcePathParser[String]("foo", 1) ::
+        RootPathParser
 
-    assert(
-      ParseSuccess(None, Some(3) ::: "asdf" ::: RootParsedPathKey) ===
-        parser.parseFinalLevel("/foo.v1/asdf/bar.v3/3"))
-    assert(
-      ParseSuccess(None, Some(3) ::: "asdf" ::: RootParsedPathKey) ===
-        parser.parseFinalLevel("/foo.v1/asdf/bar.v3/3/"))
-    assert(
-      ParseSuccess(None, None ::: "asdf" ::: RootParsedPathKey) ===
-        parser.parseFinalLevel("/foo.v1/asdf/bar.v3/"))
-    assert(
-      ParseSuccess(None, None ::: "asdf" ::: RootParsedPathKey) ===
-        parser.parseFinalLevel("/foo.v1/asdf/bar.v3"))
+    assert(ParseSuccess(None, Some(3) ::: "asdf" ::: RootParsedPathKey) ===
+      parser.parseFinalLevel("/foo.v1/asdf/bar.v3/3"))
+    assert(ParseSuccess(None, Some(3) ::: "asdf" ::: RootParsedPathKey) ===
+      parser.parseFinalLevel("/foo.v1/asdf/bar.v3/3/"))
+    assert(ParseSuccess(None, None ::: "asdf" ::: RootParsedPathKey) ===
+      parser.parseFinalLevel("/foo.v1/asdf/bar.v3/"))
+    assert(ParseSuccess(None, None ::: "asdf" ::: RootParsedPathKey) ===
+      parser.parseFinalLevel("/foo.v1/asdf/bar.v3"))
 
     assert(ParseFailure === parser.parseFinalLevel("/bar.v3/3"))
     assert(ParseFailure === parser.parseFinalLevel("/foo.v1/asdf"))
@@ -89,14 +82,14 @@ class PathKeyParserTest extends AssertionsForJUnit {
     val element = Compound("abc123", 3)
     val elementString = Compound.stringKeyFormat.writes(element).key
 
-    assert(
-      ParseSuccess(None, Some(element) ::: RootParsedPathKey) ===
-        parser.parseFinalLevel(s"/myResource.v1/$elementString"))
+    assert(ParseSuccess(None, Some(element) ::: RootParsedPathKey) ===
+      parser.parseFinalLevel(s"/myResource.v1/$elementString"))
 
     // Test incomplete ID.
     assert(ParseFailure === parser.parseFinalLevel("/myResource.v1/abc123"))
   }
 }
+
 
 object PathKeyParserTest {
   case class Compound(uuid: String, version: Int)
@@ -108,8 +101,9 @@ object PathKeyParserTest {
 
     def unapply(key: StringKey): Option[(StringKey, Int)] = key.key match {
       case ValidRegex(obj, version) => Some((StringKey(obj), version.toInt))
-      case _                        => None
+      case _ => None
     }
+
 
     implicit val stringKeyFormat: StringKeyFormat[Compound] = new StringKeyFormat[Compound] {
       def reads(key: StringKey) = {
