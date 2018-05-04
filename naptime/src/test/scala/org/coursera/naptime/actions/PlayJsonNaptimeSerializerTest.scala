@@ -47,26 +47,25 @@ class PlayJsonNaptimeSerializerTest extends AssertionsForJUnit {
     val testCase = Json.obj()
     val expected = new DataMap()
     assert(expected === NaptimeSerializer.PlayJson.serialize(testCase), "Didn't match expected")
-    assert(testCase ===
-      NaptimeSerializer.PlayJson.deserialize(NaptimeSerializer.PlayJson.serialize(testCase)))
+    assert(
+      testCase ===
+        NaptimeSerializer.PlayJson.deserialize(NaptimeSerializer.PlayJson.serialize(testCase)))
   }
 
   @Test
   def testSimpleStrings(): Unit = {
-    val testCase = Json.obj(
-      "a" -> "b")
+    val testCase = Json.obj("a" -> "b")
     val expected = new DataMap()
     expected.put("a", "b")
     assert(expected === NaptimeSerializer.PlayJson.serialize(testCase), "Didn't match expected")
-    assert(testCase ===
-      NaptimeSerializer.PlayJson.deserialize(NaptimeSerializer.PlayJson.serialize(testCase)))
+    assert(
+      testCase ===
+        NaptimeSerializer.PlayJson.deserialize(NaptimeSerializer.PlayJson.serialize(testCase)))
   }
 
   @Test
   def testNumbers(): Unit = {
-    val testCase = Json.obj(
-      "a" -> 1,
-      "b" -> 1.2)
+    val testCase = Json.obj("a" -> 1, "b" -> 1.2)
     val expected = new DataMap()
     expected.put("a", new java.lang.Integer(1))
     expected.put("b", Double.box(1.2))
@@ -74,50 +73,45 @@ class PlayJsonNaptimeSerializerTest extends AssertionsForJUnit {
 
     // Use string serialization to work around Float imprecision.
     assert(expected.toString === NaptimeSerializer.PlayJson.serialize(testCase).toString)
-    assert(testCase ===
-      NaptimeSerializer.PlayJson.deserialize(NaptimeSerializer.PlayJson.serialize(testCase)))
+    assert(
+      testCase ===
+        NaptimeSerializer.PlayJson.deserialize(NaptimeSerializer.PlayJson.serialize(testCase)))
   }
 
   // TODO: Test Longs
 
   @Test
   def testBoolean(): Unit = {
-    val testCase = Json.obj(
-      "a" -> true,
-      "b" -> false)
+    val testCase = Json.obj("a" -> true, "b" -> false)
     val expected = new DataMap()
     expected.put("a", new java.lang.Boolean(true))
     expected.put("b", new java.lang.Boolean(false))
 
     assert(expected === NaptimeSerializer.PlayJson.serialize(testCase), "Didn't match expected")
-    assert(testCase ===
-      NaptimeSerializer.PlayJson.deserialize(NaptimeSerializer.PlayJson.serialize(testCase)))
+    assert(
+      testCase ===
+        NaptimeSerializer.PlayJson.deserialize(NaptimeSerializer.PlayJson.serialize(testCase)))
   }
 
   @Test
   def testNestedObjects(): Unit = {
-    val testCase = Json.obj(
-      "a" -> Json.obj(
-        "b" -> "c"))
+    val testCase = Json.obj("a" -> Json.obj("b" -> "c"))
     val expected = new DataMap()
     val inner = new DataMap()
     inner.put("b", "c")
     expected.put("a", inner)
 
     assert(expected === NaptimeSerializer.PlayJson.serialize(testCase), "Didn't match expected")
-    assert(testCase ===
-      NaptimeSerializer.PlayJson.deserialize(NaptimeSerializer.PlayJson.serialize(testCase)))
+    assert(
+      testCase ===
+        NaptimeSerializer.PlayJson.deserialize(NaptimeSerializer.PlayJson.serialize(testCase)))
   }
 
   @Test
   def testComplex(): Unit = {
     val testCase = Json.obj(
-      "elements" -> Json.arr(
-        Json.obj("a" -> "b"),
-        Json.obj("a" -> "b")),
-      "paging" -> Json.obj(
-        "offset" -> 1,
-        "next" -> "nextTokenBase64Encoded")
+      "elements" -> Json.arr(Json.obj("a" -> "b"), Json.obj("a" -> "b")),
+      "paging" -> Json.obj("offset" -> 1, "next" -> "nextTokenBase64Encoded")
     )
 
     val expected = new DataMap()
@@ -139,7 +133,8 @@ class PlayJsonNaptimeSerializerTest extends AssertionsForJUnit {
     assert(paging === serialized.get("paging"))
 
     assert(expected === serialized, "Didn't match expected")
-    assert(testCase ===
-      NaptimeSerializer.PlayJson.deserialize(NaptimeSerializer.PlayJson.serialize(testCase)))
+    assert(
+      testCase ===
+        NaptimeSerializer.PlayJson.deserialize(NaptimeSerializer.PlayJson.serialize(testCase)))
   }
 }

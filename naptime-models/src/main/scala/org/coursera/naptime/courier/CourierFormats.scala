@@ -187,7 +187,7 @@ object CourierFormats extends StrictLogging {
   }
 
   def enumerationFormat[T <: ScalaEnumTemplateSymbol](
-    enumeration: ScalaEnumTemplate[T]): Format[T] = {
+      enumeration: ScalaEnumTemplate[T]): Format[T] = {
     new Format[T] {
       def reads(json: JsValue): JsResult[T] = {
         val jsResult = for {
@@ -213,7 +213,7 @@ object CourierFormats extends StrictLogging {
     JsError(validationMessages.map { message =>
       val path = JsPath(message.getPath.map {
         case idx: java.lang.Integer => IdxPathNode(idx)
-        case name: String => KeyPathNode(name)
+        case name: String           => KeyPathNode(name)
       }.toList)
       path -> Seq(JsonValidationError(message.toString))
     })
@@ -226,9 +226,9 @@ object CourierFormats extends StrictLogging {
   }
 
   private[this] def recordToJsObject(
-    schemaPath: SchemaPath,
-    dataMap: DataMap,
-    recordSchema: RecordDataSchema): JsObject = {
+      schemaPath: SchemaPath,
+      dataMap: DataMap,
+      recordSchema: RecordDataSchema): JsObject = {
     val passthrough =
       recordSchema.getProperties.get(passthroughAnnotation) ==
         java.lang.Boolean.TRUE.asInstanceOf[AnyRef]
@@ -252,9 +252,9 @@ object CourierFormats extends StrictLogging {
   }
 
   private[this] def unionToJsObject(
-    schemaPath: SchemaPath,
-    dataMap: DataMap,
-    unionSchema: UnionDataSchema): JsObject = {
+      schemaPath: SchemaPath,
+      dataMap: DataMap,
+      unionSchema: UnionDataSchema): JsObject = {
     val entryCount = dataMap.entrySet.size
     if (entryCount != 1) {
       throw new WriteException(
@@ -269,9 +269,9 @@ object CourierFormats extends StrictLogging {
   }
 
   private[this] def recordToJsValue(
-    schemaPath: SchemaPath,
-    dataMap: DataMap,
-    recordSchema: RecordDataSchema): JsValue = {
+      schemaPath: SchemaPath,
+      dataMap: DataMap,
+      recordSchema: RecordDataSchema): JsValue = {
     if (recordSchema.getProperties.get(codecAnnotation) == stringKeyName) {
       val codec = new StringKeyCodec(recordSchema)
       val stringKey = new String(codec.mapToBytes(dataMap))
@@ -282,9 +282,9 @@ object CourierFormats extends StrictLogging {
   }
 
   private[this] def dataToJsValue(
-    schemaPath: SchemaPath,
-    data: AnyRef,
-    schema: DataSchema): JsValue = {
+      schemaPath: SchemaPath,
+      data: AnyRef,
+      schema: DataSchema): JsValue = {
     (schema, data) match {
       case (typerefSchema: TyperefDataSchema, data: AnyRef) =>
         typerefToJsValue(schemaPath, data, typerefSchema)
@@ -327,9 +327,9 @@ object CourierFormats extends StrictLogging {
   }
 
   private[this] def checkSchema[ExpectedSchemaType <: DataSchema](
-    schemaPath: SchemaPath,
-    context: String,
-    observedSchema: DataSchema)(implicit tag: ClassTag[ExpectedSchemaType]): Unit = {
+      schemaPath: SchemaPath,
+      context: String,
+      observedSchema: DataSchema)(implicit tag: ClassTag[ExpectedSchemaType]): Unit = {
     val expectedSchemaClass = tag.runtimeClass.asInstanceOf[Class[ExpectedSchemaType]]
     val observedSchemaClass = observedSchema.getClass
     if (observedSchemaClass != expectedSchemaClass) {
@@ -346,9 +346,9 @@ object CourierFormats extends StrictLogging {
   }
 
   private[this] def arrayToJsValue(
-    schemaPath: SchemaPath,
-    dataList: DataList,
-    arraySchema: ArrayDataSchema): JsValue = {
+      schemaPath: SchemaPath,
+      dataList: DataList,
+      arraySchema: ArrayDataSchema): JsValue = {
     val itemSchema = arraySchema.getItems
     JsArray(dataList.iterator.asScala.map { itemData =>
       dataToJsValue(schemaPath, itemData, itemSchema)
@@ -356,9 +356,9 @@ object CourierFormats extends StrictLogging {
   }
 
   private[this] def mapToJsValue(
-    schemaPath: SchemaPath,
-    dataMap: DataMap,
-    mapSchema: MapDataSchema): JsValue = {
+      schemaPath: SchemaPath,
+      dataMap: DataMap,
+      mapSchema: MapDataSchema): JsValue = {
     val valueSchema = mapSchema.getValues
     JsObject(dataMap.entrySet.asScala.map { entry =>
       (entry.getKey, dataToJsValue(schemaPath, entry.getValue, valueSchema))
@@ -366,16 +366,16 @@ object CourierFormats extends StrictLogging {
   }
 
   private[this] def unionToJsValue(
-    schemaPath: SchemaPath,
-    dataMap: DataMap,
-    unionSchema: UnionDataSchema): JsValue = {
+      schemaPath: SchemaPath,
+      dataMap: DataMap,
+      unionSchema: UnionDataSchema): JsValue = {
     unionToJsObject(schemaPath, dataMap, unionSchema)
   }
 
   private[this] def typerefToJsValue(
-    schemaPath: SchemaPath,
-    data: AnyRef,
-    typerefSchema: TyperefDataSchema): JsValue = {
+      schemaPath: SchemaPath,
+      data: AnyRef,
+      typerefSchema: TyperefDataSchema): JsValue = {
     val newSchemaPath = schemaPath.push(typerefSchema)
 
     (typerefSchema.getDereferencedDataSchema, data) match {
@@ -387,10 +387,10 @@ object CourierFormats extends StrictLogging {
   }
 
   private[this] def typerefUnionToJsObject(
-    schemaPath: SchemaPath,
-    typerefSchema: TyperefDataSchema,
-    dataMap: DataMap,
-    unionSchema: UnionDataSchema): JsObject = {
+      schemaPath: SchemaPath,
+      typerefSchema: TyperefDataSchema,
+      dataMap: DataMap,
+      unionSchema: UnionDataSchema): JsObject = {
     getTypedDefinition(typerefSchema) match {
       case None =>
         unionToJsObject(schemaPath, dataMap, unionSchema)
@@ -415,16 +415,16 @@ object CourierFormats extends StrictLogging {
 
   private[this] def schemalessDataToJsValue(data: AnyRef): JsValue = {
     data match {
-      case dataMap: DataMap => schemalessDataMapToJsObject(dataMap)
-      case dataList: DataList => schemalessDataListToJsArray(dataList)
+      case dataMap: DataMap           => schemalessDataMapToJsObject(dataMap)
+      case dataList: DataList         => schemalessDataListToJsArray(dataList)
       case integer: java.lang.Integer => JsNumber(BigDecimal(integer))
-      case long: java.lang.Long => JsNumber(BigDecimal(long))
-      case float: java.lang.Float => JsNumber(BigDecimal(float.toDouble))
-      case double: java.lang.Double => JsNumber(BigDecimal(double))
+      case long: java.lang.Long       => JsNumber(BigDecimal(long))
+      case float: java.lang.Float     => JsNumber(BigDecimal(float.toDouble))
+      case double: java.lang.Double   => JsNumber(BigDecimal(double))
       case boolean: java.lang.Boolean => JsBoolean(boolean.booleanValue)
-      case string: String => JsString(string)
-      case bytes: ByteString => JsString(bytes.asAvroString)
-      case _: Null => JsNull
+      case string: String             => JsString(string)
+      case bytes: ByteString          => JsString(bytes.asAvroString)
+      case _: Null                    => JsNull
       case unknown: AnyRef =>
         throw new WriteException(s"Unsupported data type: ${unknown.getClass}")
     }
@@ -445,9 +445,9 @@ object CourierFormats extends StrictLogging {
   /* deserialization helpers */
 
   private[this] def jsValueToData(
-    schemaPath: SchemaPath,
-    jsValue: JsValue,
-    schema: DataSchema): AnyRef = {
+      schemaPath: SchemaPath,
+      jsValue: JsValue,
+      schema: DataSchema): AnyRef = {
     (schema, jsValue) match {
       case (_, JsNull) =>
         checkSchema[NullDataSchema](schemaPath, "deserializing a NULL", schema)
@@ -485,9 +485,9 @@ object CourierFormats extends StrictLogging {
   }
 
   private[this] def jsArrayToDataList(
-    schemaPath: SchemaPath,
-    jsArray: JsArray,
-    arraySchema: ArrayDataSchema): DataList = {
+      schemaPath: SchemaPath,
+      jsArray: JsArray,
+      arraySchema: ArrayDataSchema): DataList = {
     val JsArray(items) = jsArray
     val itemSchema = arraySchema.getItems
     new DataList(items.map { item =>
@@ -496,9 +496,9 @@ object CourierFormats extends StrictLogging {
   }
 
   private[this] def jsValueToRecord(
-    schemaPath: SchemaPath,
-    jsValue: JsValue,
-    recordSchema: RecordDataSchema): DataMap = {
+      schemaPath: SchemaPath,
+      jsValue: JsValue,
+      recordSchema: RecordDataSchema): DataMap = {
     val properties = recordSchema.getProperties
     jsValue match {
       case jsObject: JsObject =>
@@ -515,9 +515,9 @@ object CourierFormats extends StrictLogging {
   }
 
   private[this] def jsObjectToRecord(
-    schemaPath: SchemaPath,
-    jsObject: JsObject,
-    recordSchema: RecordDataSchema): DataMap = {
+      schemaPath: SchemaPath,
+      jsObject: JsObject,
+      recordSchema: RecordDataSchema): DataMap = {
     val passthrough =
       recordSchema.getProperties.get(passthroughAnnotation) ==
         java.lang.Boolean.TRUE.asInstanceOf[AnyRef]
@@ -546,9 +546,9 @@ object CourierFormats extends StrictLogging {
   }
 
   private[this] def jsObjectToMap(
-    schemaPath: SchemaPath,
-    jsObject: JsObject,
-    mapSchema: MapDataSchema): DataMap = {
+      schemaPath: SchemaPath,
+      jsObject: JsObject,
+      mapSchema: MapDataSchema): DataMap = {
     val JsObject(entries) = jsObject
     val valueSchema = mapSchema.getValues
     new DataMap(entries.map {
@@ -558,9 +558,9 @@ object CourierFormats extends StrictLogging {
   }
 
   private[this] def jsObjectToUnion(
-    schemaPath: SchemaPath,
-    jsObject: JsObject,
-    unionSchema: UnionDataSchema): DataMap = {
+      schemaPath: SchemaPath,
+      jsObject: JsObject,
+      unionSchema: UnionDataSchema): DataMap = {
     val JsObject(entries) = jsObject
     if (entries.size != 1) {
       throw new ReadException("Union should have exactly one entry.")
@@ -573,9 +573,9 @@ object CourierFormats extends StrictLogging {
   }
 
   private[this] def jsValueToTyperef(
-    schemaPath: SchemaPath,
-    jsValue: JsValue,
-    typerefSchema: TyperefDataSchema): AnyRef = {
+      schemaPath: SchemaPath,
+      jsValue: JsValue,
+      typerefSchema: TyperefDataSchema): AnyRef = {
     val newSchemaPath = schemaPath.push(typerefSchema)
 
     (typerefSchema.getDereferencedDataSchema, jsValue) match {
@@ -587,40 +587,38 @@ object CourierFormats extends StrictLogging {
   }
 
   private[this] def jsObjectToTyperefUnion(
-    schemaPath: SchemaPath,
-    typerefSchema: TyperefDataSchema,
-    jsObject: JsObject,
-    unionSchema: UnionDataSchema): AnyRef = {
+      schemaPath: SchemaPath,
+      typerefSchema: TyperefDataSchema,
+      jsObject: JsObject,
+      unionSchema: UnionDataSchema): AnyRef = {
     getTypedDefinition(typerefSchema) match {
       case None =>
         jsObjectToUnion(schemaPath, jsObject, unionSchema)
       case Some(TypedDef(nameMap)) =>
         val (typeName, memberJson) = destructureTypedDefinitionJsObject(jsObject)
         val memberSchema = typeNameToMemberSchema(typerefSchema, unionSchema, nameMap, typeName)
-        new DataMap(
-          Seq(memberSchema.getUnionMemberKey -> jsValueToData(
-            schemaPath,
-            memberJson,
-            memberSchema)).toMap.asJava)
+        new DataMap(Seq(memberSchema.getUnionMemberKey -> jsValueToData(
+          schemaPath,
+          memberJson,
+          memberSchema)).toMap.asJava)
       case Some(FlatTypedDef(nameMap)) =>
         val (typeName, memberJson) = destructureFlatTypedDefinitionJsObject(jsObject)
         val memberSchema = typeNameToMemberSchema(typerefSchema, unionSchema, nameMap, typeName)
-        new DataMap(
-          Seq(memberSchema.getUnionMemberKey -> jsValueToData(
-            schemaPath,
-            memberJson,
-            memberSchema)).toMap.asJava)
+        new DataMap(Seq(memberSchema.getUnionMemberKey -> jsValueToData(
+          schemaPath,
+          memberJson,
+          memberSchema)).toMap.asJava)
     }
   }
 
   private[this] def schemalessJsValueToData(jsValue: JsValue): AnyRef = {
     jsValue match {
-      case array: JsArray => schemalessJsObjectToDataMap(array)
-      case obj: JsObject => schemalessJsObjectToDataMap(obj)
-      case number: JsNumber => bigDecimalToNumber(number.value)
+      case array: JsArray     => schemalessJsObjectToDataMap(array)
+      case obj: JsObject      => schemalessJsObjectToDataMap(obj)
+      case number: JsNumber   => bigDecimalToNumber(number.value)
       case boolean: JsBoolean => Boolean.box(boolean.value)
-      case string: JsString => string.value
-      case JsNull => Null.getInstance
+      case string: JsString   => string.value
+      case JsNull             => Null.getInstance
     }
   }
 
@@ -689,12 +687,12 @@ object CourierFormats extends StrictLogging {
   /* legacy KeyFormats for complete backwards compatibility with the original CourierFormats */
 
   def enumerationStringKeyFormat[T <: ScalaEnumTemplateSymbol](
-    enumeration: ScalaEnumTemplate[T]): StringKeyFormat[T] = {
+      enumeration: ScalaEnumTemplate[T]): StringKeyFormat[T] = {
     StringKeyFormat[T](k => Try(enumeration.withName(k.key)).toOption, v => StringKey(v.toString))
   }
 
   def recordTemplateStringKeyFormat[T <: RecordTemplate](
-    implicit tag: ClassTag[T]): StringKeyFormat[T] = {
+      implicit tag: ClassTag[T]): StringKeyFormat[T] = {
     val clazz = tag.runtimeClass.asInstanceOf[Class[T]]
     CourierSerializer.getSchema(clazz) match {
       case recordSchema: RecordDataSchema => recordTemplateStringKeyFormat(clazz, recordSchema)
@@ -705,8 +703,8 @@ object CourierFormats extends StrictLogging {
   }
 
   private[this] def recordTemplateStringKeyFormat[T <: RecordTemplate](
-    clazz: Class[T],
-    schema: RecordDataSchema): StringKeyFormat[T] = {
+      clazz: Class[T],
+      schema: RecordDataSchema): StringKeyFormat[T] = {
     new StringKeyFormat[T] {
       val stringKeyCodec = new StringKeyCodec(schema)
 
@@ -720,7 +718,7 @@ object CourierFormats extends StrictLogging {
           val wrapped = DataTemplateUtil.wrap(dataMap, clazz)
           wrapped match {
             case scalaTemplate: ScalaTemplate => materialize(scalaTemplate)
-            case _ =>
+            case _                            =>
           }
           Some(DataTemplateUtil.wrap(dataMap, clazz))
         } catch {
@@ -750,7 +748,7 @@ object CourierFormats extends StrictLogging {
    * Returns a string key format for a given Courier array type.
    */
   def arrayTemplateStringKeyFormat[T <: DataTemplate[DataList]](
-    implicit tag: ClassTag[T]): StringKeyFormat[T] = {
+      implicit tag: ClassTag[T]): StringKeyFormat[T] = {
     val clazz = tag.runtimeClass.asInstanceOf[Class[T]]
     CourierSerializer.getSchema(clazz) match {
       case arraySchema: ArrayDataSchema => arrayTemplateStringKeyFormat(clazz, arraySchema)
@@ -761,7 +759,8 @@ object CourierFormats extends StrictLogging {
   }
 
   private[this] def arrayTemplateStringKeyFormat[T <: DataTemplate[DataList]](
-    clazz: Class[T], schema: ArrayDataSchema): StringKeyFormat[T] = {
+      clazz: Class[T],
+      schema: ArrayDataSchema): StringKeyFormat[T] = {
     new StringKeyFormat[T] {
       val stringKeyCodec = new StringKeyCodec(schema)
 
@@ -775,7 +774,7 @@ object CourierFormats extends StrictLogging {
           val wrapped = DataTemplateUtil.wrap(dataList, clazz.getConstructor(classOf[DataList]))
           wrapped match {
             case scalaTemplate: ScalaTemplate => materialize(scalaTemplate)
-            case _ =>
+            case _                            =>
           }
           Some(wrapped)
         } catch {

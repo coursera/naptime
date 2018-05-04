@@ -33,15 +33,13 @@ object CourierQueryParsers extends StrictLogging {
 
   import CollectionResourceRouter.errorRoute
 
-  private[this] val validationOptions = new ValidationOptions(
-    RequiredMode.FIXUP_ABSENT_WITH_DEFAULT,
-    CoercionMode.STRING_TO_PRIMITIVE)
+  private[this] val validationOptions =
+    new ValidationOptions(RequiredMode.FIXUP_ABSENT_WITH_DEFAULT, CoercionMode.STRING_TO_PRIMITIVE)
 
   private[this] def parseStringToDataMap(
       paramName: String,
       schema: DataSchema,
-      resourceClass: Class[_])
-      (value: String): Either[RouteAction, DataMap] = {
+      resourceClass: Class[_])(value: String): Either[RouteAction, DataMap] = {
     try {
       val parsed = if (value.startsWith("(") && value.endsWith(")")) {
         InlineStringCodec.instance.bytesToMap(value.getBytes("UTF-8"))
@@ -49,21 +47,20 @@ object CourierQueryParsers extends StrictLogging {
         val codec = new StringKeyCodec(schema)
         codec.bytesToMap(value.getBytes("UTF-8"))
       }
-      val validated = ValidateDataAgainstSchema.validate(
-        parsed,
-        schema,
-        validationOptions)
+      val validated = ValidateDataAgainstSchema.validate(parsed, schema, validationOptions)
       if (validated.isValid) {
         Right(validated.getFixed.asInstanceOf[DataMap])
       } else {
-        logger.warn(s"${resourceClass.getName}: Bad query parameter for parameter " +
-          s"'$paramName': $value. Errors: ${validated.getMessages}")
+        logger.warn(
+          s"${resourceClass.getName}: Bad query parameter for parameter " +
+            s"'$paramName': $value. Errors: ${validated.getMessages}")
         Left(errorRoute(s"Improperly formatted value for parameter '$paramName'", resourceClass))
       }
     } catch {
       case ioException: IOException =>
-        logger.warn(s"${resourceClass.getName}: Bad query parameter for parameter " +
-          s"'$paramName': $value. Errors: ${ioException.getMessage}")
+        logger.warn(
+          s"${resourceClass.getName}: Bad query parameter for parameter " +
+            s"'$paramName': $value. Errors: ${ioException.getMessage}")
         Left(errorRoute(s"Improperly formatted value for parameter '$paramName'", resourceClass))
     }
   }

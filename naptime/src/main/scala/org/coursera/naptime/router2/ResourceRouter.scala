@@ -52,9 +52,9 @@ trait ResourceRouterBuilder {
   // TODO(saeta): Include the collection of newly defined types (e.g. asymmetric types)
 
   /** Internal method used to construct broken instances of the resource to call methods upon it.
-    *
-    * @return An instance of [[ResourceClass]] that has _NOT_ had its constructor called.
-    */
+   *
+   * @return An instance of [[ResourceClass]] that has _NOT_ had its constructor called.
+   */
   protected[this] lazy val stubInstance: ResourceClass = {
     import sun.reflect.ReflectionFactory
 
@@ -73,6 +73,7 @@ trait ResourceRouterBuilder {
  * of the types below.
  */
 trait ResourceRouter {
+
   /**
    * The resource class this router handles.
    */
@@ -89,9 +90,7 @@ trait ResourceRouter {
    * @return Either the Play! action to handle the request, or None indicating this request is for a
    *         different resource.
    */
-  def routeRequest(
-      path: String,
-      requestHeader: RequestHeader): Option[RouteAction]
+  def routeRequest(path: String, requestHeader: RequestHeader): Option[RouteAction]
 
   // TODO(saeta): prevent people outside of naptime from calling non-test fns (similar to Await)
   // TODO(saeta): add ability to test routeRequest & associated functions.

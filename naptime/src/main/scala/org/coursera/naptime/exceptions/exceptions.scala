@@ -18,7 +18,8 @@ package org.coursera.naptime.exceptions
 
 import play.api.mvc.Result
 
-class NaptimeException(message: String = null, cause: Throwable = null) extends RuntimeException(message, cause)
+class NaptimeException(message: String = null, cause: Throwable = null)
+    extends RuntimeException(message, cause)
 
 class RoutingException(val message: String, val response: Result) extends NaptimeException(message)
 

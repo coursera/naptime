@@ -47,7 +47,7 @@ object Router {
  * @param injector The Guice injector to provide the resource instances.
  * @param resourceRouterBuilders Builders that create ResourceRouters that will handle all routing.
  */
-class Router @Inject() (
+class Router @Inject()(
     injector: Injector,
     resourceRouterBuilders: immutable.Seq[ResourceRouterBuilder]) {
   // Build the resource routers.
@@ -88,9 +88,9 @@ class Router @Inject() (
        */
       @tailrec
       def routeRequestHelper(
-        resourceRouters: Seq[ResourceRouter],
-        requestHeader: RequestHeader,
-        path: String): Option[RouteAction] = {
+          resourceRouters: Seq[ResourceRouter],
+          requestHeader: RequestHeader,
+          path: String): Option[RouteAction] = {
         if (resourceRouters.isEmpty) {
           None
         } else {

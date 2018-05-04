@@ -27,9 +27,9 @@ class SchemaInferenceTest extends AssertionsForJUnit {
 
   @Test
   def testWithPrimitives(): Unit = {
-    assert(inferSchema[WithPrimitives] ===
-      Json.parse(
-        """{
+    assert(
+      inferSchema[WithPrimitives] ===
+        Json.parse("""{
           |  "name": "WithPrimitives",
           |  "namespace": "org.coursera.naptime.courier",
           |  "type": "record",
@@ -42,9 +42,9 @@ class SchemaInferenceTest extends AssertionsForJUnit {
 
   @Test
   def testWithOptional(): Unit = {
-    assert(inferSchema[WithOptional] ===
-      Json.parse(
-        """{
+    assert(
+      inferSchema[WithOptional] ===
+        Json.parse("""{
           |  "name": "WithOptional",
           |  "namespace": "org.coursera.naptime.courier",
           |  "type": "record",
@@ -57,9 +57,9 @@ class SchemaInferenceTest extends AssertionsForJUnit {
 
   @Test
   def testWithNone(): Unit = {
-    assert(inferSchema[WithNone] ===
-      Json.parse(
-        """{
+    assert(
+      inferSchema[WithNone] ===
+        Json.parse("""{
           |  "name": "WithNone",
           |  "namespace": "org.coursera.naptime.courier",
           |  "type": "record",
@@ -72,9 +72,9 @@ class SchemaInferenceTest extends AssertionsForJUnit {
 
   @Test
   def testWithSome(): Unit = {
-    assert(inferSchema[WithSome] ===
-      Json.parse(
-        """{
+    assert(
+      inferSchema[WithSome] ===
+        Json.parse("""{
           |  "name": "WithSome",
           |  "namespace": "org.coursera.naptime.courier",
           |  "type": "record",
@@ -87,9 +87,9 @@ class SchemaInferenceTest extends AssertionsForJUnit {
 
   @Test
   def testWithRecord(): Unit = {
-    assert(inferSchema[WithRecord] ===
-      Json.parse(
-        """{
+    assert(
+      inferSchema[WithRecord] ===
+        Json.parse("""{
           |  "name": "WithRecord",
           |  "namespace": "org.coursera.naptime.courier",
           |  "type": "record",
@@ -113,9 +113,9 @@ class SchemaInferenceTest extends AssertionsForJUnit {
 
   @Test
   def testWithArrays(): Unit = {
-    assert(inferSchema[WithArrays] ===
-      Json.parse(
-        """{
+    assert(
+      inferSchema[WithArrays] ===
+        Json.parse("""{
           |  "name": "WithArrays",
           |  "namespace": "org.coursera.naptime.courier",
           |  "type": "record",
@@ -131,9 +131,9 @@ class SchemaInferenceTest extends AssertionsForJUnit {
 
   @Test
   def testWithMaps(): Unit = {
-    assert(inferSchema[WithMaps] ===
-      Json.parse(
-        """{
+    assert(
+      inferSchema[WithMaps] ===
+        Json.parse("""{
           |  "name": "WithMaps",
           |  "namespace": "org.coursera.naptime.courier",
           |  "type": "record",
@@ -149,9 +149,9 @@ class SchemaInferenceTest extends AssertionsForJUnit {
 
   @Test
   def testWithTypedKeyMaps(): Unit = {
-    assert(inferSchema[WithTypedKeyMaps] ===
-      Json.parse(
-        """{
+    assert(
+      inferSchema[WithTypedKeyMaps] ===
+        Json.parse("""{
           |  "name": "WithTypedKeyMaps",
           |  "namespace": "org.coursera.naptime.courier",
           |  "type": "record",
@@ -167,9 +167,9 @@ class SchemaInferenceTest extends AssertionsForJUnit {
 
   @Test
   def testTypedDefinition(): Unit = {
-    assert(inferSchema[TypedDefinition] ===
-      Json.parse(
-        """{
+    assert(
+      inferSchema[TypedDefinition] ===
+        Json.parse("""{
           |  "name": "TypedDefinition",
           |  "namespace": "org.coursera.naptime.courier",
           |  "type": "typeref",
@@ -197,9 +197,9 @@ class SchemaInferenceTest extends AssertionsForJUnit {
 
   @Test
   def enumTypes(): Unit = {
-    assert(inferSchema[enums.Enum1] ===
-      Json.parse(
-        """{
+    assert(
+      inferSchema[enums.Enum1] ===
+        Json.parse("""{
           |  "name": "Enum1",
           |  "namespace": "org.coursera.naptime.courier.enums",
           |  "type": "enum",
@@ -207,9 +207,9 @@ class SchemaInferenceTest extends AssertionsForJUnit {
           |}
         """.stripMargin))
 
-    assert(inferSchema[Enum2.Enum2] ===
-      Json.parse(
-        """{
+    assert(
+      inferSchema[Enum2.Enum2] ===
+        Json.parse("""{
           |  "name": "Enum2",
           |  "namespace": "org.coursera.naptime.courier",
           |  "type": "enum",
@@ -220,9 +220,9 @@ class SchemaInferenceTest extends AssertionsForJUnit {
 
   @Test
   def nestedCourierUnion(): Unit = {
-    assert(inferSchema[WithNestedUnion] ===
-      Json.parse(
-        """{
+    assert(
+      inferSchema[WithNestedUnion] ===
+        Json.parse("""{
           |  "fields": [
           |    {
           |      "name": "nestedUnion",
@@ -239,7 +239,6 @@ class SchemaInferenceTest extends AssertionsForJUnit {
         """.stripMargin))
   }
 }
-
 
 case class WithPrimitives(int: Int)
 case class WithOptional(int: Option[Int])

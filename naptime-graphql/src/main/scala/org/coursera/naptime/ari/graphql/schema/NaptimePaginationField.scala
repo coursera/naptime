@@ -54,5 +54,4 @@ object NaptimePaginationField extends StrictLogging {
 
   val paginationArguments = List(limitArgument, startArgument)
 
-
 }

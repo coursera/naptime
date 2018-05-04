@@ -1,4 +1,3 @@
-
 package org.coursera.naptime
 
 import java.util.UUID
@@ -36,8 +35,10 @@ object IdInferenceMacroTests {
   case class LegacyCourseId(id: Int) extends CourseId
   case class NewCourseId(id: String) extends CourseId
 
-  class CourseResource(implicit override val executionContext: ExecutionContext, override val materializer: Materializer)
-    extends CourierCollectionResource[CourseId, Course] {
+  class CourseResource(
+      implicit override val executionContext: ExecutionContext,
+      override val materializer: Materializer)
+      extends CourierCollectionResource[CourseId, Course] {
     override def resourceName: String = "courses"
     def getAll = Nap.getAll(ctx => ???)
   }
@@ -48,7 +49,8 @@ object IdInferenceMacroTests {
 
   case class UserId(id: Int)
   object UserId {
-    implicit val stringKeyFormat: StringKeyFormat[UserId] = StringKeyFormat.caseClassFormat(apply, unapply)
+    implicit val stringKeyFormat: StringKeyFormat[UserId] =
+      StringKeyFormat.caseClassFormat(apply, unapply)
     implicit val keyFormat: KeyFormat[UserId] = KeyFormat.idAsPrimitive(apply, unapply)
   }
 
@@ -61,9 +63,7 @@ object IdInferenceMacroTests {
     implicit val stringKeyFormat = StringKeyFormat.unimplementedFormat[MembershipId]
     implicit val keyFormat: KeyFormat[MembershipId] = {
       val writes = OWrites[MembershipId] { membershipId =>
-        Json.obj(
-          "userId" -> membershipId.userId,
-          "courseId" -> membershipId.courseId)
+        Json.obj("userId" -> membershipId.userId, "courseId" -> membershipId.courseId)
       }
       KeyFormat.idAsStringWithFields(writes)
     }
@@ -76,16 +76,16 @@ object IdInferenceMacroTests {
     implicit val jsonFormat = Json.format[CourseGrade]
   }
 
-  case class Membership(
-    enrolledTimestamp: Option[DateTime],
-    grade: Option[CourseGrade])
+  case class Membership(enrolledTimestamp: Option[DateTime], grade: Option[CourseGrade])
 
   object Membership {
     implicit val jsonFormat = Json.format[Membership]
   }
 
-  class MembershipResource(implicit val executionContext: ExecutionContext, val materializer: Materializer)
-    extends TopLevelCollectionResource[MembershipId, Membership] {
+  class MembershipResource(
+      implicit val executionContext: ExecutionContext,
+      val materializer: Materializer)
+      extends TopLevelCollectionResource[MembershipId, Membership] {
     override def keyFormat: KeyFormat[KeyType] = MembershipId.keyFormat
     override implicit def resourceFormat: OFormat[Membership] = Membership.jsonFormat
     override def resourceName: String = "memberships"
@@ -104,8 +104,10 @@ object IdInferenceMacroTests {
     implicit val keyFormat: KeyFormat[PaymentId] = KeyFormat.idAsPrimitive(apply, unapply)
   }
 
-  class PaymentResource(implicit val executionContext: ExecutionContext, val materializer: Materializer)
-    extends TopLevelCollectionResource[PaymentId, Membership] {
+  class PaymentResource(
+      implicit val executionContext: ExecutionContext,
+      val materializer: Materializer)
+      extends TopLevelCollectionResource[PaymentId, Membership] {
     override def keyFormat: KeyFormat[KeyType] = PaymentId.keyFormat
     override implicit def resourceFormat: OFormat[Membership] = Membership.jsonFormat
     override def resourceName: String = "payments"
@@ -124,8 +126,9 @@ class IdInferenceMacroTests extends AssertionsForJUnit {
   def coursesTypesGeneration(): Unit = {
     val types = IdInferenceMacroTests.CourseResource.routerBuilder.types
     assert(3 === types.size, s"$types")
-    val resourceType = types.find(
-      _.key == "org.coursera.naptime.IdInferenceMacroTests.CourseResource.Model").getOrElse {
+    val resourceType = types
+      .find(_.key == "org.coursera.naptime.IdInferenceMacroTests.CourseResource.Model")
+      .getOrElse {
         assert(false, s"Could not find merged type in types list $types")
         ???
       }
@@ -140,8 +143,9 @@ class IdInferenceMacroTests extends AssertionsForJUnit {
   def membershipsTypesGeneration(): Unit = {
     val types = IdInferenceMacroTests.MembershipResource.routerBuilder.types
     assert(3 === types.size, s"$types")
-    val resourceType = types.find(
-      _.key == "org.coursera.naptime.IdInferenceMacroTests.MembershipResource.Model").getOrElse {
+    val resourceType = types
+      .find(_.key == "org.coursera.naptime.IdInferenceMacroTests.MembershipResource.Model")
+      .getOrElse {
         assert(false, s"Could not find merged type in types list $types")
         ???
       }
@@ -157,17 +161,22 @@ class IdInferenceMacroTests extends AssertionsForJUnit {
     val types = IdInferenceMacroTests.PaymentResource.routerBuilder.types
     // There's a merged model and a body model, but no key model because we can't infer that
     assert(2 === types.size, s"$types")
-    val resourceType = types.find(
-      _.key == "org.coursera.naptime.IdInferenceMacroTests.PaymentResource.Model").getOrElse {
-      assert(false, s"Could not find merged type in types list $types")
-      ???
-    }
+    val resourceType = types
+      .find(_.key == "org.coursera.naptime.IdInferenceMacroTests.PaymentResource.Model")
+      .getOrElse {
+        assert(false, s"Could not find merged type in types list $types")
+        ???
+      }
     assert(!resourceType.value.hasError)
     assert(resourceType.value.isComplex)
     assert(resourceType.value.getType === DataSchema.Type.RECORD)
     assert(resourceType.value.isInstanceOf[RecordDataSchema])
     assert(resourceType.value.asInstanceOf[RecordDataSchema].getFields.size() === 3)
-    assert(resourceType.value.asInstanceOf[RecordDataSchema].getFields.asScala
-      .exists(_.getName == "id"))
+    assert(
+      resourceType.value
+        .asInstanceOf[RecordDataSchema]
+        .getFields
+        .asScala
+        .exists(_.getName == "id"))
   }
 }

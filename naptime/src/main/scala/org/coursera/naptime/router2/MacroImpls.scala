@@ -108,13 +108,15 @@ class MacroImpls(val c: blackbox.Context) {
      * @return A [[c.Tree]] corresponding to a [[ResourceRouterBuilder]].
      */
     def buildRouter[Resource <: CollectionResource[_, _, _]](
-      implicit wtt: WeakTypeTag[Resource]): c.Tree = {
+        implicit wtt: WeakTypeTag[Resource]): c.Tree = {
       val resourceType = weakTypeOf[Resource]
-      val classMethods = resourceType.members.collect {
-        case member: Symbol if member.isMethod => member.asMethod
-      }.filter(_.isPublic)
-      val naptimeMethods = classMethods.filter(
-        _.typeSignature.resultType.typeConstructor == REST_ACTION)
+      val classMethods = resourceType.members
+        .collect {
+          case member: Symbol if member.isMethod => member.asMethod
+        }
+        .filter(_.isPublic)
+      val naptimeMethods =
+        classMethods.filter(_.typeSignature.resultType.typeConstructor == REST_ACTION)
       debug(s"Naptime methods: $naptimeMethods")
       val methodsByRestActionCategory = try {
         naptimeMethods.groupBy { method =>
@@ -130,39 +132,39 @@ class MacroImpls(val c: blackbox.Context) {
       }
 
       // Trees is a tuple of (treeOfRoutingBindingMethods, treesOfHandlerSchemas)
-      val trees = methodsByRestActionCategory.map {
-        case (tpe, methods) if ACTION_GET =:= tpe =>
-          buildGetTree(methods)
-        case (tpe, methods) if ACTION_GET_MULTI =:= tpe =>
-          buildMultiGetTree(methods)
-        case (tpe, methods) if ACTION_GET_ALL =:= tpe =>
-          buildGetAllTree(methods)
-        case (tpe, methods) if ACTION_UPDATE =:= tpe =>
-          buildUpdateTree(methods)
-        case (tpe, methods) if ACTION_DELETE =:= tpe =>
-          buildDeleteTree(methods)
-        case (tpe, methods) if ACTION_CREATE =:= tpe =>
-          buildCreateTree(methods)
-        case (tpe, methods) if ACTION_PATCH =:= tpe =>
-          buildPatchTree(methods)
-        case (tpe, methods) if ACTION_FINDER =:= tpe =>
-          buildFinderTree(methods, tpe)
-        case (tpe, methods) if ACTION_ACTION =:= tpe =>
-          buildActionTree(methods, tpe)
-      }.flatMap { treeEither =>
-        treeEither.fold(
-          err => {
+      val trees = methodsByRestActionCategory
+        .map {
+          case (tpe, methods) if ACTION_GET =:= tpe =>
+            buildGetTree(methods)
+          case (tpe, methods) if ACTION_GET_MULTI =:= tpe =>
+            buildMultiGetTree(methods)
+          case (tpe, methods) if ACTION_GET_ALL =:= tpe =>
+            buildGetAllTree(methods)
+          case (tpe, methods) if ACTION_UPDATE =:= tpe =>
+            buildUpdateTree(methods)
+          case (tpe, methods) if ACTION_DELETE =:= tpe =>
+            buildDeleteTree(methods)
+          case (tpe, methods) if ACTION_CREATE =:= tpe =>
+            buildCreateTree(methods)
+          case (tpe, methods) if ACTION_PATCH =:= tpe =>
+            buildPatchTree(methods)
+          case (tpe, methods) if ACTION_FINDER =:= tpe =>
+            buildFinderTree(methods, tpe)
+          case (tpe, methods) if ACTION_ACTION =:= tpe =>
+            buildActionTree(methods, tpe)
+        }
+        .flatMap { treeEither =>
+          treeEither.fold(err => {
             c.error(err._1, err._2)
             None
-          },
-          Some(_))
-      }
+          }, Some(_))
+        }
       val resourceRouterBuilderType = weakTypeOf[ResourceRouterBuilder]
       debug(s"TREES ARE: $trees")
 
       val parentResourceName =
         if (resourceType <:< TOP_LEVEL_COLLECTION ||
-          resourceType <:< TOP_LEVEL_COURIER_COLLECTION) {
+            resourceType <:< TOP_LEVEL_COURIER_COLLECTION) {
           q"None"
         } else {
           val collectionTypeView = resourceType.baseType(COLLECTION_RESOURCE_TYPE.typeSymbol)
@@ -222,7 +224,6 @@ class MacroImpls(val c: blackbox.Context) {
     private[this] def mergedType(resourceType: c.Type): String = {
       resourceType.toString + ".Model"
     }
-
 
     private[this] def getRecordSchemaForType(targetType: c.Type): c.Tree = {
       if (targetType <:< SCALA_RECORD_TEMPLATE) {
@@ -452,7 +453,8 @@ class MacroImpls(val c: blackbox.Context) {
         }
         q"""
           val parameterWithoutTypeSchema = $parameterDefinition
-          val typeSchema: Option[com.linkedin.data.DataMap] = ${getDataSchemaDataMapForType(param.typeSignature)}
+          val typeSchema: Option[com.linkedin.data.DataMap] = ${getDataSchemaDataMapForType(
+          param.typeSignature)}
           val updatedDataMap = parameterWithoutTypeSchema.data().clone()
           typeSchema.foreach(t => updatedDataMap.put("typeSchema", t))
           org.coursera.naptime.schema.Parameter.build(
@@ -472,11 +474,11 @@ class MacroImpls(val c: blackbox.Context) {
     }
 
     private[this] def methodOverrideCodeGenerator(
-      params: List[(c.TermName, c.Tree, c.Tree)],
-      methodName: c.TermName,
-      methodSymbol: c.universe.MethodSymbol,
-      overrideMethodParameters: List[c.Tree],
-      category: RestActionCategory): OptionalTree = {
+        params: List[(c.TermName, c.Tree, c.Tree)],
+        methodName: c.TermName,
+        methodSymbol: c.universe.MethodSymbol,
+        overrideMethodParameters: List[c.Tree],
+        category: RestActionCategory): OptionalTree = {
       val body = q"""
         ..${params.map(_._2)}
         val allResults = scala.List(..${params.map(_._1)})
@@ -514,7 +516,7 @@ class MacroImpls(val c: blackbox.Context) {
       methods match {
         case methodSymbol :: Nil =>
           if (methodSymbol.paramLists.isEmpty ||
-            (methodSymbol.paramLists.size == 1 && methodSymbol.paramLists.head.isEmpty)) {
+              (methodSymbol.paramLists.size == 1 && methodSymbol.paramLists.head.isEmpty)) {
             val methodName = TermName(overrideMethodName)
             val tree =
               q"""override def $methodName(
@@ -543,7 +545,8 @@ class MacroImpls(val c: blackbox.Context) {
                 case Types.OptionalParam() =>
                   buildQueryParamParserTree(param, i, methodSymbol)
                 case Types.ArbitraryParam() =>
-                  c.error(param.pos,
+                  c.error(
+                    param.pos,
                     s"Parameter ${param.name}: ${param.typeSignature} not allowed here. " +
                       "Please see https://docs.dkandu.me/projects/naptime/advanced.html")
                   q"Left(???)" // Use this as a placeholder.
@@ -559,7 +562,7 @@ class MacroImpls(val c: blackbox.Context) {
               List(q"requestHeader: $REQUEST_HEADER", q"optPathKey: resourceInstance.OptPathKey"),
               actionCategory)
           } else {
-              Left(methodSymbol.pos, "Parameter list must be empty.")
+            Left(methodSymbol.pos, "Parameter list must be empty.")
           }
         case firstMethod :: _ =>
           // Note: we use firstMethod.pos as this list is reverse of source-order.
@@ -595,38 +598,39 @@ class MacroImpls(val c: blackbox.Context) {
               paramList <- methodSymbol.paramLists
               (param, i) <- paramList.zipWithIndex
             } yield {
-                debug(s"param is: $param ('${param.name}') and ${param.typeSignature}")
-                val parsedTerm = TermName(s"param_${param.name.toString}")
-                val parser = param match {
-                  case Types.PathKey() =>
-                    debug(s"FOUND A PATH KEY FOR ${param.name}")
-                    q"Right(pathKey)" // Method passes it right in.
-                  case Types.OptPathKey() =>
-                    debug(s"Found an inappropriate OptPathKey for param ${param.name}")
-                    c.error(param.pos, "You cannot bind an OptPathKey in this context.")
-                    q"Left(???)"
-                  case Types.Id() =>
-                    debug(s"Found an ID parameter: ${param.name} with type ${param.typeSignature}")
-                    q"Right(pathKey.head)"
-                  case Types.AncestorKeys() =>
-                    debug(s"FOUND AN ANCESTORKEY for ${param.name}")
-                    q"Right(pathToAncestor(pathKey))"
-                  case Types.KeyType() =>
-                    debug(s"Found a KeyType key for ${param.name}")
-                    q"Right(pathKey.head)"
-                  case Types.OptionalParam() =>
-                    debug(s"Building parser for '${param.name}' with type '${param.typeSignature}'")
-                    buildQueryParamParserTree(param, i, methodSymbol)
-                  case Types.ArbitraryParam() =>
-                    c.error(param.pos,
-                      s"Parameter ${param.name}: ${param.typeSignature} not allowed here. " +
-                        "Please see https://docs.dkandu.me/projects/naptime/advanced.html")
-                    q"Left(???)" // Use this as a placeholder.
-                }
-                val parsingTree = q"val $parsedTerm = $parser"
-                val extractedValue = q"$parsedTerm.right.get"
-                (parsedTerm, parsingTree, extractedValue)
+              debug(s"param is: $param ('${param.name}') and ${param.typeSignature}")
+              val parsedTerm = TermName(s"param_${param.name.toString}")
+              val parser = param match {
+                case Types.PathKey() =>
+                  debug(s"FOUND A PATH KEY FOR ${param.name}")
+                  q"Right(pathKey)" // Method passes it right in.
+                case Types.OptPathKey() =>
+                  debug(s"Found an inappropriate OptPathKey for param ${param.name}")
+                  c.error(param.pos, "You cannot bind an OptPathKey in this context.")
+                  q"Left(???)"
+                case Types.Id() =>
+                  debug(s"Found an ID parameter: ${param.name} with type ${param.typeSignature}")
+                  q"Right(pathKey.head)"
+                case Types.AncestorKeys() =>
+                  debug(s"FOUND AN ANCESTORKEY for ${param.name}")
+                  q"Right(pathToAncestor(pathKey))"
+                case Types.KeyType() =>
+                  debug(s"Found a KeyType key for ${param.name}")
+                  q"Right(pathKey.head)"
+                case Types.OptionalParam() =>
+                  debug(s"Building parser for '${param.name}' with type '${param.typeSignature}'")
+                  buildQueryParamParserTree(param, i, methodSymbol)
+                case Types.ArbitraryParam() =>
+                  c.error(
+                    param.pos,
+                    s"Parameter ${param.name}: ${param.typeSignature} not allowed here. " +
+                      "Please see https://docs.dkandu.me/projects/naptime/advanced.html")
+                  q"Left(???)" // Use this as a placeholder.
               }
+              val parsingTree = q"val $parsedTerm = $parser"
+              val extractedValue = q"$parsedTerm.right.get"
+              (parsedTerm, parsingTree, extractedValue)
+            }
             methodOverrideCodeGenerator(
               params,
               methodName,
@@ -643,20 +647,16 @@ class MacroImpls(val c: blackbox.Context) {
       }
     }
 
-    private[this] def buildGetTree(
-        methods: Iterable[c.universe.MethodSymbol]): OptionalTree =
+    private[this] def buildGetTree(methods: Iterable[c.universe.MethodSymbol]): OptionalTree =
       buildSingleElementActionTree(GetRestActionCategory, "executeGet", methods)
 
-    private[this] def buildUpdateTree(
-        methods: Iterable[c.universe.MethodSymbol]): OptionalTree =
+    private[this] def buildUpdateTree(methods: Iterable[c.universe.MethodSymbol]): OptionalTree =
       buildSingleElementActionTree(UpdateRestActionCategory, "executePut", methods)
 
-    private[this] def buildDeleteTree(
-        methods: Iterable[c.universe.MethodSymbol]): OptionalTree =
+    private[this] def buildDeleteTree(methods: Iterable[c.universe.MethodSymbol]): OptionalTree =
       buildSingleElementActionTree(DeleteRestActionCategory, "executeDelete", methods)
 
-    private[this] def buildPatchTree(
-        methods: Iterable[c.universe.MethodSymbol]): OptionalTree =
+    private[this] def buildPatchTree(methods: Iterable[c.universe.MethodSymbol]): OptionalTree =
       buildSingleElementActionTree(PatchRestActionCategory, "executePatch", methods)
 
     private[this] def buildMultiGetTree(
@@ -683,7 +683,8 @@ class MacroImpls(val c: blackbox.Context) {
                 case Types.OptionalParam() =>
                   buildQueryParamParserTree(param, i, methodSymbol)
                 case Types.ArbitraryParam() =>
-                  c.error(param.pos,
+                  c.error(
+                    param.pos,
                     s"Parameter ${param.name}: ${param.typeSignature} not allowed here. " +
                       "Please see https://docs.dkandu.me/projects/naptime/advanced.html")
                   q"Left(???)" // Use this as a placeholder.
@@ -697,7 +698,8 @@ class MacroImpls(val c: blackbox.Context) {
                 params,
                 TermName("executeMultiGet"),
                 methodSymbol,
-                List(q"requestHeader: $REQUEST_HEADER",
+                List(
+                  q"requestHeader: $REQUEST_HEADER",
                   q"optPathKey: resourceInstance.OptPathKey",
                   q"ids: Set[resourceInstance.KeyType]"),
                 MultiGetRestActionCategory)
@@ -772,8 +774,8 @@ class MacroImpls(val c: blackbox.Context) {
      * @param method The method we are parsing.
      * @return A tree corresponding to the case branch to take, and a Handler schema tree
      */
-    private[this] def buildSingleNamedActionTree(category: RestActionCategory)
-        (method: c.universe.MethodSymbol): (c.Tree, c.Tree) = {
+    private[this] def buildSingleNamedActionTree(category: RestActionCategory)(
+        method: c.universe.MethodSymbol): (c.Tree, c.Tree) = {
       debug(s"building single named action tree for method $method")
       val params = for {
         paramList <- method.paramLists
@@ -860,15 +862,15 @@ class MacroImpls(val c: blackbox.Context) {
       } else if (param.typeSignature <:< weakTypeOf[Option[Any]]) {
         // Use OptionalQueryParser.
         val internalType = param.typeSignature.typeArgs.head // Option's type parameter.
-        val stringKeyFormatType = appliedType(STRING_KEY_FORMAT_TYPE_CONSTRUCTOR,
-            List(internalType))
+        val stringKeyFormatType =
+          appliedType(STRING_KEY_FORMAT_TYPE_CONSTRUCTOR, List(internalType))
         val inferredFormatter = c.inferImplicitValue(stringKeyFormatType)
         q"""org.coursera.naptime.router2.CollectionResourceRouter.OptionalQueryParser(
           $paramName, $inferredFormatter, resourceInstance.getClass).evaluate(requestHeader)"""
       } else {
         // Use strict query parser.
-        val stringKeyFormatType = appliedType(STRING_KEY_FORMAT_TYPE_CONSTRUCTOR,
-          List(param.typeSignature))
+        val stringKeyFormatType =
+          appliedType(STRING_KEY_FORMAT_TYPE_CONSTRUCTOR, List(param.typeSignature))
         val inferredFormatter = c.inferImplicitValue(stringKeyFormatType)
         if (param.asTerm.isParamWithDefault) {
           val getterName = TermName(s"${method.name}$$default$$" + (index + 1))
@@ -910,7 +912,7 @@ class MacroImpls(val c: blackbox.Context) {
       object AncestorKeys {
         def unapply(a: Symbol): Boolean = {
           a.typeSignature.toString.endsWith(".this.AncestorKeys") ||
-            a.typeSignature.toString == "AncestorKeys"
+          a.typeSignature.toString == "AncestorKeys"
         }
       }
 

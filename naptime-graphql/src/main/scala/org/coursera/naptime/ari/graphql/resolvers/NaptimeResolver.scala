@@ -21,7 +21,6 @@ import sangria.execution.deferred.DeferredResolver
 import scala.concurrent.ExecutionContext
 import scala.concurrent.Future
 
-
 case class NaptimeRequest(
     idx: RequestId,
     resourceName: ResourceName,
@@ -37,10 +36,7 @@ case class NaptimeResponse(
     status: Int = 200,
     errorMessage: Option[String] = None)
 
-case class NaptimeError(
-    url: String,
-    status: Int,
-    errorMessage: String)
+case class NaptimeError(url: String, status: Int, errorMessage: String)
 
 sealed trait DeferredNaptime {
   def toNaptimeRequest(idx: Int): NaptimeRequest
@@ -91,11 +87,8 @@ case class DeferredNaptimeElement(
 case class RequestId(idx: Int)
 
 class NaptimeResolver extends DeferredResolver[SangriaGraphQlContext] with StrictLogging {
-  def resolve(
-      deferred: Vector[Deferred[Any]],
-      ctx: SangriaGraphQlContext,
-      queryState: Any)
-      (implicit ec: ExecutionContext): Vector[Future[Any]] = {
+  def resolve(deferred: Vector[Deferred[Any]], ctx: SangriaGraphQlContext, queryState: Any)(
+      implicit ec: ExecutionContext): Vector[Future[Any]] = {
 
     val naptimeRequests = deferred.zipWithIndex.collect {
       case (d: DeferredNaptime, idx: Int) => d.toNaptimeRequest(idx)
@@ -128,13 +121,11 @@ class NaptimeResolver extends DeferredResolver[SangriaGraphQlContext] with Stric
 
     val allData = Future.sequence(dataByResource).map(_.flatten.toMap)
 
-    deferred.zipWithIndex.map { case (_, idx) =>
-      allData.map(
-        _.getOrElse(
-          RequestId(idx), {
-            throw new RuntimeException(
-              "Error in NaptimeResolver. Could not find outgoing request.")
-          }))
+    deferred.zipWithIndex.map {
+      case (_, idx) =>
+        allData.map(_.getOrElse(RequestId(idx), {
+          throw new RuntimeException("Error in NaptimeResolver. Could not find outgoing request.")
+        }))
     }
   }
 
@@ -188,7 +179,8 @@ class NaptimeResolver extends DeferredResolver[SangriaGraphQlContext] with Stric
                   }.toMap
               }
           }
-    }.map(_.flatten.toMap)
+      }
+      .map(_.flatten.toMap)
   }
 
   /**
@@ -223,24 +215,27 @@ class NaptimeResolver extends DeferredResolver[SangriaGraphQlContext] with Stric
 
   private[this] def parseIds(request: NaptimeRequest): Seq[JsValue] = {
     // .toSeq here is to preserve id ordering in related resource id arrays
-    request.arguments.toSeq.filter { case (key, _) => key == "ids" }.map(_._2)
+    request.arguments.toSeq
+      .filter { case (key, _) => key == "ids" }
+      .map(_._2)
       .flatMap {
         case JsArray(idValues) => idValues
-        case value: JsValue => List(value)
-      }.distinct
+        case value: JsValue    => List(value)
+      }
+      .distinct
   }
 
   /**
-    * Fetches reverse relations for a specific resource given a list of requests
-    *
-    * In the event of an error, a NaptimeError is returned instead of a NaptimeResponse
-    *
-    * @param requests list of NaptimeRequests containing the endpoint and arguments (including ids)
-    * @param resourceName resource that the requests is made against
-    * @param context request context (includes things like header)
-    * @return Map of request ids (indexes from the deferred request batching) to either a
-    *         NaptimeError or NaptimeResponse
-    */
+   * Fetches reverse relations for a specific resource given a list of requests
+   *
+   * In the event of an error, a NaptimeError is returned instead of a NaptimeResponse
+   *
+   * @param requests list of NaptimeRequests containing the endpoint and arguments (including ids)
+   * @param resourceName resource that the requests is made against
+   * @param context request context (includes things like header)
+   * @return Map of request ids (indexes from the deferred request batching) to either a
+   *         NaptimeError or NaptimeResponse
+   */
   def fetchReverseRelations(
       requests: Vector[NaptimeRequest],
       resourceName: ResourceName,
@@ -266,35 +261,34 @@ class NaptimeResolver extends DeferredResolver[SangriaGraphQlContext] with Stric
             }
             .map(res => Map(request.idx -> res))
         }
-    }.map(_.flatten.toMap)
+      }
+      .map(_.flatten.toMap)
   }
 
   /**
-    * Helper to parse the elements in a response into a map of JsValue -> DataMapWithParent
-    * @param response Response from the network call, containing data returned
-    * @param resourceSchema schema that defines the shape of the response, for later use
-    * @return Map of JsValue ids to DataMapWithParents
-    */
+   * Helper to parse the elements in a response into a map of JsValue -> DataMapWithParent
+   * @param response Response from the network call, containing data returned
+   * @param resourceSchema schema that defines the shape of the response, for later use
+   * @return Map of JsValue ids to DataMapWithParents
+   */
   def parseElements(
       request: Request,
       response: Response,
       resourceSchema: RecordDataSchema): List[DataMapWithParent] = {
     response.data.map { element =>
-      DataMapWithParent(
-        element,
-        ParentModel(request.resource, element, resourceSchema))
+      DataMapWithParent(element, ParentModel(request.resource, element, resourceSchema))
     }
   }
 
   /**
-    * Extracts a resource name from a list of NaptimeRequests.
-    *
-    * This method assumes that all requests will be for the same resource,
-    * otherwise it will return None.
-    *
-    * @param requests a list of NaptimeRequests
-    * @return a ResourceName if all requests are for the same resource, otherwise None
-    */
+   * Extracts a resource name from a list of NaptimeRequests.
+   *
+   * This method assumes that all requests will be for the same resource,
+   * otherwise it will return None.
+   *
+   * @param requests a list of NaptimeRequests
+   * @return a ResourceName if all requests are for the same resource, otherwise None
+   */
   def getResourceName(requests: Vector[NaptimeRequest]): Option[ResourceName] = {
     val byResourceName = requests.groupBy(_.resourceName)
     if (byResourceName.size > 1) {

@@ -36,12 +36,17 @@ import scala.concurrent.Future
  * synchronous function. Use either the `apply` function or the `async` function to create a
  * [[RestAction]] which can then handle requests.
  */
-class RestActionBodyBuilder
-  [RACType, AuthType, BodyType, ResourceKeyType, ResourceType, ResponseType](
+class RestActionBodyBuilder[
+    RACType,
+    AuthType,
+    BodyType,
+    ResourceKeyType,
+    ResourceType,
+    ResponseType](
     auth: HeaderAccessControl[AuthType],
     bodyParser: BodyParser[BodyType],
-    errorHandler: PartialFunction[Throwable, RestError])
-    (implicit keyFormat: KeyFormat[ResourceKeyType],
+    errorHandler: PartialFunction[Throwable, RestError])(
+    implicit keyFormat: KeyFormat[ResourceKeyType],
     resourceFormat: OFormat[ResourceType],
     ec: ExecutionContext,
     mat: Materializer) { self =>
@@ -51,32 +56,32 @@ class RestActionBodyBuilder
   type BuiltAction =
     RestAction[RACType, AuthType, BodyType, ResourceKeyType, ResourceType, ResponseType]
 
-  def apply(fn: RestContext[AuthType, BodyType] => RestResponse[ResponseType])
-      (implicit category: CategoryEngine,
+  def apply(fn: RestContext[AuthType, BodyType] => RestResponse[ResponseType])(
+      implicit category: CategoryEngine,
       fields: Fields[ResourceType],
       paginationConfiguration: PaginationConfiguration): BuiltAction = {
 
     async(ctx => Future.successful(fn(ctx)))
   }
 
-  def apply(fn: => RestResponse[ResponseType])
-      (implicit category: CategoryEngine,
+  def apply(fn: => RestResponse[ResponseType])(
+      implicit category: CategoryEngine,
       fields: Fields[ResourceType],
       paginationConfiguration: PaginationConfiguration): BuiltAction = {
 
     async(_ => Futures.immediate(fn))
   }
 
-  def async(fn: => Future[RestResponse[ResponseType]])
-      (implicit category: CategoryEngine,
+  def async(fn: => Future[RestResponse[ResponseType]])(
+      implicit category: CategoryEngine,
       fields: Fields[ResourceType],
       paginationConfiguration: PaginationConfiguration): BuiltAction = {
 
     async(_ => fn)
   }
 
-  def async(fn: RestContext[AuthType, BodyType] => Future[RestResponse[ResponseType]])
-      (implicit category: CategoryEngine,
+  def async(fn: RestContext[AuthType, BodyType] => Future[RestResponse[ResponseType]])(
+      implicit category: CategoryEngine,
       fields: Fields[ResourceType],
       _paginationConfiguration: PaginationConfiguration): BuiltAction = {
 
@@ -92,8 +97,9 @@ class RestActionBodyBuilder
       override val executionContext = ec
       override val materializer = mat
 
-      override def apply(context: RestContext[AuthType, BodyType]):
-        Future[RestResponse[ResponseType]] = Futures.safelyCall(fn(context))
+      override def apply(
+          context: RestContext[AuthType, BodyType]): Future[RestResponse[ResponseType]] =
+        Futures.safelyCall(fn(context))
     }
   }
 }

@@ -32,11 +32,11 @@ import play.api.mvc.Result
  * Throw to break out of a Naptime action body on error.
  */
 case class NaptimeActionException(
-  httpCode: Int,
-  errorCode: Option[String],
-  message: Option[String],
-  details: Option[JsValue] = None)
-  extends RuntimeException(s"Naptime error $httpCode [$errorCode]: $message") {
+    httpCode: Int,
+    errorCode: Option[String],
+    message: Option[String],
+    details: Option[JsValue] = None)
+    extends RuntimeException(s"Naptime error $httpCode [$errorCode]: $message") {
 
   def result: Result = {
     val bodyJson = Json.toJson(NaptimeActionException.Body(errorCode, message, details))
@@ -54,8 +54,8 @@ case class NaptimeActionException(
    *
    * @return A new NaptimeActionException with exception details formatted as JSON.
    */
-  def withExceptionDetails[T](details: Option[T])(implicit format: OFormat[T]):
-  NaptimeActionException =
+  def withExceptionDetails[T](details: Option[T])(
+      implicit format: OFormat[T]): NaptimeActionException =
     this.copy(
       details = details.map(format.writes)
     )
@@ -63,10 +63,7 @@ case class NaptimeActionException(
 
 object NaptimeActionException {
 
-  case class Body(
-    errorCode: Option[String],
-    message: Option[String],
-    details: Option[JsValue])
+  case class Body(errorCode: Option[String], message: Option[String], details: Option[JsValue])
 
   object Body {
 
@@ -104,14 +101,10 @@ trait Errors {
    * Note: Only use this within a Rest Action, and not a general action.
    */
   def BadRequest(
-    errorCode: String = null,
-    msg: String = null,
-    details: Option[JsValue] = None): NaptimeActionException =
-    new NaptimeActionException(
-      BAD_REQUEST,
-      Option(errorCode),
-      Option(msg),
-      details)
+      errorCode: String = null,
+      msg: String = null,
+      details: Option[JsValue] = None): NaptimeActionException =
+    new NaptimeActionException(BAD_REQUEST, Option(errorCode), Option(msg), details)
 
   /**
    * Error out with a BadRequest (400) response.
@@ -119,13 +112,10 @@ trait Errors {
    *
    * Note: Only use this within a Rest Action, and not a general action.
    */
-  def BadRequestT[T](
-    errorCode: String = null, msg: String = null, details: Option[T] =
-  None)(implicit format: OFormat[T]): NaptimeActionException =
-    new NaptimeActionException(
-      BAD_REQUEST,
-      Option(errorCode),
-      Option(msg)).withExceptionDetails(details)
+  def BadRequestT[T](errorCode: String = null, msg: String = null, details: Option[T] = None)(
+      implicit format: OFormat[T]): NaptimeActionException =
+    new NaptimeActionException(BAD_REQUEST, Option(errorCode), Option(msg))
+      .withExceptionDetails(details)
 
   /**
    * Error out with an Unauthorized (401) response.
@@ -133,14 +123,10 @@ trait Errors {
    * Note: Only use this within a Rest Action, and not a general action.
    */
   def Unauthorized(
-    errorCode: String = null,
-    msg: String = null,
-    details: Option[JsValue] = None): NaptimeActionException =
-    new NaptimeActionException(
-      UNAUTHORIZED,
-      Option(errorCode),
-      Option(msg),
-      details)
+      errorCode: String = null,
+      msg: String = null,
+      details: Option[JsValue] = None): NaptimeActionException =
+    new NaptimeActionException(UNAUTHORIZED, Option(errorCode), Option(msg), details)
 
   /**
    * Error out with an Unauthorized (401) response.
@@ -148,13 +134,10 @@ trait Errors {
    *
    * Note: Only use this within a Rest Action, and not a general action.
    */
-  def UnauthorizedT[T](
-    errorCode: String = null, msg: String = null, details: Option[T] =
-  None)(implicit format: OFormat[T]): NaptimeActionException =
-    new NaptimeActionException(
-      UNAUTHORIZED,
-      Option(errorCode),
-      Option(msg)).withExceptionDetails(details)
+  def UnauthorizedT[T](errorCode: String = null, msg: String = null, details: Option[T] = None)(
+      implicit format: OFormat[T]): NaptimeActionException =
+    new NaptimeActionException(UNAUTHORIZED, Option(errorCode), Option(msg))
+      .withExceptionDetails(details)
 
   /**
    * Error out with an Forbidden (403) response.
@@ -162,14 +145,10 @@ trait Errors {
    * Note: Only use this within a Rest Action, and not a general action.
    */
   def Forbidden(
-    errorCode: String = null,
-    msg: String = null,
-    details: Option[JsValue] = None): NaptimeActionException =
-    new NaptimeActionException(
-      FORBIDDEN,
-      Option(errorCode),
-      Option(msg),
-      details)
+      errorCode: String = null,
+      msg: String = null,
+      details: Option[JsValue] = None): NaptimeActionException =
+    new NaptimeActionException(FORBIDDEN, Option(errorCode), Option(msg), details)
 
   /**
    * Error out with an Not Found (404) response.
@@ -177,14 +156,10 @@ trait Errors {
    * Note: Only use this within a Rest Action, and not a general action.
    */
   def NotFound(
-    errorCode: String = null,
-    msg: String = null,
-    details: Option[JsValue] = None): NaptimeActionException =
-    new NaptimeActionException(
-      NOT_FOUND,
-      Option(errorCode),
-      Option(msg),
-      details)
+      errorCode: String = null,
+      msg: String = null,
+      details: Option[JsValue] = None): NaptimeActionException =
+    new NaptimeActionException(NOT_FOUND, Option(errorCode), Option(msg), details)
 
   /**
    * Error out with an Not Found (404) response.
@@ -192,17 +167,15 @@ trait Errors {
    *
    * Note: Only use this within a Rest Action, and not a general action.
    */
-  def NotFoundT[T](errorCode: String = null, msg: String = null, details: Option[T] = None)
-    (implicit format: OFormat[T]): NaptimeActionException =
-    new NaptimeActionException(
-      NOT_FOUND,
-      Option(errorCode),
-      Option(msg)).withExceptionDetails(details)
+  def NotFoundT[T](errorCode: String = null, msg: String = null, details: Option[T] = None)(
+      implicit format: OFormat[T]): NaptimeActionException =
+    new NaptimeActionException(NOT_FOUND, Option(errorCode), Option(msg))
+      .withExceptionDetails(details)
 
   import scala.reflect.runtime.universe.TypeTag
 
-  def NotFound[MissingType](id: Int)
-    (implicit typeTag: TypeTag[MissingType]): NaptimeActionException = {
+  def NotFound[MissingType](id: Int)(
+      implicit typeTag: TypeTag[MissingType]): NaptimeActionException = {
     NotFound("missing", s"No ${typeTag.tpe.toString} with id: $id")
   }
 
@@ -212,14 +185,10 @@ trait Errors {
    * Note: Only use this within a Rest Action, and not a general action.
    */
   def Conflict(
-    errorCode: String = null,
-    msg: String = null,
-    details: Option[JsValue] = None): NaptimeActionException =
-    new NaptimeActionException(
-      CONFLICT,
-      Option(errorCode),
-      Option(msg),
-      details)
+      errorCode: String = null,
+      msg: String = null,
+      details: Option[JsValue] = None): NaptimeActionException =
+    new NaptimeActionException(CONFLICT, Option(errorCode), Option(msg), details)
 
   /**
    * Error out with an Gone (410) response.
@@ -227,14 +196,10 @@ trait Errors {
    * Note: Only use this within a Rest Action, and not a general action.
    */
   def Gone(
-    errorCode: String = null,
-    msg: String = null,
-    details: Option[JsValue] = None): NaptimeActionException =
-    new NaptimeActionException(
-      GONE,
-      Option(errorCode),
-      Option(msg),
-      details)
+      errorCode: String = null,
+      msg: String = null,
+      details: Option[JsValue] = None): NaptimeActionException =
+    new NaptimeActionException(GONE, Option(errorCode), Option(msg), details)
 
   /**
    * Error out with a precondition failed (412) response.
@@ -242,14 +207,10 @@ trait Errors {
    * Note: Only use this within a Rest Action, and not a general action.
    */
   def PreconditionFailed(
-    errorCode: String = null,
-    msg: String = null,
-    details: Option[JsValue] = None): NaptimeActionException =
-    new NaptimeActionException(
-      PRECONDITION_FAILED,
-      Option(errorCode),
-      Option(msg),
-      details)
+      errorCode: String = null,
+      msg: String = null,
+      details: Option[JsValue] = None): NaptimeActionException =
+    new NaptimeActionException(PRECONDITION_FAILED, Option(errorCode), Option(msg), details)
 
   /**
    * Error out with an internal server error (500) response.
@@ -257,14 +218,10 @@ trait Errors {
    * Note: Only use this within a Rest Action, and not a general action.
    */
   def InternalServerError(
-    errorCode: String = null,
-    msg: String = null,
-    details: Option[JsValue] = None): NaptimeActionException =
-    new NaptimeActionException(
-      INTERNAL_SERVER_ERROR,
-      Option(errorCode),
-      Option(msg),
-      details)
+      errorCode: String = null,
+      msg: String = null,
+      details: Option[JsValue] = None): NaptimeActionException =
+    new NaptimeActionException(INTERNAL_SERVER_ERROR, Option(errorCode), Option(msg), details)
 
   /**
    * Error out with a bad gateway error (502) response.
@@ -272,14 +229,10 @@ trait Errors {
    * Note: Only use this within a Rest Action, and not a general action.
    */
   def BadGateway(
-    errorCode: String = null,
-    msg: String = null,
-    details: Option[JsValue] = None): NaptimeActionException =
-    new NaptimeActionException(
-      BAD_GATEWAY,
-      Option(errorCode),
-      Option(msg),
-      details)
+      errorCode: String = null,
+      msg: String = null,
+      details: Option[JsValue] = None): NaptimeActionException =
+    new NaptimeActionException(BAD_GATEWAY, Option(errorCode), Option(msg), details)
 
   /**
    * Error out with a service unavailable (503) response.
@@ -287,14 +240,10 @@ trait Errors {
    * Note: Only use this within a Rest Action, and not a general action.
    */
   def ServiceUnavailable(
-    errorCode: String = null,
-    msg: String = null,
-    details: Option[JsValue] = None): NaptimeActionException =
-    new NaptimeActionException(
-      SERVICE_UNAVAILABLE,
-      Option(errorCode),
-      Option(msg),
-      details)
+      errorCode: String = null,
+      msg: String = null,
+      details: Option[JsValue] = None): NaptimeActionException =
+    new NaptimeActionException(SERVICE_UNAVAILABLE, Option(errorCode), Option(msg), details)
 
   /**
    * Error out with a gateway timeout (504) response.
@@ -302,23 +251,19 @@ trait Errors {
    * Note: Only use this within a Rest Action, and not a general action.
    */
   def GatewayTimeout(
-    errorCode: String = null,
-    msg: String = null,
-    details: Option[JsValue] = None): NaptimeActionException =
-    new NaptimeActionException(
-      GATEWAY_TIMEOUT,
-      Option(errorCode),
-      Option(msg),
-      details)
+      errorCode: String = null,
+      msg: String = null,
+      details: Option[JsValue] = None): NaptimeActionException =
+    new NaptimeActionException(GATEWAY_TIMEOUT, Option(errorCode), Option(msg), details)
 
   /**
    * Generate your own HTTP 4XX or 5XX response, specifying your own HTTP code.
    */
   def error(
-    httpCode: Int,
-    errorCode: String = null,
-    msg: String = null,
-    details: Option[JsValue] = None): NaptimeActionException =
+      httpCode: Int,
+      errorCode: String = null,
+      msg: String = null,
+      details: Option[JsValue] = None): NaptimeActionException =
     new NaptimeActionException(httpCode, Option(errorCode), Option(msg), details)
 }
 

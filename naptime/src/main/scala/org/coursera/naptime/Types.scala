@@ -45,9 +45,9 @@ object Types extends StrictLogging {
 
   @deprecated("Please use the one with fields included", "0.2.4")
   def computeAsymType(
-    typeName: String,
-    keyType: DataSchema,
-    valueType: RecordDataSchema): RecordDataSchema = {
+      typeName: String,
+      keyType: DataSchema,
+      valueType: RecordDataSchema): RecordDataSchema = {
     if (keyType.hasError || valueType.hasError) {
       throw new RuntimeException(s"Input schemas have error: $keyType $valueType")
     }
@@ -95,8 +95,9 @@ object Types extends StrictLogging {
     for ((name, reverseRelation) <- fields.reverseRelations) {
       Option(mergedSchema.getField(name)) match {
         case Some(field) =>
-          logger.warn(s"Fields for resource $typeName tries to add reverse relation on field " +
-            s"'$name', but that field is already defined on the model")
+          logger.warn(
+            s"Fields for resource $typeName tries to add reverse relation on field " +
+              s"'$name', but that field is already defined on the model")
         case None =>
           val errorMessageBuilder = new StringBuilder
           val newField = reverseRelation.toAnnotation.relationType match {
@@ -109,8 +110,9 @@ object Types extends StrictLogging {
               newField.setOptional(true)
               newField
             case _ =>
-              throw new RuntimeException("unknown relation type: " +
-                reverseRelation.toAnnotation.relationType.toString)
+              throw new RuntimeException(
+                "unknown relation type: " +
+                  reverseRelation.toAnnotation.relationType.toString)
           }
           val reverseRelatedMap = Map[String, AnyRef](
             Relations.REVERSE_PROPERTY_NAME -> reverseRelation.toAnnotation.data())
@@ -186,9 +188,9 @@ object Types extends StrictLogging {
 
   // Adapted from DataSchemaUtil.getField
   private[this] def insertFieldAtLocation(
-    schema: DataSchema,
-    location: List[String],
-    field: RecordDataSchema.Field): DataSchema = {
+      schema: DataSchema,
+      location: List[String],
+      field: RecordDataSchema.Field): DataSchema = {
 
     schema.getDereferencedDataSchema match {
       case mapDataSchema: MapDataSchema =>
@@ -209,20 +211,22 @@ object Types extends StrictLogging {
           recordDataSchema
         } else {
           val fieldOption = Option(recordDataSchema.getField(location.head))
-          fieldOption.map { recordField =>
-            insertFieldAtLocation(recordField.getType, location.tail, field)
-          }.getOrElse {
-            logger.warn(s"Could not find field ${location.headOption} on record $schema")
-            schema
-          }
+          fieldOption
+            .map { recordField =>
+              insertFieldAtLocation(recordField.getType, location.tail, field)
+            }
+            .getOrElse {
+              logger.warn(s"Could not find field ${location.headOption} on record $schema")
+              schema
+            }
         }
       case unionDataSchema: UnionDataSchema =>
-        location
-          .headOption
+        location.headOption
           .flatMap(loc => Option(unionDataSchema.getType(loc)))
           .map { unionSchema =>
             insertFieldAtLocation(unionSchema, location.tail, field)
-          }.getOrElse {
+          }
+          .getOrElse {
             logger.warn(s"Could not find type ${location.headOption} on union $schema")
             schema
           }

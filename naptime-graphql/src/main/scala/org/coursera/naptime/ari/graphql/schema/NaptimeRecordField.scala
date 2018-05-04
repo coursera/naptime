@@ -24,7 +24,12 @@ object NaptimeRecordField extends StrictLogging {
 
     Field.apply[SangriaGraphQlContext, DataMapWithParent, Any, Any](
       name = FieldBuilder.formatName(fieldName),
-      fieldType = getType(schemaMetadata, recordDataSchema, namespace, resourceName, currentPath :+ fieldName),
+      fieldType = getType(
+        schemaMetadata,
+        recordDataSchema,
+        namespace,
+        resourceName,
+        currentPath :+ fieldName),
       resolve = context => {
         context.value.element.get(fieldName) match {
           case dataMap: DataMap =>
@@ -52,7 +57,12 @@ object NaptimeRecordField extends StrictLogging {
       recordDataSchema.getDoc,
       fieldsFn = () => {
         val fields = recordDataSchema.getFields.asScala.map { field =>
-          FieldBuilder.buildField(schemaMetadata, field, namespace, resourceName = resourceName, currentPath = currentPath)
+          FieldBuilder.buildField(
+            schemaMetadata,
+            field,
+            namespace,
+            resourceName = resourceName,
+            currentPath = currentPath)
         }.toList
         if (fields.isEmpty) {
           // TODO(bryan): Handle this case better
@@ -68,6 +78,5 @@ object NaptimeRecordField extends StrictLogging {
       "ArbitraryField",
       StringType,
       resolve = context => null))
-
 
 }

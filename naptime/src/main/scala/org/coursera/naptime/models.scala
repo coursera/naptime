@@ -62,21 +62,21 @@ class RestContext[+AuthType, +BodyType] private[naptime] (
    */
   def selectLanguage(availableLanguages: Set[Lang], default: Lang): Lang = {
 
-      /**
-       * Implementation of the tail-recursive algorithm.
-       *
-       * @param languagePreferences Preferences in decreasing preference order (from the request)
-       * @return The language to use.
-       */
-      @tailrec
-      def findPreferredLanguage(languagePreferences: Seq[Lang]): Lang = {
-        if (languagePreferences.isEmpty) default
-        else {
-          val satisfiableLanguage = availableLanguages.find(_.satisfies(languagePreferences.head))
-          if (satisfiableLanguage.isDefined) satisfiableLanguage.get
-          else findPreferredLanguage(languagePreferences.tail)
-        }
+    /**
+     * Implementation of the tail-recursive algorithm.
+     *
+     * @param languagePreferences Preferences in decreasing preference order (from the request)
+     * @return The language to use.
+     */
+    @tailrec
+    def findPreferredLanguage(languagePreferences: Seq[Lang]): Lang = {
+      if (languagePreferences.isEmpty) default
+      else {
+        val satisfiableLanguage = availableLanguages.find(_.satisfies(languagePreferences.head))
+        if (satisfiableLanguage.isDefined) satisfiableLanguage.get
+        else findPreferredLanguage(languagePreferences.tail)
       }
+    }
 
     findPreferredLanguage(acceptLanguages)
   }
@@ -116,6 +116,7 @@ case class RequestPagination(limit: Int, start: Option[String], isDefault: Boole
 }
 
 object RequestPagination {
+
   /**
    * Parse pagination from the request header, falling back to the configuration as requested.
    */
@@ -123,10 +124,13 @@ object RequestPagination {
     // Parse out the start parameter.
     val start = rh.queryString.get("start").flatMap(_.headOption)
     // Parse out the limit string.
-    val limit = rh.queryString.get("limit").flatMap(_.headOption).flatMap(str => Try(str.toInt).toOption)
-    limit.map { limit =>
-      RequestPagination(limit, start, isDefault = false)
-    }.getOrElse(RequestPagination(configuration.defaultLimit, start, isDefault = true))
+    val limit =
+      rh.queryString.get("limit").flatMap(_.headOption).flatMap(str => Try(str.toInt).toOption)
+    limit
+      .map { limit =>
+        RequestPagination(limit, start, isDefault = false)
+      }
+      .getOrElse(RequestPagination(configuration.defaultLimit, start, isDefault = true))
   }
 }
 
@@ -180,6 +184,7 @@ object ResponsePagination {
  * changes to the Naptime framework.
  */
 trait RequestIncludes {
+
   /**
    * Whether related resource that `fieldName` references should be included in the response.
    *
@@ -189,6 +194,7 @@ trait RequestIncludes {
   def includeFieldsRelatedResource(fieldName: String): Boolean
   def forResource(resource: ResourceName): Option[RequestIncludes]
 }
+
 /**
  * The type safe structure of the requested includes for a request.
  *
@@ -201,8 +207,7 @@ trait RequestIncludes {
 private[naptime] case class QueryIncludes(
     fields: Set[String],
     resources: Map[ResourceName, Set[String]])
-  extends RequestIncludes {
-
+    extends RequestIncludes {
 
   override def includeFieldsRelatedResource(fieldName: String): Boolean = fields.contains(fieldName)
 
@@ -251,18 +256,19 @@ object QueryIncludes {
  * @param format The JSON serialization formatter for the resource.
  * @tparam T The type of the resource in the collection.
  */
-@implicitNotFound("""Implement an implicit Fields using the FieldsBuilder (ex: implicit val fields =
+@implicitNotFound(
+  """Implement an implicit Fields using the FieldsBuilder (ex: implicit val fields =
     Fields.withDefaultFields("name", "desc"). If you encounter this error in a `withRelated` clause,
     be sure to import that resource's fields object.""")
 sealed case class Fields[T](
     defaultFields: Set[String],
     fieldsPermissionsFunction: FieldsFunction,
     relations: Map[String, ResourceName],
-    reverseRelations: Map[String, ReverseRelation])
-    (implicit format: OFormat[T]) {
+    reverseRelations: Map[String, ReverseRelation])(implicit format: OFormat[T]) {
 
-  private[this] val relationsInJson = relations.map { case (field, resourceName) =>
-    field -> JsString(resourceName.identifier)
+  private[this] val relationsInJson = relations.map {
+    case (field, resourceName) =>
+      field -> JsString(resourceName.identifier)
   }.toList
 
   /**
@@ -282,44 +288,55 @@ sealed case class Fields[T](
       includes: RequestIncludes): Unit = {
     val relationMap = new DataMap()
     links.put(name, relationMap)
-    relations.foreach { case (field, resourceName) =>
-      relationMap.put(field, resourceName.identifier)
+    relations.foreach {
+      case (field, resourceName) =>
+        relationMap.put(field, resourceName.identifier)
     }
   }
 
   private[naptime] def computeFields(rh: RequestHeader): Try[RequestFields] = {
     // Try the header override first
-    rh.headers.get(Fields.FIELDS_HEADER).map { fieldsHeader =>
-      fieldsHeader.toLowerCase match {
-        case "all" => Success(AllFields)
-        case _ => Failure(
-          new NaptimeActionException(
-            Status.BAD_REQUEST,
-            Some("naptime.parse.fieldsHeader"),
-            Some(s"Invalid ${Fields.FIELDS_HEADER} option")))
-      }
-    }.getOrElse {
-      // Merge all query parameters together with a comma to take the union of them all.
-      rh.queryString.get("fields").map { fieldsSeq =>
-        val unparsed = fieldsSeq.mkString(",")
-        QueryFields(unparsed).map { parsed =>
-          // TODO: FieldFn should be applied here.
-          parsed.mergeWithDefaults(defaultFields)
+    rh.headers
+      .get(Fields.FIELDS_HEADER)
+      .map { fieldsHeader =>
+        fieldsHeader.toLowerCase match {
+          case "all" => Success(AllFields)
+          case _ =>
+            Failure(
+              new NaptimeActionException(
+                Status.BAD_REQUEST,
+                Some("naptime.parse.fieldsHeader"),
+                Some(s"Invalid ${Fields.FIELDS_HEADER} option")))
         }
-      }.getOrElse {
-        // TODO: FieldFn should be applied here?
-        Success(QueryFields(defaultFields, Map.empty))
       }
-    }
+      .getOrElse {
+        // Merge all query parameters together with a comma to take the union of them all.
+        rh.queryString
+          .get("fields")
+          .map { fieldsSeq =>
+            val unparsed = fieldsSeq.mkString(",")
+            QueryFields(unparsed).map { parsed =>
+              // TODO: FieldFn should be applied here.
+              parsed.mergeWithDefaults(defaultFields)
+            }
+          }
+          .getOrElse {
+            // TODO: FieldFn should be applied here?
+            Success(QueryFields(defaultFields, Map.empty))
+          }
+      }
   }
 
   private[naptime] def computeIncludes(rh: RequestHeader): Try[QueryIncludes] = {
-    rh.queryString.get("includes").map { includesSeq =>
-      val unparsed = includesSeq.mkString(",")
-      QueryIncludes(unparsed) // No default includes to deal with / etc.
-    }.getOrElse {
-      Success(QueryIncludes.empty)
-    }
+    rh.queryString
+      .get("includes")
+      .map { includesSeq =>
+        val unparsed = includesSeq.mkString(",")
+        QueryIncludes(unparsed) // No default includes to deal with / etc.
+      }
+      .getOrElse {
+        Success(QueryIncludes.empty)
+      }
   }
 
   private[this] def withFieldsInternal(fieldNames: Set[String]): Fields[T] = {
@@ -364,11 +381,8 @@ object Fields {
 
   val FIELDS_HEADER = "X-Coursera-Naptime-Fields"
 
-  private[naptime] val FAKE_FIELDS: Fields[_] = Fields(
-    Set.empty,
-    FieldsFunction.default,
-    Map.empty,
-    Map.empty)(null)
+  private[naptime] val FAKE_FIELDS: Fields[_] =
+    Fields(Set.empty, FieldsFunction.default, Map.empty, Map.empty)(null)
 }
 
 // TODO(saeta): FieldFn should also take advantage of the authentication applied. This will require
@@ -378,6 +392,7 @@ sealed trait FieldsFunction extends ((RequestHeader, QueryFields) => QueryFields
 }
 
 object FieldsFunction {
+
   /**
    * Default fields function that does not modify the query fields by default.
    *
@@ -470,7 +485,7 @@ private[naptime] object AllFields extends RequestFields {
 private[naptime] case class QueryFields(
     fields: Set[String],
     resources: Map[ResourceName, Set[String]])
-  extends RequestFields {
+    extends RequestFields {
 
   override def hasField(name: String): Boolean = fields.contains(name)
 
@@ -509,9 +524,10 @@ object QueryFields {
 /**
  * Used to wrap a [[RequestFields]] but substitute out new related resources.
  */
-private[naptime] case class DelegateFields(delegate: RequestFields,
+private[naptime] case class DelegateFields(
+    delegate: RequestFields,
     resources: Map[ResourceName, RequestFields])
-  extends RequestFields {
+    extends RequestFields {
   override def hasField(name: String): Boolean = delegate.hasField(name)
 
   override private[naptime] def mergeWithDefaults(defaults: Set[String]): RequestFields = {
@@ -541,15 +557,17 @@ private[naptime] case class DelegateFields(delegate: RequestFields,
 private[naptime] object QueryStringParser extends RegexParsers {
   import scala.language.postfixOps
 
-  class NaptimeParseError(source: String, msg: String) extends NaptimeActionException(
-    httpCode = Status.BAD_REQUEST,
-    errorCode = Some(s"naptime.parse.$source"),
-    message = Some(s"Failed to parse includes query parameter. Error: $msg"))
+  class NaptimeParseError(source: String, msg: String)
+      extends NaptimeActionException(
+        httpCode = Status.BAD_REQUEST,
+        errorCode = Some(s"naptime.parse.$source"),
+        message = Some(s"Failed to parse includes query parameter. Error: $msg"))
 
   private[this] def field: Parser[String] = "-?[A-z0-9\\.]+".r
-  private[this] def nonEmptyFields: Parser[Set[String]] = (field ~ (("," ~> field) *)) ^^ { parsed =>
-    val elems = parsed._1 :: parsed._2
-    elems.toSet
+  private[this] def nonEmptyFields: Parser[Set[String]] = (field ~ (("," ~> field) *)) ^^ {
+    parsed =>
+      val elems = parsed._1 :: parsed._2
+      elems.toSet
   }
   private[this] def subResourcePath: Parser[Seq[String]] = ("/" ~> "[A-z0-9]+".r).*
   private[this] def resourceVersion: Parser[Int] = (".v".r ~> "\\d+".r) ^^ (_.toInt)
@@ -568,13 +586,12 @@ private[naptime] object QueryStringParser extends RegexParsers {
   private[this] def topLevelElement: Parser[Either[String, (ResourceName, Set[String])]] =
     topLevelResource | topLevelField
 
-
   private[this] def fieldsContent: Parser[QueryFields] =
     (topLevelElement ~ (("," ~ " ".? ~> topLevelElement) *)) ^^ { parsed =>
       val elements = parsed._1 :: parsed._2
       elements.foldLeft(QueryFields(Set.empty, Map.empty)) { (a, b) =>
         b match {
-          case Left(field) => a.copy(fields = a.fields + field)
+          case Left(field)     => a.copy(fields = a.fields + field)
           case Right(resource) => a.copy(resources = a.resources + resource)
         }
       }
@@ -587,7 +604,7 @@ private[naptime] object QueryStringParser extends RegexParsers {
       val elements = parsed._1 :: parsed._2
       elements.foldLeft(QueryIncludes(Set.empty, Map.empty)) { (a, b) =>
         b match {
-          case Left(field) => a.copy(fields = a.fields + field)
+          case Left(field)     => a.copy(fields = a.fields + field)
           case Right(resource) => a.copy(resources = a.resources + resource)
         }
       }

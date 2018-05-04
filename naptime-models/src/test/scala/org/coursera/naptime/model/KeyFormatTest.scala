@@ -31,9 +31,7 @@ class KeyFormatTest extends AssertionsForJUnit {
 
   @Test
   def testWithComplexReads(): Unit = {
-    val oldSerialization = Json.obj(
-      "userId" -> 12345L,
-      "courseId" -> "machine-learning")
+    val oldSerialization = Json.obj("userId" -> 12345L, "courseId" -> "machine-learning")
 
     val newSerialization = JsString("12345~machine-learning")
 

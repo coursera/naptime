@@ -40,13 +40,15 @@ import scala.language.existentials
 private[naptime] object JsonUtilities {
 
   def filterJsonFields(jsObj: JsObject, fields: RequestFields): JsObject = {
-    JsObject(jsObj.fields.filter { case (field, _) =>
-      field == KeyFormat.ID_FIELD || fields.hasField(field)
+    JsObject(jsObj.fields.filter {
+      case (field, _) =>
+        field == KeyFormat.ID_FIELD || fields.hasField(field)
     })
   }
 
-  def outputOneObj[K, T](obj: Keyed[K, T], fields: RequestFields)
-      (implicit writes: OWrites[T], keyFormat: KeyFormat[K]): JsObject = {
+  def outputOneObj[K, T](obj: Keyed[K, T], fields: RequestFields)(
+      implicit writes: OWrites[T],
+      keyFormat: KeyFormat[K]): JsObject = {
     val filtered = JsonUtilities.filterJsonFields(Keyed.writes.writes(obj), fields)
 
     val keyFields = keyFormat.format.writes(obj.key)
@@ -54,8 +56,9 @@ private[naptime] object JsonUtilities {
     keyFields ++ filtered
   }
 
-  def outputSeq[K, T](objs: Seq[Keyed[K, T]], fields: RequestFields)
-      (implicit writes: OWrites[T], keyWrites: KeyFormat[K]): Seq[JsObject] = {
+  def outputSeq[K, T](objs: Seq[Keyed[K, T]], fields: RequestFields)(
+      implicit writes: OWrites[T],
+      keyWrites: KeyFormat[K]): Seq[JsObject] = {
     objs.map { obj =>
       outputOneObj(obj, fields)
     }
@@ -89,8 +92,9 @@ private[naptime] object JsonUtilities {
 
       val resourcesToInclude = oneHopResourcesToInclude ++ multiHopeResourcesToInclude
 
-      val filteredRelated = ok.related.filter { case (name, _) =>
-        resourcesToInclude.contains(name)
+      val filteredRelated = ok.related.filter {
+        case (name, _) =>
+          resourcesToInclude.contains(name)
       }.values
 
       Some(JsObject(filteredRelated.map(formatInclude(_, requestFields)).toList))
@@ -110,9 +114,10 @@ private[naptime] object JsonUtilities {
       ok: Ok[_]): JsObject = {
     // Don't bother outputting metadata if there are no fields present in the response.
     val visibleIncludes = ok.related.filterKeys(requestFields.forResource(_).isDefined)
-    val formatted = visibleIncludes.map { case (name, related) =>
-      name.identifier ->
-        related.fields.makeMetaRelationsMap(queryIncludes.resources.getOrElse(name, Set.empty))
+    val formatted = visibleIncludes.map {
+      case (name, related) =>
+        name.identifier ->
+          related.fields.makeMetaRelationsMap(queryIncludes.resources.getOrElse(name, Set.empty))
     }.toList
     JsObject("elements" -> fields.makeMetaRelationsMap(queryIncludes.fields) :: formatted)
   }

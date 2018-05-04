@@ -36,9 +36,10 @@ trait Decorator[-I, +O] {
       override def apply(input: I)(implicit ec: ExecutionContext): Future[Either[String, O2]] = {
         for {
           eitherO <- self.apply(input)
-          eitherO2 <- eitherO
-            .left.map(error => Future.successful(Left(error)))
-            .right.map(other.apply)
+          eitherO2 <- eitherO.left
+            .map(error => Future.successful(Left(error)))
+            .right
+            .map(other.apply)
             .merge
         } yield eitherO2
       }

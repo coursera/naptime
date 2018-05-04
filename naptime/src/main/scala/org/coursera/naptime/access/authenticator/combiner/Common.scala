@@ -29,9 +29,8 @@ private[combiner] object Common {
    */
   def combineAuthenticationResponses[A](
       successOptionFuture: Future[Option[Either[NaptimeActionException, A]]],
-      errorOptionFuture: Future[Option[Either[NaptimeActionException, A]]])
-      (implicit ec: ExecutionContext):
-    Future[Option[Either[NaptimeActionException, A]]] = {
+      errorOptionFuture: Future[Option[Either[NaptimeActionException, A]]])(
+      implicit ec: ExecutionContext): Future[Option[Either[NaptimeActionException, A]]] = {
 
     successOptionFuture.flatMap { successOption =>
       // If there's a successful authentication, use it.

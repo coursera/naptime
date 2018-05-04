@@ -8,10 +8,7 @@ import sangria.schema.Context
 
 case class ParentContext(parentContext: Context[SangriaGraphQlContext, DataMap])
 
-case class ParentModel(
-    resourceName: ResourceName,
-    value: DataMap,
-    schema: RecordDataSchema)
+case class ParentModel(resourceName: ResourceName, value: DataMap, schema: RecordDataSchema)
 
 case class DataMapWithParent(
     element: DataMap,

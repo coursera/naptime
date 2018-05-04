@@ -52,7 +52,8 @@ object NaptimeActionSerializer {
   }
 
   implicit object PlayJson extends NaptimeActionSerializer[JsValue] {
-    override def serialize(t: JsValue): Array[Byte] = Json.stringify(t).getBytes(StandardCharsets.UTF_8)
+    override def serialize(t: JsValue): Array[Byte] =
+      Json.stringify(t).getBytes(StandardCharsets.UTF_8)
 
     override def schema(t: JsValue): Option[DataSchema] = None
 
@@ -90,14 +91,16 @@ object NaptimeActionSerializer {
     new NaptimeActionSerializer[Option[T]] {
       override def serialize(t: Option[T]): Array[Byte] = {
         t.map { elem =>
-          objSerializer.serialize(elem)
-        }.getOrElse(Array.emptyByteArray)
+            objSerializer.serialize(elem)
+          }
+          .getOrElse(Array.emptyByteArray)
       }
 
       override def contentType(t: Option[T]): String = {
         t.map { elem =>
-          objSerializer.contentType(elem)
-        }.getOrElse(ContentTypes.TEXT)
+            objSerializer.contentType(elem)
+          }
+          .getOrElse(ContentTypes.TEXT)
       }
 
       override def schema(t: Option[T]): Option[DataSchema] = {

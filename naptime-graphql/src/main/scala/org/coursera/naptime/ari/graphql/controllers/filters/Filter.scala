@@ -9,4 +9,3 @@ trait Filter {
   def apply(nextFilter: FilterFn): FilterFn
 
 }
-

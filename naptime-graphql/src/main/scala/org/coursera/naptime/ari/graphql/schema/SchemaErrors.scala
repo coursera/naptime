@@ -23,10 +23,8 @@ case class MissingMergedType(resourceName: ResourceName) extends SchemaError {
   val message = "No mergedType was available from the schemas.v1 endpoint."
 }
 
-case class HasForwardRelationButMissingMultiGet(
-    resourceName: ResourceName,
-    fieldName: String)
-  extends SchemaError {
+case class HasForwardRelationButMissingMultiGet(resourceName: ResourceName, fieldName: String)
+    extends SchemaError {
 
   val key = "HAS_FORWARD_RELATION_BUT_MISSING_MULTIGET"
   val message = s"There is a forward relation on $fieldName, but no MULTI_GET is available."
@@ -42,7 +40,8 @@ case class SchemaNotFound(resourceName: ResourceName) extends SchemaError {
   val message = "Could not find schema to build resource field."
 }
 
-case class MissingQParameterOnFinderRelation(resourceName: ResourceName, fieldName: String) extends SchemaError {
+case class MissingQParameterOnFinderRelation(resourceName: ResourceName, fieldName: String)
+    extends SchemaError {
   val key = "MISSING_Q_PARAMETER"
   val message = s"Cannot have a finder relation on field $fieldName without having a `q` parameter"
 }
@@ -51,7 +50,6 @@ case class UnhandledSchemaError(resourceName: ResourceName, error: String) exten
   val key = "UNHANDLED_SCHEMA_ERROR"
   val message = s"Unhandled error: $error"
 }
-
 
 case class SchemaErrors(errors: List[SchemaError]) {
   def ++(that: List[SchemaError]): SchemaErrors = {

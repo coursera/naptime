@@ -1,6 +1,5 @@
 package org.coursera.naptime.actions
 
-
 import org.coursera.common.jsonformat.JsonFormats
 import org.coursera.common.stringkey.StringKeyFormat
 import play.api.libs.json.Format
@@ -17,20 +16,20 @@ import scala.annotation.tailrec
  * Do not change the validation because lots of existing opencourse data expects the existing validation.
  */
 case class Slug(string: String) {
-  require(
-    Slug.ValidRegex.pattern.matcher(string).matches,
-    s"Slug not allowed: $string")
+  require(Slug.ValidRegex.pattern.matcher(string).matches, s"Slug not allowed: $string")
 }
 
 object Slug {
 
   implicit val stringKeyFormat: StringKeyFormat[Slug] =
     StringKeyFormat.delegateFormat[Slug, String](
-      key => try {
-        Some(Slug(key))
-      } catch {
-        case e: IllegalArgumentException => None
-      }, _.string)
+      key =>
+        try {
+          Some(Slug(key))
+        } catch {
+          case e: IllegalArgumentException => None
+      },
+      _.string)
 
   implicit val format: Format[Slug] = JsonFormats.stringKeyFormat
 
@@ -48,8 +47,8 @@ object Slug {
     // reasonable conversions.
     val slugString = input //Junidecode.unidecode(input)
       .replaceAll("([a-z])'s([^a-z])", "$1s$2") // Convert apostrophes.
-      .replaceAll("[^a-zA-Z0-9]", "-")  // Convert all non alphanumeric characters with hyphen.
-      .replaceAll("-{2,}", "-")  // Collapse multiple hyphens into one
+      .replaceAll("[^a-zA-Z0-9]", "-") // Convert all non alphanumeric characters with hyphen.
+      .replaceAll("-{2,}", "-") // Collapse multiple hyphens into one
       .stripPrefix("-")
       .stripSuffix("-")
       .toLowerCase

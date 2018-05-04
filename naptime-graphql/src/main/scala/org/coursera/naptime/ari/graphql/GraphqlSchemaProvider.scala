@@ -58,8 +58,9 @@ trait GraphqlSchemaProvider {
  *
  * @param schemaProvider A schema provider.
  */
-class DefaultGraphqlSchemaProvider @Inject() (schemaProvider: SchemaProvider)
-  extends GraphqlSchemaProvider with StrictLogging {
+class DefaultGraphqlSchemaProvider @Inject()(schemaProvider: SchemaProvider)
+    extends GraphqlSchemaProvider
+    with StrictLogging {
   private[this] var fullSchema = FullSchema.empty
   private[this] var cachedSchema: Schema[SangriaGraphQlContext, Any] =
     DefaultGraphqlSchemaProvider.EMPTY_SCHEMA
@@ -75,8 +76,9 @@ class DefaultGraphqlSchemaProvider @Inject() (schemaProvider: SchemaProvider)
         .get(resource.mergedType)
         .map(mergedType => Right(resource.mergedType -> mergedType))
         .getOrElse {
-          logger.info(s"Did not find merged type `${resource.mergedType}` for resource " +
-            s"${resource.name}.v${resource.version.getOrElse(0L)}")
+          logger.info(
+            s"Did not find merged type `${resource.mergedType}` for resource " +
+              s"${resource.name}.v${resource.version.getOrElse(0L)}")
           val resourceName = ResourceName(resource.name, resource.version.getOrElse(0L).toInt)
           Left(MissingMergedType(resourceName))
         }
@@ -85,7 +87,9 @@ class DefaultGraphqlSchemaProvider @Inject() (schemaProvider: SchemaProvider)
     try {
       val builder = new SangriaGraphQlSchemaBuilder(latestSchema.resources, types)
       val schemaAndErrors = builder.generateSchema()
-      val graphQlSchema = schemaAndErrors.data.asInstanceOf[Schema[SangriaGraphQlContext, Any]].copy(additionalTypes = sangria.schema.BuiltinScalars)
+      val graphQlSchema = schemaAndErrors.data
+        .asInstanceOf[Schema[SangriaGraphQlContext, Any]]
+        .copy(additionalTypes = sangria.schema.BuiltinScalars)
       fullSchema = latestSchema
       cachedSchema = graphQlSchema
 
@@ -94,7 +98,7 @@ class DefaultGraphqlSchemaProvider @Inject() (schemaProvider: SchemaProvider)
       case NonFatal(e) =>
         logger.error(s"Could not build schema.", e)
         fullSchema = latestSchema
-        // Note: we do not update cachedSchema, but instead retain the existing schema.
+      // Note: we do not update cachedSchema, but instead retain the existing schema.
     }
   }
 
@@ -127,4 +131,3 @@ object DefaultGraphqlSchemaProvider {
     additionalTypes = sangria.schema.BuiltinScalars)
 
 }
-

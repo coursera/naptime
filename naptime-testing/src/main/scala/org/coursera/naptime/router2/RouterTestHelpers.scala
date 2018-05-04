@@ -28,12 +28,14 @@ trait RouterTestHelpers {
   }
 
   def assertRouted(resource: CollectionResource[_, _, _], urlFragment: String): Unit = {
-    assert(!resource.optParse(urlFragment).isEmpty,
+    assert(
+      !resource.optParse(urlFragment).isEmpty,
       s"Resource: ${resource.getClass.getName} did not accept url fragment: $urlFragment")
   }
 
   def assertNotRouted(resource: CollectionResource[_, _, _], urlFragment: String): Unit = {
-    assert(resource.optParse(urlFragment).isEmpty,
+    assert(
+      resource.optParse(urlFragment).isEmpty,
       s"Resource: ${resource.getClass.getName} did accept url fragment: $urlFragment")
   }
 }

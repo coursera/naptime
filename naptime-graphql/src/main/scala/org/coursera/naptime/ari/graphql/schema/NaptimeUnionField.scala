@@ -27,17 +27,21 @@ object NaptimeUnionField {
       currentPath: List[String]): Field[SangriaGraphQlContext, DataMapWithParent] = {
     Field.apply[SangriaGraphQlContext, DataMapWithParent, Any, Any](
       name = fieldName,
-      fieldType = getType(schemaMetadata, unionDataSchema, fieldName, namespace, resourceName, currentPath),
+      fieldType =
+        getType(schemaMetadata, unionDataSchema, fieldName, namespace, resourceName, currentPath),
       resolve = context => {
-        Option(context.value.element.getDataMap(fieldName)).map { nestedDataMap =>
-          context.value.copy(element = nestedDataMap)
-        }.orNull[DataMapWithParent]
+        Option(context.value.element.getDataMap(fieldName))
+          .map { nestedDataMap =>
+            context.value.copy(element = nestedDataMap)
+          }
+          .orNull[DataMapWithParent]
       })
   }
 
   def getTypedDefinition(unionDataSchema: UnionDataSchema): Option[Map[String, String]] = {
     Option(unionDataSchema.getProperties.get(TYPED_DEFINITION_KEY)).collect {
-      case definitions: java.util.Map[String @unchecked, String @unchecked] => definitions.asScala.toMap
+      case definitions: java.util.Map[String @unchecked, String @unchecked] =>
+        definitions.asScala.toMap
     }
   }
 
@@ -50,15 +54,14 @@ object NaptimeUnionField {
       currentPath: List[String]): UnionType[SangriaGraphQlContext] = {
 
     val objects = unionDataSchema.getTypes.asScala.map { unionMember =>
-
       val typedDefinitions = getTypedDefinition(unionDataSchema).getOrElse(Map[String, String]())
 
       val unionMemberKey = unionMember match {
         case _ if typedDefinitions.contains(unionMember.getUnionMemberKey) =>
           typedDefinitions(unionMember.getUnionMemberKey)
         case namedType: NamedDataSchema
-          if typedDefinitions.contains(namedType.getName)
-            && unionDataSchema.getProperties.get(NAMESPACE_KEY) == namedType.getNamespace =>
+            if typedDefinitions.contains(namedType.getName)
+              && unionDataSchema.getProperties.get(NAMESPACE_KEY) == namedType.getNamespace =>
           typedDefinitions(namedType.getName)
         case _ => unionMember.getUnionMemberKey
       }
@@ -95,22 +98,22 @@ object NaptimeUnionField {
       // write a custom type mapper to use field names to determine the union member type
       override def typeOf[Ctx](value: Any, schema: Schema[Ctx, _]): Option[ObjectType[Ctx, _]] = {
         (if (unionDataSchema.getProperties.containsKey(TYPED_DEFINITION_KEY)) {
-          for {
-            element <- Option(value.asInstanceOf[DataMapWithParent].element)
-            typeName <- Option(element.getString("typeName"))
-            matchingObject <- objects.find(_.fieldsByName.keySet.contains(typeName))
-          } yield {
-            matchingObject
-          }
-        } else {
-          val typedValue = value.asInstanceOf[DataMapWithParent]
-          objects.find { obj =>
-            val formattedMemberNames = typedValue.element.keySet.asScala
-              .flatMap(key => Option(key))
-              .map(FieldBuilder.formatName)
-            obj.fieldsByName.keySet.intersect(formattedMemberNames).nonEmpty
-          }
-        }).map(_.asInstanceOf[ObjectType[Ctx, DataMapWithParent]])
+           for {
+             element <- Option(value.asInstanceOf[DataMapWithParent].element)
+             typeName <- Option(element.getString("typeName"))
+             matchingObject <- objects.find(_.fieldsByName.keySet.contains(typeName))
+           } yield {
+             matchingObject
+           }
+         } else {
+           val typedValue = value.asInstanceOf[DataMapWithParent]
+           objects.find { obj =>
+             val formattedMemberNames = typedValue.element.keySet.asScala
+               .flatMap(key => Option(key))
+               .map(FieldBuilder.formatName)
+             obj.fieldsByName.keySet.intersect(formattedMemberNames).nonEmpty
+           }
+         }).map(_.asInstanceOf[ObjectType[Ctx, DataMapWithParent]])
       }
     }
   }
@@ -118,6 +121,5 @@ object NaptimeUnionField {
   def buildFullyQualifiedName(resourceName: ResourceName, fieldName: String): String = {
     FieldBuilder.formatName(s"${NaptimeResourceUtils.formatResourceName(resourceName)}.$fieldName")
   }
-
 
 }

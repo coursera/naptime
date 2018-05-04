@@ -80,8 +80,8 @@ object CourierUtils {
   }
 
   def destructureUnionMemberDataMap(
-    dataMap: DataMap,
-    unionSchema: UnionDataSchema): (String, AnyRef, DataSchema) = {
+      dataMap: DataMap,
+      unionSchema: UnionDataSchema): (String, AnyRef, DataSchema) = {
     if (dataMap.size != 1) {
       throw new WriteException(
         "Union DataMap must contain exactly one memberKey field, " +
@@ -125,9 +125,9 @@ object CourierUtils {
   }
 
   def memberKeyToTypeName(
-    typerefSchema: TyperefDataSchema,
-    nameMap: DataMap,
-    memberKey: String): String = {
+      typerefSchema: TyperefDataSchema,
+      nameMap: DataMap,
+      memberKey: String): String = {
     // When serializing to typedDefinition, we fail fast if the mapping is missing, as a
     // writer should only attempt to write with memberKeys that have a correct mapping.
     var typeName = nameMap.get(memberKey)
@@ -150,10 +150,10 @@ object CourierUtils {
   }
 
   def typeNameToMemberSchema(
-    typerefSchema: TyperefDataSchema,
-    unionSchema: UnionDataSchema,
-    nameMap: DataMap,
-    typeName: String): DataSchema = {
+      typerefSchema: TyperefDataSchema,
+      unionSchema: UnionDataSchema,
+      nameMap: DataMap,
+      typeName: String): DataSchema = {
     nameMap.entrySet.asScala.find(entry => entry.getValue == typeName) match {
       case Some(entry) =>
         val memberKey = entry.getKey

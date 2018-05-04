@@ -64,7 +64,13 @@ trait RestActionTester { this: ScalaFutures =>
       paging: RequestPagination,
       fields: String = "",
       includes: String = ""): RestContext[AuthType, BodyType] = {
-    new RestContext(body, auth, request, paging, QueryIncludes(includes).get, QueryFields(fields).get)
+    new RestContext(
+      body,
+      auth,
+      request,
+      paging,
+      QueryIncludes(includes).get,
+      QueryFields(fields).get)
   }
 
   /**
@@ -72,7 +78,7 @@ trait RestActionTester { this: ScalaFutures =>
    * easier.
    */
   protected[this] implicit class RestActionTestOps[AuthType, BodyType, ResponseType](
-    action: RestAction[_, AuthType, BodyType, _, _, ResponseType]) {
+      action: RestAction[_, AuthType, BodyType, _, _, ResponseType]) {
 
     def testAction(ctx: RestContext[AuthType, BodyType]): RestResponse[ResponseType] = {
       val updatedAuthEither = action.restAuth.check(ctx.auth)

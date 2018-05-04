@@ -58,14 +58,17 @@ import scala.concurrent.ExecutionContext
 /**
  * The top level resource in our fledgling social network.
  */
-class PersonResource(implicit val executionContext: ExecutionContext, val materializer: Materializer)
-  extends TopLevelCollectionResource[String, Person] {
+class PersonResource(
+    implicit val executionContext: ExecutionContext,
+    val materializer: Materializer)
+    extends TopLevelCollectionResource[String, Person] {
 
   val PATH_KEY: PathKey = ("myPathKeyId" ::: RootParsedPathKey).asInstanceOf[PathKey]
 
   override def keyFormat: KeyFormat[String] = KeyFormat.stringKeyFormat
 
-  override implicit def resourceFormat: OFormat[Person] = CourierFormats.recordTemplateFormats[Person]
+  override implicit def resourceFormat: OFormat[Person] =
+    CourierFormats.recordTemplateFormats[Person]
 
   override def resourceName: String = "people"
 
@@ -117,16 +120,16 @@ object PersonResource {
   val routerBuilder = Router.build[PersonResource]
 }
 
-case class FriendshipInfo(
-  friendshipQuality: String,
-  friendsSince: DateTime)
+case class FriendshipInfo(friendshipQuality: String, friendsSince: DateTime)
 
 object FriendshipInfo {
   implicit val jsonFormat: OFormat[FriendshipInfo] = Json.format[FriendshipInfo]
 }
 
-class FriendsResource(val parentResource: PersonResource)(implicit val executionContext: ExecutionContext, val materializer: Materializer)
-  extends CollectionResource[PersonResource, String, FriendshipInfo] {
+class FriendsResource(val parentResource: PersonResource)(
+    implicit val executionContext: ExecutionContext,
+    val materializer: Materializer)
+    extends CollectionResource[PersonResource, String, FriendshipInfo] {
   override def keyFormat: KeyFormat[KeyType] = KeyFormat.stringKeyFormat
 
   override implicit def resourceFormat: OFormat[FriendshipInfo] = FriendshipInfo.jsonFormat
@@ -156,21 +159,16 @@ class FriendsResource(val parentResource: PersonResource)(implicit val execution
 
   def byEmail(optPathKey: OptPathKey, email: String) = Nap.finder(ctx => ???)
 
-  def byUsernameAndDomain(
-      ancestorKeys: AncestorKeys,
-      userName: String,
-      domain: String) = Nap.finder(ctx => ???)
+  def byUsernameAndDomain(ancestorKeys: AncestorKeys, userName: String, domain: String) =
+    Nap.finder(ctx => ???)
 
-  def withDefaults(
-    ancestorKeys: AncestorKeys,
-    userName: String,
-    domain: String = "defaultDomain") = Nap.finder(ctx => ???)
+  def withDefaults(ancestorKeys: AncestorKeys, userName: String, domain: String = "defaultDomain") =
+    Nap.finder(ctx => ???)
 
   def complex(complex: ComplexEmailType, extra: Option[String]) = Nap.finder(ctx => ???)
 
-  def batchModify(
-      ancestorKeys: AncestorKeys,
-      someParam: Option[ComplexEmailType]) = Nap.action(ctx => ???)
+  def batchModify(ancestorKeys: AncestorKeys, someParam: Option[ComplexEmailType]) =
+    Nap.action(ctx => ???)
 }
 
 object FriendsResource {
@@ -193,12 +191,12 @@ class NestedMacroTests extends AssertionsForJUnit with MockitoSugar with Resourc
   when(peopleInstance.create).thenReturn(peopleInstanceImpl.create)
   when(peopleInstance.batchModify(any())).thenReturn(peopleInstanceImpl.batchModify(None))
   when(peopleInstance.byEmail(any())).thenReturn(peopleInstanceImpl.byEmail("asdf"))
-  when(peopleInstance.byUsernameAndDomain(any(), any())).thenReturn(
-    peopleInstanceImpl.byUsernameAndDomain("", ""))
-  when(peopleInstance.byUsernameSorted(any(), any())).thenReturn(
-    peopleInstanceImpl.byUsernameSorted("", SortOrder("any")))
-  when(peopleInstance.complex(any(), any(), any())).thenReturn(
-    peopleInstanceImpl.complex(null, None, false))
+  when(peopleInstance.byUsernameAndDomain(any(), any()))
+    .thenReturn(peopleInstanceImpl.byUsernameAndDomain("", ""))
+  when(peopleInstance.byUsernameSorted(any(), any()))
+    .thenReturn(peopleInstanceImpl.byUsernameSorted("", SortOrder("any")))
+  when(peopleInstance.complex(any(), any(), any()))
+    .thenReturn(peopleInstanceImpl.complex(null, None, false))
   when(peopleInstance.complexWithDefault(any())).thenReturn(peopleInstanceImpl.complexWithDefault())
   when(peopleInstance.parameterless()).thenReturn(peopleInstanceImpl.parameterless())
 
@@ -209,25 +207,25 @@ class NestedMacroTests extends AssertionsForJUnit with MockitoSugar with Resourc
   when(friendsInstance.keyFormat).thenReturn(KeyFormat.stringKeyFormat)
 
   when(friendsInstance.get(any())).thenReturn(friendsInstanceImpl.get(friendsInstanceImpl.PATH_KEY))
-  when(friendsInstance.multiGet(any(), any())).thenReturn(
-    friendsInstanceImpl.multiGet(Set.empty, friendsInstanceImpl.ANCESTOR_KEY))
-  when(friendsInstance.getAll(any())).thenReturn(
-    friendsInstanceImpl.getAll(friendsInstanceImpl.ANCESTOR_KEY))
-  when(friendsInstance.update(any(), any())).thenReturn(
-    friendsInstanceImpl.update("fakeId", friendsInstanceImpl.ANCESTOR_KEY))
-  when(friendsInstance.delete(any(), any())).thenReturn(
-    friendsInstanceImpl.delete("fakeId", friendsInstanceImpl.PATH_KEY))
-  when(friendsInstance.create(any())).thenReturn(
-    friendsInstanceImpl.create(friendsInstanceImpl.ANCESTOR_KEY))
-  when(friendsInstance.batchModify(any(), any())).thenReturn(
-    friendsInstanceImpl.batchModify(friendsInstanceImpl.ANCESTOR_KEY, None))
-  when(friendsInstance.byEmail(any(), any())).thenReturn(
-    friendsInstanceImpl.byEmail(friendsInstanceImpl.OPT_PATH_KEY, "fakeEmail"))
-  when(friendsInstance.byUsernameAndDomain(any(), any(), any())).thenReturn(
-    friendsInstanceImpl.byUsernameAndDomain(friendsInstanceImpl.ANCESTOR_KEY, "", ""))
+  when(friendsInstance.multiGet(any(), any()))
+    .thenReturn(friendsInstanceImpl.multiGet(Set.empty, friendsInstanceImpl.ANCESTOR_KEY))
+  when(friendsInstance.getAll(any()))
+    .thenReturn(friendsInstanceImpl.getAll(friendsInstanceImpl.ANCESTOR_KEY))
+  when(friendsInstance.update(any(), any()))
+    .thenReturn(friendsInstanceImpl.update("fakeId", friendsInstanceImpl.ANCESTOR_KEY))
+  when(friendsInstance.delete(any(), any()))
+    .thenReturn(friendsInstanceImpl.delete("fakeId", friendsInstanceImpl.PATH_KEY))
+  when(friendsInstance.create(any()))
+    .thenReturn(friendsInstanceImpl.create(friendsInstanceImpl.ANCESTOR_KEY))
+  when(friendsInstance.batchModify(any(), any()))
+    .thenReturn(friendsInstanceImpl.batchModify(friendsInstanceImpl.ANCESTOR_KEY, None))
+  when(friendsInstance.byEmail(any(), any()))
+    .thenReturn(friendsInstanceImpl.byEmail(friendsInstanceImpl.OPT_PATH_KEY, "fakeEmail"))
+  when(friendsInstance.byUsernameAndDomain(any(), any(), any()))
+    .thenReturn(friendsInstanceImpl.byUsernameAndDomain(friendsInstanceImpl.ANCESTOR_KEY, "", ""))
   when(friendsInstance.complex(any(), any())).thenReturn(friendsInstanceImpl.complex(null, None))
-  when(friendsInstance.withDefaults(any(), any(), any())).thenReturn(
-    friendsInstanceImpl.withDefaults(friendsInstanceImpl.ANCESTOR_KEY, "", ""))
+  when(friendsInstance.withDefaults(any(), any(), any()))
+    .thenReturn(friendsInstanceImpl.withDefaults(friendsInstanceImpl.ANCESTOR_KEY, "", ""))
   val peopleRouter = PersonResource.routerBuilder.build(
     peopleInstance.asInstanceOf[PersonResource.routerBuilder.ResourceClass])
   val friendRouter = FriendsResource.routerBuilder.build(
@@ -246,9 +244,12 @@ class NestedMacroTests extends AssertionsForJUnit with MockitoSugar with Resourc
         .asInstanceOf[ParseSuccess[peopleInstance.OptPathKey]])
     when(friendsInstance.optParse(path.substring("/api".length))).thenReturn(ParseFailure)
     if (query.nonEmpty) {
-      val queryStr = query.map { param =>
-        s"${param._1}=${param._2}"
-      }.toList.mkString("?", "&", "")
+      val queryStr = query
+        .map { param =>
+          s"${param._1}=${param._2}"
+        }
+        .toList
+        .mkString("?", "&", "")
       path = s"$path$queryStr"
     }
     val request = FakeRequest(method, path)
@@ -256,10 +257,10 @@ class NestedMacroTests extends AssertionsForJUnit with MockitoSugar with Resourc
   }
 
   private[this] def mkFriendRequest(
-    id: Option[String],
-    method: String = "GET",
-    query: Map[String, String] = Map.empty,
-    personId: String = "zyx"): FakeRequest[AnyContentAsEmpty.type] = {
+      id: Option[String],
+      method: String = "GET",
+      query: Map[String, String] = Map.empty,
+      personId: String = "zyx"): FakeRequest[AnyContentAsEmpty.type] = {
     var suffix = "/friends"
     id.foreach { id =>
       suffix = s"$suffix/$id"
@@ -273,9 +274,12 @@ class NestedMacroTests extends AssertionsForJUnit with MockitoSugar with Resourc
         .asInstanceOf[ParseSuccess[peopleInstance.OptPathKey]]
     )
     if (query.nonEmpty) {
-      val queryStr = query.map { param =>
-        s"${param._1}=${param._2}"
-      }.toList.mkString("?", "&", "")
+      val queryStr = query
+        .map { param =>
+          s"${param._1}=${param._2}"
+        }
+        .toList
+        .mkString("?", "&", "")
       path = s"$path$queryStr"
     }
     val request = FakeRequest(method, path)
@@ -368,15 +372,16 @@ class NestedMacroTests extends AssertionsForJUnit with MockitoSugar with Resourc
 
   @Test
   def finderByEmailTest(): Unit = {
-    val finderRequest = mkPeopleRequest(None,
-      query = Map("q" -> "byEmail", "email" -> "user@example.com"))
+    val finderRequest =
+      mkPeopleRequest(None, query = Map("q" -> "byEmail", "email" -> "user@example.com"))
     checkRouter(finderRequest, "byEmail")
     verify(peopleInstance).byEmail("user@example.com")
   }
 
   @Test
   def finderByUsernameAndDomainTest(): Unit = {
-    val finderRequest = mkPeopleRequest(None,
+    val finderRequest = mkPeopleRequest(
+      None,
       query = Map("q" -> "byUsernameAndDomain", "userName" -> "daphne", "domain" -> "coursera.org"))
     checkRouter(finderRequest, "byUsernameAndDomain")
     verify(peopleInstance).byUsernameAndDomain("daphne", "coursera.org")
@@ -384,8 +389,11 @@ class NestedMacroTests extends AssertionsForJUnit with MockitoSugar with Resourc
 
   @Test
   def finderByUsernameSortedTestSimple(): Unit = {
-    val finderRequest = mkPeopleRequest(None,
-      query = Map("q" -> "byUsernameSorted", "userName" -> "daphne",
+    val finderRequest = mkPeopleRequest(
+      None,
+      query = Map(
+        "q" -> "byUsernameSorted",
+        "userName" -> "daphne",
         "sort" -> "(field~timestamp,descending~false)"))
     checkRouter(finderRequest, "byUsernameSorted")
     verify(peopleInstance).byUsernameSorted("daphne", SortOrder("timestamp", false))
@@ -393,25 +401,26 @@ class NestedMacroTests extends AssertionsForJUnit with MockitoSugar with Resourc
 
   @Test
   def finderByUsernameSortedTestMissingField(): Unit = {
-    val finderRequest = mkPeopleRequest(None,
-      query = Map("q" -> "byUsernameSorted", "userName" -> "daphne",
-        "sort" -> "(field~timestamp)"))
+    val finderRequest = mkPeopleRequest(
+      None,
+      query = Map("q" -> "byUsernameSorted", "userName" -> "daphne", "sort" -> "(field~timestamp)"))
     checkRouter(finderRequest, "byUsernameSorted")
     verify(peopleInstance).byUsernameSorted("daphne", SortOrder("timestamp", true))
   }
 
   @Test
   def finderByUsernameSortedTestOldWireFormat(): Unit = {
-    val finderRequest = mkPeopleRequest(None,
-      query = Map("q" -> "byUsernameSorted", "userName" -> "daphne",
-        "sort" -> "timestamp~false"))
+    val finderRequest = mkPeopleRequest(
+      None,
+      query = Map("q" -> "byUsernameSorted", "userName" -> "daphne", "sort" -> "timestamp~false"))
     checkRouter(finderRequest, "byUsernameSorted")
     verify(peopleInstance).byUsernameSorted("daphne", SortOrder("timestamp", false))
   }
 
   @Test
   def finderComplexTest(): Unit = {
-    val finderRequest = mkPeopleRequest(None,
+    val finderRequest = mkPeopleRequest(
+      None,
       query = Map("q" -> "complex", "complex" -> "daphne~coursera.org", "skipCache" -> "false"))
     checkRouter(finderRequest, "complex")
     verify(peopleInstance).complex(ComplexEmailType("daphne", "coursera.org"), None, false)
@@ -419,8 +428,12 @@ class NestedMacroTests extends AssertionsForJUnit with MockitoSugar with Resourc
 
   @Test
   def finderComplexTypes2(): Unit = {
-    val finderRequest2 = mkPeopleRequest(None,
-      query = Map("q" -> "complex", "complex" -> "daphne~coursera.org", "extra" -> "foo",
+    val finderRequest2 = mkPeopleRequest(
+      None,
+      query = Map(
+        "q" -> "complex",
+        "complex" -> "daphne~coursera.org",
+        "extra" -> "foo",
         "skipCache" -> "true"))
     checkRouter(finderRequest2, "complex")
     verify(peopleInstance).complex(ComplexEmailType("daphne", "coursera.org"), Some("foo"), true)
@@ -428,8 +441,12 @@ class NestedMacroTests extends AssertionsForJUnit with MockitoSugar with Resourc
 
   @Test
   def finderComplexTypesMalformedBoolean(): Unit = {
-    val finderRequest3 = mkPeopleRequest(None,
-      query = Map("q" -> "complex", "complex" -> "daphne~coursera.org", "extra" -> "foo",
+    val finderRequest3 = mkPeopleRequest(
+      None,
+      query = Map(
+        "q" -> "complex",
+        "complex" -> "daphne~coursera.org",
+        "extra" -> "foo",
         "skipCache" -> "1"))
     checkRouter(finderRequest3, methodName = null)
     verify(peopleInstance, never()).complex(any(), any(), any())
@@ -437,18 +454,21 @@ class NestedMacroTests extends AssertionsForJUnit with MockitoSugar with Resourc
 
   @Test
   def finderComplexTypesMalformedRequiredParam(): Unit = {
-    val finderRequest4 = mkPeopleRequest(None,
-      query = Map("q" -> "complex", "complex" -> "malformed!", "extra" -> "foo",
-        "skipCache" -> "true"))
+    val finderRequest4 = mkPeopleRequest(
+      None,
+      query =
+        Map("q" -> "complex", "complex" -> "malformed!", "extra" -> "foo", "skipCache" -> "true"))
     checkRouter(finderRequest4, methodName = null)
     verify(peopleInstance, never()).complex(any(), any(), any())
   }
 
   @Test
   def finderComplexTypesDefaultParam(): Unit = {
-    NestedMacroTestsHelper.setupMockDefaults(peopleInstance,
+    NestedMacroTestsHelper.setupMockDefaults(
+      peopleInstance,
       ComplexEmailType("daphne", "coursera.org"))
-    val finderRequest = mkPeopleRequest(None,
+    val finderRequest = mkPeopleRequest(
+      None,
       query = Map("q" -> "complexWithDefault", "complex" -> "andrew~coursera.org"))
     checkRouter(finderRequest, "complexWithDefault")
     verify(peopleInstance).complexWithDefault(ComplexEmailType("andrew", "coursera.org"))
@@ -466,10 +486,11 @@ class NestedMacroTests extends AssertionsForJUnit with MockitoSugar with Resourc
 
   @Test
   def finderComplexTypesMalformedDefaultParam(): Unit = {
-    NestedMacroTestsHelper.setupMockDefaults(peopleInstance,
+    NestedMacroTestsHelper.setupMockDefaults(
+      peopleInstance,
       ComplexEmailType("daphne", "coursera.org"))
-    val finderRequest = mkPeopleRequest(None,
-      query = Map("q" -> "complexWithDefault", "complex" -> "malformed!"))
+    val finderRequest =
+      mkPeopleRequest(None, query = Map("q" -> "complexWithDefault", "complex" -> "malformed!"))
     checkRouter(finderRequest, methodName = null)
     verify(peopleInstance, never()).complexWithDefault(any())
     NestedMacroTestsHelper.verifyDefaultNotTaken(peopleInstance)
@@ -477,7 +498,9 @@ class NestedMacroTests extends AssertionsForJUnit with MockitoSugar with Resourc
 
   @Test
   def actionTest(): Unit = {
-    val actionRequest = mkPeopleRequest(None, "POST",
+    val actionRequest = mkPeopleRequest(
+      None,
+      "POST",
       query = Map("action" -> "batchModify", "someParam" -> "daphne~coursera.org"))
     checkRouter(actionRequest, "batchModify")
     verify(peopleInstance).batchModify(Some(ComplexEmailType("daphne", "coursera.org")))
@@ -485,7 +508,9 @@ class NestedMacroTests extends AssertionsForJUnit with MockitoSugar with Resourc
 
   @Test
   def actionTestMalformedOptionalParam(): Unit = {
-    val actionRequest = mkPeopleRequest(None, "POST",
+    val actionRequest = mkPeopleRequest(
+      None,
+      "POST",
       query = Map("action" -> "batchModify", "someParam" -> "malformedparam!"))
     checkRouter(actionRequest, methodName = null)
     verify(peopleInstance, never()).batchModify(any())
@@ -493,8 +518,7 @@ class NestedMacroTests extends AssertionsForJUnit with MockitoSugar with Resourc
 
   @Test
   def parameterlessTest(): Unit = {
-    val finderRequest = mkPeopleRequest(None, "POST",
-      query = Map("action" -> "parameterless"))
+    val finderRequest = mkPeopleRequest(None, "POST", query = Map("action" -> "parameterless"))
     checkRouter(finderRequest, "parameterless")
     verify(peopleInstance).parameterless()
   }
@@ -543,15 +567,16 @@ class NestedMacroTests extends AssertionsForJUnit with MockitoSugar with Resourc
 
   @Test
   def nestedFinderByEmailTest(): Unit = {
-    val finderRequest = mkFriendRequest(None,
-      query = Map("q" -> "byEmail", "email" -> "user@example.com"))
+    val finderRequest =
+      mkFriendRequest(None, query = Map("q" -> "byEmail", "email" -> "user@example.com"))
     checkSubRouter(finderRequest, "byEmail")
     verify(friendsInstance).byEmail(any(), e("user@example.com"))
   }
 
   @Test
   def nestedFinderByUsernameAndDomainTest(): Unit = {
-    val finderRequest = mkFriendRequest(None,
+    val finderRequest = mkFriendRequest(
+      None,
       query = Map("q" -> "byUsernameAndDomain", "userName" -> "daphne", "domain" -> "coursera.org"))
     checkSubRouter(finderRequest, "byUsernameAndDomain")
     verify(friendsInstance).byUsernameAndDomain(any(), e("daphne"), e("coursera.org"))
@@ -560,42 +585,41 @@ class NestedMacroTests extends AssertionsForJUnit with MockitoSugar with Resourc
   @Test
   def defaultsMissing(): Unit = {
     NestedMacroTestsHelper.setupMockDefaults(friendsInstance, "defaultDomain")
-    val finderRequest = mkFriendRequest(None,
-      query = Map("q" -> "withDefaults", "userName" -> "daphne"))
+    val finderRequest =
+      mkFriendRequest(None, query = Map("q" -> "withDefaults", "userName" -> "daphne"))
     checkSubRouter(finderRequest, "withDefaults")
     verify(friendsInstance).withDefaults(any(), e("daphne"), e("defaultDomain"))
   }
 
   @Test
   def defaultsOverriding(): Unit = {
-    val finderRequest = mkFriendRequest(None,
+    val finderRequest = mkFriendRequest(
+      None,
       query = Map("q" -> "withDefaults", "userName" -> "daphne", "domain" -> "alternateDomain"))
     checkSubRouter(finderRequest, "withDefaults")
     verify(friendsInstance).withDefaults(any(), e("daphne"), e("alternateDomain"))
   }
-
-
   @Test
   def defaultsMissingRequired(): Unit = {
-    val finderRequest = mkFriendRequest(None,
-      query = Map("q" -> "withDefaults"))
-    val result = friendRouter.routeRequest(finderRequest.path.substring("/api".length),
-      finderRequest)
+    val finderRequest = mkFriendRequest(None, query = Map("q" -> "withDefaults"))
+    val result =
+      friendRouter.routeRequest(finderRequest.path.substring("/api".length), finderRequest)
     assert(result.isDefined)
     verify(friendsInstance, never()).withDefaults(any(), any(), any())
   }
 
   @Test
   def nestedFinderComplexTest(): Unit = {
-    val finderRequest = mkFriendRequest(None,
-      query = Map("q" -> "complex", "complex" -> "daphne~coursera.org"))
+    val finderRequest =
+      mkFriendRequest(None, query = Map("q" -> "complex", "complex" -> "daphne~coursera.org"))
     checkSubRouter(finderRequest, "complex")
     verify(friendsInstance).complex(ComplexEmailType("daphne", "coursera.org"), None)
   }
 
   @Test
   def nestedFinderComplexTypes2(): Unit = {
-    val finderRequest2 = mkFriendRequest(None,
+    val finderRequest2 = mkFriendRequest(
+      None,
       query = Map("q" -> "complex", "complex" -> "daphne~coursera.org", "extra" -> "foo"))
     checkSubRouter(finderRequest2, "complex")
     verify(friendsInstance).complex(ComplexEmailType("daphne", "coursera.org"), Some("foo"))
@@ -603,7 +627,9 @@ class NestedMacroTests extends AssertionsForJUnit with MockitoSugar with Resourc
 
   @Test
   def nestedActionTest(): Unit = {
-    val actionRequest = mkFriendRequest(None, "POST",
+    val actionRequest = mkFriendRequest(
+      None,
+      "POST",
       query = Map("action" -> "batchModify", "someParam" -> "daphne~coursera.org"))
     checkSubRouter(actionRequest, "batchModify")
     verify(friendsInstance).batchModify(any(), e(Some(ComplexEmailType("daphne", "coursera.org"))))
@@ -620,10 +646,12 @@ class NestedMacroTests extends AssertionsForJUnit with MockitoSugar with Resourc
     assert(schema.valueType === "org.coursera.naptime.Person")
     assert(schema.mergedType === "org.coursera.naptime.PersonResource.Model")
     assert(schema.handlers.length === 13)
-    assert(schema.handlers.filter(_.kind == HandlerKind.FINDER).map(_.name).toSet ===
-      Set("byEmail", "byUsernameAndDomain", "complex", "complexWithDefault", "byUsernameSorted"))
-    assert(schema.handlers.filter(_.kind == HandlerKind.ACTION).map(_.name).toSet ===
-      Set("parameterless", "batchModify"))
+    assert(
+      schema.handlers.filter(_.kind == HandlerKind.FINDER).map(_.name).toSet ===
+        Set("byEmail", "byUsernameAndDomain", "complex", "complexWithDefault", "byUsernameSorted"))
+    assert(
+      schema.handlers.filter(_.kind == HandlerKind.ACTION).map(_.name).toSet ===
+        Set("parameterless", "batchModify"))
     assert(schema.handlers.count(_.kind == HandlerKind.MULTI_GET) === 1)
     val multiGetSchema = schema.handlers.find(_.kind == HandlerKind.MULTI_GET).get
     assert(multiGetSchema.customOutputBody === None)
@@ -652,8 +680,9 @@ class NestedMacroTests extends AssertionsForJUnit with MockitoSugar with Resourc
     assert(resourceType.value.getType === DataSchema.Type.RECORD)
     assert(resourceType.value.isInstanceOf[RecordDataSchema])
     assert(resourceType.value.asInstanceOf[RecordDataSchema].getFields.size() === 3)
-    assert(resourceType.value.asInstanceOf[RecordDataSchema].getFields.toList.map(_.getName).toSet ===
-      Set("id", "name", "email"))
+    assert(
+      resourceType.value.asInstanceOf[RecordDataSchema].getFields.toList.map(_.getName).toSet ===
+        Set("id", "name", "email"))
   }
 
   @Test
@@ -667,14 +696,17 @@ class NestedMacroTests extends AssertionsForJUnit with MockitoSugar with Resourc
     assert(schema.valueType === "org.coursera.naptime.FriendshipInfo")
     assert(schema.mergedType === "org.coursera.naptime.FriendsResource.Model")
     assert(schema.handlers.length === 11)
-    assert(schema.handlers.filter(_.kind == HandlerKind.FINDER).map(_.name).toSet ===
-      Set("byEmail", "byUsernameAndDomain", "withDefaults", "complex"))
+    assert(
+      schema.handlers.filter(_.kind == HandlerKind.FINDER).map(_.name).toSet ===
+        Set("byEmail", "byUsernameAndDomain", "withDefaults", "complex"))
     val withDefaultsSchema = schema.handlers.find(_.name == "withDefaults").get
     assert(withDefaultsSchema.parameters.length === 3)
-    assert(withDefaultsSchema.parameters.map(_.name).toSet ===
-      Set("ancestorKeys", "userName", "domain"))
+    assert(
+      withDefaultsSchema.parameters.map(_.name).toSet ===
+        Set("ancestorKeys", "userName", "domain"))
     val domainSchema = withDefaultsSchema.parameters.find(_.name == "domain").get
-    assert(StringMember(domainSchema.data.get("default").asInstanceOf[DataMap]).value === "defaultDomain")
+    assert(
+      StringMember(domainSchema.data.get("default").asInstanceOf[DataMap]).value === "defaultDomain")
 
     assert(schema.parentClass === Some(peopleInstanceImpl.getClass.getName))
 
@@ -685,24 +717,27 @@ class NestedMacroTests extends AssertionsForJUnit with MockitoSugar with Resourc
   def nestedTypes(): Unit = {
     val types = FriendsResource.routerBuilder.types
     assert(types.size === 3)
-    val resourceModel = types.find(_.key === "org.coursera.naptime.FriendsResource.Model").getOrElse {
-      assert(false, "Could not find constructed merged type.")
-      ???
-    }
+    val resourceModel =
+      types.find(_.key === "org.coursera.naptime.FriendsResource.Model").getOrElse {
+        assert(false, "Could not find constructed merged type.")
+        ???
+      }
     assert(resourceModel.key === "org.coursera.naptime.FriendsResource.Model")
     assert(!resourceModel.value.hasError)
     assert(resourceModel.value.isComplex)
     assert(resourceModel.value.getType === DataSchema.Type.RECORD)
     assert(resourceModel.value.isInstanceOf[RecordDataSchema])
     assert(resourceModel.value.asInstanceOf[RecordDataSchema].getFields.size() === 3)
-    assert(resourceModel.value.asInstanceOf[RecordDataSchema].getFields.toList.map(_.getName).toSet ===
-      Set("id", "friendshipQuality", "friendsSince"))
+    assert(
+      resourceModel.value.asInstanceOf[RecordDataSchema].getFields.toList.map(_.getName).toSet ===
+        Set("id", "friendshipQuality", "friendsSince"))
   }
 
   // TODO(saeta): test the generated pegasus asymmetric body types for correctness.
 
   def shouldNotCompileTests(): Unit = {
-    shapeless.test.illTyped("""
+    shapeless.test.illTyped(
+      """
       class MyResource extends TopLevelCollectionResource[String, FriendshipInfo] {
 
         override def keyFormat: KeyFormat[KeyType] = KeyFormat.stringKeyFormat
@@ -715,10 +750,10 @@ class NestedMacroTests extends AssertionsForJUnit with MockitoSugar with Resourc
       object MyResource {
         val router = Router.build[MyResource]
       }""",
-      "You cannot bind an OptPathKey in this context."
-    )
+      "You cannot bind an OptPathKey in this context.")
 
-    shapeless.test.illTyped("""
+    shapeless.test.illTyped(
+      """
       class MyResource extends TopLevelCollectionResource[String, FriendshipInfo] {
 
         override def keyFormat: KeyFormat[KeyType] = KeyFormat.stringKeyFormat
@@ -731,10 +766,10 @@ class NestedMacroTests extends AssertionsForJUnit with MockitoSugar with Resourc
       object MyResource {
         val router = Router.build[MyResource]
       }""",
-      "You cannot bind a PathKey in this context."
-    )
+      "You cannot bind a PathKey in this context.")
 
-    shapeless.test.illTyped("""
+    shapeless.test.illTyped(
+      """
       class MyResource extends TopLevelCollectionResource[String, FriendshipInfo] {
 
         override def keyFormat: KeyFormat[KeyType] = KeyFormat.stringKeyFormat
@@ -747,10 +782,10 @@ class NestedMacroTests extends AssertionsForJUnit with MockitoSugar with Resourc
       object MyResource {
         val router = Router.build[MyResource]
       }""",
-      "Cannot automatically bind parameter pathKey.*"
-    )
+      "Cannot automatically bind parameter pathKey.*")
 
-    shapeless.test.illTyped("""
+    shapeless.test.illTyped(
+      """
       class MyResource extends TopLevelCollectionResource[String, FriendshipInfo] {
 
         override def keyFormat: KeyFormat[KeyType] = KeyFormat.stringKeyFormat
@@ -764,7 +799,6 @@ class NestedMacroTests extends AssertionsForJUnit with MockitoSugar with Resourc
         val router = Router.build[MyResource]
       }""",
       "Parameter randomParameter: String not allowed here. " +
-        "Please see https://docs.dkandu.me/projects/naptime/advanced.html"
-    )
+        "Please see https://docs.dkandu.me/projects/naptime/advanced.html")
   }
 }

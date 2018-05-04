@@ -23,6 +23,7 @@ import org.coursera.common.stringkey.StringKeyFormat
  * Partially parses type `T` from a URL.
  */
 trait ResourcePathParser[+T] {
+
   /**
    * Attempt to parse an element of type T from the URL as per the routing of the resource.
    * If the URL matches, return [[ParseSuccess]] with the rest of the URL, and the parsed element.
@@ -37,8 +38,9 @@ trait ResourcePathParser[+T] {
 }
 
 // TODO: migrate from StringKeyFormat to a UrlParseFormat or something.
-case class CollectionResourcePathParser[+T](resourceName: String, resourceVersion: Int)
-  (implicit stringFormat: StringKeyFormat[T]) extends ResourcePathParser[T] {
+case class CollectionResourcePathParser[+T](resourceName: String, resourceVersion: Int)(
+    implicit stringFormat: StringKeyFormat[T])
+    extends ResourcePathParser[T] {
   private[this] val REGEX = if (resourceVersion > 0) {
     s"/$resourceName.v$resourceVersion(/(([^/]+)(/.*)?)?)?".r
   } else {
@@ -51,12 +53,13 @@ case class CollectionResourcePathParser[+T](resourceName: String, resourceVersio
    * @return Either a [[ParseSuccess]] or a [[ParseFailure]].
    */
   override def parseUrl(url: String): UrlParseResult[T] = {
-    parseOptUrl(url).flatMap { case (rest, keyOpt) =>
-      if (keyOpt.isDefined) {
-        ParseSuccess(rest, keyOpt.get)
-      } else {
-        ParseFailure
-      }
+    parseOptUrl(url).flatMap {
+      case (rest, keyOpt) =>
+        if (keyOpt.isDefined) {
+          ParseSuccess(rest, keyOpt.get)
+        } else {
+          ParseFailure
+        }
     }
   }
 
@@ -72,13 +75,19 @@ case class CollectionResourcePathParser[+T](resourceName: String, resourceVersio
     url match {
       case REGEX(_, _, keyNullable, restNullable) =>
         val rest = Option(restNullable).filter(_ != "").filter(_ != "/")
-        Option(keyNullable).filter(_.nonEmpty).map { keyStr =>
-          stringFormat.reads(StringKey(keyStr)).map { key =>
-            ParseSuccess(rest, Some(key))
-          }.getOrElse {
-            ParseFailure
+        Option(keyNullable)
+          .filter(_.nonEmpty)
+          .map { keyStr =>
+            stringFormat
+              .reads(StringKey(keyStr))
+              .map { key =>
+                ParseSuccess(rest, Some(key))
+              }
+              .getOrElse {
+                ParseFailure
+              }
           }
-        }.getOrElse(ParseSuccess(rest, None))
+          .getOrElse(ParseSuccess(rest, None))
       case _ =>
         ParseFailure
     }
