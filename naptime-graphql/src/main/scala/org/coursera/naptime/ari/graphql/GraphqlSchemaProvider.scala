@@ -79,15 +79,13 @@ class DefaultGraphqlSchemaProvider @Inject()(schemaProvider: SchemaProvider)
           logger.info(
             s"Did not find merged type `${resource.mergedType}` for resource " +
               s"${resource.name}.v${resource.version.getOrElse(0L)}")
-          val resourceName =
-            ResourceName(resource.name, resource.version.getOrElse(0L).toInt)
+          val resourceName = ResourceName(resource.name, resource.version.getOrElse(0L).toInt)
           Left(MissingMergedType(resourceName))
         }
     }
     val types = typesAndErrors.flatMap(_.right.toOption).toMap
     try {
-      val builder =
-        new SangriaGraphQlSchemaBuilder(latestSchema.resources, types)
+      val builder = new SangriaGraphQlSchemaBuilder(latestSchema.resources, types)
       val schemaAndErrors = builder.generateSchema()
       val graphQlSchema = schemaAndErrors.data
         .asInstanceOf[Schema[SangriaGraphQlContext, Any]]

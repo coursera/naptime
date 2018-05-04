@@ -329,10 +329,7 @@ object StringKeyCodec {
                 throw new IOException(s"Missing required field: ${field.getName}")
               }
               val valueString = generateData(value, field.getType)
-              outputStream.write(
-                tupleParser
-                  .escape(valueString)
-                  .getBytes(StringKeyCodec.charset))
+              outputStream.write(tupleParser.escape(valueString).getBytes(StringKeyCodec.charset))
 
               if (idx < fields.size - 1) {
                 outputStream.write(tupleParser.separatorBytes)
@@ -398,8 +395,7 @@ object StringKeyCodec {
       handleParseErrors(parseAll(listParser, input))
     }
 
-    private[this] val itemRegex =
-      s"""([^$reservedChars]|$escapeChar[$reservedChars])*""".r
+    private[this] val itemRegex = s"""([^$reservedChars]|$escapeChar[$reservedChars])*""".r
 
     private[this] val itemParser: Parser[String] = {
       itemRegex ^^ { value =>

@@ -86,8 +86,7 @@ object KeyFormat extends PrimitiveFormats {
    * (JSON number for `Int`, etc.)
    */
   def idAsPrimitive[K, P](apply: P => K, unapply: K => Option[P])(
-      implicit primitiveFormat: KeyFormat[P]): KeyFormat[K] =
-    caseClassFormat(apply, unapply)
+      implicit primitiveFormat: KeyFormat[P]): KeyFormat[K] = caseClassFormat(apply, unapply)
 
   /**
    * Conveniently construct a format for a `case class` type.
@@ -111,10 +110,8 @@ object KeyFormat extends PrimitiveFormats {
       override implicit val format: OFormat[K] =
         JsonFormats.caseClassOFormat(apply, unapply)(delegateFormat.format)
 
-      override def reads(json: JsValue): JsResult[K] =
-        delegateFormat.reads(json).map(apply)
-      override def writes(o: K): JsValue =
-        delegateFormat.writes(Function.unlift(unapply).apply(o))
+      override def reads(json: JsValue): JsResult[K] = delegateFormat.reads(json).map(apply)
+      override def writes(o: K): JsValue = delegateFormat.writes(Function.unlift(unapply).apply(o))
     }
   }
 
@@ -155,8 +152,7 @@ object KeyFormat extends PrimitiveFormats {
   def withFallbackReads[K](altReads: Reads[K])(keyFormat: KeyFormat[K]): KeyFormat[K] = {
     new KeyFormat[K] {
 
-      override implicit def stringKeyFormat: StringKeyFormat[K] =
-        keyFormat.stringKeyFormat
+      override implicit def stringKeyFormat: StringKeyFormat[K] = keyFormat.stringKeyFormat
 
       override implicit def format: OFormat[K] = keyFormat.format
 
@@ -218,8 +214,7 @@ sealed trait PrimitiveFormats {
 
     override def writes(o: P): JsValue = primitiveJsonFormat.writes(o)
 
-    override def reads(json: JsValue): JsResult[P] =
-      primitiveJsonFormat.reads(json)
+    override def reads(json: JsValue): JsResult[P] = primitiveJsonFormat.reads(json)
 
   }
 

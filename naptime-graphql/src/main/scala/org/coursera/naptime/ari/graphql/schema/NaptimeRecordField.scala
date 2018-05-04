@@ -41,8 +41,7 @@ object NaptimeRecordField extends StrictLogging {
             Value(null)
         }
 
-      }
-    )
+      })
   }
 
   private[schema] def getType(
@@ -52,8 +51,7 @@ object NaptimeRecordField extends StrictLogging {
       resourceName: ResourceName,
       currentPath: List[String]): ObjectType[SangriaGraphQlContext, DataMapWithParent] = {
 
-    val formattedResourceName =
-      NaptimeResourceUtils.formatResourceName(resourceName)
+    val formattedResourceName = NaptimeResourceUtils.formatResourceName(resourceName)
     ObjectType[SangriaGraphQlContext, DataMapWithParent](
       FieldBuilder.formatName(s"${formattedResourceName}_${recordDataSchema.getFullName}"),
       recordDataSchema.getDoc,
@@ -72,8 +70,7 @@ object NaptimeRecordField extends StrictLogging {
         } else {
           fields
         }
-      }
-    )
+      })
   }
 
   val EMPTY_FIELDS_FALLBACK = List(

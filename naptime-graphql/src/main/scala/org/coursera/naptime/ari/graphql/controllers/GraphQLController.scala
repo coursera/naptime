@@ -127,34 +127,32 @@ class GraphQLController @Inject()(
       }
       parsedQuery match {
         case Success(queryAst) =>
-          val baseFilter: IncomingQuery => Future[OutgoingQuery] =
-            (incoming: IncomingQuery) => {
-              val context = SangriaGraphQlContext(fetcher, requestHeader, ec, incoming.debugMode)
-              Executor
-                .execute(
-                  graphqlSchemaProvider.schema,
-                  queryAst,
-                  context,
-                  variables = variables,
-                  middleware = List(
-                    new ResponseMetadataMiddleware(),
-                    metricsCollectionMiddleware,
-                    new SlowLogMiddleware(logger, incoming.debugMode)),
-                  exceptionHandler = GraphQLController.exceptionHandler(logger),
-                  deferredResolver = naptimeResolver
-                )
-                .map { executionResponse =>
-                  OutgoingQuery(executionResponse.as[JsObject], Some(Response.empty))
-                }
-            }.recover {
-              case error: QueryAnalysisError =>
-                OutgoingQuery(error.resolveError.as[JsObject], None)
-              case error: ErrorWithResolver =>
-                OutgoingQuery(error.resolveError.as[JsObject], None)
-              case error: Exception =>
-                logger.error("GraphQL execution error", error)
-                OutgoingQuery(Json.obj("errors" -> Json.arr(error.getMessage)), None)
-            }
+          val baseFilter: IncomingQuery => Future[OutgoingQuery] = (incoming: IncomingQuery) => {
+            val context = SangriaGraphQlContext(fetcher, requestHeader, ec, incoming.debugMode)
+            Executor
+              .execute(
+                graphqlSchemaProvider.schema,
+                queryAst,
+                context,
+                variables = variables,
+                middleware = List(
+                  new ResponseMetadataMiddleware(),
+                  metricsCollectionMiddleware,
+                  new SlowLogMiddleware(logger, incoming.debugMode)),
+                exceptionHandler = GraphQLController.exceptionHandler(logger),
+                deferredResolver = naptimeResolver)
+              .map { executionResponse =>
+                OutgoingQuery(executionResponse.as[JsObject], Some(Response.empty))
+              }
+          }.recover {
+            case error: QueryAnalysisError =>
+              OutgoingQuery(error.resolveError.as[JsObject], None)
+            case error: ErrorWithResolver =>
+              OutgoingQuery(error.resolveError.as[JsObject], None)
+            case error: Exception =>
+              logger.error("GraphQL execution error", error)
+              OutgoingQuery(Json.obj("errors" -> Json.arr(error.getMessage)), None)
+          }
           val incomingQuery =
             IncomingQuery(queryAst, requestHeader, variables, operation, debugMode = false)
 
@@ -173,10 +171,8 @@ class GraphQLController @Inject()(
                 "locations" -> Json.arr(
                   Json.obj(
                     "line" -> error.originalError.position.line,
-                    "column" -> error.originalError.position.column))
-              ),
-              None
-            ))
+                    "column" -> error.originalError.position.column))),
+              None))
 
         case Failure(error) =>
           throw error

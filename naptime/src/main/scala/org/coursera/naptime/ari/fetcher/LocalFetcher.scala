@@ -47,8 +47,7 @@ import scala.concurrent.Future
 class LocalFetcher @Inject()(naptimeRoutes: NaptimeRoutes) extends FetcherApi with StrictLogging {
 
   private[this] val schemas = naptimeRoutes.routerBuilders.map(_.schema)
-  private[this] val models =
-    naptimeRoutes.routerBuilders.flatMap(_.types).map(_.tuple).toMap
+  private[this] val models = naptimeRoutes.routerBuilders.flatMap(_.types).map(_.tuple).toMap
 
   private[this] val routers = naptimeRoutes.buildersToRouters.map {
     case (builder, router) =>
@@ -62,12 +61,9 @@ class LocalFetcher @Inject()(naptimeRoutes: NaptimeRoutes) extends FetcherApi wi
       resourceSchema.name == request.resource.topLevelName &&
       resourceSchema.version.contains(request.resource.version)
     }
-    val queryString =
-      request.arguments.toMap.mapValues(arg => List(stringifyArg(arg)))
+    val queryString = request.arguments.toMap.mapValues(arg => List(stringifyArg(arg)))
     val url = s"/api/${request.resource.identifier}?" +
-      queryString
-        .map { case (key, value) => key + "=" + value.mkString(",") }
-        .mkString("&")
+      queryString.map { case (key, value) => key + "=" + value.mkString(",") }.mkString("&")
     (for {
       resourceSchema <- resourceSchemaOpt
       router <- routers.get(resourceSchema.className)

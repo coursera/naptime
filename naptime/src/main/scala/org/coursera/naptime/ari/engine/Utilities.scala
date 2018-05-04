@@ -229,7 +229,8 @@ object Utilities extends StrictLogging {
   private def makeDataMapWithTypedDefinitionsEasyToReplace(
       element: DataMap,
       schema: RecordDataSchema): DataMap = {
-    val typedDefinitionCoercer = new TypedDefinitionDataCoercer(schema)
+    val typedDefinitionCoercer =
+      new TypedDefinitionDataCoercer(schema, true /* passthroughEnabled */ )
     Try(typedDefinitionCoercer.convertTypedDefinitionToUnion(element)).getOrElse(element)
   }
 }

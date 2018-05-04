@@ -102,8 +102,7 @@ trait PlayJsonRestActionCategoryEngine {
       // Note: JsObject's `fieldSet` (used to compute `hashCode`) does not guarantee single values
       // for a particular key.
       // Note: for pagination, we explicitly call the eTagHashCode that excludes some fields.
-      val hashCode =
-        Set(jsValue.hashCode(), pagination.eTagHashCode()).hashCode()
+      val hashCode = Set(jsValue.hashCode(), pagination.eTagHashCode()).hashCode()
 
       constructEtagHeader(ETag(hashCode.toString))
     }
@@ -114,9 +113,7 @@ trait PlayJsonRestActionCategoryEngine {
       pagination: RequestPagination,
       ok: Ok[T],
       jsRepresentation: JsValue): (String, String) =
-    ETagHelpers
-      .addProvidedETag(ok)
-      .getOrElse(ETagHelpers.computeETag(jsRepresentation, pagination))
+    ETagHelpers.addProvidedETag(ok).getOrElse(ETagHelpers.computeETag(jsRepresentation, pagination))
 
   private[naptime] def mkETagHeaderOpt[T](
       pagination: RequestPagination,
@@ -139,8 +136,7 @@ trait PlayJsonRestActionCategoryEngine {
           pagination: RequestPagination,
           response: RestResponse[Keyed[Key, Resource]]): Result = {
         mkOkResponse(response) { ok =>
-          val elements =
-            JsArray(Seq(JsonUtilities.outputOneObj(ok.content, requestFields)))
+          val elements = JsArray(Seq(JsonUtilities.outputOneObj(ok.content, requestFields)))
           val body = JsonUtilities.formatSuccessfulResponseBody(
             ok,
             elements,
@@ -186,21 +182,19 @@ trait PlayJsonRestActionCategoryEngine {
           } else {
             request.path + "/" + key
           }
-          val baseHeaders =
-            List(HeaderNames.LOCATION -> newLocation, "X-Coursera-Id" -> key)
+          val baseHeaders = List(HeaderNames.LOCATION -> newLocation, "X-Coursera-Id" -> key)
 
           ok.content.value
             .map { value =>
               val keyedResource = Keyed(ok.content.key, value)
               val elements = JsArray(Seq(JsonUtilities.outputOneObj(keyedResource, requestFields)))
-              val body =
-                JsonUtilities.formatSuccessfulResponseBody(
-                  ok,
-                  elements,
-                  resourceFields,
-                  request,
-                  requestFields,
-                  requestIncludes)
+              val body = JsonUtilities.formatSuccessfulResponseBody(
+                ok,
+                elements,
+                resourceFields,
+                request,
+                requestFields,
+                requestIncludes)
               Results
                 .Created(body)
                 .withHeaders(mkETagHeader(pagination, ok, elements) :: baseHeaders: _*)
@@ -238,19 +232,15 @@ trait PlayJsonRestActionCategoryEngine {
         mkOkResponse(response) { ok =>
           ok.content
             .map { result =>
-              val elements =
-                JsArray(Seq(JsonUtilities.outputOneObj(result, requestFields)))
-              val body =
-                JsonUtilities.formatSuccessfulResponseBody(
-                  ok,
-                  elements,
-                  resourceFields,
-                  request,
-                  requestFields,
-                  requestIncludes)
-              Results
-                .Ok(body)
-                .withHeaders(mkETagHeader(pagination, ok, elements))
+              val elements = JsArray(Seq(JsonUtilities.outputOneObj(result, requestFields)))
+              val body = JsonUtilities.formatSuccessfulResponseBody(
+                ok,
+                elements,
+                resourceFields,
+                request,
+                requestFields,
+                requestIncludes)
+              Results.Ok(body).withHeaders(mkETagHeader(pagination, ok, elements))
             }
             .getOrElse {
               Results.NoContent.withHeaders(mkETagHeaderOpt(pagination, ok, None).toList: _*)
@@ -274,8 +264,7 @@ trait PlayJsonRestActionCategoryEngine {
           pagination: RequestPagination,
           response: RestResponse[Keyed[Key, Resource]]): Result = {
         mkOkResponse(response) { ok =>
-          val elements =
-            JsArray(Seq(JsonUtilities.outputOneObj(ok.content, requestFields)))
+          val elements = JsArray(Seq(JsonUtilities.outputOneObj(ok.content, requestFields)))
           val body = JsonUtilities.formatSuccessfulResponseBody(
             ok,
             elements,
@@ -330,8 +319,7 @@ trait PlayJsonRestActionCategoryEngine {
           pagination: RequestPagination,
           response: RestResponse[Seq[Keyed[Key, Resource]]]): Result = {
         mkOkResponse(response) { ok =>
-          val elements =
-            Json.toJson(JsonUtilities.outputSeq(ok.content, requestFields))
+          val elements = Json.toJson(JsonUtilities.outputSeq(ok.content, requestFields))
           val body = JsonUtilities.formatSuccessfulResponseBody(
             ok,
             elements,
@@ -367,8 +355,7 @@ trait PlayJsonRestActionCategoryEngine {
           pagination: RequestPagination,
           response: RestResponse[Seq[Keyed[Key, Resource]]]): Result = {
         mkOkResponse(response) { ok =>
-          val elements =
-            Json.toJson(JsonUtilities.outputSeq(ok.content, requestFields))
+          val elements = Json.toJson(JsonUtilities.outputSeq(ok.content, requestFields))
           val body = JsonUtilities.formatSuccessfulResponseBody(
             ok,
             elements,
@@ -404,8 +391,7 @@ trait PlayJsonRestActionCategoryEngine {
           pagination: RequestPagination,
           response: RestResponse[Seq[Keyed[Key, Resource]]]): Result = {
         mkOkResponse(response) { ok =>
-          val elements =
-            Json.toJson(JsonUtilities.outputSeq(ok.content, requestFields))
+          val elements = Json.toJson(JsonUtilities.outputSeq(ok.content, requestFields))
           val body = JsonUtilities.formatSuccessfulResponseBody(
             ok,
             elements,

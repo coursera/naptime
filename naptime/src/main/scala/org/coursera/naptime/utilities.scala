@@ -49,8 +49,7 @@ private[naptime] object JsonUtilities {
   def outputOneObj[K, T](obj: Keyed[K, T], fields: RequestFields)(
       implicit writes: OWrites[T],
       keyFormat: KeyFormat[K]): JsObject = {
-    val filtered =
-      JsonUtilities.filterJsonFields(Keyed.writes.writes(obj), fields)
+    val filtered = JsonUtilities.filterJsonFields(Keyed.writes.writes(obj), fields)
 
     val keyFields = keyFormat.format.writes(obj.key)
 
@@ -114,16 +113,13 @@ private[naptime] object JsonUtilities {
       fields: Fields[_],
       ok: Ok[_]): JsObject = {
     // Don't bother outputting metadata if there are no fields present in the response.
-    val visibleIncludes =
-      ok.related.filterKeys(requestFields.forResource(_).isDefined)
+    val visibleIncludes = ok.related.filterKeys(requestFields.forResource(_).isDefined)
     val formatted = visibleIncludes.map {
       case (name, related) =>
         name.identifier ->
           related.fields.makeMetaRelationsMap(queryIncludes.resources.getOrElse(name, Set.empty))
     }.toList
-    JsObject(
-      "elements" -> fields
-        .makeMetaRelationsMap(queryIncludes.fields) :: formatted)
+    JsObject("elements" -> fields.makeMetaRelationsMap(queryIncludes.fields) :: formatted)
   }
 
   // TODO(future): Format differently based on the request header accepts.

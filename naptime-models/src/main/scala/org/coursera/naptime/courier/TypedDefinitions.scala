@@ -92,8 +92,7 @@ object TypedDefinitions {
   def typeName[K <: ScalaUnionTemplate](memberCompanion: UnionMemberCompanion[K]): String = {
     val unionCompanion = memberCompanion.unionCompanion
     val schema = unionCompanion match {
-      case withTyperef: UnionWithTyperefCompanion[K] =>
-        withTyperef.TYPEREF_SCHEMA
+      case withTyperef: UnionWithTyperefCompanion[K] => withTyperef.TYPEREF_SCHEMA
       case withoutTyperef: UnionCompanion[K] =>
         throw new IllegalArgumentException(
           "Union must be declared within a typeref and the typeref must have a 'typedDefinition' " +

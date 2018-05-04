@@ -115,8 +115,7 @@ object Types extends StrictLogging {
                   reverseRelation.toAnnotation.relationType.toString)
           }
           val reverseRelatedMap = Map[String, AnyRef](
-            Relations.REVERSE_PROPERTY_NAME -> reverseRelation.toAnnotation
-              .data())
+            Relations.REVERSE_PROPERTY_NAME -> reverseRelation.toAnnotation.data())
           newField.setProperties(reverseRelatedMap.asJava)
           newField.setDoc(reverseRelation.description)
           newField.setName(name.split("/").last, errorMessageBuilder)
@@ -141,11 +140,8 @@ object Types extends StrictLogging {
       keyType: RecordDataSchema,
       valueType: RecordDataSchema): RecordDataSchema = {
     val errorMessageBuilder = new StringBuilder
-    val recordDataSchema =
-      new RecordDataSchema(new Name(typeName), RecordType.RECORD)
-    val combinedFields = keyType.getFields().asScala.toList ++ valueType
-      .getFields()
-      .asScala
+    val recordDataSchema = new RecordDataSchema(new Name(typeName), RecordType.RECORD)
+    val combinedFields = keyType.getFields().asScala.toList ++ valueType.getFields().asScala
     val fields = if (combinedFields.exists(_.getName == "id")) {
       combinedFields // The key type had an `id` field defined as part of it.
     } else {
@@ -177,8 +173,7 @@ object Types extends StrictLogging {
       keyType: PrimitiveDataSchema,
       valueType: RecordDataSchema): RecordDataSchema = {
     val errorMessageBuilder = new StringBuilder
-    val recordDataSchema =
-      new RecordDataSchema(new Name(typeName), RecordType.RECORD)
+    val recordDataSchema = new RecordDataSchema(new Name(typeName), RecordType.RECORD)
     val idField = new RecordDataSchema.Field(keyType)
     idField.setOptional(false)
     idField.setName("id", errorMessageBuilder)

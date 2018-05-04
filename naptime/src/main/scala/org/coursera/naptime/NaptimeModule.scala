@@ -48,10 +48,8 @@ private[naptime] abstract class BinderExposer extends AbstractModule {
  */
 trait NaptimeModule extends BinderExposer with ScalaModule {
 
-  private[this] def resourceBinder =
-    NaptimeModuleHelpers.multibinder(exposedBinder())
-  private[this] def schemaTypesBinder =
-    NaptimeModuleHelpers.schemaTypesBinder(exposedBinder())
+  private[this] def resourceBinder = NaptimeModuleHelpers.multibinder(exposedBinder())
+  private[this] def schemaTypesBinder = NaptimeModuleHelpers.schemaTypesBinder(exposedBinder())
 
   protected[this] def bindResourceRouterBuilder(
       resourceRouterBuilder: ResourceRouterBuilder): Unit = {

@@ -80,11 +80,10 @@ object Decorator {
   /**
    * Build a decorator from a function `f` that doesn't require an [[ExecutionContext]].
    */
-  def function[I, O](f: I => Future[Either[String, O]]): Decorator[I, O] =
-    new Decorator[I, O] {
-      override def apply(input: I)(implicit ec: ExecutionContext): Future[Either[String, O]] = {
-        f(input)
-      }
+  def function[I, O](f: I => Future[Either[String, O]]): Decorator[I, O] = new Decorator[I, O] {
+    override def apply(input: I)(implicit ec: ExecutionContext): Future[Either[String, O]] = {
+      f(input)
     }
+  }
 
 }

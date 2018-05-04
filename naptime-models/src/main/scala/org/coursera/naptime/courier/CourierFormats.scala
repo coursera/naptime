@@ -109,8 +109,7 @@ object CourierFormats extends StrictLogging {
     new OFormat[T] {
       private[this] val clazz = tag.runtimeClass.asInstanceOf[Class[T]]
       private[this] val builder = CourierSerializer.builder(clazz)
-      private[this] val schema =
-        CourierSerializer.getSchema(clazz).asInstanceOf[RecordDataSchema]
+      private[this] val schema = CourierSerializer.getSchema(clazz).asInstanceOf[RecordDataSchema]
 
       override def reads(jsValue: JsValue): JsResult[T] = {
         jsValue match {
@@ -128,8 +127,7 @@ object CourierFormats extends StrictLogging {
               case castException: TemplateOutputCastException =>
                 JsError(s"Pegasus template cast error: ${castException.getMessage}")
             }
-          case unknown: Any =>
-            JsError(s"Unsupported JsValue type: ${unknown.getClass}")
+          case unknown: Any => JsError(s"Unsupported JsValue type: ${unknown.getClass}")
         }
       }
 
@@ -153,8 +151,7 @@ object CourierFormats extends StrictLogging {
             try {
               val dataMap = schema match {
                 case typerefSchema: TyperefDataSchema =>
-                  jsValueToTyperef(emptyPath, jsValue, typerefSchema)
-                    .asInstanceOf[DataMap]
+                  jsValueToTyperef(emptyPath, jsValue, typerefSchema).asInstanceOf[DataMap]
                 case unionSchema: UnionDataSchema =>
                   jsObjectToUnion(emptyPath, jsObject, unionSchema)
               }
@@ -169,8 +166,7 @@ object CourierFormats extends StrictLogging {
               case castException: TemplateOutputCastException =>
                 JsError(s"Pegasus template cast error: ${castException.getMessage}")
             }
-          case unknown: Any =>
-            JsError(s"Unsupported JsValue type: ${unknown.getClass}")
+          case unknown: Any => JsError(s"Unsupported JsValue type: ${unknown.getClass}")
         }
       }
 
@@ -179,8 +175,7 @@ object CourierFormats extends StrictLogging {
           case dataMap: DataMap =>
             schema match {
               case typerefSchema: TyperefDataSchema =>
-                typerefToJsValue(emptyPath, dataMap, typerefSchema)
-                  .asInstanceOf[JsObject]
+                typerefToJsValue(emptyPath, dataMap, typerefSchema).asInstanceOf[JsObject]
               case unionSchema: UnionDataSchema =>
                 unionToJsObject(emptyPath, dataMap, unionSchema)
             }
@@ -335,8 +330,7 @@ object CourierFormats extends StrictLogging {
       schemaPath: SchemaPath,
       context: String,
       observedSchema: DataSchema)(implicit tag: ClassTag[ExpectedSchemaType]): Unit = {
-    val expectedSchemaClass =
-      tag.runtimeClass.asInstanceOf[Class[ExpectedSchemaType]]
+    val expectedSchemaClass = tag.runtimeClass.asInstanceOf[Class[ExpectedSchemaType]]
     val observedSchemaClass = observedSchema.getClass
     if (observedSchemaClass != expectedSchemaClass) {
       val schemaInfo = schemaPath.last
@@ -414,8 +408,7 @@ object CourierFormats extends StrictLogging {
         val (memberKey, memberData, memberSchema) =
           destructureUnionMemberDataMap(dataMap, unionSchema)
         val typeName = memberKeyToTypeName(typerefSchema, nameMap, memberKey)
-        val definition = dataToJsValue(schemaPath, memberData, memberSchema)
-          .asInstanceOf[JsObject]
+        val definition = dataToJsValue(schemaPath, memberData, memberSchema).asInstanceOf[JsObject]
         definition + (typeNameField -> JsString(typeName))
     }
   }
@@ -603,16 +596,14 @@ object CourierFormats extends StrictLogging {
         jsObjectToUnion(schemaPath, jsObject, unionSchema)
       case Some(TypedDef(nameMap)) =>
         val (typeName, memberJson) = destructureTypedDefinitionJsObject(jsObject)
-        val memberSchema =
-          typeNameToMemberSchema(typerefSchema, unionSchema, nameMap, typeName)
+        val memberSchema = typeNameToMemberSchema(typerefSchema, unionSchema, nameMap, typeName)
         new DataMap(Seq(memberSchema.getUnionMemberKey -> jsValueToData(
           schemaPath,
           memberJson,
           memberSchema)).toMap.asJava)
       case Some(FlatTypedDef(nameMap)) =>
         val (typeName, memberJson) = destructureFlatTypedDefinitionJsObject(jsObject)
-        val memberSchema =
-          typeNameToMemberSchema(typerefSchema, unionSchema, nameMap, typeName)
+        val memberSchema = typeNameToMemberSchema(typerefSchema, unionSchema, nameMap, typeName)
         new DataMap(Seq(memberSchema.getUnionMemberKey -> jsValueToData(
           schemaPath,
           memberJson,
@@ -704,8 +695,7 @@ object CourierFormats extends StrictLogging {
       implicit tag: ClassTag[T]): StringKeyFormat[T] = {
     val clazz = tag.runtimeClass.asInstanceOf[Class[T]]
     CourierSerializer.getSchema(clazz) match {
-      case recordSchema: RecordDataSchema =>
-        recordTemplateStringKeyFormat(clazz, recordSchema)
+      case recordSchema: RecordDataSchema => recordTemplateStringKeyFormat(clazz, recordSchema)
       case unknown: DataSchema =>
         throw new IllegalArgumentException(
           s"Expected RecordDataSchema but found: ${unknown.getClass}")
@@ -761,8 +751,7 @@ object CourierFormats extends StrictLogging {
       implicit tag: ClassTag[T]): StringKeyFormat[T] = {
     val clazz = tag.runtimeClass.asInstanceOf[Class[T]]
     CourierSerializer.getSchema(clazz) match {
-      case arraySchema: ArrayDataSchema =>
-        arrayTemplateStringKeyFormat(clazz, arraySchema)
+      case arraySchema: ArrayDataSchema => arrayTemplateStringKeyFormat(clazz, arraySchema)
       case unknown: DataSchema =>
         throw new IllegalArgumentException(
           s"Expected ArrayDataSchema but found: ${unknown.getClass}")
@@ -850,8 +839,7 @@ object CourierFormats extends StrictLogging {
     new ValidationOptions(RequiredMode.FIXUP_ABSENT_WITH_DEFAULT, CoercionMode.STRING_TO_PRIMITIVE)
 
   private[this] def validateAndFixUp(data: Any, schema: DataSchema): Unit = {
-    val result =
-      ValidateDataAgainstSchema.validate(data, schema, validationOptions)
+    val result = ValidateDataAgainstSchema.validate(data, schema, validationOptions)
     if (!result.isValid) {
       throw new DataValidationException(result)
     }

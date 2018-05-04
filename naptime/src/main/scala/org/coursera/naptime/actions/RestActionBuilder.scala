@@ -104,8 +104,7 @@ class RestActionBuilder[RACType, AuthType, BodyType, ResourceKeyType, ResourceTy
     NewResponseType] =
     new RestActionBuilder(auth, bodyParser, errorHandler)
 
-  def rawJsonBody(maxLength: Int = 100 * 1024) =
-    body(BodyParsers.parse.tolerantJson(maxLength))
+  def rawJsonBody(maxLength: Int = 100 * 1024) = body(BodyParsers.parse.tolerantJson(maxLength))
 
   def jsonBody[NewBodyType](implicit reads: Reads[NewBodyType]): RestActionBuilder[
     RACType,
@@ -201,8 +200,7 @@ class RestActionBuilder[RACType, AuthType, BodyType, ResourceKeyType, ResourceTy
    * Underlying HTTP request (id = "1"):
    * {{{ GET /api/myResource/1 }}}
    */
-  type GetBuilder =
-    BodyBuilder[GetRestActionCategory, Keyed[ResourceKeyType, ResourceType]]
+  type GetBuilder = BodyBuilder[GetRestActionCategory, Keyed[ResourceKeyType, ResourceType]]
   def get: GetBuilder = bodyBuilder()
 
   /**
@@ -311,8 +309,7 @@ class RestActionBuilder[RACType, AuthType, BodyType, ResourceKeyType, ResourceTy
    * Underlying HTTP request (id=10, body elided):
    * {{{ PATCH /api/myResource/10 }}}
    */
-  type PatchBuilder =
-    BodyBuilder[PatchRestActionCategory, Keyed[ResourceKeyType, ResourceType]]
+  type PatchBuilder = BodyBuilder[PatchRestActionCategory, Keyed[ResourceKeyType, ResourceType]]
   def patch: PatchBuilder = bodyBuilder()
 
   /**

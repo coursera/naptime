@@ -131,8 +131,7 @@ private[authenticator] trait FirstOf {
         authenticator1.collect(transformer1.partial),
         authenticator2.collect(transformer2.partial),
         authenticator3.collect(transformer3.partial),
-        authenticator4.collect(transformer4.partial)
-      ))
+        authenticator4.collect(transformer4.partial)))
   }
 
   def firstOf[A, A1, A2, A3, A4, A5](
@@ -153,8 +152,7 @@ private[authenticator] trait FirstOf {
         authenticator2.collect(transformer2.partial),
         authenticator3.collect(transformer3.partial),
         authenticator4.collect(transformer4.partial),
-        authenticator5.collect(transformer5.partial)
-      ))
+        authenticator5.collect(transformer5.partial)))
   }
 
   // TODO(josh): Generate for remaining arities.

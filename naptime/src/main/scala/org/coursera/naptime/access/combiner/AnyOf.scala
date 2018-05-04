@@ -50,8 +50,7 @@ private[access] trait AnyOf {
           resultB <- futureB
         } yield {
           (resultA, resultB) match {
-            case (Left(errorA), Left(_)) =>
-              Left(errorA) // Ignore the other error.
+            case (Left(errorA), Left(_)) => Left(errorA) // Ignore the other error.
             case _ =>
               Right((resultA.right.toOption, resultB.right.toOption))
           }
@@ -92,8 +91,7 @@ private[access] trait AnyOf {
           resultC <- futureC
         } yield {
           (resultA, resultB, resultC) match {
-            case (Left(errorA), Left(_), Left(_)) =>
-              Left(errorA) // Ignore the other errors.
+            case (Left(errorA), Left(_), Left(_)) => Left(errorA) // Ignore the other errors.
             case _ =>
               Right((resultA.right.toOption, resultB.right.toOption, resultC.right.toOption))
           }
@@ -122,9 +120,7 @@ private[access] trait AnyOf {
   private[this] def computeCheckResult[T](
       elem: Option[T],
       accessControl: HeaderAccessControl[T]): Either[NaptimeActionException, T] = {
-    elem
-      .map(e => accessControl.check(e))
-      .getOrElse(StructuredAccessControl.missingResponse)
+    elem.map(e => accessControl.check(e)).getOrElse(StructuredAccessControl.missingResponse)
   }
 
 }

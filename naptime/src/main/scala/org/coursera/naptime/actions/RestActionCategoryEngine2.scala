@@ -124,8 +124,7 @@ trait RestActionCategoryEngine2Impls {
           serializeItem(dataMap, elem, keyFormat, serializer, wireConverter)
           dataMap
         }.toList
-        val response =
-          AriResponse(data, ok.pagination.getOrElse(ResponsePagination.empty), None)
+        val response = AriResponse(data, ok.pagination.getOrElse(ResponsePagination.empty), None)
         Future.successful(response)
       }
       .getOrElse {
@@ -156,8 +155,7 @@ trait RestActionCategoryEngine2Impls {
       // Note: upgrading Play! versions (even point releases) could change the output of hashCode.
       // Because ETags are just an optimization, we are okay with that for now.
       // Note: for pagination, we explicitly call the eTagHashCode that excludes some fields.
-      val hashCode =
-        Set(dataMap.hashCode(), pagination.eTagHashCode()).hashCode()
+      val hashCode = Set(dataMap.hashCode(), pagination.eTagHashCode()).hashCode()
 
       constructEtagHeader(ETag(hashCode.toString))
     }
@@ -168,9 +166,7 @@ trait RestActionCategoryEngine2Impls {
       pagination: RequestPagination,
       ok: Ok[T],
       jsRepresentation: DataMap): (String, String) =
-    ETagHelpers
-      .addProvidedETag(ok)
-      .getOrElse(ETagHelpers.computeETag(jsRepresentation, pagination))
+    ETagHelpers.addProvidedETag(ok).getOrElse(ETagHelpers.computeETag(jsRepresentation, pagination))
 
   private[naptime] def mkETagHeaderOpt[T](
       pagination: RequestPagination,
@@ -274,8 +270,7 @@ trait RestActionCategoryEngine2Impls {
     } yield {
       val dataList = new DataList()
       linked.put(relationName.identifier, dataList)
-      val relationFields =
-        requestFields.forResource(relationName).getOrElse(RequestFields.empty)
+      val relationFields = requestFields.forResource(relationName).getOrElse(RequestFields.empty)
       relationName -> relation.toPegasus(relationFields, dataList)
     }
     DelegateFields(requestFields, updatedRelatedFields.toMap)
@@ -345,8 +340,7 @@ trait RestActionCategoryEngine2Impls {
     if (request.includeFieldsRelatedResource("_links")) {
       val links = new DataMap()
       response.put("links", links)
-      val visibleIncludes =
-        ok.related.filterKeys(requestFields.forResource(_).isDefined)
+      val visibleIncludes = ok.related.filterKeys(requestFields.forResource(_).isDefined)
       visibleIncludes.foreach {
         case (name, related) =>
           related.fields.makeLinksRelationsMap(
@@ -383,8 +377,7 @@ trait RestActionCategoryEngine2Impls {
         serializeFacets(facetsMap, facets)
       }
     }
-    val newFields =
-      serializeRelated(linked, ok, fields, requestIncludes, elementsFields)
+    val newFields = serializeRelated(linked, ok, fields, requestIncludes, elementsFields)
     val codec = new FlattenedFilteringJacksonDataCodec(newFields)
     val etag = mkETagHeader(pagination, ok, response)
     addLinks(response, requestIncludes, newFields, fields, ok)
@@ -468,8 +461,7 @@ trait RestActionCategoryEngine2Impls {
           } else {
             request.path + "/" + key
           }
-          val baseHeaders =
-            List(HeaderNames.LOCATION -> newLocation, "X-Coursera-Id" -> key)
+          val baseHeaders = List(HeaderNames.LOCATION -> newLocation, "X-Coursera-Id" -> key)
 
           ok.content.value
             .map { value =>
@@ -482,9 +474,7 @@ trait RestActionCategoryEngine2Impls {
                 requestIncludes,
                 resourceFields,
                 pagination)
-              response
-                .playResponse(Status.CREATED, None)
-                .withHeaders(baseHeaders: _*)
+              response.playResponse(Status.CREATED, None).withHeaders(baseHeaders: _*)
             }
             .getOrElse {
               // No body, just a 201 Created.

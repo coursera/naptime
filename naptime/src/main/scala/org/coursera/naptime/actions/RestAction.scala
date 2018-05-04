@@ -107,14 +107,12 @@ trait RestAction[RACType, AuthType, BodyType, KeyType, ResourceType, ResponseTyp
               // TODO: keep as an exception.
               successAuth => {
                 val bodyAsBytesEventually = bodyError.body.consumeData
-                val bodyAsStrEventually =
-                  bodyAsBytesEventually.map(byteStr => byteStr.utf8String)
+                val bodyAsStrEventually = bodyAsBytesEventually.map(byteStr => byteStr.utf8String)
                 bodyAsStrEventually.map { bodyAsStr =>
                   throw new IllegalArgumentException(
                     s"${rh.headers} Encountered body error: $bodyAsStr")
                 }
-              }
-            )
+              })
           }
         case Right(a) =>
           authResult.flatMap[Response] { authResult =>
@@ -125,8 +123,7 @@ trait RestAction[RACType, AuthType, BodyType, KeyType, ResourceType, ResponseTyp
                   fields <- fieldsEngine.computeFields(rh)
                   includes <- fieldsEngine.computeIncludes(rh)
                 } yield {
-                  val pagination =
-                    RequestPagination(rh, paginationConfiguration)
+                  val pagination = RequestPagination(rh, paginationConfiguration)
                   val playRequest = Request(rh, a)
                   val ctx = new RestContext(a, auth, playRequest, pagination, includes, fields)
                   def run(): Future[Response] = {
@@ -158,10 +155,9 @@ trait RestAction[RACType, AuthType, BodyType, KeyType, ResourceType, ResponseTyp
                   // Implementation below borrowed from Play's Action.scala
                   Play.maybeApplication
                     .map { app =>
-                      play.utils.Threads
-                        .withContextClassLoader(app.classloader) {
-                          run()
-                        }
+                      play.utils.Threads.withContextClassLoader(app.classloader) {
+                        run()
+                      }
                     }
                     .getOrElse {
                       // Run without the app class loader. This is important if we're running low-level
@@ -173,8 +169,7 @@ trait RestAction[RACType, AuthType, BodyType, KeyType, ResourceType, ResponseTyp
                   case e: NaptimeParseError      => Future.failed(e)
                   case e: NaptimeActionException => Future.failed(e)
                 }.get
-              }
-            )
+              })
           }
       }
       .run()
@@ -231,14 +226,12 @@ trait RestAction[RACType, AuthType, BodyType, KeyType, ResourceType, ResponseTyp
                 case e: NaptimeParseError      => Future.successful(e.result)
                 case e: NaptimeActionException => Future.successful(e.result)
               }.get
-            }
-          )
+            })
         }
     }
   }
 
-  override def toString() =
-    s"RestAction(engine=$restEngine, auth=$restAuth, body=$restBodyParser)"
+  override def toString() = s"RestAction(engine=$restEngine, auth=$restAuth, body=$restBodyParser)"
 
   /**
    * A set of tags to add to all requests that are processed by this RestAction.

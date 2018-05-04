@@ -35,8 +35,7 @@ object NaptimeUnionField {
             context.value.copy(element = nestedDataMap)
           }
           .orNull[DataMapWithParent]
-      }
-    )
+      })
   }
 
   def getTypedDefinition(unionDataSchema: UnionDataSchema): Option[Map[String, String]] = {
@@ -55,8 +54,7 @@ object NaptimeUnionField {
       currentPath: List[String]): UnionType[SangriaGraphQlContext] = {
 
     val objects = unionDataSchema.getTypes.asScala.map { unionMember =>
-      val typedDefinitions =
-        getTypedDefinition(unionDataSchema).getOrElse(Map[String, String]())
+      val typedDefinitions = getTypedDefinition(unionDataSchema).getOrElse(Map[String, String]())
 
       val unionMemberKey = unionMember match {
         case _ if typedDefinitions.contains(unionMember.getUnionMemberKey) =>
@@ -69,31 +67,27 @@ object NaptimeUnionField {
       }
 
       val unionMemberFieldName = FieldBuilder.formatName(unionMemberKey)
-      val subTypeField =
-        FieldBuilder.buildField(
-          schemaMetadata,
-          new RecordDataSchemaField(unionMember),
-          namespace,
-          Some(unionMemberKey),
-          resourceName = resourceName,
-          currentPath = currentPath)
+      val subTypeField = FieldBuilder.buildField(
+        schemaMetadata,
+        new RecordDataSchemaField(unionMember),
+        namespace,
+        Some(unionMemberKey),
+        resourceName = resourceName,
+        currentPath = currentPath)
 
-      val field =
-        Field.apply[SangriaGraphQlContext, DataMapWithParent, Any, Any](
-          unionMemberFieldName,
-          subTypeField.fieldType,
-          resolve = context => {
-            if (unionDataSchema.getProperties.containsKey(TYPED_DEFINITION_KEY)) {
-              Option(context.value.element.getDataMap("definition"))
-                .map(element => context.value.copy(element = element))
-                .getOrElse(subTypeField.resolve(context))
-            } else {
-              subTypeField.resolve(context)
-            }
+      val field = Field.apply[SangriaGraphQlContext, DataMapWithParent, Any, Any](
+        unionMemberFieldName,
+        subTypeField.fieldType,
+        resolve = context => {
+          if (unionDataSchema.getProperties.containsKey(TYPED_DEFINITION_KEY)) {
+            Option(context.value.element.getDataMap("definition"))
+              .map(element => context.value.copy(element = element))
+              .getOrElse(subTypeField.resolve(context))
+          } else {
+            subTypeField.resolve(context)
           }
-        )
-      val formattedResourceName =
-        NaptimeResourceUtils.formatResourceName(resourceName)
+        })
+      val formattedResourceName = NaptimeResourceUtils.formatResourceName(resourceName)
 
       ObjectType[SangriaGraphQlContext, DataMapWithParent](
         name = FieldBuilder.formatName(s"$formattedResourceName/${unionMemberKey}Member"),

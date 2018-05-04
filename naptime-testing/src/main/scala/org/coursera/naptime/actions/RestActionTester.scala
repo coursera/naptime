@@ -40,13 +40,11 @@ import scala.util.Try
  */
 trait RestActionTester { this: ScalaFutures =>
   private[this] val internalActorSystem: ActorSystem = ActorSystem("test")
-  private[this] val internalExecutionContext: ExecutionContext =
-    actorSystem.dispatcher
+  private[this] val internalExecutionContext: ExecutionContext = actorSystem.dispatcher
   private[this] val internalMaterializer: Materializer = ActorMaterializer()
 
   implicit protected def actorSystem: ActorSystem = internalActorSystem
-  implicit protected def executionContext: ExecutionContext =
-    internalExecutionContext
+  implicit protected def executionContext: ExecutionContext = internalExecutionContext
   implicit protected def materializer: Materializer = internalMaterializer
 
   @After
@@ -57,8 +55,7 @@ trait RestActionTester { this: ScalaFutures =>
   /**
    * Allow access to the request to facilitate testing.
    */
-  protected[this] implicit def requestEvidence: RequestEvidence =
-    RequestEvidence
+  protected[this] implicit def requestEvidence: RequestEvidence = RequestEvidence
 
   protected[this] def buildRestContext[AuthType, BodyType](
       auth: AuthType,
@@ -89,14 +86,12 @@ trait RestActionTester { this: ScalaFutures =>
       updatedAuthEither match {
         case Left(error) => RestError(error)
         case Right(updatedAuth) =>
-          val responseFuture =
-            action.safeApply(ctx.copyWithAuth(updatedAuth)).recover {
-              case e: NaptimeActionException => RestError(e)
-            }
+          val responseFuture = action.safeApply(ctx.copyWithAuth(updatedAuth)).recover {
+            case e: NaptimeActionException => RestError(e)
+          }
 
           Try(responseFuture.futureValue).recover {
-            case e: TestFailedException =>
-              e.cause.map(throw _).getOrElse(throw e)
+            case e: TestFailedException => e.cause.map(throw _).getOrElse(throw e)
           }.get
       }
     }

@@ -27,8 +27,7 @@ import scala.collection.immutable
 import language.experimental.macros
 
 object Router {
-  def build[T <: CollectionResource[_, _, _]]: ResourceRouterBuilder =
-    macro MacroImpls.build[T]
+  def build[T <: CollectionResource[_, _, _]]: ResourceRouterBuilder = macro MacroImpls.build[T]
 
   /**
    * Key for the [[RequestHeader.tags]] map filled in with the resource's class name

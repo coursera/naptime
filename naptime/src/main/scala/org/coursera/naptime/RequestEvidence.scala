@@ -33,6 +33,5 @@ sealed trait RequestEvidence
 private[naptime] object RequestEvidence extends RequestEvidence
 
 trait DangerousAccessToUnderlyingRequest { this: Resource[_] =>
-  protected[this] implicit def requestEvidence: RequestEvidence =
-    RequestEvidence
+  protected[this] implicit def requestEvidence: RequestEvidence = RequestEvidence
 }

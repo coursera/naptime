@@ -34,8 +34,7 @@ object NaptimeEnumField {
           EnumValue(
             name = FieldBuilder.formatName(symbol),
             description = enumDataSchema.getSymbolDocs.asScala.get(symbol),
-            value = symbol))
-    )
+            value = symbol)))
   }
 
 }

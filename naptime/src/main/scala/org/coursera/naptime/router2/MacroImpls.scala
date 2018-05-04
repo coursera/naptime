@@ -69,8 +69,7 @@ class MacroImpls(val c: blackbox.Context) {
   val COLLECTION_RESOURCE_TYPE = typeOf[CollectionResource[_, _, _]]
   val TOP_LEVEL_COLLECTION = typeOf[TopLevelCollectionResource[_, _]]
   val TOP_LEVEL_COURIER_COLLECTION = typeOf[CourierCollectionResource[_, _]]
-  val STRING_KEY_FORMAT_TYPE_CONSTRUCTOR =
-    weakTypeOf[StringKeyFormat[_]].typeConstructor
+  val STRING_KEY_FORMAT_TYPE_CONSTRUCTOR = weakTypeOf[StringKeyFormat[_]].typeConstructor
 
   val ANY_VAL = typeOf[AnyVal] // Primitive types.
   val STRING = typeOf[String]
@@ -168,8 +167,7 @@ class MacroImpls(val c: blackbox.Context) {
             resourceType <:< TOP_LEVEL_COURIER_COLLECTION) {
           q"None"
         } else {
-          val collectionTypeView =
-            resourceType.baseType(COLLECTION_RESOURCE_TYPE.typeSymbol)
+          val collectionTypeView = resourceType.baseType(COLLECTION_RESOURCE_TYPE.typeSymbol)
           q"Some(${collectionTypeView.typeArgs.head.toString})"
         }
 
@@ -205,8 +203,7 @@ class MacroImpls(val c: blackbox.Context) {
     }
 
     private[this] def keyType(resourceType: c.Type): c.Tree = {
-      val collectionTypeView =
-        resourceType.baseType(COLLECTION_RESOURCE_TYPE.typeSymbol)
+      val collectionTypeView = resourceType.baseType(COLLECTION_RESOURCE_TYPE.typeSymbol)
       val keyType = collectionTypeView.typeArgs(1)
       if (keyType <:< ANY_VAL || keyType =:= typeOf[String]) {
         q"""
@@ -219,8 +216,7 @@ class MacroImpls(val c: blackbox.Context) {
     }
 
     private[this] def valueType(resourceType: c.Type): c.Tree = {
-      val collectionTypeView =
-        resourceType.baseType(COLLECTION_RESOURCE_TYPE.typeSymbol)
+      val collectionTypeView = resourceType.baseType(COLLECTION_RESOURCE_TYPE.typeSymbol)
       val bodyType = collectionTypeView.typeArgs(2)
       q"${bodyType.toString}"
     }
@@ -334,8 +330,7 @@ class MacroImpls(val c: blackbox.Context) {
     }
 
     private[this] def computeTypes(resourceType: c.Type): c.Tree = {
-      val collectionTypeView =
-        resourceType.baseType(COLLECTION_RESOURCE_TYPE.typeSymbol)
+      val collectionTypeView = resourceType.baseType(COLLECTION_RESOURCE_TYPE.typeSymbol)
       val keyType = collectionTypeView.typeArgs(1)
       val bodyType = collectionTypeView.typeArgs(2)
 
@@ -573,8 +568,7 @@ class MacroImpls(val c: blackbox.Context) {
           // Note: we use firstMethod.pos as this list is reverse of source-order.
           Left(firstMethod.pos, s"Multiple ${actionCategory.name} actions found.")
         case Nil =>
-          val msg =
-            "COMPILER BUG: methods in BuildParameterlessActionTree is empty"
+          val msg = "COMPILER BUG: methods in BuildParameterlessActionTree is empty"
           c.error(c.enclosingPosition, msg)
           throw MacroBugException(msg)
       }
@@ -647,8 +641,7 @@ class MacroImpls(val c: blackbox.Context) {
         case firstMethod :: _ =>
           Left(firstMethod.pos, s"Multiple ${actionCategory.name}'s found.")
         case Nil =>
-          val msg =
-            "COMPILER BUG: methods in buildSingleElementActionTree is empty"
+          val msg = "COMPILER BUG: methods in buildSingleElementActionTree is empty"
           c.error(c.enclosingPosition, msg)
           throw MacroBugException(msg)
       }
@@ -709,8 +702,7 @@ class MacroImpls(val c: blackbox.Context) {
                   q"requestHeader: $REQUEST_HEADER",
                   q"optPathKey: resourceInstance.OptPathKey",
                   q"ids: Set[resourceInstance.KeyType]"),
-                MultiGetRestActionCategory
-              )
+                MultiGetRestActionCategory)
             } else {
               Left(methodSymbol.pos, "Multi-Get requires an 'ids' parameter!")
             }
@@ -727,8 +719,7 @@ class MacroImpls(val c: blackbox.Context) {
     private[this] def buildFinderTree(
         methods: Iterable[c.universe.MethodSymbol],
         keyType: c.universe.Type): OptionalTree = {
-      val methodBranches =
-        methods.map(buildSingleNamedActionTree(FinderRestActionCategory))
+      val methodBranches = methods.map(buildSingleNamedActionTree(FinderRestActionCategory))
       val tree = q"""
       override def executeFinder(
           requestHeader: $REQUEST_HEADER,
@@ -746,8 +737,7 @@ class MacroImpls(val c: blackbox.Context) {
     private[this] def buildActionTree(
         methods: Iterable[c.universe.MethodSymbol],
         keyType: c.universe.Type): OptionalTree = {
-      val methodBranches =
-        methods.map(buildSingleNamedActionTree(ActionRestActionCategory))
+      val methodBranches = methods.map(buildSingleNamedActionTree(ActionRestActionCategory))
       val tree = q"""
       override def executeAction(
           requestHeader: $REQUEST_HEADER,

@@ -37,8 +37,7 @@ class ResponseMetadataMiddleware
       status: Int = 200,
       errorMessage: Option[JsValue] = None)
 
-  private[this] val responseMetadata =
-    new ConcurrentHashMap[String, ResponseMetadata]().asScala
+  private[this] val responseMetadata = new ConcurrentHashMap[String, ResponseMetadata]().asScala
 
   override def beforeQuery(context: MiddlewareQueryContext[SangriaGraphQlContext, _, _]): QueryVal =
     ()
@@ -123,10 +122,8 @@ class ResponseMetadataMiddleware
             sangria.ast.ObjectValue(
               Vector(
                 sangria.ast.ObjectField("sourceUrl", sangria.ast.StringValue(metadata.sourceUrl)),
-                sangria.ast.ObjectField("statusCode", sangria.ast.IntValue(metadata.status))
-              ) ++
-                errorMessageFieldOpt)
-          )
+                sangria.ast.ObjectField("statusCode", sangria.ast.IntValue(metadata.status))) ++
+                errorMessageFieldOpt))
       }.toVector
 
       Vector(

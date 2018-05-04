@@ -35,16 +35,14 @@ trait Authorizer[-A] {
   /**
    * Construct an `Authorizer` for new type [[AA]], given a function to compute [[A]] from [[AA]].
    */
-  def on[AA](f: AA => A): Authorizer[AA] =
-    Authorizer[AA](aa => authorize(f(aa)))
+  def on[AA](f: AA => A): Authorizer[AA] = Authorizer[AA](aa => authorize(f(aa)))
 
 }
 
 object Authorizer {
 
   def apply[A](f: A => AuthorizeResult): Authorizer[A] = new Authorizer[A] {
-    override def authorize(authentication: A): AuthorizeResult =
-      f(authentication)
+    override def authorize(authentication: A): AuthorizeResult = f(authentication)
   }
 
   def toResponse[T](result: AuthorizeResult, rawResponse: T): Either[NaptimeActionException, T] = {

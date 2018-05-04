@@ -110,8 +110,7 @@ case class NaptimePlayRouter(
    */
   override lazy val routes: Routes = Function.unlift(handlerFor)
 
-  override def withPrefix(prefix: String): routing.Router =
-    copy(prefix = prefix)
+  override def withPrefix(prefix: String): routing.Router = copy(prefix = prefix)
 
   /**
    * Includes the Naptime resources into Play's dev mode not-found handler that lists all routes.
@@ -164,8 +163,7 @@ case class NaptimePlayRouter(
               s"Problem computing schema for resource ${resourceSchema.className}. " +
                 s"Parent class ${resourceSchema.parentClass} not found in schema map keys: " +
                 s"${naptimeRoutes.schemaMap.keys}",
-              e
-            )
+              e)
             prefix
         }
       } else {
@@ -193,8 +191,7 @@ case class NaptimePlayRouter(
       (path, pathWithKey) = computeFullPath(routerBuilder.schema)
       handler <- routerBuilder.schema.handlers.sortBy(h => handlerOrder(h.kind))
     } yield {
-      val method =
-        s"${handlerKindToHttpMethod(handler.kind)} --- ${handler.kind}"
+      val method = s"${handlerKindToHttpMethod(handler.kind)} --- ${handler.kind}"
       val documentationPath = if (shouldUsePathWithKey(handler.kind)) {
         pathWithKey
       } else {
@@ -218,8 +215,7 @@ case class NaptimePlayRouter(
             s"${param.name}: ${param.`type`}"
           }
       }
-      val baseMethod =
-        s"[NAPTIME] ${routerBuilder.schema.className}.${handler.name}"
+      val baseMethod = s"[NAPTIME] ${routerBuilder.schema.className}.${handler.name}"
       val scalaMethod = if (queryParamInfo.isEmpty) {
         baseMethod
       } else {
@@ -238,8 +234,7 @@ case class NaptimePlayRouter(
     HandlerKind.DELETE,
     HandlerKind.PATCH,
     HandlerKind.FINDER,
-    HandlerKind.ACTION
-  ).zipWithIndex.toMap
+    HandlerKind.ACTION).zipWithIndex.toMap
 
   /**
    * Route the request to one of the naptime resources, invoking the (macro-generated) router.
