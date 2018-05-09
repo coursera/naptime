@@ -103,11 +103,11 @@ class Resource(implicit val executionContext: ExecutionContext, val materializer
     ???
   }
 
-  def batchModify(someParam: Option[ComplexEmailType]) = Nap.action { ctx =>
+  def actionWithParams(someParam: Option[ComplexEmailType]) = Nap.action { ctx =>
     ???
   }
 
-  def parameterless() = Nap.action { ctx =>
+  def actionWithoutParams() = Nap.action { ctx =>
     ???
   }
 
@@ -134,8 +134,8 @@ class NonNestedMacroTests extends AssertionsForJUnit with MockitoSugar with Reso
   when(instance.byEmail(any())).thenReturn(instanceImpl.byEmail("emailAddr"))
   when(instance.byUsernameAndDomain(any(), any()))
     .thenReturn(instanceImpl.byUsernameAndDomain("user", "domain"))
-  when(instance.parameterless()).thenReturn(instanceImpl.parameterless())
-  when(instance.batchModify(any())).thenReturn(instanceImpl.batchModify(None))
+  when(instance.actionWithoutParams()).thenReturn(instanceImpl.actionWithoutParams())
+  when(instance.actionWithParams(any())).thenReturn(instanceImpl.actionWithParams(None))
   when(instance.complex(any(), any())).thenReturn(instanceImpl.complex(null, None))
 
   val router =
@@ -170,6 +170,13 @@ class NonNestedMacroTests extends AssertionsForJUnit with MockitoSugar with Reso
     val taggedRequest = result.get.tagRequest(requestHeader)
     assert(taggedRequest.tags.contains(Router.NAPTIME_RESOURCE_NAME))
     assert(taggedRequest.tags.get(Router.NAPTIME_METHOD_NAME).contains(methodName))
+  }
+
+  private[this] def noCustomInputOutputAuthTypes(methodName: String): Unit = {
+    val handler = Resource.routerBuilder.schema.handlers.find(_.name === methodName).get
+    assert(handler.inputBody.isEmpty)
+    assert(handler.customOutputBody.isEmpty)
+    assert(handler.authType.isEmpty)
   }
 
   @Test
@@ -224,9 +231,11 @@ class NonNestedMacroTests extends AssertionsForJUnit with MockitoSugar with Reso
 
   @Test
   def finderByUsernameAndDomainTest(): Unit = {
-    val finderRequest = mkRequest(
-      None,
-      query = Map("q" -> "byUsernameAndDomain", "userName" -> "daphne", "domain" -> "coursera.org"))
+    val finderRequest =
+      mkRequest(
+        None,
+        query =
+          Map("q" -> "byUsernameAndDomain", "userName" -> "daphne", "domain" -> "coursera.org"))
     checkRouter(finderRequest, "byUsernameAndDomain")
     verify(instance).byUsernameAndDomain("daphne", "coursera.org")
   }
@@ -253,16 +262,28 @@ class NonNestedMacroTests extends AssertionsForJUnit with MockitoSugar with Reso
     val actionRequest = mkRequest(
       None,
       "POST",
-      query = Map("action" -> "batchModify", "someParam" -> "daphne~coursera.org"))
-    checkRouter(actionRequest, "batchModify")
-    verify(instance).batchModify(Some(ComplexEmailType("daphne", "coursera.org")))
+      query = Map("action" -> "actionWithParams", "someParam" -> "daphne~coursera.org"))
+    checkRouter(actionRequest, "actionWithParams")
+    verify(instance).actionWithParams(Some(ComplexEmailType("daphne", "coursera.org")))
   }
 
   @Test
-  def parameterlessTest(): Unit = {
-    val actionRequest = mkRequest(None, "POST", query = Map("action" -> "parameterless"))
-    checkRouter(actionRequest, "parameterless")
-    verify(instance).parameterless()
+  def actionWithoutParamsTest(): Unit = {
+    val actionRequest = mkRequest(None, "POST", query = Map("action" -> "actionWithoutParams"))
+    checkRouter(actionRequest, "actionWithoutParams")
+    verify(instance).actionWithoutParams()
+  }
+
+  @Test
+  def noCustomTypes(): Unit = {
+    noCustomInputOutputAuthTypes("getAll")
+    noCustomInputOutputAuthTypes("get")
+    noCustomInputOutputAuthTypes("multiGet")
+    noCustomInputOutputAuthTypes("create")
+    noCustomInputOutputAuthTypes("update")
+    noCustomInputOutputAuthTypes("delete")
+    noCustomInputOutputAuthTypes("complex")
+    noCustomInputOutputAuthTypes("actionWithoutParams")
   }
 
 }
