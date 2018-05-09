@@ -70,8 +70,7 @@ class QueryComplexityFilter @Inject()(
       variables = variables,
       exceptionHandler = GraphQLController.exceptionHandler(logger),
       queryReducers = List(complReducer),
-      deferredResolver = new NoopResolver()
-    )
+      deferredResolver = new NoopResolver())
 
     executorFut.map { _ =>
       complexity

@@ -60,8 +60,7 @@ trait ResourceRouterBuilder {
 
     val rf = ReflectionFactory.getReflectionFactory
     val objConstructor = classOf[AnyRef].getDeclaredConstructor()
-    val instanceStubConstructor =
-      rf.newConstructorForSerialization(resourceClass(), objConstructor)
+    val instanceStubConstructor = rf.newConstructorForSerialization(resourceClass(), objConstructor)
     resourceClass().cast(instanceStubConstructor.newInstance())
   }
 }

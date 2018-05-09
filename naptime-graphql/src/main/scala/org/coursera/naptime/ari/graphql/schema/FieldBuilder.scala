@@ -76,10 +76,7 @@ object FieldBuilder extends StrictLogging {
       Context[SangriaGraphQlContext, DataMapWithParent] => Value[SangriaGraphQlContext, Any]
 
     val relatedResourceOption = if (followRelations) {
-      ReverseRelation
-        .parse(field)
-        .map(_.resourceName)
-        .flatMap(ResourceName.parse)
+      ReverseRelation.parse(field).map(_.resourceName).flatMap(ResourceName.parse)
     } else {
       None
     }
@@ -137,15 +134,12 @@ object FieldBuilder extends StrictLogging {
 
       // Passthrough Exempt types (fallback to DataMap)
       case (None, recordDataSchema: RecordDataSchema)
-          if recordDataSchema.getProperties.asScala
-            .get("passthroughExempt")
-            .contains(true) =>
+          if recordDataSchema.getProperties.asScala.get("passthroughExempt").contains(true) =>
         Field.apply[SangriaGraphQlContext, DataMapWithParent, Any, Any](
           name = FieldBuilder.formatName(fieldName),
           fieldType = NaptimeTypes.DataMapType,
           resolve =
-            context => context.value.copy(element = context.value.element.getDataMap(fieldName))
-        )
+            context => context.value.copy(element = context.value.element.getDataMap(fieldName)))
 
       // Complex types
       case (None, recordDataSchema: RecordDataSchema) =>
@@ -214,8 +208,7 @@ object FieldBuilder extends StrictLogging {
                 case dataMap: DataMap => context.value.copy(element = dataMap)
                 case element: Any     => element
               })
-              .getOrElse(null)
-        )
+              .getOrElse(null))
 
       case (None, _: MapDataSchema) =>
         Field.apply[SangriaGraphQlContext, DataMapWithParent, Any, Any](
@@ -224,20 +217,13 @@ object FieldBuilder extends StrictLogging {
           resolve = context => context.value.element.getDataMap(fieldName))
 
       // Primitives
-      case (None, ds: StringDataSchema) =>
-        buildPrimitiveField[String](fieldName, ds, StringType)
-      case (None, ds: BytesDataSchema) =>
-        buildPrimitiveField[String](fieldName, ds, StringType)
-      case (None, ds: IntegerDataSchema) =>
-        buildPrimitiveField[Int](fieldName, ds, IntType)
-      case (None, ds: LongDataSchema) =>
-        buildPrimitiveField[Long](fieldName, ds, LongType)
-      case (None, ds: BooleanDataSchema) =>
-        buildPrimitiveField[Boolean](fieldName, ds, BooleanType)
-      case (None, ds: DoubleDataSchema) =>
-        buildPrimitiveField[Double](fieldName, ds, FloatType)
-      case (None, ds: FloatDataSchema) =>
-        buildPrimitiveField[Float](fieldName, ds, FloatType)
+      case (None, ds: StringDataSchema)  => buildPrimitiveField[String](fieldName, ds, StringType)
+      case (None, ds: BytesDataSchema)   => buildPrimitiveField[String](fieldName, ds, StringType)
+      case (None, ds: IntegerDataSchema) => buildPrimitiveField[Int](fieldName, ds, IntType)
+      case (None, ds: LongDataSchema)    => buildPrimitiveField[Long](fieldName, ds, LongType)
+      case (None, ds: BooleanDataSchema) => buildPrimitiveField[Boolean](fieldName, ds, BooleanType)
+      case (None, ds: DoubleDataSchema)  => buildPrimitiveField[Double](fieldName, ds, FloatType)
+      case (None, ds: FloatDataSchema)   => buildPrimitiveField[Float](fieldName, ds, FloatType)
 
       case (None, _: NullDataSchema) =>
         Field.apply[SangriaGraphQlContext, DataMapWithParent, Any, Any](
@@ -253,30 +239,28 @@ object FieldBuilder extends StrictLogging {
           resolve = context => context.value)
     }
 
-    val (fieldTypeWithOptionality, resolverWithOptionality) =
-      if (field.getOptional) {
-        val updatedFieldType = OptionType(sangriaField.fieldType)
-        val updatedResolver =
-          (context: Context[SangriaGraphQlContext, DataMapWithParent]) => {
-            sangriaField
-              .resolve(context)
-              .map {
-                case null =>
-                  None
-                case value: DataMapWithParent =>
-                  if (value.element == null) {
-                    None
-                  } else {
-                    value
-                  }
-                case value: Any =>
-                  Option(value)
-              }(context.ctx.executionContext)
-          }
-        (updatedFieldType, updatedResolver)
-      } else {
-        (sangriaField.fieldType, sangriaField.resolve)
+    val (fieldTypeWithOptionality, resolverWithOptionality) = if (field.getOptional) {
+      val updatedFieldType = OptionType(sangriaField.fieldType)
+      val updatedResolver = (context: Context[SangriaGraphQlContext, DataMapWithParent]) => {
+        sangriaField
+          .resolve(context)
+          .map {
+            case null =>
+              None
+            case value: DataMapWithParent =>
+              if (value.element == null) {
+                None
+              } else {
+                value
+              }
+            case value: Any =>
+              Option(value)
+          }(context.ctx.executionContext)
       }
+      (updatedFieldType, updatedResolver)
+    } else {
+      (sangriaField.fieldType, sangriaField.resolve)
+    }
 
     sangriaField.copy(
       description = fieldDoc,
@@ -304,16 +288,14 @@ object FieldBuilder extends StrictLogging {
               if (result.isValid) {
                 result.getFixed match {
                   case value: ParseType => value
-                  case _ =>
-                    throw ResponseFormatException(s"$fieldName's value is an invalid type")
+                  case _                => throw ResponseFormatException(s"$fieldName's value is an invalid type")
                 }
               } else {
                 throw ResponseFormatException(s"$fieldName could not be fixed-up or parsed")
               }
           }
           .getOrElse(null)
-      }
-    )
+      })
   }
 
   /**

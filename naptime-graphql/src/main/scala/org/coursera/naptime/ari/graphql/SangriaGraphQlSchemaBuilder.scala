@@ -54,8 +54,7 @@ class SangriaGraphQlSchemaBuilder(resources: Set[Resource], schemas: Map[String,
               resourceObject,
               resolve = (_: Context[SangriaGraphQlContext, DataMap]) => {
                 Value(new DataMap())
-              }
-            ))
+              }))
         } else {
           None
         }
@@ -63,12 +62,10 @@ class SangriaGraphQlSchemaBuilder(resources: Set[Resource], schemas: Map[String,
       lookupTypeAndErrors.copy(data = fields)
     }
 
-    val topLevelResourceObjects =
-      topLevelResourceObjectsAndErrors.flatMap(_.data)
+    val topLevelResourceObjects = topLevelResourceObjectsAndErrors.flatMap(_.data)
     val schemaErrors = topLevelResourceObjectsAndErrors.foldLeft(SchemaErrors.empty)(_ ++ _.errors)
 
-    val dedupedResources =
-      topLevelResourceObjects.groupBy(_.name).map(_._2.head).toList
+    val dedupedResources = topLevelResourceObjects.groupBy(_.name).map(_._2.head).toList
     val rootObject = ObjectType[SangriaGraphQlContext, DataMap](
       name = "root",
       description = "Top-level accessor for Naptime resources",

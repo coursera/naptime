@@ -157,17 +157,16 @@ object NaptimeSerializer {
    * Useful for mocking tests / etc.
    */
   object AnyWrites {
-    implicit val anyWrites: NaptimeSerializer[Any] =
-      new NaptimeSerializer[Any] {
-        override def serialize(t: Any): DataMap = {
-          val m = new DataMap()
-          m.put("id", t.toString)
-          m
-        }
-
-        override def schema(t: Any): Option[DataSchema] = {
-          None
-        }
+    implicit val anyWrites: NaptimeSerializer[Any] = new NaptimeSerializer[Any] {
+      override def serialize(t: Any): DataMap = {
+        val m = new DataMap()
+        m.put("id", t.toString)
+        m
       }
+
+      override def schema(t: Any): Option[DataSchema] = {
+        None
+      }
+    }
   }
 }

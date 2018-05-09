@@ -89,8 +89,7 @@ object NaptimePaginatedResourceField extends StrictLogging {
       }
 
       handlerOpt.right.map { handler =>
-        val providedArguments =
-          fieldRelationOpt.map(_.arguments.keySet).getOrElse(Set[String]())
+        val providedArguments = fieldRelationOpt.map(_.arguments.keySet).getOrElse(Set[String]())
 
         val authOverride = fieldRelationOpt.flatMap(_.authOverride)
 
@@ -114,16 +113,13 @@ object NaptimePaginatedResourceField extends StrictLogging {
                 }
               }
 
-            val args = context.args.raw
-              .mapValues(NaptimeResourceUtils.parseToJson)
-              .toSet ++
+            val args = context.args.raw.mapValues(NaptimeResourceUtils.parseToJson).toSet ++
               extraArguments
 
             val hasIds = fieldRelationOpt.exists(_.relationType == RelationType.MULTI_GET) ||
               fieldRelationOpt.exists(_.relationType == RelationType.GET)
             val (updatedArgs, paginationOverride, isEmpty) = if (hasIds) {
-              val startOption =
-                context.arg(NaptimePaginationField.startArgument)
+              val startOption = context.arg(NaptimePaginationField.startArgument)
               val limit = context.arg(NaptimePaginationField.limitArgument)
               val ids = args
                 .find(_._1 == "ids")
@@ -144,11 +140,9 @@ object NaptimePaginatedResourceField extends StrictLogging {
               val idsAfterStart = startOption
                 .map(s => ids.dropWhile(_ != NaptimeResourceUtils.parseToJson(s)))
                 .getOrElse(ids)
-              val next =
-                idsAfterStart.drop(limit).headOption.map(Utilities.stringifyArg)
+              val next = idsAfterStart.drop(limit).headOption.map(Utilities.stringifyArg)
 
-              val paginationResponse =
-                ResponsePagination(next, Some(ids.size.toLong))
+              val paginationResponse = ResponsePagination(next, Some(ids.size.toLong))
 
               if (paginatedIds.value.isEmpty || Utilities.jsValueIsEmpty(paginatedIds)) {
                 (args, Some(paginationResponse), true)
@@ -181,8 +175,7 @@ object NaptimePaginatedResourceField extends StrictLogging {
                       error.status,
                       Some(error.errorMessage))
                   case Right(response) =>
-                    val limit =
-                      context.arg(NaptimePaginationField.limitArgument)
+                    val limit = context.arg(NaptimePaginationField.limitArgument)
                     response.copy(elements = response.elements.take(limit))
                 }(context.ctx.executionContext)
             }
@@ -193,8 +186,7 @@ object NaptimePaginatedResourceField extends StrictLogging {
             val limit = args.arg(NaptimePaginationField.limitArgument)
             Math.max(limit / 10, 1) * COMPLEXITY_COST * childScore
           }),
-          arguments = arguments
-        )
+          arguments = arguments)
       }
     }).getOrElse(Left(SchemaNotFound(resourceName)))
   }
@@ -230,16 +222,12 @@ object NaptimePaginatedResourceField extends StrictLogging {
                   name = "paging",
                   fieldType = NaptimePaginationField.getField(resourceName, fieldName),
                   resolve = (ctx) => {
-                    val pagination =
-                      ctx.value.pagination.getOrElse(ResponsePagination.empty)
+                    val pagination = ctx.value.pagination.getOrElse(ResponsePagination.empty)
                     Value(pagination)
-                  }
-                )
-              )
+                  }))
           }
           .getOrElse(List.empty)
-      }
-    )
+      })
   }
 
   /**

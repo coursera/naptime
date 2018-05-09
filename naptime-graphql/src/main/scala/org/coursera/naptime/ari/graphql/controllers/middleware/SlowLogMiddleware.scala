@@ -69,8 +69,7 @@ class SlowLogMiddleware(logger: Logger, isDebugMode: Boolean)
       ctx: Context[SangriaGraphQlContext, _]): Option[Any] = {
     val safeContext = Try(ctx.asInstanceOf[Context[Any, _]])
     safeContext match {
-      case Success(c) =>
-        underlying.afterField(queryVal, fieldVal, value, mctx, c)
+      case Success(c) => underlying.afterField(queryVal, fieldVal, value, mctx, c)
       case Failure(_) => None
     }
   }

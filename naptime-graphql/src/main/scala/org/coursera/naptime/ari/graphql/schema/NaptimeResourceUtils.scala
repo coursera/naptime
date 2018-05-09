@@ -65,9 +65,8 @@ object NaptimeResourceUtils extends StrictLogging {
         val (optionalInputType, optionalFromInputType: FromInput[Any]) =
           (inputType, parameter.required) match {
             case (_: OptionInputType[Any], _) => (inputType, fromInputType)
-            case (_, false) =>
-              (OptionInputType(inputType), FromInput.optionInput(fromInputType))
-            case (_, true) => (inputType, fromInputType)
+            case (_, false)                   => (OptionInputType(inputType), FromInput.optionInput(fromInputType))
+            case (_, true)                    => (inputType, fromInputType)
           }
         Argument(name = parameter.name, argumentType = optionalInputType)(
           optionalFromInputType,
@@ -94,16 +93,14 @@ object NaptimeResourceUtils extends StrictLogging {
     val optionPattern = "(Option)\\[(.*)\\]".r
     // TODO(bryan): Fill in the missing types here
     typeName match {
-      case listPattern(_, innerType) =>
-        ListInputType(scalaTypeToSangria(innerType))
-      case optionPattern(_, innerType) =>
-        OptionInputType(scalaTypeToSangria(innerType))
-      case "string" | "String"   => StringType
-      case "int" | "Int"         => IntType
-      case "long" | "Long"       => LongType
-      case "float" | "Float"     => FloatType
-      case "decimal" | "Decimal" => BigDecimalType
-      case "boolean" | "Boolean" => BooleanType
+      case listPattern(_, innerType)   => ListInputType(scalaTypeToSangria(innerType))
+      case optionPattern(_, innerType) => OptionInputType(scalaTypeToSangria(innerType))
+      case "string" | "String"         => StringType
+      case "int" | "Int"               => IntType
+      case "long" | "Long"             => LongType
+      case "float" | "Float"           => FloatType
+      case "decimal" | "Decimal"       => BigDecimalType
+      case "boolean" | "Boolean"       => BooleanType
       case _ => {
         logger.info(s"could not parse type from $typeName")
         StringType
@@ -121,15 +118,11 @@ object NaptimeResourceUtils extends StrictLogging {
     typeName.toLowerCase match {
       case listPattern(outerType, innerType) =>
         val listType = scalaTypeToFromInput(innerType)
-        sangria.marshalling.FromInput
-          .seqInput(listType)
-          .asInstanceOf[FromInput[Any]]
+        sangria.marshalling.FromInput.seqInput(listType).asInstanceOf[FromInput[Any]]
       case "string" | "int" | "long" | "float" | "decimal" | "boolean" =>
-        sangria.marshalling.FromInput.coercedScalaInput
-          .asInstanceOf[FromInput[Any]]
+        sangria.marshalling.FromInput.coercedScalaInput.asInstanceOf[FromInput[Any]]
       case _ =>
-        sangria.marshalling.FromInput.coercedScalaInput
-          .asInstanceOf[FromInput[Any]]
+        sangria.marshalling.FromInput.coercedScalaInput.asInstanceOf[FromInput[Any]]
     }
   }
 
@@ -152,17 +145,15 @@ object NaptimeResourceUtils extends StrictLogging {
   // TODO(bryan): Fix the number parsing here
   def parseToJson(value: Any): JsValue = {
     value match {
-      case None            => JsNull
-      case Some(someValue) => parseToJson(someValue)
-      case str: String =>
-        Try(JsNumber(str.toInt)).toOption.getOrElse(JsString(str))
-      case traversable: Traversable[Any] =>
-        JsArray(traversable.map(parseToJson).toSeq)
-      case int: Int       => JsNumber(int)
-      case long: Long     => JsNumber(long)
-      case float: Float   => JsNumber(float.toLong)
-      case double: Double => JsNumber(double)
-      case _              => JsString(value.toString)
+      case None                          => JsNull
+      case Some(someValue)               => parseToJson(someValue)
+      case str: String                   => Try(JsNumber(str.toInt)).toOption.getOrElse(JsString(str))
+      case traversable: Traversable[Any] => JsArray(traversable.map(parseToJson).toSeq)
+      case int: Int                      => JsNumber(int)
+      case long: Long                    => JsNumber(long)
+      case float: Float                  => JsNumber(float.toLong)
+      case double: Double                => JsNumber(double)
+      case _                             => JsString(value.toString)
     }
   }
 

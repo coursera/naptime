@@ -35,10 +35,7 @@ object CourierFilters {
    * WARNING: this mutates data in-place.
    */
   def filterUnrecognizedFields[D <: DataComplex](data: D, schema: DataSchema): D = {
-    Builder
-      .create(data, schema, IterationOrder.PRE_ORDER)
-      .filterBy(AbsentSchemaPredicate)
-      .remove()
+    Builder.create(data, schema, IterationOrder.PRE_ORDER).filterBy(AbsentSchemaPredicate).remove()
     data
   }
 

@@ -49,9 +49,7 @@ private[access] trait And {
             case (Right(authenticationA), Right(authenticationB)) =>
               Right((authenticationA, authenticationB))
             case _ =>
-              List(resultA, resultB).collectFirst {
-                case Left(error) => Left(error)
-              }.head
+              List(resultA, resultB).collectFirst { case Left(error) => Left(error) }.head
           }
         }
       }
@@ -89,9 +87,7 @@ private[access] trait And {
             case (Right(authenticationA), Right(authenticationB), Right(authenticationC)) =>
               Right((authenticationA, authenticationB, authenticationC))
             case _ =>
-              List(resultA, resultB).collectFirst {
-                case Left(error) => Left(error)
-              }.head
+              List(resultA, resultB).collectFirst { case Left(error) => Left(error) }.head
           }
         }
       }

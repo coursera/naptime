@@ -47,8 +47,7 @@ object CourierQueryParsers extends StrictLogging {
         val codec = new StringKeyCodec(schema)
         codec.bytesToMap(value.getBytes("UTF-8"))
       }
-      val validated =
-        ValidateDataAgainstSchema.validate(parsed, schema, validationOptions)
+      val validated = ValidateDataAgainstSchema.validate(parsed, schema, validationOptions)
       if (validated.isValid) {
         Right(validated.getFixed.asInstanceOf[DataMap])
       } else {
@@ -92,8 +91,7 @@ object CourierQueryParsers extends StrictLogging {
       Right(None)
     } else if (queryStringResults.get.tail.isEmpty) {
       val stringValue = queryStringResults.get.head
-      parseStringToDataMap(paramName, schema, resourceClass)(stringValue).right
-        .map(Some(_))
+      parseStringToDataMap(paramName, schema, resourceClass)(stringValue).right.map(Some(_))
     } else {
       Left(errorRoute(s"Too many query parameters for '$paramName", resourceClass))
     }

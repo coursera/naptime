@@ -51,12 +51,8 @@ private[access] trait SuccessfulOf {
             Futures.safelyCall(control.run(requestHeader))
           }
           .map { results =>
-            val successes = results.collect {
-              case Right(authentication) => authentication
-            }
-            lazy val firstErrorOption = results.collectFirst {
-              case Left(error) => error
-            }
+            val successes = results.collect { case Right(authentication)        => authentication }
+            lazy val firstErrorOption = results.collectFirst { case Left(error) => error }
             if (successes.nonEmpty) {
               Right(successes.toSet)
             } else {

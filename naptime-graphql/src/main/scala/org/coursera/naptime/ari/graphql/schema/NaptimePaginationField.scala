@@ -38,18 +38,14 @@ object NaptimePaginationField extends StrictLogging {
                 logger.error("Expected ResponsePagination but got null")
                 None
             }
-          }
-        )
-      )
-    )
+          })))
   }
 
   private[graphql] val limitArgument = Argument(
     name = "limit",
     argumentType = OptionInputType(IntType),
     defaultValue = PaginationConfiguration().defaultLimit,
-    description = "Maximum number of results to include in response"
-  )
+    description = "Maximum number of results to include in response")
 
   private[graphql] val startArgument = Argument(
     name = "start",

@@ -62,8 +62,7 @@ sealed trait RootResource extends Resource[Unit] {
   override type PathKey = RootParsedPathKey
   override type PathParser = RootPathParser
   private[naptime] def pathParser = RootPathParser
-  def resourceFormat: OFormat[Unit] =
-    ??? // TODO(saeta): remove this from here for courier-engines
+  def resourceFormat: OFormat[Unit] = ??? // TODO(saeta): remove this from here for courier-engines
   override def resourceName: String = ""
 }
 object RootResource extends RootResource
@@ -78,8 +77,7 @@ trait CollectionResource[ParentResource <: Resource[_], K, M] extends Resource[M
    * Provide a default pagination configuration for the resource that users can override and
    * configure as needed.
    */
-  implicit val paginationConfiguration: PaginationConfiguration =
-    PaginationConfiguration()
+  implicit val paginationConfiguration: PaginationConfiguration = PaginationConfiguration()
   // TODO how to fetch associations?
   // TODO Efficient field projection at model level (not just filtered on the way out)
 
@@ -215,13 +213,11 @@ abstract class NestedCourierCollectionResource[
 
   // When we use the serializer constructor, the classTag parameter is never initialized, and
   // thus, we get NPEs when working with schemas. Because the OFormat isn't actually needed
-  final override implicit lazy val resourceFormat: OFormat[M] =
-    Option(classTag).map { ct =>
-      CourierFormats.recordTemplateFormats[M](ct)
-    }.orNull // TODO: consider making a fake formatter.
+  final override implicit lazy val resourceFormat: OFormat[M] = Option(classTag).map { ct =>
+    CourierFormats.recordTemplateFormats[M](ct)
+  }.orNull // TODO: consider making a fake formatter.
 
-  protected[this] final lazy val BaseFields: Fields[M] =
-    org.coursera.naptime.Fields(resourceFormat)
+  protected[this] final lazy val BaseFields: Fields[M] = org.coursera.naptime.Fields(resourceFormat)
 
   implicit override def Fields: Fields[M] = BaseFields
 }

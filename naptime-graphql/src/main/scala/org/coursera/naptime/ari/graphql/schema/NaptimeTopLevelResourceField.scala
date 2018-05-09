@@ -34,8 +34,7 @@ import collection.JavaConverters._
 
 object NaptimeTopLevelResourceField extends StrictLogging {
 
-  private[this] val EMPTY_JS_VALUE =
-    JsValue.build(new DataMap(), DataConversion.SetReadOnly)
+  private[this] val EMPTY_JS_VALUE = JsValue.build(new DataMap(), DataConversion.SetReadOnly)
 
   val MUTATION_HANDLERS: Set[HandlerKind] = Set(
     HandlerKind.ACTION,
@@ -80,8 +79,7 @@ object NaptimeTopLevelResourceField extends StrictLogging {
         val data = attribute.value.getOrElse(EMPTY_JS_VALUE).data()
         data.keySet.asScala
           .map { key =>
-            val valueStr =
-              Option(data.get(key)).map(_.toString).getOrElse("???")
+            val valueStr = Option(data.get(key)).map(_.toString).getOrElse("???")
             s"$key -> $valueStr"
           }
           .mkString("Attributes:\n", "\n", "")
@@ -89,11 +87,10 @@ object NaptimeTopLevelResourceField extends StrictLogging {
       .getOrElse("???")
 
     if (fields.nonEmpty) {
-      val resourceObjectType =
-        ObjectType[SangriaGraphQlContext, DataMapWithParent](
-          name = formatResourceTopLevelName(resource),
-          fieldsFn = () => fields,
-          description = description)
+      val resourceObjectType = ObjectType[SangriaGraphQlContext, DataMapWithParent](
+        name = formatResourceTopLevelName(resource),
+        fieldsFn = () => fields,
+        description = description)
       WithSchemaErrors(Some(resourceObjectType), errors)
     } else {
       WithSchemaErrors(None, errors + NoHandlersAvailable(resourceName))
@@ -123,8 +120,8 @@ object NaptimeTopLevelResourceField extends StrictLogging {
         .map { field =>
           val newArguments =
             field.arguments.filterNot(newArg => arguments.map(_.name).contains(newArg.name))
-          logger.debug(s"existing arguments: ${arguments
-            .map(_.name)}\tnewArguments: ${newArguments.map(_.name)}")
+          logger.debug(
+            s"existing arguments: ${arguments.map(_.name)}\tnewArguments: ${newArguments.map(_.name)}")
           field.copy(arguments = arguments ++ newArguments)
         }
     } else {
@@ -138,8 +135,7 @@ object NaptimeTopLevelResourceField extends StrictLogging {
       schemaMetadata: SchemaMetadata)
     : Either[SchemaError, Field[SangriaGraphQlContext, DataMapWithParent]] = {
 
-    val resourceName =
-      ResourceName(resource.name, resource.version.getOrElse(0L).toInt)
+    val resourceName = ResourceName(resource.name, resource.version.getOrElse(0L).toInt)
     val arguments = NaptimeResourceUtils.generateHandlerArguments(handler)
 
     val fieldName = handler.kind match {
@@ -156,8 +152,7 @@ object NaptimeTopLevelResourceField extends StrictLogging {
         fieldName = fieldName,
         handlerOverride = Some(handler),
         fieldRelationOpt = None,
-        currentPath = List.empty
-      )
+        currentPath = List.empty)
       .right
       .map { field =>
         val mergedArguments = (field.arguments ++ arguments)

@@ -89,9 +89,7 @@ class NestingCollectionResourceRouter[CollectionResourceType <: CollectionResour
         // Note: we centralize here the casting required to get the compiler to believe us.
         val pathKey: Either[resourceInstance.OptPathKey, resourceInstance.PathKey] =
           if (pathKeyOpt.head.isDefined) {
-            Right(
-              (pathKeyOpt.head.get ::: pathKeyOpt.tail)
-                .asInstanceOf[resourceInstance.PathKey])
+            Right((pathKeyOpt.head.get ::: pathKeyOpt.tail).asInstanceOf[resourceInstance.PathKey])
           } else {
             Left(pathKeyOpt)
           }

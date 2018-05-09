@@ -91,8 +91,7 @@ class RestActionBodyBuilder[
       override def restEngine = category
       override def fieldsEngine = fields
       override def paginationConfiguration = _paginationConfiguration
-      override def errorHandler: PartialFunction[Throwable, RestError] =
-        self.errorHandler
+      override def errorHandler: PartialFunction[Throwable, RestError] = self.errorHandler
       override val keyFormat = self.keyFormat
       override val resourceFormat = self.resourceFormat
       override val executionContext = ec

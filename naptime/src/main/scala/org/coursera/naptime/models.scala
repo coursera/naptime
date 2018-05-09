@@ -72,8 +72,7 @@ class RestContext[+AuthType, +BodyType] private[naptime] (
     def findPreferredLanguage(languagePreferences: Seq[Lang]): Lang = {
       if (languagePreferences.isEmpty) default
       else {
-        val satisfiableLanguage =
-          availableLanguages.find(_.satisfies(languagePreferences.head))
+        val satisfiableLanguage = availableLanguages.find(_.satisfies(languagePreferences.head))
         if (satisfiableLanguage.isDefined) satisfiableLanguage.get
         else findPreferredLanguage(languagePreferences.tail)
       }
@@ -125,10 +124,8 @@ object RequestPagination {
     // Parse out the start parameter.
     val start = rh.queryString.get("start").flatMap(_.headOption)
     // Parse out the limit string.
-    val limit = rh.queryString
-      .get("limit")
-      .flatMap(_.headOption)
-      .flatMap(str => Try(str.toInt).toOption)
+    val limit =
+      rh.queryString.get("limit").flatMap(_.headOption).flatMap(str => Try(str.toInt).toOption)
     limit
       .map { limit =>
         RequestPagination(limit, start, isDefault = false)
@@ -212,8 +209,7 @@ private[naptime] case class QueryIncludes(
     resources: Map[ResourceName, Set[String]])
     extends RequestIncludes {
 
-  override def includeFieldsRelatedResource(fieldName: String): Boolean =
-    fields.contains(fieldName)
+  override def includeFieldsRelatedResource(fieldName: String): Boolean = fields.contains(fieldName)
 
   override def forResource(resource: ResourceName): Option[QueryIncludes] = {
     resources.get(resource).map { relatedResourceFields =>
@@ -282,8 +278,7 @@ sealed case class Fields[T](
    * @return
    */
   private[naptime] def makeMetaRelationsMap(fieldsToInclude: Set[String]): JsObject = {
-    val filtered =
-      relationsInJson.filter(field => fieldsToInclude.contains(field._1))
+    val filtered = relationsInJson.filter(field => fieldsToInclude.contains(field._1))
     JsObject(filtered)
   }
 
@@ -438,8 +433,7 @@ case class ResourceName(
     version: Int,
     resourcePath: immutable.Seq[String] = List.empty) {
   def identifier: String = {
-    val suffix =
-      if (resourcePath.isEmpty) "" else resourcePath.mkString("/", "/", "")
+    val suffix = if (resourcePath.isEmpty) "" else resourcePath.mkString("/", "/", "")
     s"$topLevelName.v$version$suffix"
   }
 }
@@ -570,15 +564,13 @@ private[naptime] object QueryStringParser extends RegexParsers {
         message = Some(s"Failed to parse includes query parameter. Error: $msg"))
 
   private[this] def field: Parser[String] = "-?[A-z0-9\\.]+".r
-  private[this] def nonEmptyFields: Parser[Set[String]] =
-    (field ~ (("," ~> field) *)) ^^ { parsed =>
+  private[this] def nonEmptyFields: Parser[Set[String]] = (field ~ (("," ~> field) *)) ^^ {
+    parsed =>
       val elems = parsed._1 :: parsed._2
       elems.toSet
-    }
-  private[this] def subResourcePath: Parser[Seq[String]] =
-    ("/" ~> "[A-z0-9]+".r).*
-  private[this] def resourceVersion: Parser[Int] =
-    (".v".r ~> "\\d+".r) ^^ (_.toInt)
+  }
+  private[this] def subResourcePath: Parser[Seq[String]] = ("/" ~> "[A-z0-9]+".r).*
+  private[this] def resourceVersion: Parser[Int] = (".v".r ~> "\\d+".r) ^^ (_.toInt)
   private[this] def resourceName: Parser[ResourceName] =
     ("[A-z0-9]+".r ~ resourceVersion ~ subResourcePath) ^^ { parsed =>
       ResourceName(parsed._1._1, parsed._1._2, parsed._2.toList)
@@ -620,8 +612,7 @@ private[naptime] object QueryStringParser extends RegexParsers {
 
   private[this] val includesAllContent = phrase(includesContent)
 
-  def parseQueryFields(input: String): ParseResult[QueryFields] =
-    parse(fieldsAllContent, input)
+  def parseQueryFields(input: String): ParseResult[QueryFields] = parse(fieldsAllContent, input)
   def parseQueryIncludes(input: String): ParseResult[QueryIncludes] =
     parse(includesAllContent, input)
 }

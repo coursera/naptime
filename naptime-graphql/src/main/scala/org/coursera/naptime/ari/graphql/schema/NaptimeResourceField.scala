@@ -68,8 +68,7 @@ object NaptimeResourceField extends StrictLogging {
           arguments = arguments,
           complexity = Some((_, _, childScore) => {
             COMPLEXITY_COST * childScore
-          })
-        )
+          }))
       }
     }).getOrElse(Left(SchemaNotFound(resourceName)))
   }
@@ -96,8 +95,7 @@ object NaptimeResourceField extends StrictLogging {
                     currentPath = List(field.getName))
                 }.toList)
                 .getOrElse(List.empty)
-            }
-          ))
+            }))
         resourceObjectType
       }
       .toRight(SchemaNotFound(resourceName))
