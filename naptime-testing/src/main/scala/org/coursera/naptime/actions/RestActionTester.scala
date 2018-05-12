@@ -95,5 +95,15 @@ trait RestActionTester { this: ScalaFutures =>
           }.get
       }
     }
+
+    def testActionPassAuth(ctx: RestContext[AuthType, BodyType]): RestResponse[ResponseType] = {
+      val responseFuture = action.safeApply(ctx).recover {
+        case e: NaptimeActionException => RestError(e)
+      }
+
+      Try(responseFuture.futureValue).recover {
+        case e: TestFailedException => e.cause.map(throw _).getOrElse(throw e)
+      }.get
+    }
   }
 }
