@@ -85,7 +85,10 @@ class RestActionBuilder[RACType, AuthType, BodyType, ResourceKeyType, ResourceTy
     new RestActionBuilder(auth, bodyParser, errorHandler)
 
   /**
-   * Set the authentication framework.
+   * Like [[auth]] above, but with a body-aware generator function.
+   *
+   * Note that this version of [[auth]] converts the builder into a
+   * [[DefinedBodyTypeRestActionBuilder]], which forbids request body definition changes.
    */
   def auth[NewAuthType](authGenerator: BodyType => HeaderAccessControl[NewAuthType])
     : DefinedBodyTypeRestActionBuilder[
@@ -98,7 +101,13 @@ class RestActionBuilder[RACType, AuthType, BodyType, ResourceKeyType, ResourceTy
     new DefinedBodyTypeRestActionBuilder(Left(authGenerator), bodyParser, errorHandler)
 
   /**
-   * Set the authentication framework.
+   * Like [[auth]] above, but with a body-aware generator function.
+   *
+   * The `bodyTransform` argument is intended to support reuse `authGenerator` functions across
+   * handlers with different body types, but whose bodies contain compatible projections.
+   *
+   * Note that this version of [[auth]] converts the builder into a
+   * [[DefinedBodyTypeRestActionBuilder]], which forbids request body definition changes.
    */
   def auth[NewAuthType, C](bodyTransform: BodyType => C)(
       authGenerator: C => HeaderAccessControl[NewAuthType]): DefinedBodyTypeRestActionBuilder[
