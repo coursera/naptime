@@ -66,8 +66,7 @@ trait RestAction[RACType, AuthType, BodyType, KeyType, ResourceType, ResponseTyp
     extends EssentialAction
     with RequestTaggingHandler {
 
-  protected[actions] def restAuth
-    : Either[BodyType => HeaderAccessControl[AuthType], HeaderAccessControl[AuthType]]
+  protected[actions] def authGeneratorOrAuth: AuthGeneratorOrAuth[BodyType, AuthType]
   protected def restBodyParser: BodyParser[BodyType]
   protected[naptime] def restEngine
     : RestActionCategoryEngine[RACType, KeyType, ResourceType, ResponseType]
@@ -107,18 +106,16 @@ trait RestAction[RACType, AuthType, BodyType, KeyType, ResourceType, ResponseTyp
                 s"${rh.headers} Encountered body error: $bodyAsStr")
             }
           }
-          bodyErrorResultFuture.flatMap { bodyErrorResult =>
-            restAuth match {
-              case Left(_) => Future.successful(bodyErrorResult)
-              case Right(auth) =>
-                auth.run(rh).map {
-                  case Left(error) => ??? // TODO amory - replace with error.result
-                  case Right(_)    => bodyErrorResult
-                }
-            }
+          authGeneratorOrAuth match {
+            case Left(_) => bodyErrorResultFuture
+            case Right(auth) =>
+              auth.run(rh).flatMap {
+                case Left(error) => Future.failed(error)
+                case Right(_)    => bodyErrorResultFuture
+              }
           }
         case Right(a) =>
-          val authResult = restAuth match {
+          val authResult = authGeneratorOrAuth match {
             case Left(f)     => f(a).run(rh)
             case Right(auth) => auth.run(rh)
           }
@@ -187,7 +184,7 @@ trait RestAction[RACType, AuthType, BodyType, KeyType, ResourceType, ResponseTyp
   final override def apply(rh: RequestHeader): Accumulator[ByteString, Result] = {
     restBodyParser(rh).mapFuture {
       case Left(bodyError) =>
-        restAuth match {
+        authGeneratorOrAuth match {
           case Left(f) => Future.successful(bodyError)
           case Right(auth) =>
             auth.run(rh).map {
@@ -196,7 +193,7 @@ trait RestAction[RACType, AuthType, BodyType, KeyType, ResourceType, ResponseTyp
             }
         }
       case Right(a) =>
-        val authResult = restAuth match {
+        val authResult = authGeneratorOrAuth match {
           case Left(f)     => f(a).run(rh)
           case Right(auth) => auth.run(rh)
         }
@@ -241,7 +238,8 @@ trait RestAction[RACType, AuthType, BodyType, KeyType, ResourceType, ResponseTyp
     }
   }
 
-  override def toString() = s"RestAction(engine=$restEngine, auth=$restAuth, body=$restBodyParser)"
+  override def toString() =
+    s"RestAction(engine=$restEngine, auth=$authGeneratorOrAuth, body=$restBodyParser)"
 
   /**
    * A set of tags to add to all requests that are processed by this RestAction.

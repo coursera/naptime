@@ -38,7 +38,7 @@ class DefinedBodyTypeRestActionBuilder[
     ResourceKeyType,
     ResourceType,
     ResponseType] private[actions] (
-    auth: Either[BodyType => HeaderAccessControl[AuthType], HeaderAccessControl[AuthType]],
+    authGeneratorOrAuth: AuthGeneratorOrAuth[BodyType, AuthType],
     bodyParser: BodyParser[BodyType],
     errorHandler: PartialFunction[Throwable, RestError])(
     implicit keyFormat: KeyFormat[ResourceKeyType],
@@ -68,21 +68,21 @@ class DefinedBodyTypeRestActionBuilder[
   /**
    * Set the authentication framework.
    */
-  def auth[NewAuthType](
-      bodyAuthFn: BodyType => HeaderAccessControl[NewAuthType]): DefinedBodyTypeRestActionBuilder[
-    RACType,
-    NewAuthType,
-    BodyType,
-    ResourceKeyType,
-    ResourceType,
-    ResponseType] =
-    new DefinedBodyTypeRestActionBuilder(Left(bodyAuthFn), bodyParser, errorHandler)
+  def auth[NewAuthType](authGenerator: BodyType => HeaderAccessControl[NewAuthType])
+    : DefinedBodyTypeRestActionBuilder[
+      RACType,
+      NewAuthType,
+      BodyType,
+      ResourceKeyType,
+      ResourceType,
+      ResponseType] =
+    new DefinedBodyTypeRestActionBuilder(Left(authGenerator), bodyParser, errorHandler)
 
   /**
    * Set the authentication framework.
    */
-  def auth[NewAuthType, C](bodyTransformFn: BodyType => C)(
-      authFn: C => HeaderAccessControl[NewAuthType]): DefinedBodyTypeRestActionBuilder[
+  def auth[NewAuthType, C](bodyTransform: BodyType => C)(
+      authGenerator: C => HeaderAccessControl[NewAuthType]): DefinedBodyTypeRestActionBuilder[
     RACType,
     NewAuthType,
     BodyType,
@@ -90,7 +90,7 @@ class DefinedBodyTypeRestActionBuilder[
     ResourceType,
     ResponseType] =
     new DefinedBodyTypeRestActionBuilder(
-      Left(authFn.compose(bodyTransformFn)),
+      Left(authGenerator.compose(bodyTransform)),
       bodyParser,
       errorHandler)
 
@@ -111,7 +111,10 @@ class DefinedBodyTypeRestActionBuilder[
     ResourceKeyType,
     ResourceType,
     ResponseType] =
-    new DefinedBodyTypeRestActionBuilder(auth, bodyParser, errorHandler.orElse(this.errorHandler))
+    new DefinedBodyTypeRestActionBuilder(
+      authGeneratorOrAuth,
+      bodyParser,
+      errorHandler.orElse(this.errorHandler))
 
   /**
    * Set the response type.
@@ -124,7 +127,7 @@ class DefinedBodyTypeRestActionBuilder[
     ResourceKeyType,
     ResourceType,
     NewResponseType] =
-    new DefinedBodyTypeRestActionBuilder(auth, bodyParser, errorHandler)
+    new DefinedBodyTypeRestActionBuilder(authGeneratorOrAuth, bodyParser, errorHandler)
 
   override protected def bodyBuilder[Category, Response](): BodyBuilder[Category, Response] = {
     new RestActionBodyBuilder[
@@ -133,7 +136,7 @@ class DefinedBodyTypeRestActionBuilder[
       BodyType,
       ResourceKeyType,
       ResourceType,
-      Response](auth, bodyParser, errorHandler)
+      Response](authGeneratorOrAuth, bodyParser, errorHandler)
   }
 
 }

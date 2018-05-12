@@ -87,21 +87,21 @@ class RestActionBuilder[RACType, AuthType, BodyType, ResourceKeyType, ResourceTy
   /**
    * Set the authentication framework.
    */
-  def auth[NewAuthType](
-      bodyAuthFn: BodyType => HeaderAccessControl[NewAuthType]): DefinedBodyTypeRestActionBuilder[
-    RACType,
-    NewAuthType,
-    BodyType,
-    ResourceKeyType,
-    ResourceType,
-    ResponseType] =
-    new DefinedBodyTypeRestActionBuilder(Left(bodyAuthFn), bodyParser, errorHandler)
+  def auth[NewAuthType](authGenerator: BodyType => HeaderAccessControl[NewAuthType])
+    : DefinedBodyTypeRestActionBuilder[
+      RACType,
+      NewAuthType,
+      BodyType,
+      ResourceKeyType,
+      ResourceType,
+      ResponseType] =
+    new DefinedBodyTypeRestActionBuilder(Left(authGenerator), bodyParser, errorHandler)
 
   /**
    * Set the authentication framework.
    */
-  def auth[NewAuthType, C](bodyTransformFn: BodyType => C)(
-      authFn: C => HeaderAccessControl[NewAuthType]): DefinedBodyTypeRestActionBuilder[
+  def auth[NewAuthType, C](bodyTransform: BodyType => C)(
+      authGenerator: C => HeaderAccessControl[NewAuthType]): DefinedBodyTypeRestActionBuilder[
     RACType,
     NewAuthType,
     BodyType,
@@ -109,7 +109,7 @@ class RestActionBuilder[RACType, AuthType, BodyType, ResourceKeyType, ResourceTy
     ResourceType,
     ResponseType] =
     new DefinedBodyTypeRestActionBuilder(
-      Left(authFn.compose(bodyTransformFn)),
+      Left(authGenerator.compose(bodyTransform)),
       bodyParser,
       errorHandler)
 

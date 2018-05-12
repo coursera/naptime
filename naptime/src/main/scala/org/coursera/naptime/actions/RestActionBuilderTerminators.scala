@@ -5,7 +5,7 @@ import org.coursera.naptime.model.Keyed
 /**
  * Defines terminal-position builder methods for [[RestActionBuilder]]
  */
-trait RestActionBuilderTerminators[
+private[actions] trait RestActionBuilderTerminators[
     RACType, AuthType, BodyType, ResourceKeyType, ResourceType, ResponseType] {
 
   type BodyBuilder[Category, Response] =
@@ -14,6 +14,7 @@ trait RestActionBuilderTerminators[
   protected def bodyBuilder[Category, Response](): BodyBuilder[Category, Response]
 
   // Define all the available REST action types and categories.
+
   /**
    * Gets a resource by ID
    *
