@@ -81,7 +81,10 @@ trait RestActionTester { this: ScalaFutures =>
       action: RestAction[_, AuthType, BodyType, _, _, ResponseType]) {
 
     def testAction(ctx: RestContext[AuthType, BodyType]): RestResponse[ResponseType] = {
-      val updatedAuthEither = action.authGeneratorOrAuth.check(ctx.auth)
+      val updatedAuthEither = action.authGeneratorOrAuth match {
+        case Left(generator) => generator.apply(ctx.body).check(ctx.auth)
+        case Right(auth)     => auth.check(ctx.auth)
+      }
 
       updatedAuthEither match {
         case Left(error) => RestError(error)
