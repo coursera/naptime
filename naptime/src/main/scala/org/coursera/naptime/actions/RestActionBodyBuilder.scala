@@ -43,7 +43,7 @@ class RestActionBodyBuilder[
     ResourceKeyType,
     ResourceType,
     ResponseType](
-    auth: HeaderAccessControl[AuthType],
+    auth: Either[BodyType => HeaderAccessControl[AuthType], HeaderAccessControl[AuthType]],
     bodyParser: BodyParser[BodyType],
     errorHandler: PartialFunction[Throwable, RestError])(
     implicit keyFormat: KeyFormat[ResourceKeyType],

@@ -46,7 +46,7 @@ import scala.util.control.NonFatal
  * A builder that helps build Rest Actions.
  */
 class RestActionBuilder[RACType, AuthType, BodyType, ResourceKeyType, ResourceType, ResponseType](
-    auth: HeaderAccessControl[AuthType],
+    auth: Either[BodyType => HeaderAccessControl[AuthType], HeaderAccessControl[AuthType]],
     bodyParser: BodyParser[BodyType],
     errorHandler: PartialFunction[Throwable, RestError])(
     implicit keyFormat: KeyFormat[ResourceKeyType],
@@ -64,7 +64,7 @@ class RestActionBuilder[RACType, AuthType, BodyType, ResourceKeyType, ResourceTy
     ResourceKeyType,
     ResourceType,
     ResponseType] =
-    new RestActionBuilder(auth, bodyParser, errorHandler)
+    new RestActionBuilder(Right(auth), bodyParser, errorHandler)
 
   /**
    * Set the body type.
