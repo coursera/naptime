@@ -85,7 +85,7 @@ class RestActionBodyBuilder[
       _paginationConfiguration: PaginationConfiguration): BuiltAction = {
 
     new RestAction[RACType, AuthType, BodyType, ResourceKeyType, ResourceType, ResponseType] {
-      override def authGeneratorOrAuth = authGeneratorOrAuth
+      override def restAuthGeneratorOrAuth = authGeneratorOrAuth
       override def restBodyParser = bodyParser
       override def restEngine = category
       override def fieldsEngine = fields

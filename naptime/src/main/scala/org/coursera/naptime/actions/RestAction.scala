@@ -66,7 +66,7 @@ trait RestAction[RACType, AuthType, BodyType, KeyType, ResourceType, ResponseTyp
     extends EssentialAction
     with RequestTaggingHandler {
 
-  protected[actions] def authGeneratorOrAuth: AuthGeneratorOrAuth[BodyType, AuthType]
+  protected[actions] def restAuthGeneratorOrAuth: AuthGeneratorOrAuth[BodyType, AuthType]
   protected def restBodyParser: BodyParser[BodyType]
   protected[naptime] def restEngine
     : RestActionCategoryEngine[RACType, KeyType, ResourceType, ResponseType]
@@ -106,7 +106,7 @@ trait RestAction[RACType, AuthType, BodyType, KeyType, ResourceType, ResponseTyp
                 s"${rh.headers} Encountered body error: $bodyAsStr")
             }
           }
-          authGeneratorOrAuth match {
+          restAuthGeneratorOrAuth match {
             case Left(_) => bodyErrorResultFuture
             case Right(auth) =>
               auth.run(rh).flatMap {
@@ -115,7 +115,7 @@ trait RestAction[RACType, AuthType, BodyType, KeyType, ResourceType, ResponseTyp
               }
           }
         case Right(a) =>
-          val authResult = authGeneratorOrAuth match {
+          val authResult = restAuthGeneratorOrAuth match {
             case Left(f)     => f(a).run(rh)
             case Right(auth) => auth.run(rh)
           }
@@ -184,7 +184,7 @@ trait RestAction[RACType, AuthType, BodyType, KeyType, ResourceType, ResponseTyp
   final override def apply(rh: RequestHeader): Accumulator[ByteString, Result] = {
     restBodyParser(rh).mapFuture {
       case Left(bodyError) =>
-        authGeneratorOrAuth match {
+        restAuthGeneratorOrAuth match {
           case Left(f) => Future.successful(bodyError)
           case Right(auth) =>
             auth.run(rh).map {
@@ -193,7 +193,7 @@ trait RestAction[RACType, AuthType, BodyType, KeyType, ResourceType, ResponseTyp
             }
         }
       case Right(a) =>
-        val authResult = authGeneratorOrAuth match {
+        val authResult = restAuthGeneratorOrAuth match {
           case Left(f)     => f(a).run(rh)
           case Right(auth) => auth.run(rh)
         }
@@ -239,7 +239,7 @@ trait RestAction[RACType, AuthType, BodyType, KeyType, ResourceType, ResponseTyp
   }
 
   override def toString() =
-    s"RestAction(engine=$restEngine, auth=$authGeneratorOrAuth, body=$restBodyParser)"
+    s"RestAction(engine=$restEngine, auth=$restAuthGeneratorOrAuth, body=$restBodyParser)"
 
   /**
    * A set of tags to add to all requests that are processed by this RestAction.
