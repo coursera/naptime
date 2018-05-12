@@ -88,7 +88,8 @@ class MacroImpls(val c: blackbox.Context) {
    * @tparam Resource The resource type that we are specializing.
    * @return A [[c.Tree]] corresponding to a [[ResourceRouterBuilder]].
    */
-  def build[Resource <: CollectionResource[_, _, _]](implicit wtt: WeakTypeTag[Resource]): c.Tree = {
+  def build[Resource <: CollectionResource[_, _, _]](
+      implicit wtt: WeakTypeTag[Resource]): c.Tree = {
     Nested.buildRouter[Resource]
   }
 
@@ -120,9 +121,7 @@ class MacroImpls(val c: blackbox.Context) {
       val methodsByRestActionCategory = try {
         naptimeMethods.groupBy { method =>
           method.typeSignature.resultType.typeArgs.headOption.getOrElse {
-            c.error(
-              method.pos,
-              "Method did not have type argument in result type?! Macro bug :'-(")
+            c.error(method.pos, "Method did not have type argument in result type?! Macro bug :'-(")
             throw MacroImpls.MacroBugException(s"Method: $method at pos: ${method.pos}")
           }
         }.toList
@@ -694,13 +693,12 @@ class MacroImpls(val c: blackbox.Context) {
     private[this] def buildPatchTree(methods: Iterable[c.universe.MethodSymbol]): OptionalTree =
       buildSingleElementActionTree(PatchRestActionCategory, "executePatch", methods)
 
-    private[this] def buildMultiGetTree(methods: Iterable[c.universe.MethodSymbol]): OptionalTree = {
+    private[this] def buildMultiGetTree(
+        methods: Iterable[c.universe.MethodSymbol]): OptionalTree = {
       methods match {
         case methodSymbol :: Nil =>
           if (methodSymbol.paramLists.length != 1) {
-            Left(
-              methodSymbol.pos,
-              "MultiGet requires a single parameter list, with at least 'ids'")
+            Left(methodSymbol.pos, "MultiGet requires a single parameter list, with at least 'ids'")
           } else {
             var hasSeenIds = false
             val params = for {
@@ -769,8 +767,7 @@ class MacroImpls(val c: blackbox.Context) {
       Right(tree -> methodBranches.map(_._2))
     }
 
-    private[this] def buildActionTree(
-        methods: Iterable[c.universe.MethodSymbol]): OptionalTree = {
+    private[this] def buildActionTree(methods: Iterable[c.universe.MethodSymbol]): OptionalTree = {
       val methodBranches =
         methods.map(buildSingleNamedActionTree(ActionRestActionCategory))
       val tree = q"""
