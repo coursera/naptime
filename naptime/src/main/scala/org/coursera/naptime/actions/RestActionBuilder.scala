@@ -90,7 +90,7 @@ class RestActionBuilder[RACType, AuthType, BodyType, ResourceKeyType, ResourceTy
    * Note that this version of [[auth]] converts the builder into a
    * [[DefinedBodyTypeRestActionBuilder]], which forbids request body definition changes.
    */
-  def auth[NewAuthType](authGenerator: BodyType => HeaderAccessControl[NewAuthType])
+  def bodyAuth[NewAuthType](authGenerator: BodyType => HeaderAccessControl[NewAuthType])
     : DefinedBodyTypeRestActionBuilder[
       RACType,
       NewAuthType,
@@ -109,7 +109,7 @@ class RestActionBuilder[RACType, AuthType, BodyType, ResourceKeyType, ResourceTy
    * Note that this version of [[auth]] converts the builder into a
    * [[DefinedBodyTypeRestActionBuilder]], which forbids request body definition changes.
    */
-  def auth[NewAuthType, C](bodyTransform: BodyType => C)(
+  def bodyAuth[NewAuthType, C](bodyTransform: BodyType => C)(
       authGenerator: C => HeaderAccessControl[NewAuthType]): DefinedBodyTypeRestActionBuilder[
     RACType,
     NewAuthType,

@@ -68,7 +68,7 @@ class DefinedBodyTypeRestActionBuilder[
   /**
    * Like [[auth]] above, but with a body-aware generator function.
    */
-  def auth[NewAuthType](authGenerator: BodyType => HeaderAccessControl[NewAuthType])
+  def bodyAuth[NewAuthType](authGenerator: BodyType => HeaderAccessControl[NewAuthType])
     : DefinedBodyTypeRestActionBuilder[
       RACType,
       NewAuthType,
@@ -77,25 +77,6 @@ class DefinedBodyTypeRestActionBuilder[
       ResourceType,
       ResponseType] =
     new DefinedBodyTypeRestActionBuilder(Left(authGenerator), bodyParser, errorHandler)
-
-  /**
-   * Like [[auth]] above, but with a body-aware generator function.
-   *
-   * The `bodyTransform` argument is intended to support reuse `authGenerator` functions across
-   * handlers with different body types, but whose bodies contain compatible projections.
-   */
-  def auth[NewAuthType, C](bodyTransform: BodyType => C)(
-      authGenerator: C => HeaderAccessControl[NewAuthType]): DefinedBodyTypeRestActionBuilder[
-    RACType,
-    NewAuthType,
-    BodyType,
-    ResourceKeyType,
-    ResourceType,
-    ResponseType] =
-    new DefinedBodyTypeRestActionBuilder(
-      Left(authGenerator.compose(bodyTransform)),
-      bodyParser,
-      errorHandler)
 
   /**
    * Adds an error handling function to allow exceptions to generate custom errors.
