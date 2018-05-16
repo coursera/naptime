@@ -19,7 +19,9 @@ import sbt.Keys
 import de.heikoseeberger.sbtheader.HeaderKey.headers
 import de.heikoseeberger.sbtheader.license.Apache2_0
 import play.sbt.PlayFilters
-
+import play.sbt.PlayAkkaHttpServer
+import play.sbt.PlayLayoutPlugin
+import play.sbt.PlayScala
 
 object NaptimeBuild extends Build with NamedDependencies with PluginVersionProvider {
 
@@ -77,8 +79,8 @@ object NaptimeBuild extends Build with NamedDependencies with PluginVersionProvi
 
   private[this] def configure(project: Project): Project = {
     project
-      .enablePlugins(play.sbt.PlayScala)
-      .disablePlugins(play.sbt.PlayLayoutPlugin, PlayFilters)
+      .enablePlugins(PlayScala)
+      .disablePlugins(PlayLayoutPlugin, PlayFilters, PlayAkkaHttpServer)
       .settings(testSettings)
       .settings(headerSettings)
       .settings(org.coursera.naptime.sbt.Sonatype.settings)
