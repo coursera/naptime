@@ -70,7 +70,7 @@ class RestActionBuilder[RACType, AuthType, BodyType, ResourceKeyType, ResourceTy
     ResourceKeyType,
     ResourceType,
     ResponseType] =
-    new DefinedBodyTypeRestActionBuilder(Right(auth), bodyParser, errorHandler)
+    new DefinedBodyTypeRestActionBuilder(auth, bodyParser, errorHandler)
 
   /**
    * Set the authentication framework.
@@ -83,44 +83,6 @@ class RestActionBuilder[RACType, AuthType, BodyType, ResourceKeyType, ResourceTy
     ResourceType,
     ResponseType] =
     new RestActionBuilder(auth, bodyParser, errorHandler)
-
-  /**
-   * Like [[auth]] above, but with a body-aware generator function.
-   *
-   * Note that this version of [[auth]] converts the builder into a
-   * [[DefinedBodyTypeRestActionBuilder]], which forbids request body definition changes.
-   */
-  def bodyAuth[NewAuthType](authGenerator: BodyType => HeaderAccessControl[NewAuthType])
-    : DefinedBodyTypeRestActionBuilder[
-      RACType,
-      NewAuthType,
-      BodyType,
-      ResourceKeyType,
-      ResourceType,
-      ResponseType] =
-    new DefinedBodyTypeRestActionBuilder(Left(authGenerator), bodyParser, errorHandler)
-
-  /**
-   * Like [[auth]] above, but with a body-aware generator function.
-   *
-   * The `bodyTransform` argument is intended to support reuse `authGenerator` functions across
-   * handlers with different body types, but whose bodies contain compatible projections.
-   *
-   * Note that this version of [[auth]] converts the builder into a
-   * [[DefinedBodyTypeRestActionBuilder]], which forbids request body definition changes.
-   */
-  def bodyAuth[NewAuthType, C](bodyTransform: BodyType => C)(
-      authGenerator: C => HeaderAccessControl[NewAuthType]): DefinedBodyTypeRestActionBuilder[
-    RACType,
-    NewAuthType,
-    BodyType,
-    ResourceKeyType,
-    ResourceType,
-    ResponseType] =
-    new DefinedBodyTypeRestActionBuilder(
-      Left(authGenerator.compose(bodyTransform)),
-      bodyParser,
-      errorHandler)
 
   /**
    * Adds an error handling function to allow exceptions to generate custom errors.
@@ -224,7 +186,7 @@ class RestActionBuilder[RACType, AuthType, BodyType, ResourceKeyType, ResourceTy
       BodyType,
       ResourceKeyType,
       ResourceType,
-      Response](Right(auth), bodyParser, errorHandler)
+      Response](auth, bodyParser, errorHandler)
   }
 
 }

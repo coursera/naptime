@@ -28,7 +28,6 @@ import org.coursera.naptime.RequestPagination
 import org.coursera.naptime.ResourceName
 import org.coursera.naptime.RestContext
 import org.coursera.naptime.RestResponse
-import org.coursera.naptime.access.HeaderAccessControl
 import org.coursera.naptime.ari.Response
 import play.api.Play
 import play.api.libs.json.OFormat
@@ -66,7 +65,7 @@ trait RestAction[RACType, AuthType, BodyType, KeyType, ResourceType, ResponseTyp
     extends EssentialAction
     with RequestTaggingHandler {
 
-  protected[actions] def restAuthGeneratorOrAuth: AuthGeneratorOrAuth[BodyType, AuthType]
+  protected[actions] def restAuthGenerator: AuthGenerator[BodyType, AuthType]
   protected def restBodyParser: BodyParser[BodyType]
   protected[naptime] def restEngine
     : RestActionCategoryEngine[RACType, KeyType, ResourceType, ResponseType]
@@ -98,28 +97,13 @@ trait RestAction[RACType, AuthType, BodyType, KeyType, ResourceType, ResponseTyp
     restBodyParser(rh)
       .mapFuture[Response] {
         case Left(bodyError) =>
-          val bodyErrorResultFuture: Future[Response] = {
-            val bodyAsBytesEventually = bodyError.body.consumeData
-            val bodyAsStrEventually = bodyAsBytesEventually.map(byteStr => byteStr.utf8String)
-            bodyAsStrEventually.map { bodyAsStr =>
-              throw new IllegalArgumentException(
-                s"${rh.headers} Encountered body error: $bodyAsStr")
-            }
-          }
-          restAuthGeneratorOrAuth match {
-            case Left(_) => bodyErrorResultFuture
-            case Right(auth) =>
-              auth.run(rh).flatMap {
-                case Left(error) => Future.failed(error)
-                case Right(_)    => bodyErrorResultFuture
-              }
+          val bodyAsBytesEventually = bodyError.body.consumeData
+          val bodyAsStrEventually = bodyAsBytesEventually.map(byteStr => byteStr.utf8String)
+          bodyAsStrEventually.map { bodyAsStr =>
+            throw new IllegalArgumentException(s"${rh.headers} Encountered body error: $bodyAsStr")
           }
         case Right(a) =>
-          val authResult = restAuthGeneratorOrAuth match {
-            case Left(f)     => f(a).run(rh)
-            case Right(auth) => auth.run(rh)
-          }
-          authResult.flatMap[Response] {
+          restAuthGenerator(a).run(rh).flatMap[Response] {
             case Left(error) => Future.failed(error) // TODO: log?
             case Right(auth) => {
               val responseTry = for {
@@ -183,21 +167,9 @@ trait RestAction[RACType, AuthType, BodyType, KeyType, ResourceType, ResponseTyp
    */
   final override def apply(rh: RequestHeader): Accumulator[ByteString, Result] = {
     restBodyParser(rh).mapFuture {
-      case Left(bodyError) =>
-        restAuthGeneratorOrAuth match {
-          case Left(f) => Future.successful(bodyError)
-          case Right(auth) =>
-            auth.run(rh).map {
-              case Left(error) => error.result
-              case Right(_)    => bodyError
-            }
-        }
+      case Left(bodyError) => Future.successful(bodyError)
       case Right(a) =>
-        val authResult = restAuthGeneratorOrAuth match {
-          case Left(f)     => f(a).run(rh)
-          case Right(auth) => auth.run(rh)
-        }
-        authResult.flatMap {
+        restAuthGenerator(a).run(rh).flatMap {
           case Left(error) => Future.successful(error.result) // TODO: log?
           case Right(auth) => {
             val responseTry = for {
@@ -239,7 +211,7 @@ trait RestAction[RACType, AuthType, BodyType, KeyType, ResourceType, ResponseTyp
   }
 
   override def toString() =
-    s"RestAction(engine=$restEngine, auth=$restAuthGeneratorOrAuth, body=$restBodyParser)"
+    s"RestAction(engine=$restEngine, auth=$restAuthGenerator, body=$restBodyParser)"
 
   /**
    * A set of tags to add to all requests that are processed by this RestAction.

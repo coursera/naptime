@@ -38,7 +38,7 @@ class DefinedBodyTypeRestActionBuilder[
     ResourceKeyType,
     ResourceType,
     ResponseType] private[actions] (
-    authGeneratorOrAuth: AuthGeneratorOrAuth[BodyType, AuthType],
+    authGeneratorOrAuth: AuthGenerator[BodyType, AuthType],
     bodyParser: BodyParser[BodyType],
     errorHandler: PartialFunction[Throwable, RestError])(
     implicit keyFormat: KeyFormat[ResourceKeyType],
@@ -54,21 +54,9 @@ class DefinedBodyTypeRestActionBuilder[
       ResponseType] {
 
   /**
-   * Set the authentication framework.
-   */
-  def auth[NewAuthType](auth: HeaderAccessControl[NewAuthType]): DefinedBodyTypeRestActionBuilder[
-    RACType,
-    NewAuthType,
-    BodyType,
-    ResourceKeyType,
-    ResourceType,
-    ResponseType] =
-    new DefinedBodyTypeRestActionBuilder(Right(auth), bodyParser, errorHandler)
-
-  /**
    * Like [[auth]] above, but with a body-aware generator function.
    */
-  def bodyAuth[NewAuthType](authGenerator: BodyType => HeaderAccessControl[NewAuthType])
+  def auth[NewAuthType](authGenerator: BodyType => HeaderAccessControl[NewAuthType])
     : DefinedBodyTypeRestActionBuilder[
       RACType,
       NewAuthType,
@@ -76,7 +64,7 @@ class DefinedBodyTypeRestActionBuilder[
       ResourceKeyType,
       ResourceType,
       ResponseType] =
-    new DefinedBodyTypeRestActionBuilder(Left(authGenerator), bodyParser, errorHandler)
+    new DefinedBodyTypeRestActionBuilder(authGenerator, bodyParser, errorHandler)
 
   /**
    * Adds an error handling function to allow exceptions to generate custom errors.

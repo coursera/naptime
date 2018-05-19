@@ -64,4 +64,10 @@ object HeaderAccessControl extends AnyOf with And with EitherOf with SuccessfulO
     StructuredAccessControl(Authenticator(parser, Decorator.identity[Unit]), authorizer)
   }
 
+  import scala.language.implicitConversions
+  implicit def accessControlGenerator[BodyType, T](
+      accessControl: HeaderAccessControl[T]): (BodyType => HeaderAccessControl[T]) = {
+    (b: BodyType) => accessControl
+  }
+
 }

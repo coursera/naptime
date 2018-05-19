@@ -42,7 +42,7 @@ class RestActionBodyBuilder[
     ResourceKeyType,
     ResourceType,
     ResponseType](
-    authGeneratorOrAuth: AuthGeneratorOrAuth[BodyType, AuthType],
+    authGeneratorOrAuth: AuthGenerator[BodyType, AuthType],
     bodyParser: BodyParser[BodyType],
     errorHandler: PartialFunction[Throwable, RestError])(
     implicit keyFormat: KeyFormat[ResourceKeyType],
@@ -85,7 +85,7 @@ class RestActionBodyBuilder[
       _paginationConfiguration: PaginationConfiguration): BuiltAction = {
 
     new RestAction[RACType, AuthType, BodyType, ResourceKeyType, ResourceType, ResponseType] {
-      override def restAuthGeneratorOrAuth = authGeneratorOrAuth
+      override def restAuthGenerator = authGeneratorOrAuth
       override def restBodyParser = bodyParser
       override def restEngine = category
       override def fieldsEngine = fields

@@ -20,8 +20,7 @@ import org.coursera.naptime.access.HeaderAccessControl
 
 package object actions {
 
-  type AuthGeneratorOrAuth[BodyType, AuthType] =
-    Either[BodyType => HeaderAccessControl[AuthType], HeaderAccessControl[AuthType]]
+  type AuthGenerator[BodyType, AuthType] = BodyType => HeaderAccessControl[AuthType]
 
   /**
    * Defines the allowed types of API endpoints.

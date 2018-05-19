@@ -136,7 +136,7 @@ object AuthBuilderTest {
     def createBodyAuthNamedBrennan() =
       Nap
         .jsonBody[Engineer]
-        .bodyAuth(acceptIfEngineerHasName(_, "Brennan"))
+        .auth(acceptIfEngineerHasName(_, "Brennan"))
         .create { ctx =>
           Ok(Keyed(1, Some(ctx.body)))
         }
@@ -144,7 +144,7 @@ object AuthBuilderTest {
     def createBodyAuthNamedFrank() =
       Nap
         .jsonBody[Engineer]
-        .bodyAuth(acceptIfEngineerHasName(_, "Frank"))
+        .auth(acceptIfEngineerHasName(_, "Frank"))
         .create { ctx =>
           Ok(Keyed(1, Some(ctx.body)))
         }

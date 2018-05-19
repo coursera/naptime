@@ -81,10 +81,7 @@ trait RestActionTester { this: ScalaFutures =>
       action: RestAction[_, AuthType, BodyType, _, _, ResponseType]) {
 
     def testAction(ctx: RestContext[AuthType, BodyType]): RestResponse[ResponseType] = {
-      val updatedAuthEither = action.restAuthGeneratorOrAuth match {
-        case Left(generator) => generator.apply(ctx.body).check(ctx.auth)
-        case Right(auth)     => auth.check(ctx.auth)
-      }
+      val updatedAuthEither = action.restAuthGenerator.apply(ctx.body).check(ctx.auth)
 
       updatedAuthEither match {
         case Left(error) => RestError(error)
@@ -97,6 +94,16 @@ trait RestActionTester { this: ScalaFutures =>
             case e: TestFailedException => e.cause.map(throw _).getOrElse(throw e)
           }.get
       }
+    }
+
+    def testActionPassAuth(ctx: RestContext[AuthType, BodyType]): RestResponse[ResponseType] = {
+      val responseFuture = action.safeApply(ctx).recover {
+        case e: NaptimeActionException => RestError(e)
+      }
+
+      Try(responseFuture.futureValue).recover {
+        case e: TestFailedException => e.cause.map(throw _).getOrElse(throw e)
+      }.get
     }
   }
 }
