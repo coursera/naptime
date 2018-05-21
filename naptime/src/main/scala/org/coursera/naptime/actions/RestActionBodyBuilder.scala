@@ -24,7 +24,6 @@ import org.coursera.naptime.PaginationConfiguration
 import org.coursera.naptime.RestContext
 import org.coursera.naptime.RestError
 import org.coursera.naptime.RestResponse
-import org.coursera.naptime.access.HeaderAccessControl
 import play.api.libs.json.OFormat
 import play.api.mvc.BodyParser
 
@@ -43,7 +42,7 @@ class RestActionBodyBuilder[
     ResourceKeyType,
     ResourceType,
     ResponseType](
-    auth: HeaderAccessControl[AuthType],
+    authGeneratorOrAuth: AuthGenerator[BodyType, AuthType],
     bodyParser: BodyParser[BodyType],
     errorHandler: PartialFunction[Throwable, RestError])(
     implicit keyFormat: KeyFormat[ResourceKeyType],
@@ -86,7 +85,7 @@ class RestActionBodyBuilder[
       _paginationConfiguration: PaginationConfiguration): BuiltAction = {
 
     new RestAction[RACType, AuthType, BodyType, ResourceKeyType, ResourceType, ResponseType] {
-      override def restAuth = auth
+      override def restAuthGenerator = authGeneratorOrAuth
       override def restBodyParser = bodyParser
       override def restEngine = category
       override def fieldsEngine = fields
