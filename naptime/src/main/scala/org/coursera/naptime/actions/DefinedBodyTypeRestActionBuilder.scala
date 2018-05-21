@@ -54,7 +54,7 @@ class DefinedBodyTypeRestActionBuilder[
       ResponseType] {
 
   /**
-   * Like [[auth]] above, but with a body-aware generator function.
+   * Like [[RestActionBuilder.auth]], but with a body-aware generator function.
    */
   def auth[NewAuthType](authGenerator: BodyType => HeaderAccessControl[NewAuthType])
     : DefinedBodyTypeRestActionBuilder[
