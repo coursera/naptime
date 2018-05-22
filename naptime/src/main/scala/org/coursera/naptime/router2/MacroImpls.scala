@@ -469,7 +469,7 @@ class MacroImpls(val c: blackbox.Context) {
       // undefined. Rather then reporting these types in the inputBody and customOutputBody
       // fields of our schema, we filter them and report `None`.
       val vagueTypes = List("Unit", "play.api.mvc.AnyContent", "Any")
-      val inputBody = category match {
+      val inputBodyType = category match {
         case CreateRestActionCategory | UpdateRestActionCategory | ActionRestActionCategory |
             DeleteRestActionCategory =>
           q"""
@@ -479,7 +479,7 @@ class MacroImpls(val c: blackbox.Context) {
         case _ => q"None"
       }
 
-      val customOutputBody = category match {
+      val customOutputBodyType = category match {
         case ActionRestActionCategory =>
           q"""
            val paramName = ${method.returnType.typeArgs(5).toString}
@@ -501,8 +501,8 @@ class MacroImpls(val c: blackbox.Context) {
         parameters = List(..$parameterTrees),
         attributes = org.coursera.naptime.router2.AttributesProvider
             .getMethodAttributes(resourceClass.getName, ${method.name.toString}),
-        inputBody = $inputBody,
-        customOutputBody = $customOutputBody,
+        inputBodyType = $inputBodyType,
+        customOutputBodyType = $customOutputBodyType,
         authType = $authType)
       """
     }

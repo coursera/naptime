@@ -67,7 +67,8 @@ object HeaderAccessControl extends AnyOf with And with EitherOf with SuccessfulO
   import scala.language.implicitConversions
   implicit def accessControlGenerator[BodyType, T](
       accessControl: HeaderAccessControl[T]): (BodyType => HeaderAccessControl[T]) = {
-    (b: BodyType) => accessControl
+    (b: BodyType) =>
+      accessControl
   }
 
 }
