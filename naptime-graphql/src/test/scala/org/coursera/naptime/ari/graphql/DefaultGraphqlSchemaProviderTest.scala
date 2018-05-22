@@ -83,8 +83,8 @@ object DefaultGraphqlSchemaProviderTest extends MockitoSugar {
     name = "get",
     parameters =
       List(Parameter(name = "id", `type` = "int", attributes = List.empty, default = None)),
-    inputBody = None,
-    customOutputBody = None,
+    inputBodyType = None,
+    customOutputBodyType = None,
     attributes = List.empty)
 
   val MULTIGET_HANDLER = Handler(
@@ -92,8 +92,8 @@ object DefaultGraphqlSchemaProviderTest extends MockitoSugar {
     name = "multiGet",
     parameters =
       List(Parameter(name = "ids", `type` = "List[int]", attributes = List.empty, default = None)),
-    inputBody = None,
-    customOutputBody = None,
+    inputBodyType = None,
+    customOutputBodyType = None,
     attributes = List.empty)
 
   val COURSES_RESOURCE_ID = ResourceName("courses", 1)

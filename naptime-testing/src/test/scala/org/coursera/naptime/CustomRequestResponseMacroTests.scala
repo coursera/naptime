@@ -101,28 +101,28 @@ class CustomRequestResponseMacroTests
   @Test
   def updateTypes(): Unit = {
     val handler = schema.handlers.find(_.name === "update").get
-    assert(handler.inputBody.contains("org.coursera.naptime.CustomRequest"))
-    assert(handler.customOutputBody.isEmpty)
+    assert(handler.inputBodyType.contains("org.coursera.naptime.CustomRequest"))
+    assert(handler.customOutputBodyType.isEmpty)
   }
   @Test
   def createTest(): Unit = {
     val handler = schema.handlers.find(_.name === "create").get
-    assert(handler.inputBody.contains("org.coursera.naptime.CustomRequest"))
-    assert(handler.customOutputBody.isEmpty)
+    assert(handler.inputBodyType.contains("org.coursera.naptime.CustomRequest"))
+    assert(handler.customOutputBodyType.isEmpty)
   }
 
   @Test
   def actionTest(): Unit = {
     val handler = schema.handlers.find(_.name === "action").get
-    assert(handler.inputBody.contains("org.coursera.naptime.CustomRequest"))
-    assert(handler.customOutputBody.contains("org.coursera.naptime.CustomResponse"))
+    assert(handler.inputBodyType.contains("org.coursera.naptime.CustomRequest"))
+    assert(handler.customOutputBodyType.contains("org.coursera.naptime.CustomResponse"))
   }
 
   @Test
   def deleteTest(): Unit = {
     val handler = schema.handlers.find(_.name === "delete").get
-    assert(handler.inputBody.contains("org.coursera.naptime.CustomRequest"))
-    assert(handler.customOutputBody.isEmpty)
+    assert(handler.inputBodyType.contains("org.coursera.naptime.CustomRequest"))
+    assert(handler.customOutputBodyType.isEmpty)
   }
 
 }

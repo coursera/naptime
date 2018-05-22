@@ -174,8 +174,8 @@ class NonNestedMacroTests extends AssertionsForJUnit with MockitoSugar with Reso
 
   private[this] def noCustomInputOutputAuthTypes(methodName: String): Unit = {
     val handler = Resource.routerBuilder.schema.handlers.find(_.name === methodName).get
-    assert(handler.inputBody.isEmpty)
-    assert(handler.customOutputBody.isEmpty)
+    assert(handler.inputBodyType.isEmpty)
+    assert(handler.customOutputBodyType.isEmpty)
     assert(handler.authType.isEmpty)
   }
 
