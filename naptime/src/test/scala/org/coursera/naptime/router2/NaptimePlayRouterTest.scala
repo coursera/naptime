@@ -57,8 +57,8 @@ class NaptimePlayRouterTest extends AssertionsForJUnit with MockitoSugar {
         name = "get",
         parameters =
           List(Parameter(name = "id", `type` = "String", attributes = List.empty, default = None)),
-        inputBody = None,
-        customOutputBody = None,
+        inputBodyType = None,
+        customOutputBodyType = None,
         attributes = List.empty)),
     className = "org.coursera.naptime.FakeResource",
     attributes = List.empty)

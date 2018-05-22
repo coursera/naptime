@@ -654,8 +654,8 @@ class NestedMacroTests extends AssertionsForJUnit with MockitoSugar with Resourc
         Set("parameterless", "batchModify"))
     assert(schema.handlers.count(_.kind == HandlerKind.MULTI_GET) === 1)
     val multiGetSchema = schema.handlers.find(_.kind == HandlerKind.MULTI_GET).get
-    assert(multiGetSchema.customOutputBody === None)
-    assert(multiGetSchema.inputBody === None)
+    assert(multiGetSchema.customOutputBodyType === None)
+    assert(multiGetSchema.inputBodyType === None)
     assert(multiGetSchema.parameters.length === 1)
     val multiGetSetParameter = multiGetSchema.parameters.head
     assert(multiGetSetParameter.name === "ids")

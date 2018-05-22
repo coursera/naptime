@@ -23,13 +23,13 @@ record Handler {
   /**
    * If the handler consumes a request body, the type is specified here.
    */
-  inputBody: TypeName?
+  inputBodyType: TypeName?
 
   /**
    * If the handler produces a custom response body that is not the expected based on the Resource,
    * the type is specified here.
    */
-  customOutputBody: TypeName?
+  customOutputBodyType: TypeName?
 
   /**
    * If the handler includes an authorization context, the type is specified here.
