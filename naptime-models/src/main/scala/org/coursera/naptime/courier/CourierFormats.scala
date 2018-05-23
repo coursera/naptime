@@ -53,12 +53,8 @@ import com.typesafe.scalalogging.StrictLogging
 import org.coursera.common.stringkey.StringKey
 import org.coursera.common.stringkey.StringKeyFormat
 import org.coursera.courier.templates.DataValidationException
-import org.coursera.courier.templates.ScalaArrayTemplate
 import org.coursera.courier.templates.ScalaEnumTemplate
 import org.coursera.courier.templates.ScalaEnumTemplateSymbol
-import org.coursera.courier.templates.ScalaRecordTemplate
-import org.coursera.courier.templates.ScalaTemplate
-import org.coursera.courier.templates.ScalaUnionTemplate
 import org.coursera.naptime.courier.CourierUtils._
 import org.coursera.naptime.courier.Exceptions._
 import play.api.libs.json.JsonValidationError
