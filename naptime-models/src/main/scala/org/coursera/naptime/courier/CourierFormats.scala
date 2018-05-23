@@ -811,7 +811,7 @@ object CourierFormats extends StrictLogging {
   /**
    * Recursively force materialization of lazy vals that are typerefs by materializing the entire tree recursively.
    * This forces any validation logic in the typeref's custom Scala constructor or coercer to run.
-   * Throw TemplateOutputCastException if the materialization failed.
+   * Throw [[TemplateOutputCastException]] if the materialization failed.
    */
   private[this] def materialize(template: DataTemplate[_]): Unit = {
     try {
