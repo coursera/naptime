@@ -1,0 +1,5 @@
+namespace org.coursera.naptime.courier
+
+record TestPositiveIntPairMapRecord {
+  mapField: map[TestPositiveIntPair, map[TestPositiveIntPair, TestPositiveIntPair]]
+}

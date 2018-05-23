@@ -58,6 +58,7 @@ import org.coursera.courier.templates.ScalaEnumTemplate
 import org.coursera.courier.templates.ScalaEnumTemplateSymbol
 import org.coursera.courier.templates.ScalaRecordTemplate
 import org.coursera.courier.templates.ScalaTemplate
+import org.coursera.courier.templates.ScalaUnionTemplate
 import org.coursera.naptime.courier.CourierUtils._
 import org.coursera.naptime.courier.Exceptions._
 import play.api.libs.json.JsonValidationError
@@ -119,7 +120,9 @@ object CourierFormats extends StrictLogging {
               builder.validateAndBuild(dataMap) match {
                 case Left(validationResult) =>
                   toJsError(validationResult.getMessages.asScala.toSeq)
-                case Right(template) => JsSuccess(template)
+                case Right(template) =>
+                  materialize(template)
+                  JsSuccess(template)
               }
             } catch {
               case readException: ReadException =>
@@ -158,7 +161,9 @@ object CourierFormats extends StrictLogging {
               builder.validateAndBuild(dataMap) match {
                 case Left(validationResult) =>
                   toJsError(validationResult.getMessages.asScala.toSeq)
-                case Right(template) => JsSuccess(template)
+                case Right(template) =>
+                  materialize(template)
+                  JsSuccess(template)
               }
             } catch {
               case readException: ReadException =>
@@ -716,11 +721,8 @@ object CourierFormats extends StrictLogging {
           validateAndFixUp(dataMap, schema)
           dataMap.setReadOnly()
           val wrapped = DataTemplateUtil.wrap(dataMap, clazz)
-          wrapped match {
-            case scalaTemplate: ScalaTemplate => materialize(scalaTemplate)
-            case _                            =>
-          }
-          Some(DataTemplateUtil.wrap(dataMap, clazz))
+          materialize(wrapped)
+          Some(wrapped)
         } catch {
           case parseException: IOException =>
             logger.debug(s"${parseException.getMessage}", parseException)
@@ -772,10 +774,7 @@ object CourierFormats extends StrictLogging {
           validateAndFixUp(dataList, schema)
           dataList.setReadOnly()
           val wrapped = DataTemplateUtil.wrap(dataList, clazz.getConstructor(classOf[DataList]))
-          wrapped match {
-            case scalaTemplate: ScalaTemplate => materialize(scalaTemplate)
-            case _                            =>
-          }
+          materialize(wrapped)
           Some(wrapped)
         } catch {
           case parseException: IOException =>
@@ -801,37 +800,38 @@ object CourierFormats extends StrictLogging {
   }
 
   /**
-   * Recursively force materialization of lazy vals that are typerefs.
+   * Recursively force materialization of lazy vals that are typerefs by materializing the entire tree recursively.
    * This forces any validation logic in the typeref's custom Scala constructor or coercer to run.
    */
-  private[this] def materialize(dataTemplate: ScalaTemplate): Unit = {
+  private[this] def materialize(template: DataTemplate[_]): Unit = {
     try {
-      // Materialize the entire tree recursively.
-      // Only record, array, union and map can contain typerefs.
-      // Since union and map are not allowed in keys, we only need to traverse record and array.
-      dataTemplate match {
-        case recordTemplate: ScalaRecordTemplate =>
-          recordTemplate
-            .asInstanceOf[Product]
-            .productIterator
-            .foreach {
-              case scalaTemplate: ScalaTemplate =>
-                materialize(scalaTemplate)
-              case _ =>
-            }
-        case arrayTemplate: ScalaArrayTemplate =>
-          arrayTemplate
-            .asInstanceOf[Traversable[_]]
-            .foreach {
-              case scalaTemplate: ScalaTemplate =>
-                materialize(scalaTemplate)
-              case _ =>
-            }
-        case _ =>
+      // Only record, array, union and map can contain typerefs as elements.
+      template match {
+        case arrayTemplate: IndexedSeq[_] =>
+          arrayTemplate.foreach(materializeIfDataTemplate)
+        case mapTemplate: scala.collection.immutable.Map[_, _] =>
+          mapTemplate.foreach {
+            case (key, value) =>
+              materializeIfDataTemplate(key)
+              materializeIfDataTemplate(value)
+          }
+        // Product pattern must come last because arrays and maps are also Products
+        case recordOrUnionTemplate: Product =>
+          recordOrUnionTemplate.productIterator.foreach(materializeIfDataTemplate)
+        case _: Any =>
       }
     } catch {
+      case e: TemplateOutputCastException =>
+        throw e
       case e: Exception =>
-        throw new TemplateOutputCastException("Could not materialize fields", e)
+        throw new TemplateOutputCastException(s"${e.getClass.getSimpleName}: ${e.getMessage}", e)
+    }
+  }
+
+  private[this] def materializeIfDataTemplate(element: Any): Unit = {
+    element match {
+      case dataTemplate: DataTemplate[_] => materialize(dataTemplate)
+      case _: Any                        =>
     }
   }
 

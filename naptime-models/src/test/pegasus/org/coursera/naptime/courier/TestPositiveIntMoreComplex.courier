@@ -1,0 +1,8 @@
+namespace org.coursera.naptime.courier
+
+import org.coursera.naptime.courier.TestPositiveIntPair
+
+record TestPositiveIntMoreComplex {
+  mapField: map[TestPositiveIntPair, map[TestPositiveIntPair, TestPositiveIntPair]]
+  unionField: union[TestPositiveIntPair]
+}
