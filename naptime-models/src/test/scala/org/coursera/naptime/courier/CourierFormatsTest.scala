@@ -298,6 +298,43 @@ class CourierFormatsTest extends AssertionsForJUnit {
   }
 
   @Test
+  def testRecordTemplateFormatsMaterialized(): Unit = {
+    implicit val complexFormat = CourierFormats.recordTemplateFormats[TestPositiveIntComplex]
+    implicit val mapFormat = CourierFormats.recordTemplateFormats[TestPositiveIntPairMapRecord]
+    implicit val unionFormat = CourierFormats.unionTemplateFormats[TestPositiveIntPairUnion]
+
+    val badRecordString =
+      """{ "pair": { "first": -1, "second": 2 }, "elements": [ { "first": 3, "second": 4 } ] }"""
+    assertResult(
+      JsError("Pegasus template cast error: IllegalArgumentException: -1 is not positive"))(
+      Json.parse(badRecordString).validate[TestPositiveIntComplex])
+
+    val badArrayString =
+      """{ "pair": { "first": 1, "second": 2 }, "elements": [ { "first": -3, "second": 4 } ] }"""
+    assertResult(
+      JsError("Pegasus template cast error: IllegalArgumentException: -3 is not positive"))(
+      Json.parse(badArrayString).validate[TestPositiveIntComplex])
+
+    val badStringMapKey =
+      """{ "mapField": { "(first~1,second~2)": { "(first~-3,second~4)": { "first": 5, "second": 6 } } } }"""
+    assertResult(
+      JsError("Pegasus template cast error: IllegalArgumentException: -3 is not positive"))(
+      Json.parse(badStringMapKey).validate[TestPositiveIntPairMapRecord])
+
+    val badStringMapValue =
+      """{ "mapField": { "(first~1,second~2)": { "(first~3,second~4)": { "first": -5, "second": 6 } } } }"""
+    assertResult(
+      JsError("Pegasus template cast error: IllegalArgumentException: -5 is not positive"))(
+      Json.parse(badStringMapValue).validate[TestPositiveIntPairMapRecord])
+
+    val badUnionString =
+      """{ "org.coursera.naptime.courier.TestPositiveIntPair": { "first": -1, "second": 2 } }"""
+    assertResult(
+      JsError("Pegasus template cast error: IllegalArgumentException: -1 is not positive"))(
+      Json.parse(badUnionString).validate[TestPositiveIntPairUnion])
+  }
+
+  @Test
   def testValidatingRecordTemplateFormats(): Unit = {
     implicit val converter = CourierFormats.recordTemplateFormats[MockRecord]
 
