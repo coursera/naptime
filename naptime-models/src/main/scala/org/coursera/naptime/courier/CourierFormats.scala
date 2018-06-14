@@ -265,6 +265,10 @@ object CourierFormats extends StrictLogging {
     }.toSeq)
   }
 
+  def unionToJsObject(dataMap: DataMap, unionSchema: UnionDataSchema): JsObject = {
+    unionToJsObject(emptyPath, dataMap, unionSchema)
+  }
+
   private[this] def unionToJsObject(
       schemaPath: SchemaPath,
       dataMap: DataMap,
@@ -569,6 +573,10 @@ object CourierFormats extends StrictLogging {
       case (key, value) =>
         (key, jsValueToData(schemaPath, value, valueSchema))
     }.asJava)
+  }
+
+  def jsObjectToUnion(jsObject: JsObject, unionSchema: UnionDataSchema): DataMap = {
+    jsObjectToUnion(emptyPath, jsObject, unionSchema)
   }
 
   private[this] def jsObjectToUnion(
