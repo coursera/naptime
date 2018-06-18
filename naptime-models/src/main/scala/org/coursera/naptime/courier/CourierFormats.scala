@@ -404,6 +404,13 @@ object CourierFormats extends StrictLogging {
     }
   }
 
+  def typerefUnionToJsObject(
+      typerefSchema: TyperefDataSchema,
+      dataMap: DataMap,
+      unionSchema: UnionDataSchema): JsObject = {
+    typerefUnionToJsObject(emptyPath, typerefSchema, dataMap, unionSchema)
+  }
+
   private[this] def typerefUnionToJsObject(
       schemaPath: SchemaPath,
       typerefSchema: TyperefDataSchema,
@@ -608,11 +615,18 @@ object CourierFormats extends StrictLogging {
     }
   }
 
+  def jsObjectToTyperefUnion(
+      typerefSchema: TyperefDataSchema,
+      jsObject: JsObject,
+      unionSchema: UnionDataSchema): DataMap = {
+    jsObjectToTyperefUnion(emptyPath, typerefSchema, jsObject, unionSchema)
+  }
+
   private[this] def jsObjectToTyperefUnion(
       schemaPath: SchemaPath,
       typerefSchema: TyperefDataSchema,
       jsObject: JsObject,
-      unionSchema: UnionDataSchema): AnyRef = {
+      unionSchema: UnionDataSchema): DataMap = {
     getTypedDefinition(typerefSchema) match {
       case None =>
         jsObjectToUnion(schemaPath, jsObject, unionSchema)
