@@ -72,11 +72,11 @@ private[naptime] object JsonUtilities {
       ok: Ok[_],
       requestFields: RequestFields,
       queryIncludes: QueryIncludes,
-      fields: Fields[_]): Option[JsObject] = {
+      fields: ResourceFields[_]): Option[JsObject] = {
     if (ok.related.isEmpty || queryIncludes.fields.isEmpty) {
       None
     } else {
-      case class FieldsHolder(fields: Fields[_])
+      case class FieldsHolder(fields: ResourceFields[_])
       val fieldsMap = ok.related.map { related =>
         related._1 -> FieldsHolder(related._2.fields)
       }
@@ -110,7 +110,7 @@ private[naptime] object JsonUtilities {
   def formatLinksMeta(
       queryIncludes: QueryIncludes,
       requestFields: RequestFields,
-      fields: Fields[_],
+      fields: ResourceFields[_],
       ok: Ok[_]): JsObject = {
     // Don't bother outputting metadata if there are no fields present in the response.
     val visibleIncludes = ok.related.filterKeys(requestFields.forResource(_).isDefined)
