@@ -32,7 +32,7 @@ class TypesTest extends AssertionsForJUnit {
       "org.coursera.naptime.TestResource.Model",
       new IntegerDataSchema,
       Course.SCHEMA,
-      Fields.FAKE_FIELDS)
+      ResourceFields.FAKE_FIELDS)
 
     assert(!resultingType.isErrorRecord)
     assert(resultingType.getFields().size() == 3)
@@ -51,7 +51,7 @@ class TypesTest extends AssertionsForJUnit {
       "org.coursera.naptime.ComplexTestResource.Model",
       EnrollmentId.SCHEMA,
       Course.SCHEMA,
-      Fields.FAKE_FIELDS)
+      ResourceFields.FAKE_FIELDS)
 
     assert(!resultingType.isErrorRecord)
     assert(resultingType.getFields().size() == 5)
@@ -76,7 +76,7 @@ class TypesTest extends AssertionsForJUnit {
       "org.coursera.naptime.IdWithIdTestResource.Model",
       IdWithIdField.SCHEMA,
       Course.SCHEMA,
-      Fields.FAKE_FIELDS)
+      ResourceFields.FAKE_FIELDS)
 
     assert(!resultingType.isErrorRecord)
     assert(resultingType.getFields().size() == 4)
@@ -90,6 +90,5 @@ class TypesTest extends AssertionsForJUnit {
     assert(resultingType.getField("name").getRecord == Course.SCHEMA)
     assert(resultingType.getField("description") != null)
     assert(resultingType.getField("description").getRecord == Course.SCHEMA)
-
   }
 }
