@@ -246,7 +246,7 @@ class ETagRestActionCategoryEngineTest extends AssertionsForJUnit with ScalaFutu
   def etagShouldShortCircuitResponse(): Unit = {
     implicit val intKeyFormat = KeyFormat.intKeyFormat
     val req = FakeRequest().withHeaders(HeaderNames.IF_NONE_MATCH -> "W/\"asdf\"")
-    val fields = Fields[TestResponse](TestResponse.fmt)
+    val fields = ResourceFields[TestResponse](TestResponse.fmt)
     val pagination = RequestPagination(20, None, isDefault = true)
     val naptimeResponse = Ok(Keyed(1, TestResponse(foo = "bar"))).withETag(ETag("asdf"))
 

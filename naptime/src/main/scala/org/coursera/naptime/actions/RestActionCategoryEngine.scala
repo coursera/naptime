@@ -21,7 +21,7 @@ import org.coursera.naptime.ETag
 import org.coursera.naptime.model.KeyFormat
 import org.coursera.naptime.model.Keyed
 import org.coursera.naptime.RestError
-import org.coursera.naptime.Fields
+import org.coursera.naptime.ResourceFields
 import org.coursera.naptime.JsonUtilities
 import org.coursera.naptime.Ok
 import org.coursera.naptime.QueryIncludes
@@ -53,7 +53,7 @@ import scala.annotation.implicitNotFound
 trait RestActionCategoryEngine[Category, Key, Resource, Response] {
   private[naptime] def mkResult(
       request: RequestHeader,
-      resourceFields: Fields[Resource],
+      resourceFields: ResourceFields[Resource],
       requestFields: RequestFields,
       requestIncludes: QueryIncludes,
       pagination: RequestPagination,
@@ -130,7 +130,7 @@ trait PlayJsonRestActionCategoryEngine {
     new RestActionCategoryEngine[GetRestActionCategory, Key, Resource, Keyed[Key, Resource]] {
       override def mkResult(
           request: RequestHeader,
-          resourceFields: Fields[Resource],
+          resourceFields: ResourceFields[Resource],
           requestFields: RequestFields,
           requestIncludes: QueryIncludes,
           pagination: RequestPagination,
@@ -170,7 +170,7 @@ trait PlayJsonRestActionCategoryEngine {
       Keyed[Key, Option[Resource]]] {
       override def mkResult(
           request: RequestHeader,
-          resourceFields: Fields[Resource],
+          resourceFields: ResourceFields[Resource],
           requestFields: RequestFields,
           requestIncludes: QueryIncludes,
           pagination: RequestPagination,
@@ -224,7 +224,7 @@ trait PlayJsonRestActionCategoryEngine {
       Option[Keyed[Key, Resource]]] {
       override def mkResult(
           request: RequestHeader,
-          resourceFields: Fields[Resource],
+          resourceFields: ResourceFields[Resource],
           requestFields: RequestFields,
           requestIncludes: QueryIncludes,
           pagination: RequestPagination,
@@ -258,7 +258,7 @@ trait PlayJsonRestActionCategoryEngine {
     new RestActionCategoryEngine[PatchRestActionCategory, Key, Resource, Keyed[Key, Resource]] {
       override def mkResult(
           request: RequestHeader,
-          resourceFields: Fields[Resource],
+          resourceFields: ResourceFields[Resource],
           requestFields: RequestFields,
           requestIncludes: QueryIncludes,
           pagination: RequestPagination,
@@ -286,7 +286,7 @@ trait PlayJsonRestActionCategoryEngine {
     new RestActionCategoryEngine[DeleteRestActionCategory, Key, Resource, Unit] {
       override def mkResult(
           request: RequestHeader,
-          resourceFields: Fields[Resource],
+          resourceFields: ResourceFields[Resource],
           requestFields: RequestFields,
           requestIncludes: QueryIncludes,
           pagination: RequestPagination,
@@ -313,7 +313,7 @@ trait PlayJsonRestActionCategoryEngine {
       Seq[Keyed[Key, Resource]]] {
       override def mkResult(
           request: RequestHeader,
-          resourceFields: Fields[Resource],
+          resourceFields: ResourceFields[Resource],
           requestFields: RequestFields,
           requestIncludes: QueryIncludes,
           pagination: RequestPagination,
@@ -349,7 +349,7 @@ trait PlayJsonRestActionCategoryEngine {
     new RestActionCategoryEngine[GetAllRestActionCategory, Key, Resource, Seq[Keyed[Key, Resource]]] {
       override def mkResult(
           request: RequestHeader,
-          resourceFields: Fields[Resource],
+          resourceFields: ResourceFields[Resource],
           requestFields: RequestFields,
           requestIncludes: QueryIncludes,
           pagination: RequestPagination,
@@ -385,7 +385,7 @@ trait PlayJsonRestActionCategoryEngine {
     new RestActionCategoryEngine[FinderRestActionCategory, Key, Resource, Seq[Keyed[Key, Resource]]] {
       override def mkResult(
           request: RequestHeader,
-          resourceFields: Fields[Resource],
+          resourceFields: ResourceFields[Resource],
           requestFields: RequestFields,
           requestIncludes: QueryIncludes,
           pagination: RequestPagination,
@@ -419,7 +419,7 @@ trait PlayJsonRestActionCategoryEngine {
     new RestActionCategoryEngine[ActionRestActionCategory, Key, Resource, Response] {
       override def mkResult(
           request: RequestHeader,
-          resourceFields: Fields[Resource],
+          resourceFields: ResourceFields[Resource],
           requestFields: RequestFields,
           requestIncludes: QueryIncludes,
           pagination: RequestPagination,

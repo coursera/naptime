@@ -21,7 +21,7 @@ import akka.util.ByteString
 import org.coursera.naptime.model.KeyFormat
 import org.coursera.naptime.RestError
 import org.coursera.naptime.NaptimeActionException
-import org.coursera.naptime.Fields
+import org.coursera.naptime.ResourceFields
 import org.coursera.naptime.PaginationConfiguration
 import org.coursera.naptime.QueryStringParser.NaptimeParseError
 import org.coursera.naptime.RequestPagination
@@ -69,7 +69,7 @@ trait RestAction[RACType, AuthType, BodyType, KeyType, ResourceType, ResponseTyp
   protected def restBodyParser: BodyParser[BodyType]
   protected[naptime] def restEngine
     : RestActionCategoryEngine[RACType, KeyType, ResourceType, ResponseType]
-  protected[naptime] def fieldsEngine: Fields[ResourceType]
+  protected[naptime] def fieldsEngine: ResourceFields[ResourceType]
   protected def paginationConfiguration: PaginationConfiguration
   protected def errorHandler: PartialFunction[Throwable, RestError]
   protected implicit val keyFormat: KeyFormat[KeyType]
