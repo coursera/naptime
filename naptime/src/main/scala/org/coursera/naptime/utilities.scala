@@ -126,7 +126,7 @@ private[naptime] object JsonUtilities {
   def formatSuccessfulResponseBody(
       response: Ok[_],
       elements: JsValue,
-      fields: Fields[_],
+      fields: ResourceFields[_],
       request: RequestHeader,
       requestFields: RequestFields,
       queryIncludes: QueryIncludes): JsObject = {

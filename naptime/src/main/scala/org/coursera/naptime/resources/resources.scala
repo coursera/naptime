@@ -48,7 +48,7 @@ trait Resource[M] {
   def resourceName: String
   def resourceVersion: Int = 1
 
-  def Fields: Fields[M] = org.coursera.naptime.Fields[M](resourceFormat)
+  def Fields: ResourceFields[M] = org.coursera.naptime.ResourceFields[M](resourceFormat)
 
   type PathKey <: ParsedPathKey
   type PathParser <: PathKeyParser[PathKey]
@@ -217,9 +217,10 @@ abstract class NestedCourierCollectionResource[
     CourierFormats.recordTemplateFormats[M](ct)
   }.orNull // TODO: consider making a fake formatter.
 
-  protected[this] final lazy val BaseFields: Fields[M] = org.coursera.naptime.Fields(resourceFormat)
+  protected[this] final lazy val BaseFields: ResourceFields[M] =
+    org.coursera.naptime.ResourceFields(resourceFormat)
 
-  implicit override def Fields: Fields[M] = BaseFields
+  implicit override def Fields: ResourceFields[M] = BaseFields
 }
 
 /**

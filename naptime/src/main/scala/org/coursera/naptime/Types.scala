@@ -78,7 +78,7 @@ object Types extends StrictLogging {
       typeName: String,
       keyType: DataSchema,
       valueType: RecordDataSchema,
-      fields: Fields[_]): RecordDataSchema = {
+      fields: ResourceFields[_]): RecordDataSchema = {
     if (keyType.hasError || valueType.hasError) {
       throw new RuntimeException(s"Input schemas have error: $keyType $valueType")
     }

@@ -55,7 +55,7 @@ class JsonUtilitiesTest extends AssertionsForJUnit {
 
   @Test
   def metaLinksSimple(): Unit = {
-    val fields = Fields[TestResource].withRelated("author" -> ResourceName("user", 1))
+    val fields = ResourceFields[TestResource].withRelated("author" -> ResourceName("user", 1))
     val meta = JsonUtilities.formatLinksMeta(
       QueryIncludes(Set("author"), Map.empty),
       QueryFields.empty,
@@ -66,8 +66,9 @@ class JsonUtilitiesTest extends AssertionsForJUnit {
 
   @Test
   def metaLinksRecursed(): Unit = {
-    val fields = Fields[TestResource].withRelated("author" -> ResourceName("user", 1))
-    val userFields = Fields[FakeUser].withRelated("almaMater" -> ResourceName("university", 3))
+    val fields = ResourceFields[TestResource].withRelated("author" -> ResourceName("user", 1))
+    val userFields =
+      ResourceFields[FakeUser].withRelated("almaMater" -> ResourceName("university", 3))
     val result = Ok(()).withRelated(ResourceName("user", 1), Seq.empty[Keyed[Int, FakeUser]])(
       FakeUser.format,
       KeyFormat.intKeyFormat,
@@ -86,8 +87,8 @@ class JsonUtilitiesTest extends AssertionsForJUnit {
 
   @Test
   def formatIncludes(): Unit = {
-    val fields = Fields[TestResource].withRelated("author" -> ResourceName("user", 1))
-    val userFields = Fields[FakeUser].withDefaultFields("name")
+    val fields = ResourceFields[TestResource].withRelated("author" -> ResourceName("user", 1))
+    val userFields = ResourceFields[FakeUser].withDefaultFields("name")
     val queryIncludes = QueryIncludes(Set("author"), Map.empty)
 
     val fakeUser = FakeUser("bob", "good", 1)
@@ -110,10 +111,12 @@ class JsonUtilitiesTest extends AssertionsForJUnit {
   def formatTransitiveIncludes(): Unit = {
     val userResource = ResourceName("user", 1)
     val universityResource = ResourceName("universities", 1)
-    implicit val fields = Fields[TestResource].withRelated("author" -> userResource)
+    implicit val fields = ResourceFields[TestResource].withRelated("author" -> userResource)
     implicit val userFields =
-      Fields[FakeUser].withDefaultFields("name").withRelated("almaMater" -> universityResource)
-    implicit val uniFields = Fields[University].withDefaultFields("name")
+      ResourceFields[FakeUser]
+        .withDefaultFields("name")
+        .withRelated("almaMater" -> universityResource)
+    implicit val uniFields = ResourceFields[University].withDefaultFields("name")
     val queryIncludes = QueryIncludes(Set("author"), Map(userResource -> Set("almaMater")))
 
     val ok = Ok(())
@@ -131,8 +134,8 @@ class JsonUtilitiesTest extends AssertionsForJUnit {
 
   @Test
   def formatIncludesNotRequested(): Unit = {
-    val fields = Fields[TestResource].withRelated("author" -> ResourceName("user", 1))
-    val userFields = Fields[FakeUser].withDefaultFields("name")
+    val fields = ResourceFields[TestResource].withRelated("author" -> ResourceName("user", 1))
+    val userFields = ResourceFields[FakeUser].withDefaultFields("name")
     val queryIncludes = QueryIncludes(Set("nonexistent"), Map.empty)
 
     val fakeUser = FakeUser("bob", "good", 1)

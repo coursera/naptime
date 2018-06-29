@@ -19,7 +19,7 @@ package org.coursera.naptime.actions
 import akka.stream.Materializer
 import org.coursera.common.concurrent.Futures
 import org.coursera.naptime.model.KeyFormat
-import org.coursera.naptime.Fields
+import org.coursera.naptime.ResourceFields
 import org.coursera.naptime.PaginationConfiguration
 import org.coursera.naptime.RestContext
 import org.coursera.naptime.RestError
@@ -57,7 +57,7 @@ class RestActionBodyBuilder[
 
   def apply(fn: RestContext[AuthType, BodyType] => RestResponse[ResponseType])(
       implicit category: CategoryEngine,
-      fields: Fields[ResourceType],
+      fields: ResourceFields[ResourceType],
       paginationConfiguration: PaginationConfiguration): BuiltAction = {
 
     async(ctx => Future.successful(fn(ctx)))
@@ -65,7 +65,7 @@ class RestActionBodyBuilder[
 
   def apply(fn: => RestResponse[ResponseType])(
       implicit category: CategoryEngine,
-      fields: Fields[ResourceType],
+      fields: ResourceFields[ResourceType],
       paginationConfiguration: PaginationConfiguration): BuiltAction = {
 
     async(_ => Futures.immediate(fn))
@@ -73,7 +73,7 @@ class RestActionBodyBuilder[
 
   def async(fn: => Future[RestResponse[ResponseType]])(
       implicit category: CategoryEngine,
-      fields: Fields[ResourceType],
+      fields: ResourceFields[ResourceType],
       paginationConfiguration: PaginationConfiguration): BuiltAction = {
 
     async(_ => fn)
@@ -81,7 +81,7 @@ class RestActionBodyBuilder[
 
   def async(fn: RestContext[AuthType, BodyType] => Future[RestResponse[ResponseType]])(
       implicit category: CategoryEngine,
-      fields: Fields[ResourceType],
+      fields: ResourceFields[ResourceType],
       _paginationConfiguration: PaginationConfiguration): BuiltAction = {
 
     new RestAction[RACType, AuthType, BodyType, ResourceKeyType, ResourceType, ResponseType] {
