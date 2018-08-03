@@ -6,8 +6,8 @@ import javax.inject.Singleton
 import akka.stream.Materializer
 import org.coursera.example.Course
 import org.coursera.naptime.Fields
-import org.coursera.naptime.GetReverseRelation
-import org.coursera.naptime.MultiGetReverseRelation
+import org.coursera.naptime.GetGraphQLRelation
+import org.coursera.naptime.MultiGetGraphQLRelation
 import org.coursera.naptime.Ok
 import org.coursera.naptime.ResourceName
 import org.coursera.naptime.model.Keyed
@@ -24,21 +24,21 @@ class CoursesResource @Inject() (
   override def resourceName = "courses"
   override def resourceVersion = 1
   override implicit lazy val Fields: Fields[Course] = BaseFields
-    .withReverseRelations(
-      "instructors" -> MultiGetReverseRelation(
+    .withGraphQLRelations(
+      "instructors" -> MultiGetGraphQLRelation(
         resourceName = ResourceName("instructors", 1),
         ids = "$instructorIds"),
-      "partner" -> GetReverseRelation(
+      "partner" -> GetGraphQLRelation(
         resourceName = ResourceName("partners", 1),
         id = "$partnerId",
         description = "Partner who produces this course."),
       "courseMetadata/org.coursera.example.CertificateCourseMetadata/certificateInstructors" ->
-        MultiGetReverseRelation(
+        MultiGetGraphQLRelation(
           resourceName = ResourceName("instructors", 1),
           ids = "${courseMetadata/certificate/certificateInstructorIds}",
           description = "Instructor whose name and signature appears on the course certificate."),
       "courseMetadata/org.coursera.example.DegreeCourseMetadata/degreeInstructors" ->
-        MultiGetReverseRelation(
+        MultiGetGraphQLRelation(
           resourceName = ResourceName("instructors", 1),
           ids = "${courseMetadata/degree/degreeInstructorIds}",
           description = "Instructor whose name and signature appears on the degree certificate."))

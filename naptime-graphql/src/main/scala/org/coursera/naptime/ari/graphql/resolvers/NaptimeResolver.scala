@@ -99,22 +99,22 @@ class NaptimeResolver extends DeferredResolver[SangriaGraphQlContext] with Stric
       .map {
         case (resourceName, requests) =>
           // Handle MultiGet and Non-Multigets differently, since multigets can be batched
-          val (forwardRequests, reverseRequests) =
+          val (multiGetRequests, nonMultiGetRequests) =
             requests.partition(_.arguments.exists(_._1 == "ids"))
 
           // partition forward requests by auth type. it will make a separate batched request for
           // each distinct auth override type found.
-          val forwardRelations = Future
-            .sequence(forwardRequests.groupBy(_.authOverride).map {
+          val multiGetRelations = Future
+            .sequence(multiGetRequests.groupBy(_.authOverride).map {
               case (authOverride, selectedRequests) =>
-                fetchForwardRelations(selectedRequests, resourceName, ctx, authOverride)
+                fetchMultiGetRelations(selectedRequests, resourceName, ctx, authOverride)
             })
             .map(_.flatten.toMap)
 
-          val reverseRelations =
-            fetchReverseRelations(reverseRequests, resourceName, ctx)
+          val nonMultiGetRelations =
+            fetchNonMultiGetRelations(nonMultiGetRequests, resourceName, ctx)
 
-          val allRelations = List(forwardRelations, reverseRelations)
+          val allRelations = List(multiGetRelations, nonMultiGetRelations)
 
           Future.sequence(allRelations).map(_.flatten.toMap)
       }
@@ -130,7 +130,7 @@ class NaptimeResolver extends DeferredResolver[SangriaGraphQlContext] with Stric
   }
 
   /**
-   * Fetches forward relations (via multiget) for a specific resource given a list of requests.
+   * Fetches multiget relations for a specific resource given a list of requests.
    * This implementation optimizes fetches by merging multigets into as few requests as possible.
    *
    * Multiget requests can be merged if all other query parameters are the same.
@@ -143,7 +143,7 @@ class NaptimeResolver extends DeferredResolver[SangriaGraphQlContext] with Stric
    * @return Map of request ids (indexes from the deferred request batching) to either a
    *         NaptimeError or NaptimeResponse
    */
-  private[this] def fetchForwardRelations(
+  private[this] def fetchMultiGetRelations(
       requests: Vector[NaptimeRequest],
       resourceName: ResourceName,
       context: SangriaGraphQlContext,
@@ -226,7 +226,7 @@ class NaptimeResolver extends DeferredResolver[SangriaGraphQlContext] with Stric
   }
 
   /**
-   * Fetches reverse relations for a specific resource given a list of requests
+   * Fetches non-multi get relations for a specific resource given a list of requests
    *
    * In the event of an error, a NaptimeError is returned instead of a NaptimeResponse
    *
@@ -236,7 +236,7 @@ class NaptimeResolver extends DeferredResolver[SangriaGraphQlContext] with Stric
    * @return Map of request ids (indexes from the deferred request batching) to either a
    *         NaptimeError or NaptimeResponse
    */
-  def fetchReverseRelations(
+  def fetchNonMultiGetRelations(
       requests: Vector[NaptimeRequest],
       resourceName: ResourceName,
       context: SangriaGraphQlContext)(implicit ec: ExecutionContext)

@@ -6,7 +6,7 @@ import javax.inject.Singleton
 import akka.stream.Materializer
 import org.coursera.example.Partner
 import org.coursera.naptime.Fields
-import org.coursera.naptime.MultiGetReverseRelation
+import org.coursera.naptime.MultiGetGraphQLRelation
 import org.coursera.naptime.Ok
 import org.coursera.naptime.ResourceName
 import org.coursera.naptime.model.Keyed
@@ -23,11 +23,11 @@ class PartnersResource @Inject() (
   override def resourceName = "partners"
   override def resourceVersion = 1
   override implicit lazy val Fields: Fields[Partner] = BaseFields
-    .withReverseRelations(
-      "instructors" -> MultiGetReverseRelation(
+    .withGraphQLRelations(
+      "instructors" -> MultiGetGraphQLRelation(
         resourceName = ResourceName("instructors", 1),
         ids = "$instructorIds"),
-      "courses" -> MultiGetReverseRelation(
+      "courses" -> MultiGetGraphQLRelation(
         resourceName = ResourceName("courses", 1),
         ids = "$courseIds"))
 

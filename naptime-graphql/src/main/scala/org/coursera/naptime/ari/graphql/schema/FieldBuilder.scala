@@ -76,7 +76,7 @@ object FieldBuilder extends StrictLogging {
       Context[SangriaGraphQlContext, DataMapWithParent] => Value[SangriaGraphQlContext, Any]
 
     val relatedResourceOption = if (followRelations) {
-      ReverseRelation.parse(field).map(_.resourceName).flatMap(ResourceName.parse)
+      GraphQLRelation.parse(field).map(_.resourceName).flatMap(ResourceName.parse)
     } else {
       None
     }
@@ -96,7 +96,7 @@ object FieldBuilder extends StrictLogging {
             relatedResourceName,
             fieldName,
             None,
-            ReverseRelation.parse(field),
+            GraphQLRelation.parse(field),
             currentPath)
           .right
           .getOrElse {
@@ -118,7 +118,7 @@ object FieldBuilder extends StrictLogging {
             schemaMetadata,
             relatedResourceName,
             fieldName,
-            ReverseRelation.parse(field),
+            GraphQLRelation.parse(field),
             currentPath)
           .right
           .getOrElse {

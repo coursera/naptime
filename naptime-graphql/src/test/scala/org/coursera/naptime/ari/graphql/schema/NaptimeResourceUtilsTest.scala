@@ -25,7 +25,7 @@ import org.coursera.naptime.ari.graphql.Models
 import org.coursera.naptime.ari.graphql.models.MergedCourse
 import org.coursera.naptime.ari.graphql.models.MergedCourses
 import org.coursera.naptime.schema.RelationType
-import org.coursera.naptime.schema.ReverseRelationAnnotation
+import org.coursera.naptime.schema.GraphQLRelationAnnotation
 import play.api.libs.json.JsArray
 import play.api.libs.json.JsString
 
@@ -38,7 +38,7 @@ class NaptimeResourceUtilsTest extends AssertionsForJUnit with MockitoSugar {
       Models.COURSE_A.data(),
       ParentModel(ResourceName("courses", 1), Models.COURSE_A.data(), MergedCourse.SCHEMA))
 
-    val finderRelation = ReverseRelationAnnotation(
+    val finderRelation = GraphQLRelationAnnotation(
       resourceName = "courses.v1",
       arguments = StringMap(Map("id" -> "COURSE~$id", "q" -> "byId")),
       relationType = RelationType.FINDER)
@@ -55,7 +55,7 @@ class NaptimeResourceUtilsTest extends AssertionsForJUnit with MockitoSugar {
       Models.COURSE_A.data(),
       ParentModel(ResourceName("courses", 1), Models.COURSE_A.data(), MergedCourse.SCHEMA))
 
-    val getRelation = ReverseRelationAnnotation(
+    val getRelation = GraphQLRelationAnnotation(
       resourceName = "coursePartners.v1",
       arguments = StringMap(Map("id" -> "$id~$partnerId")),
       relationType = RelationType.GET)
@@ -74,7 +74,7 @@ class NaptimeResourceUtilsTest extends AssertionsForJUnit with MockitoSugar {
       Models.COURSE_A.data(),
       ParentModel(ResourceName("instructors", 1), Models.COURSE_A.data(), MergedCourse.SCHEMA))
 
-    val finderRelation = ReverseRelationAnnotation(
+    val finderRelation = GraphQLRelationAnnotation(
       resourceName = "instructors.v1",
       arguments = StringMap(Map("ids" -> "INSTRUCTOR~${instructorIds}")),
       relationType = RelationType.MULTI_GET)
@@ -94,7 +94,7 @@ class NaptimeResourceUtilsTest extends AssertionsForJUnit with MockitoSugar {
         Models.COURSE_A.data(),
         MergedCourse.SCHEMA))
 
-    val multiGetRelation = ReverseRelationAnnotation(
+    val multiGetRelation = GraphQLRelationAnnotation(
       resourceName = "courseInstructors.v1",
       arguments = StringMap(Map("ids" -> "COURSE~${id}~INSTRUCTOR~${instructorIds}")),
       relationType = RelationType.MULTI_GET)
@@ -116,7 +116,7 @@ class NaptimeResourceUtilsTest extends AssertionsForJUnit with MockitoSugar {
       Models.COURSES.data(),
       ParentModel(ResourceName("courses", 1), Models.COURSES.data(), MergedCourses.SCHEMA))
 
-    val multiGetRelation = ReverseRelationAnnotation(
+    val multiGetRelation = GraphQLRelationAnnotation(
       resourceName = "courses.v1",
       arguments = StringMap(Map("ids" -> "COURSE~${courses/id}")),
       relationType = RelationType.MULTI_GET)
@@ -135,7 +135,7 @@ class NaptimeResourceUtilsTest extends AssertionsForJUnit with MockitoSugar {
       Models.COURSES.data(),
       ParentModel(ResourceName("oldCourses", 1), Models.COURSES.data(), MergedCourses.SCHEMA))
 
-    val multiGetRelation = ReverseRelationAnnotation(
+    val multiGetRelation = GraphQLRelationAnnotation(
       resourceName = "oldCourses.v1",
       arguments =
         StringMap(Map("ids" -> "OLD_COURSE~${courses/platformSpecificData/old/oldPlatformId}")),
