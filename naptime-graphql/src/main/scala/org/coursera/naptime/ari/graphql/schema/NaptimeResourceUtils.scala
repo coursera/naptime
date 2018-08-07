@@ -20,7 +20,7 @@ import com.typesafe.scalalogging.StrictLogging
 import org.coursera.naptime.ResourceName
 import org.coursera.naptime.ari.engine.Utilities
 import org.coursera.naptime.schema.Handler
-import org.coursera.naptime.schema.ReverseRelationAnnotation
+import org.coursera.naptime.schema.GraphQLRelationAnnotation
 import play.api.libs.json.JsArray
 import play.api.libs.json.JsNull
 import play.api.libs.json.JsNumber
@@ -160,7 +160,7 @@ object NaptimeResourceUtils extends StrictLogging {
   case class VariableNameWithInterpolatedIds(matchedLiteral: String, interpolatedIds: List[String])
   def interpolateArguments(
       data: DataMapWithParent,
-      relation: ReverseRelationAnnotation): Set[(String, JsValue)] = {
+      relation: GraphQLRelationAnnotation): Set[(String, JsValue)] = {
 
     relation.arguments
       .mapValues { value =>

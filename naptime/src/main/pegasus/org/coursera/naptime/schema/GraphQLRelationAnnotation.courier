@@ -1,9 +1,9 @@
 namespace org.coursera.naptime.schema
 
 /**
- * The schema for a reverse-relation annotation.
+ * The schema for a GraphQL relation annotation.
  */
-record ReverseRelationAnnotation {
+record GraphQLRelationAnnotation {
 
   /**
    * The name of the resource.
@@ -11,7 +11,7 @@ record ReverseRelationAnnotation {
   resourceName: string
 
   /**
-   * Arguments passed along to the reverse relation request
+   * Arguments passed along to the relation request
    */
   arguments: map[string, string]
 

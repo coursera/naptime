@@ -6,8 +6,8 @@ import javax.inject.Singleton
 import akka.stream.Materializer
 import org.coursera.example.Instructor
 import org.coursera.naptime.Fields
-import org.coursera.naptime.FinderReverseRelation
-import org.coursera.naptime.GetReverseRelation
+import org.coursera.naptime.FinderGraphQLRelation
+import org.coursera.naptime.GetGraphQLRelation
 import org.coursera.naptime.Ok
 import org.coursera.naptime.ResourceName
 import org.coursera.naptime.model.Keyed
@@ -24,12 +24,12 @@ class InstructorsResource @Inject() (
   override def resourceName = "instructors"
   override def resourceVersion = 1
   override implicit lazy val Fields: Fields[Instructor] = BaseFields
-    .withReverseRelations(
-      "courses" -> FinderReverseRelation(
+    .withGraphQLRelations(
+      "courses" -> FinderGraphQLRelation(
         resourceName = ResourceName("courses", 1),
         finderName = "byInstructor",
         arguments = Map("instructorId" -> "$id")),
-      "partner" -> GetReverseRelation(
+      "partner" -> GetGraphQLRelation(
         resourceName = ResourceName("partners", 1),
         id = "$partnerId"))
 

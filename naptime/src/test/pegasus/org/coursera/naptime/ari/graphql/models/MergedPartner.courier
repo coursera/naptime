@@ -9,6 +9,4 @@ record MergedPartner {
 
   geolocation: Coordinates
 
-  // TODO: add reverse relations.
-
 }

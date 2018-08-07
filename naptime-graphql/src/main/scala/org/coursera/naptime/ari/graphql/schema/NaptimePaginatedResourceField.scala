@@ -27,7 +27,7 @@ import org.coursera.naptime.schema.Handler
 import org.coursera.naptime.schema.HandlerKind
 import org.coursera.naptime.schema.RelationType
 import org.coursera.naptime.schema.Resource
-import org.coursera.naptime.schema.ReverseRelationAnnotation
+import org.coursera.naptime.schema.GraphQLRelationAnnotation
 import play.api.libs.json.JsArray
 import play.api.libs.json.JsString
 import play.api.libs.json.JsValue
@@ -49,7 +49,7 @@ object NaptimePaginatedResourceField extends StrictLogging {
       resourceName: ResourceName,
       fieldName: String,
       handlerOverride: Option[Handler] = None,
-      fieldRelationOpt: Option[ReverseRelationAnnotation],
+      fieldRelationOpt: Option[GraphQLRelationAnnotation],
       currentPath: List[String])
     : Either[SchemaError, Field[SangriaGraphQlContext, DataMapWithParent]] = {
     (for {
