@@ -138,8 +138,7 @@ object FieldBuilder extends StrictLogging {
         Field.apply[SangriaGraphQlContext, DataMapWithParent, Any, Any](
           name = FieldBuilder.formatName(fieldName),
           fieldType = NaptimeTypes.DataMapType,
-          resolve =
-            context => context.value.copy(element = context.value.element.getDataMap(fieldName)))
+          resolve = context => context.value.element.getDataMap(fieldName))
 
       // Complex types
       case (None, recordDataSchema: RecordDataSchema) =>
@@ -278,24 +277,23 @@ object FieldBuilder extends StrictLogging {
     Field.apply[SangriaGraphQlContext, DataMapWithParent, Any, Any](
       name = FieldBuilder.formatName(fieldName),
       fieldType = sangriaScalarType,
-      resolve = context => {
+      resolve = context =>
         Option(context.value.element.get(fieldName))
-          .map {
-            rawValue =>
-              val result =
-                ValidateDataAgainstSchema.validate(rawValue, dataSchema, validationOptions)
+          .map { rawValue =>
+            val result =
+              ValidateDataAgainstSchema.validate(rawValue, dataSchema, validationOptions)
 
-              if (result.isValid) {
-                result.getFixed match {
-                  case value: ParseType => value
-                  case _                => throw ResponseFormatException(s"$fieldName's value is an invalid type")
-                }
-              } else {
-                throw ResponseFormatException(s"$fieldName could not be fixed-up or parsed")
+            if (result.isValid) {
+              result.getFixed match {
+                case value: ParseType => value
+                case _                => throw ResponseFormatException(s"$fieldName's value is an invalid type")
               }
+            } else {
+              throw ResponseFormatException(s"$fieldName could not be fixed-up or parsed")
+            }
           }
           .getOrElse(null)
-      })
+    )
   }
 
   /**
