@@ -47,13 +47,14 @@ class NaptimeAnyDataFieldTest extends AssertionsForJUnit with MockitoSugar {
 
   private[this] val fieldName = "anyDataField"
 
-  private[this] def createContext[Val](value: Val, args: Map[String, Any] = Map("limit" -> 100))(
+  private[this] def createContext[Val](value: Val)(
       implicit ctxManifest: Manifest[SangriaGraphQlContext],
       valManifest: Manifest[Val]): Context[SangriaGraphQlContext, Val] = {
     Context[SangriaGraphQlContext, Val](
       value = value,
       ctx = SangriaGraphQlContext(null, null, ExecutionContext.global, debugMode = true),
-      args = ArgumentBuilder.buildArgs(NaptimePaginationField.paginationArguments, args),
+      args =
+        ArgumentBuilder.buildArgs(NaptimePaginationField.paginationArguments, Map("limit" -> 100)),
       schema = mock[Schema[SangriaGraphQlContext, Val]],
       field = mock[Field[SangriaGraphQlContext, Val]],
       parentType = mock[ObjectType[SangriaGraphQlContext, Any]],
