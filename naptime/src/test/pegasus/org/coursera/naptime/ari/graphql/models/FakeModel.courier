@@ -1,0 +1,9 @@
+namespace org.coursera.naptime.ari.graphql.models
+
+/**
+ * A fictional model used for testing purposes
+ */
+record FakeModel {
+  id: string
+  unionField: UnionTypeWithTyperef
+}

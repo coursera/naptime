@@ -38,9 +38,11 @@ class DefaultGraphqlSchemaProviderTest extends AssertionsForJUnit {
     val simpleSchema = new DefaultGraphqlSchemaProvider(simpleSchemaProvider())
 
     val nonMetadataTypes = simpleSchema.schema.allTypes.filterNot(_._1.startsWith("__"))
+    val expected = DEFAULT_TYPES ++ COMPUTED_TYPES -- FILTERED_TYPES
+    val result = nonMetadataTypes.keySet
     assert(
-      nonMetadataTypes.keySet === DEFAULT_TYPES ++ COMPUTED_TYPES -- FILTERED_TYPES,
-      s"${nonMetadataTypes.keySet}")
+      result === expected,
+      s"Missing: ${expected -- result}. Shouldn't contain: ${result -- expected}")
   }
 
   @Test
@@ -64,9 +66,11 @@ class DefaultGraphqlSchemaProviderTest extends AssertionsForJUnit {
     val regenerating = new DefaultGraphqlSchemaProvider(regeneratingProvider)
 
     val nonMetadataTypes = regenerating.schema.allTypes.filterNot(_._1.startsWith("__"))
+    val expected = DEFAULT_TYPES ++ COMPUTED_TYPES -- FILTERED_TYPES
+    val result = nonMetadataTypes.keySet
     assert(
-      nonMetadataTypes.keySet === DEFAULT_TYPES ++ COMPUTED_TYPES -- FILTERED_TYPES,
-      s"${nonMetadataTypes.keySet}")
+      result === expected,
+      s"Missing: ${expected -- result}. Shouldn't contain: ${result -- expected}")
   }
 
   // TODO: check to ensure that it recomputes only when required.

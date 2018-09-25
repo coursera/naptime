@@ -1,17 +1,19 @@
 package org.coursera.naptime.ari.graphql.schema
 
-import com.linkedin.data.DataMap
 import com.linkedin.data.schema.NamedDataSchema
 import com.linkedin.data.schema.RecordDataSchema.{Field => RecordDataSchemaField}
 import com.linkedin.data.schema.UnionDataSchema
 import org.coursera.naptime.ResourceName
 import org.coursera.naptime.ari.graphql.SangriaGraphQlContext
+import sangria.schema.Action
 import sangria.schema.Field
 import sangria.schema.ObjectType
 import sangria.schema.Schema
 import sangria.schema.UnionType
+import sangria.schema.LowestPrioActions
 
 import scala.collection.JavaConverters._
+import scala.util.Try
 
 object NaptimeUnionField {
 
@@ -67,6 +69,7 @@ object NaptimeUnionField {
       }
 
       val unionMemberFieldName = FieldBuilder.formatName(unionMemberKey)
+
       val subTypeField = FieldBuilder.buildField(
         schemaMetadata,
         new RecordDataSchemaField(unionMember),
@@ -75,14 +78,28 @@ object NaptimeUnionField {
         resourceName = resourceName,
         currentPath = currentPath)
 
+
       val field = Field.apply[SangriaGraphQlContext, DataMapWithParent, Any, Any](
         unionMemberFieldName,
         subTypeField.fieldType,
         resolve = context => {
           if (unionDataSchema.getProperties.containsKey(TYPED_DEFINITION_KEY)) {
-            Option(context.value.element.getDataMap("definition"))
+            val resultAsDataMap: Option[Action[SangriaGraphQlContext, Any]] = Try(
+              context.value.element
+                .getDataMap("definition")).toOption
               .map(element => context.value.copy(element = element))
-              .getOrElse(subTypeField.resolve(context))
+            resultAsDataMap.getOrElse {
+              // Create a separate field to access the non data-map directly. This field will be
+              // found at the "definition" key.
+              val nonDataMapField = FieldBuilder.buildField(
+                schemaMetadata,
+                new RecordDataSchemaField(unionMember),
+                namespace,
+                Some("definition"),
+                resourceName = resourceName,
+                currentPath = currentPath)
+              nonDataMapField.resolve(context)
+            }
           } else {
             subTypeField.resolve(context)
           }

@@ -16,12 +16,14 @@
 
 package org.coursera.naptime.ari.graphql.schema
 
+import com.linkedin.data.DataMap
 import com.linkedin.data.schema.DataSchema
 import com.linkedin.data.schema.IntegerDataSchema
 import com.linkedin.data.schema.Name
 import com.linkedin.data.schema.RecordDataSchema
 import com.linkedin.data.schema.RecordDataSchema.Field
 import com.linkedin.data.schema.RecordDataSchema.RecordType
+import com.linkedin.data.schema.StringDataSchema
 import org.junit.Test
 import org.scalatest.junit.AssertionsForJUnit
 import org.scalatest.mockito.MockitoSugar
@@ -32,6 +34,7 @@ import org.mockito.Mockito.when
 import sangria.schema.IntType
 import sangria.schema.ObjectType
 import sangria.schema.OutputType
+import sangria.schema.StringType
 import sangria.schema.UnionType
 
 import scala.collection.JavaConverters._
@@ -149,13 +152,15 @@ class NaptimeUnionFieldTest extends AssertionsForJUnit with MockitoSugar {
     integerField.setName("integerField", new java.lang.StringBuilder())
     val simpleFieldDataSchema = buildRecordField("simpleField", List(integerField))
     val complexFieldDataSchema = buildRecordField("complexField", List(integerField))
+    val stringDataSchema = new StringDataSchema()
 
-    val values = List(simpleFieldDataSchema, complexFieldDataSchema)
+    val values = List(simpleFieldDataSchema, complexFieldDataSchema, stringDataSchema)
     val union = buildUnionDataSchema(
       values,
       typedDefinitions = Map(
         "org.coursera.naptime.simpleField" -> "easy",
-        "org.coursera.naptime.complexField" -> "hard"))
+        "org.coursera.naptime.complexField" -> "hard",
+        "string" -> "string"))
 
     val fieldName = "typedDefinitionTestField"
     val field =
@@ -181,7 +186,10 @@ class NaptimeUnionFieldTest extends AssertionsForJUnit with MockitoSugar {
             "hard",
             Some("org.coursera.naptime"),
             resourceName,
-            List.empty))))
+            List.empty))),
+      ObjectType(
+        "CoursesV1_stringMember",
+        List(FieldBuilder.buildPrimitiveField[String]("string", stringDataSchema, StringType))))
     val expectedField = UnionType("CoursesV1_typedDefinitionTestField", None, expectedUnionTypes)
 
     assertComputedIsExpectedUnionTypeUsingNames(field.fieldType, expectedField)
@@ -288,4 +296,76 @@ class NaptimeUnionFieldTest extends AssertionsForJUnit with MockitoSugar {
     assertComputedIsExpectedUnionTypeUsingNames(field.fieldType, expectedField)
   }
 
+  @Test
+  def parseApiResponseForTyperef(): Unit = {
+    val responseData = new ExecutorHelper().executeQuery(
+      """
+        |query {
+        |  FakeModelsV1Resource {
+        |    get(id: "model1") {
+        |      id
+        |      unionField {
+        |        ... on FakeModelsV1_courseMember {
+        |          course
+        |        }
+        |      }
+        |    }
+        |  }
+        |}
+      """.stripMargin,
+      Map(
+        "fakeModels" -> Map(
+          "model1" -> List(
+            new DataMap(Map(
+              "unionField" ->
+                new DataMap(Map("typeName" -> "course", "definition" -> "course1Id").asJava),
+              "id" -> "model1").asJava)))))
+
+    assert(
+      (responseData \ "data" \ "FakeModelsV1Resource" \ "get" \ "unionField" \ "course").get
+        .as[String] === "course1Id")
+    assert(
+      (responseData \ "data" \ "FakeModelsV1Resource" \ "get" \ "id").get
+        .as[String] === "model1")
+  }
+
+  @Test
+  def parseApiResponseForNonTyperef(): Unit = {
+    val responseData = new ExecutorHelper().executeQuery(
+      """
+        |query {
+        |  FakeModelsV1Resource {
+        |    get(id: "model1") {
+        |      id
+        |      unionField {
+        |        ... on FakeModelsV1_coordinatesMember {
+        |          coordinates {
+        |            latitude
+        |            longitude
+        |          }
+        |        }
+        |      }
+        |    }
+        |  }
+        |}
+      """.stripMargin,
+      Map(
+        "fakeModels" -> Map(
+          "model1" -> List(
+            new DataMap(
+              Map(
+                "unionField" ->
+                  new DataMap(Map(
+                    "typeName" -> "coordinates",
+                    "definition" ->
+                      new DataMap(Map("latitude" -> 10.5, "longitude" -> 10.5).asJava)).asJava),
+                "id" -> "model1").asJava)))))
+
+    assert(
+      ((responseData \ "data" \ "FakeModelsV1Resource" \ "get" \ "unionField" \ "coordinates" \
+        "latitude").get.as[Double] - 10.5).abs < 1e-5)
+    assert(
+      (responseData \ "data" \ "FakeModelsV1Resource" \ "get" \ "id").get
+        .as[String] === "model1")
+  }
 }

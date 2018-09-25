@@ -5,31 +5,16 @@ import com.linkedin.data.schema.RecordDataSchema
 import com.linkedin.data.schema.RecordDataSchema.{Field => RecordDataSchemaField}
 import com.linkedin.data.template.DataTemplateUtil
 import org.coursera.naptime.ResourceName
-import org.coursera.naptime.ResponsePagination
-import org.coursera.naptime.ari.FetcherApi
-import org.coursera.naptime.ari.Response
-import org.coursera.naptime.ari.graphql.Models
 import org.coursera.naptime.ari.graphql.SangriaGraphQlContext
-import org.coursera.naptime.ari.graphql.SangriaGraphQlSchemaBuilder
 import org.coursera.naptime.ari.graphql.helpers.ArgumentBuilder
-import org.coursera.naptime.ari.graphql.marshaller.NaptimeMarshaller._
-import org.coursera.naptime.ari.graphql.models.MergedCourse
-import org.coursera.naptime.ari.graphql.models.MergedInstructor
-import org.coursera.naptime.ari.graphql.models.MergedPartner
-import org.coursera.naptime.ari.graphql.resolvers.NaptimeResolver
 import org.coursera.naptime.ari.graphql.types.NaptimeTypes
 import org.junit.Test
 import org.scalatest.junit.AssertionsForJUnit
 import org.scalatest.mockito.MockitoSugar
-import org.mockito.Matchers.any
-import org.mockito.Mockito.when
-import play.api.libs.json.JsObject
 import sangria.ast.Document
 import sangria.execution.DeprecationTracker
 import sangria.execution.ExecutionPath
-import sangria.execution.Executor
 import sangria.marshalling.ResultMarshaller
-import sangria.parser.QueryParser
 import sangria.schema.Context
 import sangria.schema.Field
 import sangria.schema.ObjectType
@@ -37,11 +22,7 @@ import sangria.schema.Schema
 import sangria.schema.Value
 
 import scala.collection.JavaConverters._
-import scala.concurrent.Await
 import scala.concurrent.ExecutionContext
-import scala.concurrent.ExecutionContext.Implicits.global
-import scala.concurrent.Future
-import scala.concurrent.duration.Duration
 
 class NaptimeAnyDataFieldTest extends AssertionsForJUnit with MockitoSugar {
 
@@ -98,17 +79,8 @@ class NaptimeAnyDataFieldTest extends AssertionsForJUnit with MockitoSugar {
   }
 
   @Test
-  def parseDataMapTypes(): Unit = {
-    val schemaTypes = Map(
-      "org.coursera.naptime.ari.graphql.models.MergedCourse" -> MergedCourse.SCHEMA,
-      "org.coursera.naptime.ari.graphql.models.MergedPartner" -> MergedPartner.SCHEMA,
-      "org.coursera.naptime.ari.graphql.models.MergedInstructor" -> MergedInstructor.SCHEMA)
-    val allResources =
-      Set(Models.courseResource, Models.instructorResource, Models.partnersResource)
-    val builder = new SangriaGraphQlSchemaBuilder(allResources, schemaTypes)
-    val schema = builder.generateSchema().data.asInstanceOf[Schema[SangriaGraphQlContext, Any]]
-
-    val query =
+  def parseApiResponse(): Unit = {
+    val responseData = new ExecutorHelper().executeQuery(
       """
         |query {
         |  CoursesV1Resource {
@@ -118,32 +90,14 @@ class NaptimeAnyDataFieldTest extends AssertionsForJUnit with MockitoSugar {
         |    }
         |  }
         |}
-    """.stripMargin
-    val queryAst = QueryParser.parse(query).get
-
-    val fetcher = mock[FetcherApi]
-    val data = List(
-      new DataMap(
-        Map(
-          "arbitraryData" ->
-            new DataMap(Map("moduleOne" -> "abc", "moduleTwo" -> "defg").asJava),
-          "id" -> "courseAId").asJava))
-    when(fetcher.data(any(), any())(any()))
-      .thenReturn(
-        Future.successful(Right(Response(data, ResponsePagination(None, None, None), url = None))))
-
-    val context = SangriaGraphQlContext(fetcher, null, ExecutionContext.global, debugMode = true)
-    val responseData = Await
-      .result(
-        Executor
-          .execute(
-            schema,
-            queryAst,
-            context,
-            variables = JsObject(Map.empty[String, JsObject]),
-            deferredResolver = new NaptimeResolver()),
-        Duration.Inf)
-      .asInstanceOf[JsObject]
+      """.stripMargin,
+      Map(
+        "courses" -> Map(
+          "courseAId" -> List(
+            new DataMap(Map(
+              "arbitraryData" ->
+                new DataMap(Map("moduleOne" -> "abc", "moduleTwo" -> "defg").asJava),
+              "id" -> "courseAId").asJava)))))
 
     assert(
       (responseData \ "data" \ "CoursesV1Resource" \ "get" \ "arbitraryData").get
