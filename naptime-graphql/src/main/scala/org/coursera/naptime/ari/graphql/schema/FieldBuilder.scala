@@ -286,7 +286,7 @@ object FieldBuilder extends StrictLogging {
             if (result.isValid) {
               result.getFixed match {
                 case value: ParseType => value
-                case _ => throw ResponseFormatException(s"$fieldName's value is an invalid type")
+                case _                => throw ResponseFormatException(s"$fieldName's value is an invalid type")
               }
             } else {
               throw ResponseFormatException(s"$fieldName could not be fixed-up or parsed")

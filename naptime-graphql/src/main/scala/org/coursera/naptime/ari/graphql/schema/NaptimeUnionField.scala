@@ -10,7 +10,6 @@ import sangria.schema.Field
 import sangria.schema.ObjectType
 import sangria.schema.Schema
 import sangria.schema.UnionType
-import sangria.schema.LowestPrioActions
 
 import scala.collection.JavaConverters._
 import scala.util.Try
@@ -77,7 +76,6 @@ object NaptimeUnionField {
         Some(unionMemberKey),
         resourceName = resourceName,
         currentPath = currentPath)
-
 
       val field = Field.apply[SangriaGraphQlContext, DataMapWithParent, Any, Any](
         unionMemberFieldName,
