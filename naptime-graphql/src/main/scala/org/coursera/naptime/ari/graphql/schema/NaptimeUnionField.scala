@@ -82,22 +82,16 @@ object NaptimeUnionField {
         subTypeField.fieldType,
         resolve = context => {
           if (unionDataSchema.getProperties.containsKey(TYPED_DEFINITION_KEY)) {
-            val resultAsDataMap: Option[Action[SangriaGraphQlContext, Any]] = Try(
-              context.value.element
-                .getDataMap("definition")).toOption
-              .map(element => context.value.copy(element = element))
-            resultAsDataMap.getOrElse {
-              // Create a separate field to access the non data-map directly. This field will be
-              // found at the "definition" key.
-              val nonDataMapField = FieldBuilder.buildField(
-                schemaMetadata,
-                new RecordDataSchemaField(unionMember),
-                namespace,
-                Some("definition"),
-                resourceName = resourceName,
-                currentPath = currentPath)
-              nonDataMapField.resolve(context)
-            }
+            // In a typed definition union, the target field will reside with the key
+            // "definition". So, build a new `Field` to access this value directly.
+            val newSubTypeField = FieldBuilder.buildField(
+              schemaMetadata,
+              new RecordDataSchemaField(unionMember),
+              namespace,
+              Some("definition"),
+              resourceName = resourceName,
+              currentPath = currentPath)
+            newSubTypeField.resolve(context)
           } else {
             subTypeField.resolve(context)
           }

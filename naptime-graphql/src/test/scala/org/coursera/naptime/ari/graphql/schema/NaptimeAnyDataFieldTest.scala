@@ -80,7 +80,7 @@ class NaptimeAnyDataFieldTest extends AssertionsForJUnit with MockitoSugar {
 
   @Test
   def parseApiResponse(): Unit = {
-    val responseData = new ExecutorHelper().executeQuery(
+    val responseData = new TestExecutorHelper().executeQuery(
       """
         |query {
         |  CoursesV1Resource {

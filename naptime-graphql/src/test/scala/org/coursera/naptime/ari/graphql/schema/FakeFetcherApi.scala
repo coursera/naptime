@@ -13,7 +13,7 @@ import scala.concurrent.Future
 /**
  * An implementation of FetcherApi that allows one to store data keyed by resource name and ID.
  */
-case class TestingFetcherApi(rawData: TestingFetcherApi.TestingFetcherApiData) extends FetcherApi {
+case class FakeFetcherApi(rawData: FakeFetcherApi.TestingFetcherApiData) extends FetcherApi {
 
   def data(request: Request, isDebugMode: Boolean)(
       implicit executionContext: ExecutionContext): Future[FetcherResponse] = {
@@ -24,7 +24,7 @@ case class TestingFetcherApi(rawData: TestingFetcherApi.TestingFetcherApiData) e
 
 }
 
-object TestingFetcherApi {
+object FakeFetcherApi {
 
   type TestingFetcherApiData = Map[String, Map[String, List[DataMap]]]
 

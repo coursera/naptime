@@ -297,14 +297,14 @@ class NaptimeUnionFieldTest extends AssertionsForJUnit with MockitoSugar {
   }
 
   @Test
-  def parseApiResponseForTyperef(): Unit = {
-    val responseData = new ExecutorHelper().executeQuery(
+  def parseApiResponse_forTypedUnionAndTyperef(): Unit = {
+    val responseData = new TestExecutorHelper().executeQuery(
       """
         |query {
         |  FakeModelsV1Resource {
         |    get(id: "model1") {
         |      id
-        |      unionField {
+        |      typedDefinitionUnionField {
         |        ... on FakeModelsV1_courseMember {
         |          course
         |        }
@@ -317,12 +317,12 @@ class NaptimeUnionFieldTest extends AssertionsForJUnit with MockitoSugar {
         "fakeModels" -> Map(
           "model1" -> List(
             new DataMap(Map(
-              "unionField" ->
+              "typedDefinitionUnionField" ->
                 new DataMap(Map("typeName" -> "course", "definition" -> "course1Id").asJava),
               "id" -> "model1").asJava)))))
 
     assert(
-      (responseData \ "data" \ "FakeModelsV1Resource" \ "get" \ "unionField" \ "course").get
+      (responseData \ "data" \ "FakeModelsV1Resource" \ "get" \ "typedDefinitionUnionField" \ "course").get
         .as[String] === "course1Id")
     assert(
       (responseData \ "data" \ "FakeModelsV1Resource" \ "get" \ "id").get
@@ -330,14 +330,14 @@ class NaptimeUnionFieldTest extends AssertionsForJUnit with MockitoSugar {
   }
 
   @Test
-  def parseApiResponseForNonTyperef(): Unit = {
-    val responseData = new ExecutorHelper().executeQuery(
+  def parseApiResponse_forTypedUnionAndRecord(): Unit = {
+    val responseData = new TestExecutorHelper().executeQuery(
       """
         |query {
         |  FakeModelsV1Resource {
         |    get(id: "model1") {
         |      id
-        |      unionField {
+        |      typedDefinitionUnionField {
         |        ... on FakeModelsV1_coordinatesMember {
         |          coordinates {
         |            latitude
@@ -354,7 +354,7 @@ class NaptimeUnionFieldTest extends AssertionsForJUnit with MockitoSugar {
           "model1" -> List(
             new DataMap(
               Map(
-                "unionField" ->
+                "typedDefinitionUnionField" ->
                   new DataMap(Map(
                     "typeName" -> "coordinates",
                     "definition" ->
@@ -362,10 +362,44 @@ class NaptimeUnionFieldTest extends AssertionsForJUnit with MockitoSugar {
                 "id" -> "model1").asJava)))))
 
     assert(
-      ((responseData \ "data" \ "FakeModelsV1Resource" \ "get" \ "unionField" \ "coordinates" \
+      ((responseData \ "data" \ "FakeModelsV1Resource" \ "get" \ "typedDefinitionUnionField" \ "coordinates" \
         "latitude").get.as[Double] - 10.5).abs < 1e-5)
     assert(
       (responseData \ "data" \ "FakeModelsV1Resource" \ "get" \ "id").get
         .as[String] === "model1")
   }
+
+  @Test
+  def parseApiResponse_forTypedUnionAndEnum(): Unit = {
+    val responseData = new TestExecutorHelper().executeQuery(
+      """
+        |query {
+        |  FakeModelsV1Resource {
+        |    get(id: "model1") {
+        |      id
+        |      typedDefinitionUnionField {
+        |        ... on FakeModelsV1_enumMember {
+        |          enum
+        |        }
+        |      }
+        |    }
+        |  }
+        |}
+      """.stripMargin,
+      Map(
+        "fakeModels" -> Map(
+          "model1" -> List(
+            new DataMap(Map(
+              "typedDefinitionUnionField" ->
+                new DataMap(Map("typeName" -> "enum", "definition" -> "YES").asJava),
+              "id" -> "model1").asJava)))))
+
+    assert(
+      (responseData \ "data" \ "FakeModelsV1Resource" \ "get" \ "typedDefinitionUnionField" \ "enum").get
+        .as[String] === "YES")
+    assert(
+      (responseData \ "data" \ "FakeModelsV1Resource" \ "get" \ "id").get
+        .as[String] === "model1")
+  }
+
 }

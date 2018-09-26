@@ -3,7 +3,8 @@ namespace org.coursera.naptime.ari.graphql.models
 /**
  * A fictional model used for testing purposes
  */
-record FakeModel {
+record RecordWithUnionTypes {
   id: string
-  unionField: UnionTypeWithTyperef
+  typedDefinitionUnionField: TypedDefinitionUnion?
+  unionField: StandardUnion?
 }
