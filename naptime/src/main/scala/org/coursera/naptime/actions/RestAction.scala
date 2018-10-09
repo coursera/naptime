@@ -168,45 +168,50 @@ trait RestAction[RACType, AuthType, BodyType, KeyType, ResourceType, ResponseTyp
   final override def apply(rh: RequestHeader): Accumulator[ByteString, Result] = {
     restBodyParser(rh).mapFuture {
       case Left(bodyError) => Future.successful(bodyError)
-      case Right(a) =>
-        restAuthGenerator(a).run(rh).flatMap {
-          case Left(error) => Future.successful(error.result) // TODO: log?
-          case Right(auth) => {
-            val responseTry = for {
-              fields <- fieldsEngine.computeFields(rh)
-              includes <- fieldsEngine.computeIncludes(rh)
-            } yield {
-              val pagination = RequestPagination(rh, paginationConfiguration)
-              val playRequest = Request(rh, a)
-              val ctx = new RestContext(a, auth, playRequest, pagination, includes, fields)
-              def run(): Future[Result] = {
-                val highLevelResponse = safeApply(ctx)
-                highLevelResponse.map { resp =>
-                  restEngine.mkResult(rh, fieldsEngine, fields, includes, pagination, resp)
-                } recover {
-                  case e: NaptimeActionException => e.result
-                }
-              }
+      case Right(body) =>
+        runAuthAndBody(rh, body)
+    }
+  }
 
-              // Implementation below borrowed from Play's Action.scala
-              Play.maybeApplication
-                .map { app =>
-                  play.utils.Threads.withContextClassLoader(app.classloader) {
-                    run()
-                  }
-                }
-                .getOrElse {
-                  // Run without the app class loader. This is important if we're running low-level
-                  // tests (e.g. router tests)
-                  run()
-                }
+  private[naptime] def runAuthAndBody(rh: RequestHeader, body: BodyType): Future[Result] = {
+    restAuthGenerator(body).run(rh).flatMap {
+      case Left(error) => Future.successful(error.result) // TODO: log?
+      case Right(auth) => {
+        val responseTry = for {
+          fields <- fieldsEngine.computeFields(rh)
+          includes <- fieldsEngine.computeIncludes(rh)
+        } yield {
+          val pagination = RequestPagination(rh, paginationConfiguration)
+          val playRequest = Request(rh, body)
+          val ctx = new RestContext(body, auth, playRequest, pagination, includes, fields)
+
+          def run(): Future[Result] = {
+            val highLevelResponse = safeApply(ctx)
+            highLevelResponse.map { resp =>
+              restEngine.mkResult(rh, fieldsEngine, fields, includes, pagination, resp)
+            } recover {
+              case e: NaptimeActionException => e.result
             }
-            responseTry.recover {
-              case e: NaptimeParseError      => Future.successful(e.result)
-              case e: NaptimeActionException => Future.successful(e.result)
-            }.get
           }
+
+          // Implementation below borrowed from Play's Action.scala
+          Play.maybeApplication
+            .map { app =>
+              play.utils.Threads.withContextClassLoader(app.classloader) {
+                run()
+              }
+            }
+            .getOrElse {
+              // Run without the app class loader. This is important if we're running low-level
+              // tests (e.g. router tests)
+              run()
+            }
         }
+        responseTry.recover {
+          case e: NaptimeParseError      => Future.successful(e.result)
+          case e: NaptimeActionException => Future.successful(e.result)
+        }.get
+      }
     }
   }
 
