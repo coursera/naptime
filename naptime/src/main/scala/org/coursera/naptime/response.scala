@@ -70,7 +70,7 @@ final case class Ok[+T](
   def withRelated[K, A](name: ResourceName, objects: Seq[Keyed[K, A]])(
       implicit valueFormat: OFormat[A],
       keyFormat: KeyFormat[K],
-      fields: Fields[A]): Ok[T] = {
+      fields: ResourceFields[A]): Ok[T] = {
     val newRelated = related + (name -> Ok.Related(name, objects, valueFormat, keyFormat, fields))
     copy(related = newRelated)
   }
@@ -89,7 +89,7 @@ object Ok {
       objects: Seq[Keyed[K, A]],
       jsonFormat: OFormat[A],
       keyFormat: KeyFormat[K],
-      fields: Fields[A]) {
+      fields: ResourceFields[A]) {
     def toJson(requestFields: RequestFields): Seq[JsValue] = {
       val finalFields = requestFields
         .forResource(resourceName)

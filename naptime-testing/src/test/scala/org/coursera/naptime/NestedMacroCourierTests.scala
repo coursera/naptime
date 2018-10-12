@@ -42,7 +42,7 @@ object NestedMacroCourierTests {
       extends CourierCollectionResource[String, Course] {
     override def resourceName: String = CoursesResource.ID.topLevelName
 
-    override implicit lazy val Fields: Fields[Course] = BaseFields
+    override implicit lazy val Fields: ResourceFields[Course] = BaseFields
       .withGraphQLRelations(
         "instructors" -> MultiGetGraphQLRelation(
           resourceName = ResourceName("instructors", 1),

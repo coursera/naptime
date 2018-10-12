@@ -28,7 +28,7 @@ import org.coursera.naptime.NaptimeActionException
 import org.coursera.naptime.Errors
 import org.coursera.naptime.FacetField
 import org.coursera.naptime.FacetFieldValue
-import org.coursera.naptime.Fields
+import org.coursera.naptime.ResourceFields
 import org.coursera.naptime.Ok
 import org.coursera.naptime.QueryFields
 import org.coursera.naptime.QueryIncludes
@@ -239,7 +239,7 @@ object RestActionCategoryEngine2Test {
   object RelatedResources extends AssertionsForJUnit {
     object CaseClass {
       val relatedName = ResourceName("relatedCaseClass", 2)
-      implicit val fields = Fields[Person]
+      implicit val fields = ResourceFields[Person]
 
       val related = Seq(
         Keyed(1, Person("related1", "1@related.com"))
@@ -253,7 +253,7 @@ object RestActionCategoryEngine2Test {
     object Courier {
       val relatedName = ResourceName("relatedCourier", 3)
       implicit val format = CourierFormats.recordTemplateFormats[Course]
-      implicit val fields = Fields[Course]
+      implicit val fields = ResourceFields[Course]
 
       val related = Seq(
         Keyed(1, Course("relatedCourse1", "All about the first related course!"))
@@ -589,7 +589,7 @@ class RestActionCategoryEngine2Test extends AssertionsForJUnit with ScalaFutures
       KeyFormat.stringKeyFormat,
       NaptimeSerializer.courierModels,
       fields,
-      Fields(CourierFormats.recordTemplateFormats[ExpandedCourse]))
+      ResourceFields(CourierFormats.recordTemplateFormats[ExpandedCourse]))
 
     val model2 = mkModel("test-course-2").copy(model1.data(), DataConversion.SetReadOnly)
 
@@ -599,7 +599,7 @@ class RestActionCategoryEngine2Test extends AssertionsForJUnit with ScalaFutures
       KeyFormat.stringKeyFormat,
       NaptimeSerializer.courierModels,
       fields,
-      Fields(CourierFormats.recordTemplateFormats[ExpandedCourse]))
+      ResourceFields(CourierFormats.recordTemplateFormats[ExpandedCourse]))
   }
 
   @Test
@@ -611,9 +611,9 @@ class RestActionCategoryEngine2Test extends AssertionsForJUnit with ScalaFutures
     implicit val instructorFormats = CourierFormats.recordTemplateFormats[Instructor]
     implicit val partnerFormats = CourierFormats.recordTemplateFormats[Partner]
 
-    implicit val coursesFields = Fields[ExpandedCourse].withRelated("instructorIds" -> instructorsResourceName)
-    implicit val instructorFields = Fields[Instructor].withRelated("partner" -> partnersResourceName)
-    implicit val partnerFields = Fields[Partner]
+    implicit val coursesFields = ResourceFields[ExpandedCourse].withRelated("instructorIds" -> instructorsResourceName)
+    implicit val instructorFields = ResourceFields[Instructor].withRelated("partner" -> partnersResourceName)
+    implicit val partnerFields = ResourceFields[Partner]
 
     val queryFields = QueryFields(Set("name", "description", "instructorIds"),
       Map(instructorsResourceName -> Set("name"), partnersResourceName -> Set("name", "slug")))
@@ -748,7 +748,7 @@ class RestActionCategoryEngine2Test extends AssertionsForJUnit with ScalaFutures
   @Test
   def serializeFacetsCorrectly(): Unit = {
     implicit val courseFormat = CourierFormats.recordTemplateFormats[Course]
-    implicit val coursesFields = Fields[Course]
+    implicit val coursesFields = ResourceFields[Course]
 
     val engine = RestActionCategoryEngine2.finderActionCategoryEngine[String, Course]
 

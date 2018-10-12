@@ -29,7 +29,7 @@ import org.coursera.pegasus.TypedDefinitionDataCoercer
 import org.coursera.naptime.DelegateFields
 import org.coursera.naptime.RestError
 import org.coursera.naptime.FacetField
-import org.coursera.naptime.Fields
+import org.coursera.naptime.ResourceFields
 import org.coursera.naptime.Ok
 import org.coursera.naptime.QueryIncludes
 import org.coursera.naptime.Redirect
@@ -68,7 +68,7 @@ trait RestActionCategoryEngine2[Category, Key, Resource, Response]
    */
   def mkResponse(
       request: RequestHeader,
-      resourceFields: Fields[Resource],
+      resourceFields: ResourceFields[Resource],
       requestFields: RequestFields,
       requestIncludes: QueryIncludes,
       pagination: RequestPagination,
@@ -107,7 +107,7 @@ trait RestActionCategoryEngine2Impls {
       serializer: NaptimeSerializer[V],
       requestFields: RequestFields,
       requestIncludes: RequestIncludes,
-      fields: Fields[V],
+      fields: ResourceFields[V],
       pagination: RequestPagination,
       resourceName: ResourceName,
       uri: String): Future[AriResponse] = {
@@ -219,7 +219,7 @@ trait RestActionCategoryEngine2Impls {
       keyFormat: KeyFormat[K],
       serializer: NaptimeSerializer[V],
       requestFields: RequestFields,
-      fields: Fields[V]): RequestFields = {
+      fields: ResourceFields[V]): RequestFields = {
 
     // Compute the set of field names provided by the Key type to avoid filtering them out in the
     // response serializer. (This is to maintain backwards compatibility with the legacy Rest
@@ -249,7 +249,7 @@ trait RestActionCategoryEngine2Impls {
   private[this] def serializeRelated[T](
       linked: DataMap,
       response: Ok[T],
-      resourceFields: Fields[_],
+      resourceFields: ResourceFields[_],
       requestIncludes: RequestIncludes,
       requestFields: RequestFields): RequestFields = {
     val firstHopModelsToInclude = resourceFields.relations.filter { relationTuple =>
@@ -335,7 +335,7 @@ trait RestActionCategoryEngine2Impls {
       response: DataMap,
       request: RequestIncludes,
       requestFields: RequestFields,
-      fields: Fields[_],
+      fields: ResourceFields[_],
       ok: Ok[_]): Unit = {
     if (request.includeFieldsRelatedResource("_links")) {
       val links = new DataMap()
@@ -359,7 +359,7 @@ trait RestActionCategoryEngine2Impls {
       serializer: NaptimeSerializer[V],
       requestFields: RequestFields,
       requestIncludes: RequestIncludes,
-      fields: Fields[V],
+      fields: ResourceFields[V],
       pagination: RequestPagination): ProcessedResponse = {
     val (response, elements, paging, linked) = mkDataCollections()
     val elementsFields =
@@ -391,7 +391,7 @@ trait RestActionCategoryEngine2Impls {
     new RestActionCategoryEngine2[GetRestActionCategory, Key, Resource, Keyed[Key, Resource]] {
       override def mkResult(
           request: RequestHeader,
-          resourceFields: Fields[Resource],
+          resourceFields: ResourceFields[Resource],
           requestFields: RequestFields,
           requestIncludes: QueryIncludes,
           pagination: RequestPagination,
@@ -411,7 +411,7 @@ trait RestActionCategoryEngine2Impls {
       }
       override def mkResponse(
           request: RequestHeader,
-          resourceFields: Fields[Resource],
+          resourceFields: ResourceFields[Resource],
           requestFields: RequestFields,
           requestIncludes: QueryIncludes,
           pagination: RequestPagination,
@@ -449,7 +449,7 @@ trait RestActionCategoryEngine2Impls {
       Keyed[Key, Option[Resource]]] {
       override def mkResult(
           request: RequestHeader,
-          resourceFields: Fields[Resource],
+          resourceFields: ResourceFields[Resource],
           requestFields: RequestFields,
           requestIncludes: QueryIncludes,
           pagination: RequestPagination,
@@ -501,7 +501,7 @@ trait RestActionCategoryEngine2Impls {
       Option[Keyed[Key, Resource]]] {
       override def mkResult(
           request: RequestHeader,
-          resourceFields: Fields[Resource],
+          resourceFields: ResourceFields[Resource],
           requestFields: RequestFields,
           requestIncludes: QueryIncludes,
           pagination: RequestPagination,
@@ -536,7 +536,7 @@ trait RestActionCategoryEngine2Impls {
     new RestActionCategoryEngine[PatchRestActionCategory, Key, Resource, Keyed[Key, Resource]] {
       override def mkResult(
           request: RequestHeader,
-          resourceFields: Fields[Resource],
+          resourceFields: ResourceFields[Resource],
           requestFields: RequestFields,
           requestIncludes: QueryIncludes,
           pagination: RequestPagination,
@@ -565,7 +565,7 @@ trait RestActionCategoryEngine2Impls {
     new RestActionCategoryEngine[DeleteRestActionCategory, Key, Resource, Unit] {
       override def mkResult(
           request: RequestHeader,
-          resourceFields: Fields[Resource],
+          resourceFields: ResourceFields[Resource],
           requestFields: RequestFields,
           requestIncludes: QueryIncludes,
           pagination: RequestPagination,
@@ -592,7 +592,7 @@ trait RestActionCategoryEngine2Impls {
       Seq[Keyed[Key, Resource]]] {
       override def mkResult(
           request: RequestHeader,
-          resourceFields: Fields[Resource],
+          resourceFields: ResourceFields[Resource],
           requestFields: RequestFields,
           requestIncludes: QueryIncludes,
           pagination: RequestPagination,
@@ -612,7 +612,7 @@ trait RestActionCategoryEngine2Impls {
       }
       override def mkResponse(
           request: RequestHeader,
-          resourceFields: Fields[Resource],
+          resourceFields: ResourceFields[Resource],
           requestFields: RequestFields,
           requestIncludes: QueryIncludes,
           pagination: RequestPagination,
@@ -650,7 +650,7 @@ trait RestActionCategoryEngine2Impls {
       Seq[Keyed[Key, Resource]]] {
       override def mkResult(
           request: RequestHeader,
-          resourceFields: Fields[Resource],
+          resourceFields: ResourceFields[Resource],
           requestFields: RequestFields,
           requestIncludes: QueryIncludes,
           pagination: RequestPagination,
@@ -670,7 +670,7 @@ trait RestActionCategoryEngine2Impls {
       }
       override def mkResponse(
           request: RequestHeader,
-          resourceFields: Fields[Resource],
+          resourceFields: ResourceFields[Resource],
           requestFields: RequestFields,
           requestIncludes: QueryIncludes,
           pagination: RequestPagination,
@@ -708,7 +708,7 @@ trait RestActionCategoryEngine2Impls {
       Seq[Keyed[Key, Resource]]] {
       override def mkResult(
           request: RequestHeader,
-          resourceFields: Fields[Resource],
+          resourceFields: ResourceFields[Resource],
           requestFields: RequestFields,
           requestIncludes: QueryIncludes,
           pagination: RequestPagination,
@@ -728,7 +728,7 @@ trait RestActionCategoryEngine2Impls {
       }
       override def mkResponse(
           request: RequestHeader,
-          resourceFields: Fields[Resource],
+          resourceFields: ResourceFields[Resource],
           requestFields: RequestFields,
           requestIncludes: QueryIncludes,
           pagination: RequestPagination,
@@ -758,7 +758,7 @@ trait RestActionCategoryEngine2Impls {
     new RestActionCategoryEngine[ActionRestActionCategory, Key, Resource, Response] {
       override def mkResult(
           request: RequestHeader,
-          resourceFields: Fields[Resource],
+          resourceFields: ResourceFields[Resource],
           requestFields: RequestFields,
           requestIncludes: QueryIncludes,
           pagination: RequestPagination,
