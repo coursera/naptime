@@ -44,7 +44,7 @@ object NestedMacroCourierTests {
 
     override implicit lazy val Fields: ResourceFields[Course] = BaseFields
       .withGraphQLRelations(
-        "instructors" -> MultiGetReverseRelation(
+        "instructors" -> MultiGetGraphQLRelation(
           resourceName = ResourceName("instructors", 1),
           ids = "$instructorIds",
           description = "Instructors for the course"))
