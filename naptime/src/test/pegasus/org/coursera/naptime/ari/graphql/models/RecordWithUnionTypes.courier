@@ -1,0 +1,10 @@
+namespace org.coursera.naptime.ari.graphql.models
+
+/**
+ * A fictional model used for testing purposes
+ */
+record RecordWithUnionTypes {
+  id: string
+  typedDefinitionUnionField: TypedDefinitionUnion?
+  unionField: StandardUnion?
+}

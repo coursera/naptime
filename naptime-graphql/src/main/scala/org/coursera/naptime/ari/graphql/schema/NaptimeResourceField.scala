@@ -25,7 +25,7 @@ import org.coursera.naptime.ari.graphql.resolvers.DeferredNaptimeElement
 import org.coursera.naptime.schema.HandlerKind
 import org.coursera.naptime.schema.RelationType
 import org.coursera.naptime.schema.Resource
-import org.coursera.naptime.schema.ReverseRelationAnnotation
+import org.coursera.naptime.schema.GraphQLRelationAnnotation
 import sangria.schema.Context
 import sangria.schema.DeferredValue
 import sangria.schema.Field
@@ -43,7 +43,7 @@ object NaptimeResourceField extends StrictLogging {
       schemaMetadata: SchemaMetadata,
       resourceName: ResourceName,
       fieldName: String,
-      fieldRelation: Option[ReverseRelationAnnotation],
+      fieldRelation: Option[GraphQLRelationAnnotation],
       currentPath: List[String])
     : Either[SchemaError, Field[SangriaGraphQlContext, DataMapWithParent]] = {
 
@@ -104,7 +104,7 @@ object NaptimeResourceField extends StrictLogging {
   private[this] def getResolver(
       resourceName: ResourceName,
       fieldName: String,
-      fieldRelationOpt: Option[ReverseRelationAnnotation],
+      fieldRelationOpt: Option[GraphQLRelationAnnotation],
       resourceMergedType: RecordDataSchema): FieldBuilder.ResolverType = {
     (context: Context[SangriaGraphQlContext, DataMapWithParent]) =>
       {

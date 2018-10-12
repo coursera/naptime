@@ -17,7 +17,6 @@
 package org.coursera.naptime.ari.graphql.schema
 
 import org.coursera.naptime.ResourceName
-import org.coursera.naptime.ari.Response
 import org.coursera.naptime.ari.graphql.Models
 import org.coursera.naptime.ari.graphql.SangriaGraphQlContext
 import org.coursera.naptime.ari.graphql.helpers.ArgumentBuilder
