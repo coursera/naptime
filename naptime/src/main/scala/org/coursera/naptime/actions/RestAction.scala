@@ -91,10 +91,10 @@ trait RestAction[RACType, AuthType, BodyType, KeyType, ResourceType, ResponseTyp
       .recover(errorHandler)
       .recover {
         case e: NaptimeActionException =>
-          // Wrap thrown NaptimeActionExceptions in errorHandler
-          //
-          // It is quite a common pattern to throw a NaptimeActionException instead of returning RestError(new NaptimeActionException()).
-          // Wrapping the thrown exception consolidates the codepaths for handling NaptimeActionExceptions.
+          // Chain this recover because it is quite a common pattern to throw a NaptimeActionException in the
+          // errorHandler instead of returning RestError. This recover should wrap those thrown
+          // NaptimeActionExceptions into RestErrors. This consolidates the code paths for handling
+          // NaptimeActionExceptions.
           RestError(e)
       }
   }
