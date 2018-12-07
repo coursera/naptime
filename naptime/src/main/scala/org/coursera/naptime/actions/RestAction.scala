@@ -19,6 +19,7 @@ package org.coursera.naptime.actions
 import akka.stream.Materializer
 import akka.util.ByteString
 import com.typesafe.scalalogging.StrictLogging
+import org.coursera.common.concurrent.Futures
 import org.coursera.naptime.NaptimeActionException
 import org.coursera.naptime.PaginationConfiguration
 import org.coursera.naptime.QueryStringParser.NaptimeParseError
@@ -43,7 +44,6 @@ import play.api.mvc.request.RequestAttrKey
 
 import scala.concurrent.ExecutionContext
 import scala.concurrent.Future
-import scala.util.Try
 
 /**
  * A RestAction is a layer on top of Play! with additional type information
@@ -87,15 +87,15 @@ trait RestAction[RACType, AuthType, BodyType, KeyType, ResourceType, ResponseTyp
 
   private[naptime] def safeApply(
       context: RestContext[AuthType, BodyType]): Future[RestResponse[ResponseType]] = {
-    Try(apply(context))
-      .recover {
-        case e: Throwable => Future.failed(e)
-      }
-      .get
+    Futures.safelyCall(apply(context))
       .recover(errorHandler)
       .recover {
         case e: NaptimeActionException =>
-          RestError(e) // wrap thrown NaptimeActionResponses in errorHandler
+          // Wrap thrown NaptimeActionExceptions in errorHandler
+          //
+          // It is quite a common pattern to throw a NaptimeActionException instead of returning RestError(new NaptimeActionException()).
+          // Wrapping the thrown exception consolidates the codepaths for handling NaptimeActionExceptions.
+          RestError(e)
       }
   }
 
