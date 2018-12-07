@@ -18,17 +18,18 @@ package org.coursera.naptime.actions
 
 import akka.stream.Materializer
 import akka.util.ByteString
-import org.coursera.naptime.model.KeyFormat
-import org.coursera.naptime.RestError
+import com.typesafe.scalalogging.StrictLogging
 import org.coursera.naptime.NaptimeActionException
-import org.coursera.naptime.ResourceFields
 import org.coursera.naptime.PaginationConfiguration
 import org.coursera.naptime.QueryStringParser.NaptimeParseError
 import org.coursera.naptime.RequestPagination
+import org.coursera.naptime.ResourceFields
 import org.coursera.naptime.ResourceName
 import org.coursera.naptime.RestContext
+import org.coursera.naptime.RestError
 import org.coursera.naptime.RestResponse
 import org.coursera.naptime.ari.Response
+import org.coursera.naptime.model.KeyFormat
 import play.api.Play
 import play.api.libs.json.OFormat
 import play.api.libs.streams.Accumulator
@@ -42,7 +43,7 @@ import play.api.mvc.request.RequestAttrKey
 
 import scala.concurrent.ExecutionContext
 import scala.concurrent.Future
-import scala.util.control.NonFatal
+import scala.util.Try
 
 /**
  * A RestAction is a layer on top of Play! with additional type information
@@ -63,7 +64,8 @@ import scala.util.control.NonFatal
  */
 trait RestAction[RACType, AuthType, BodyType, KeyType, ResourceType, ResponseType]
     extends EssentialAction
-    with RequestTaggingHandler {
+    with RequestTaggingHandler
+    with StrictLogging {
 
   protected[actions] def restAuthGenerator: AuthGenerator[BodyType, AuthType]
   protected def restBodyParser: BodyParser[BodyType]
@@ -85,12 +87,16 @@ trait RestAction[RACType, AuthType, BodyType, KeyType, ResourceType, ResponseTyp
 
   private[naptime] def safeApply(
       context: RestContext[AuthType, BodyType]): Future[RestResponse[ResponseType]] = {
-    try {
-      apply(context) recover errorHandler
-    } catch {
-      case NonFatal(e) if errorHandler.isDefinedAt(e) =>
-        errorHandler.andThen(Future.successful)(e)
-    }
+    Try(apply(context))
+      .recover {
+        case e: Throwable => Future.failed(e)
+      }
+      .get
+      .recover(errorHandler)
+      .recover {
+        case e: NaptimeActionException =>
+          RestError(e) // wrap thrown NaptimeActionResponses in errorHandler
+      }
   }
 
   private[naptime] def localRun(rh: RequestHeader, resourceName: ResourceName): Future[Response] = {
@@ -176,7 +182,7 @@ trait RestAction[RACType, AuthType, BodyType, KeyType, ResourceType, ResponseTyp
   private[naptime] def runAuthAndBody(rh: RequestHeader, body: BodyType): Future[Result] = {
     restAuthGenerator(body).run(rh).flatMap {
       case Left(error) => Future.successful(error.result) // TODO: log?
-      case Right(auth) => {
+      case Right(auth) =>
         val responseTry = for {
           fields <- fieldsEngine.computeFields(rh)
           includes <- fieldsEngine.computeIncludes(rh)
@@ -186,11 +192,15 @@ trait RestAction[RACType, AuthType, BodyType, KeyType, ResourceType, ResponseTyp
           val ctx = new RestContext(body, auth, playRequest, pagination, includes, fields)
 
           def run(): Future[Result] = {
-            val highLevelResponse = safeApply(ctx)
-            highLevelResponse.map { resp =>
+            safeApply(ctx).map { resp =>
+              // log error messages from resources that return a RestError(...)
+              resp match {
+                case RestError(e) if e.httpCode >= 500 =>
+                  logger.error("Server 5xx error response", e)
+                case _ =>
+              }
+
               restEngine.mkResult(rh, fieldsEngine, fields, includes, pagination, resp)
-            } recover {
-              case e: NaptimeActionException => e.result
             }
           }
 
@@ -211,7 +221,6 @@ trait RestAction[RACType, AuthType, BodyType, KeyType, ResourceType, ResponseTyp
           case e: NaptimeParseError      => Future.successful(e.result)
           case e: NaptimeActionException => Future.successful(e.result)
         }.get
-      }
     }
   }
 
