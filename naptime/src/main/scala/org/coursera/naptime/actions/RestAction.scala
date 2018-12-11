@@ -87,7 +87,8 @@ trait RestAction[RACType, AuthType, BodyType, KeyType, ResourceType, ResponseTyp
 
   private[naptime] def safeApply(
       context: RestContext[AuthType, BodyType]): Future[RestResponse[ResponseType]] = {
-    Futures.safelyCall(apply(context))
+    Futures
+      .safelyCall(apply(context))
       .recover(errorHandler)
       .recover {
         case e: NaptimeActionException =>

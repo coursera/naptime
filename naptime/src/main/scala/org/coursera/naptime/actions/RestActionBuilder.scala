@@ -154,20 +154,21 @@ class RestActionBuilder[RACType, AuthType, BodyType, ResourceKeyType, ResourceTy
                 })
               })
               val response = NaptimeActionException(
-                Status.BAD_REQUEST,
-                None,
-                Some("JSON didn't validate"),
-                Some(errorDetails))
+                httpCode = Status.BAD_REQUEST,
+                errorCode = None,
+                message = Some("JSON didn't validate"),
+                details = Some(errorDetails))
               Left(response.result)
           }
         } catch {
           case e: IllegalArgumentException =>
             logger.info(s"Request failed validation.", e)
             val resp = NaptimeActionException(
-              Status.BAD_REQUEST,
-              Some("request.validation"),
-              Some(e.getMessage),
-              None)
+              httpCode = Status.BAD_REQUEST,
+              errorCode = Some("request.validation"),
+              message = Some(e.getMessage),
+              details = None,
+              cause = Some(e))
             Left(resp.result)
           case NonFatal(e) =>
             logger.error(s"Unknown exception while parsing body of request.", e)
