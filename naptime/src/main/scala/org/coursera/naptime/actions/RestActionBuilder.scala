@@ -167,7 +167,8 @@ class RestActionBuilder[RACType, AuthType, BodyType, ResourceKeyType, ResourceTy
               Status.BAD_REQUEST,
               Some("request.validation"),
               Some(e.getMessage),
-              None)
+              None,
+              Some(e))
             Left(resp.result)
           case NonFatal(e) =>
             logger.error(s"Unknown exception while parsing body of request.", e)
