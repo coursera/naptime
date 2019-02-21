@@ -42,9 +42,9 @@ object NestedMacroCourierTests {
       extends CourierCollectionResource[String, Course] {
     override def resourceName: String = CoursesResource.ID.topLevelName
 
-    override implicit lazy val Fields: Fields[Course] = BaseFields
-      .withReverseRelations(
-        "instructors" -> MultiGetReverseRelation(
+    override implicit lazy val Fields: ResourceFields[Course] = BaseFields
+      .withGraphQLRelations(
+        "instructors" -> MultiGetGraphQLRelation(
           resourceName = ResourceName("instructors", 1),
           ids = "$instructorIds",
           description = "Instructors for the course"))
@@ -135,7 +135,7 @@ class NestedMacroCourierTests
     val instructorsField = mergedValueRecord.getField("instructors")
     assert(null != instructorsField, instructorsField)
     assert(null != instructorsField.getProperties)
-    val typesProperty = instructorsField.getProperties.get(Types.Relations.REVERSE_PROPERTY_NAME)
+    val typesProperty = instructorsField.getProperties.get(Types.Relations.RELATION_PROPERTY_NAME)
     assert(null != typesProperty)
     assert(typesProperty.isInstanceOf[DataMap])
     val annotation = typesProperty.asInstanceOf[DataMap]

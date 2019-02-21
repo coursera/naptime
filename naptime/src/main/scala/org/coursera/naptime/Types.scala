@@ -39,8 +39,7 @@ import scala.collection.JavaConverters._
 object Types extends StrictLogging {
 
   object Relations {
-    val PROPERTY_NAME = "related"
-    val REVERSE_PROPERTY_NAME = "relatedOn"
+    val RELATION_PROPERTY_NAME = "relatedOn"
   }
 
   @deprecated("Please use the one with fields included", "0.2.4")
@@ -78,7 +77,7 @@ object Types extends StrictLogging {
       typeName: String,
       keyType: DataSchema,
       valueType: RecordDataSchema,
-      fields: Fields[_]): RecordDataSchema = {
+      fields: ResourceFields[_]): RecordDataSchema = {
     if (keyType.hasError || valueType.hasError) {
       throw new RuntimeException(s"Input schemas have error: $keyType $valueType")
     }
@@ -92,15 +91,15 @@ object Types extends StrictLogging {
       case unknown: DataSchema =>
         throw new RuntimeException(s"Cannot compute asymmetric type for key type: $unknown")
     }
-    for ((name, reverseRelation) <- fields.reverseRelations) {
+    for ((name, graphQLRelation) <- fields.graphQLRelations) {
       Option(mergedSchema.getField(name)) match {
         case Some(field) =>
           logger.warn(
-            s"Fields for resource $typeName tries to add reverse relation on field " +
+            s"Fields for resource $typeName tries to add graphql relation on field " +
               s"'$name', but that field is already defined on the model")
         case None =>
           val errorMessageBuilder = new StringBuilder
-          val newField = reverseRelation.toAnnotation.relationType match {
+          val newField = graphQLRelation.toAnnotation.relationType match {
             case FINDER | MULTI_GET =>
               val newField = new RecordDataSchema.Field(new ArrayDataSchema(new StringDataSchema)) // TODO(bryan): fix type here
               newField.setOptional(false)
@@ -112,12 +111,12 @@ object Types extends StrictLogging {
             case _ =>
               throw new RuntimeException(
                 "unknown relation type: " +
-                  reverseRelation.toAnnotation.relationType.toString)
+                  graphQLRelation.toAnnotation.relationType.toString)
           }
-          val reverseRelatedMap = Map[String, AnyRef](
-            Relations.REVERSE_PROPERTY_NAME -> reverseRelation.toAnnotation.data())
-          newField.setProperties(reverseRelatedMap.asJava)
-          newField.setDoc(reverseRelation.description)
+          val relationMap = Map[String, AnyRef](
+            Relations.RELATION_PROPERTY_NAME -> graphQLRelation.toAnnotation.data())
+          newField.setProperties(relationMap.asJava)
+          newField.setDoc(graphQLRelation.description)
           newField.setName(name.split("/").last, errorMessageBuilder)
           insertFieldAtLocation(mergedSchema, name.split("/").dropRight(1).toList, newField)
       }

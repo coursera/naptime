@@ -7,15 +7,18 @@ import play.api.test.FakeRequest
 
 import scala.util.Success
 
-case class FieldsTestModel(a: String, b: Int, c: String)
-object FieldsTestModel {
-  implicit val format = Json.format[FieldsTestModel]
+case class ResourceFieldsTestModel(a: String, b: Int, c: String)
+
+object ResourceFieldsTestModel {
+  implicit val format = Json.format[ResourceFieldsTestModel]
 }
 
-class FieldsTest extends AssertionsForJUnit {
+class ResourceFieldsTest extends AssertionsForJUnit {
 
   val sampleFields =
-    Fields[FieldsTestModel].withDefaultFields("a").withRelated("author" -> ResourceName("user", 6))
+    ResourceFields[ResourceFieldsTestModel]
+      .withDefaultFields("a")
+      .withRelated("author" -> ResourceName("user", 6))
 
   @Test
   def simpleComputeFields(): Unit = {
@@ -56,7 +59,7 @@ class FieldsTest extends AssertionsForJUnit {
 
   @Test
   def headerFieldsOverride(): Unit = {
-    val request = FakeRequest("GET", "/foo/bar").withHeaders(Fields.FIELDS_HEADER -> "ALL")
+    val request = FakeRequest("GET", "/foo/bar").withHeaders(ResourceFields.FIELDS_HEADER -> "ALL")
     val parsed = sampleFields.computeFields(request)
 
     assert(parsed === Success(AllFields))
@@ -92,7 +95,7 @@ class FieldsTest extends AssertionsForJUnit {
   @Test
   def repeatedFieldsInvalid(): Unit = {
     intercept[IllegalArgumentException] {
-      Fields[FieldsTestModel]
+      ResourceFields[ResourceFieldsTestModel]
         .withDefaultFields("a")
         .withDefaultFields("a")
     }
@@ -101,7 +104,7 @@ class FieldsTest extends AssertionsForJUnit {
   @Test
   def repeatedRelationsInvalid(): Unit = {
     intercept[IllegalArgumentException] {
-      Fields[FieldsTestModel]
+      ResourceFields[ResourceFieldsTestModel]
         .withRelated("author" -> ResourceName("user", 6))
         .withRelated("author" -> ResourceName("user", 1))
     }

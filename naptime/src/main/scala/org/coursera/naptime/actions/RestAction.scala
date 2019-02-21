@@ -18,17 +18,19 @@ package org.coursera.naptime.actions
 
 import akka.stream.Materializer
 import akka.util.ByteString
-import org.coursera.naptime.model.KeyFormat
-import org.coursera.naptime.RestError
+import com.typesafe.scalalogging.StrictLogging
+import org.coursera.common.concurrent.Futures
 import org.coursera.naptime.NaptimeActionException
-import org.coursera.naptime.Fields
 import org.coursera.naptime.PaginationConfiguration
 import org.coursera.naptime.QueryStringParser.NaptimeParseError
 import org.coursera.naptime.RequestPagination
+import org.coursera.naptime.ResourceFields
 import org.coursera.naptime.ResourceName
 import org.coursera.naptime.RestContext
+import org.coursera.naptime.RestError
 import org.coursera.naptime.RestResponse
 import org.coursera.naptime.ari.Response
+import org.coursera.naptime.model.KeyFormat
 import play.api.Play
 import play.api.libs.json.OFormat
 import play.api.libs.streams.Accumulator
@@ -42,7 +44,6 @@ import play.api.mvc.request.RequestAttrKey
 
 import scala.concurrent.ExecutionContext
 import scala.concurrent.Future
-import scala.util.control.NonFatal
 
 /**
  * A RestAction is a layer on top of Play! with additional type information
@@ -63,13 +64,14 @@ import scala.util.control.NonFatal
  */
 trait RestAction[RACType, AuthType, BodyType, KeyType, ResourceType, ResponseType]
     extends EssentialAction
-    with RequestTaggingHandler {
+    with RequestTaggingHandler
+    with StrictLogging {
 
   protected[actions] def restAuthGenerator: AuthGenerator[BodyType, AuthType]
   protected def restBodyParser: BodyParser[BodyType]
   protected[naptime] def restEngine
     : RestActionCategoryEngine[RACType, KeyType, ResourceType, ResponseType]
-  protected[naptime] def fieldsEngine: Fields[ResourceType]
+  protected[naptime] def fieldsEngine: ResourceFields[ResourceType]
   protected def paginationConfiguration: PaginationConfiguration
   protected def errorHandler: PartialFunction[Throwable, RestError]
   protected implicit val keyFormat: KeyFormat[KeyType]
@@ -85,12 +87,17 @@ trait RestAction[RACType, AuthType, BodyType, KeyType, ResourceType, ResponseTyp
 
   private[naptime] def safeApply(
       context: RestContext[AuthType, BodyType]): Future[RestResponse[ResponseType]] = {
-    try {
-      apply(context) recover errorHandler
-    } catch {
-      case NonFatal(e) if errorHandler.isDefinedAt(e) =>
-        errorHandler.andThen(Future.successful)(e)
-    }
+    Futures
+      .safelyCall(apply(context))
+      .recover(errorHandler)
+      .recover {
+        case e: NaptimeActionException =>
+          // Chain this recover because it is quite a common pattern to throw a NaptimeActionException in the
+          // errorHandler instead of returning RestError. This recover should wrap those thrown
+          // NaptimeActionExceptions into RestErrors. This consolidates the code paths for handling
+          // NaptimeActionExceptions.
+          RestError(e)
+      }
   }
 
   private[naptime] def localRun(rh: RequestHeader, resourceName: ResourceName): Future[Response] = {
@@ -168,45 +175,53 @@ trait RestAction[RACType, AuthType, BodyType, KeyType, ResourceType, ResponseTyp
   final override def apply(rh: RequestHeader): Accumulator[ByteString, Result] = {
     restBodyParser(rh).mapFuture {
       case Left(bodyError) => Future.successful(bodyError)
-      case Right(a) =>
-        restAuthGenerator(a).run(rh).flatMap {
-          case Left(error) => Future.successful(error.result) // TODO: log?
-          case Right(auth) => {
-            val responseTry = for {
-              fields <- fieldsEngine.computeFields(rh)
-              includes <- fieldsEngine.computeIncludes(rh)
-            } yield {
-              val pagination = RequestPagination(rh, paginationConfiguration)
-              val playRequest = Request(rh, a)
-              val ctx = new RestContext(a, auth, playRequest, pagination, includes, fields)
-              def run(): Future[Result] = {
-                val highLevelResponse = safeApply(ctx)
-                highLevelResponse.map { resp =>
-                  restEngine.mkResult(rh, fieldsEngine, fields, includes, pagination, resp)
-                } recover {
-                  case e: NaptimeActionException => e.result
-                }
+      case Right(body) =>
+        runAuthAndBody(rh, body)
+    }
+  }
+
+  private[naptime] def runAuthAndBody(rh: RequestHeader, body: BodyType): Future[Result] = {
+    restAuthGenerator(body).run(rh).flatMap {
+      case Left(error) => Future.successful(error.result) // TODO: log?
+      case Right(auth) =>
+        val responseTry = for {
+          fields <- fieldsEngine.computeFields(rh)
+          includes <- fieldsEngine.computeIncludes(rh)
+        } yield {
+          val pagination = RequestPagination(rh, paginationConfiguration)
+          val playRequest = Request(rh, body)
+          val ctx = new RestContext(body, auth, playRequest, pagination, includes, fields)
+
+          def run(): Future[Result] = {
+            safeApply(ctx).map { resp =>
+              // log error messages from resources that return a RestError(...)
+              resp match {
+                case RestError(e) if e.httpCode >= 500 =>
+                  logger.error("Server 5xx error response", e)
+                case _ =>
               }
 
-              // Implementation below borrowed from Play's Action.scala
-              Play.maybeApplication
-                .map { app =>
-                  play.utils.Threads.withContextClassLoader(app.classloader) {
-                    run()
-                  }
-                }
-                .getOrElse {
-                  // Run without the app class loader. This is important if we're running low-level
-                  // tests (e.g. router tests)
-                  run()
-                }
+              restEngine.mkResult(rh, fieldsEngine, fields, includes, pagination, resp)
             }
-            responseTry.recover {
-              case e: NaptimeParseError      => Future.successful(e.result)
-              case e: NaptimeActionException => Future.successful(e.result)
-            }.get
           }
+
+          // Implementation below borrowed from Play's Action.scala
+          Play.maybeApplication
+            .map { app =>
+              play.utils.Threads.withContextClassLoader(app.classloader) {
+                run()
+              }
+            }
+            .getOrElse {
+              // Run without the app class loader. This is important if we're running low-level
+              // tests (e.g. router tests)
+              run()
+            }
         }
+        responseTry.recover {
+          case e: NaptimeParseError      => Future.successful(e.result)
+          case e: NaptimeActionException => Future.successful(e.result)
+        }.get
     }
   }
 

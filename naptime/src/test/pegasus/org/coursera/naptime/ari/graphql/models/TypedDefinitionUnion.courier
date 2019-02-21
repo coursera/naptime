@@ -1,0 +1,15 @@
+namespace org.coursera.naptime.ari.graphql.models
+
+/**
+ * The goal of this type is to exercise functionality for union type that contains a record, a
+ * typeref, and an enum.
+ *
+ * The "typeref" here applies to the CourseId.
+ */
+
+@typedDefinition = {
+  "Coordinates": "coordinates"
+  "CourseId": "course"
+  "SimpleEnum": "enum"
+}
+typeref TypedDefinitionUnion = union[Coordinates, CourseId, SimpleEnum]

@@ -1,0 +1,6 @@
+namespace org.coursera.naptime.ari.graphql.models
+
+enum SimpleEnum {
+  YES
+  NO
+}

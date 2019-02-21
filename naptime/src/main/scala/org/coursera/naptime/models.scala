@@ -21,7 +21,7 @@ import org.coursera.naptime.QueryStringParser.NaptimeParseError
 import org.coursera.naptime.schema.AuthOverride
 import org.coursera.naptime.schema.RelationType
 import org.coursera.naptime.schema.Resource
-import org.coursera.naptime.schema.ReverseRelationAnnotation
+import org.coursera.naptime.schema.GraphQLRelationAnnotation
 import play.api.http.Status
 import play.api.i18n.Lang
 import play.api.libs.json.JsObject
@@ -257,14 +257,14 @@ object QueryIncludes {
  * @tparam T The type of the resource in the collection.
  */
 @implicitNotFound(
-  """Implement an implicit Fields using the FieldsBuilder (ex: implicit val fields =
-    Fields.withDefaultFields("name", "desc"). If you encounter this error in a `withRelated` clause,
-    be sure to import that resource's fields object.""")
-sealed case class Fields[T](
+  """Implement an implicit ResourceFields using the FieldsBuilder (ex: implicit val fields =
+    ResourceFields.withDefaultFields("name", "desc"). If you encounter this error in a
+    `withRelated` clause, be sure to import that resource's fields object.""")
+sealed case class ResourceFields[T](
     defaultFields: Set[String],
     fieldsPermissionsFunction: FieldsFunction,
     relations: Map[String, ResourceName],
-    reverseRelations: Map[String, ReverseRelation])(implicit format: OFormat[T]) {
+    graphQLRelations: Map[String, GraphQLRelation])(implicit format: OFormat[T]) {
 
   private[this] val relationsInJson = relations.map {
     case (field, resourceName) =>
@@ -297,7 +297,7 @@ sealed case class Fields[T](
   private[naptime] def computeFields(rh: RequestHeader): Try[RequestFields] = {
     // Try the header override first
     rh.headers
-      .get(Fields.FIELDS_HEADER)
+      .get(ResourceFields.FIELDS_HEADER)
       .map { fieldsHeader =>
         fieldsHeader.toLowerCase match {
           case "all" => Success(AllFields)
@@ -306,7 +306,7 @@ sealed case class Fields[T](
               new NaptimeActionException(
                 Status.BAD_REQUEST,
                 Some("naptime.parse.fieldsHeader"),
-                Some(s"Invalid ${Fields.FIELDS_HEADER} option")))
+                Some(s"Invalid ${ResourceFields.FIELDS_HEADER} option")))
         }
       }
       .getOrElse {
@@ -339,50 +339,50 @@ sealed case class Fields[T](
       }
   }
 
-  private[this] def withFieldsInternal(fieldNames: Set[String]): Fields[T] = {
+  private[this] def withFieldsInternal(fieldNames: Set[String]): ResourceFields[T] = {
     val intersection = fieldNames.intersect(defaultFields)
     require(intersection.isEmpty, s"Duplicate field names provided: $intersection")
     copy(defaultFields = defaultFields ++ fieldNames)
   }
 
-  def withDefaultFields(fieldNames: String*): Fields[T] = {
+  def withDefaultFields(fieldNames: String*): ResourceFields[T] = {
     withFieldsInternal(fieldNames.toSet)
   }
 
-  def withDefaultFields(fieldNames: Iterable[String]): Fields[T] = {
+  def withDefaultFields(fieldNames: Iterable[String]): ResourceFields[T] = {
     withFieldsInternal(fieldNames.toSet)
   }
 
-  def withRelated(newRelations: Map[String, ResourceName]): Fields[T] = {
+  def withRelated(newRelations: Map[String, ResourceName]): ResourceFields[T] = {
     val intersection = newRelations.keySet.intersect(relations.keySet)
     require(intersection.isEmpty, s"Duplicate relations provided for: $intersection")
     copy(relations = relations ++ newRelations)
   }
 
-  def withRelated(newRelations: (String, ResourceName)*): Fields[T] = {
+  def withRelated(newRelations: (String, ResourceName)*): ResourceFields[T] = {
     withRelated(newRelations.toMap)
   }
 
-  def withReverseRelations(newRelations: Map[String, ReverseRelation]): Fields[T] = {
-    val intersection = newRelations.keySet.intersect(reverseRelations.keySet)
+  def withGraphQLRelations(newRelations: Map[String, GraphQLRelation]): ResourceFields[T] = {
+    val intersection = newRelations.keySet.intersect(graphQLRelations.keySet)
     require(intersection.isEmpty, s"Duplicate relations provided for: $intersection")
-    copy(reverseRelations = reverseRelations ++ newRelations)
+    copy(graphQLRelations = graphQLRelations ++ newRelations)
   }
 
-  def withReverseRelations(newRelations: (String, ReverseRelation)*): Fields[T] = {
-    withReverseRelations(newRelations.toMap)
+  def withGraphQLRelations(newRelations: (String, GraphQLRelation)*): ResourceFields[T] = {
+    withGraphQLRelations(newRelations.toMap)
   }
 }
 
-object Fields {
-  def apply[T](implicit format: OFormat[T]): Fields[T] = {
-    Fields(Set.empty, FieldsFunction.default, Map.empty, Map.empty)
+object ResourceFields {
+  def apply[T](implicit format: OFormat[T]): ResourceFields[T] = {
+    ResourceFields(Set.empty, FieldsFunction.default, Map.empty, Map.empty)
   }
 
   val FIELDS_HEADER = "X-Coursera-Naptime-Fields"
 
-  private[naptime] val FAKE_FIELDS: Fields[_] =
-    Fields(Set.empty, FieldsFunction.default, Map.empty, Map.empty)(null)
+  private[naptime] val FAKE_FIELDS: ResourceFields[_] =
+    ResourceFields(Set.empty, FieldsFunction.default, Map.empty, Map.empty)(null)
 }
 
 // TODO(saeta): FieldFn should also take advantage of the authentication applied. This will require
@@ -617,26 +617,26 @@ private[naptime] object QueryStringParser extends RegexParsers {
     parse(includesAllContent, input)
 }
 
-trait ReverseRelation {
+trait GraphQLRelation {
   val resourceName: ResourceName
   val arguments: Map[String, String]
   val description: String
   val authOverride: Option[AuthOverride]
 
-  def toAnnotation: ReverseRelationAnnotation
+  def toAnnotation: GraphQLRelationAnnotation
 }
 
-case class FinderReverseRelation(
+case class FinderGraphQLRelation(
     resourceName: ResourceName,
     finderName: String,
     arguments: Map[String, String] = Map.empty,
     description: String = "",
     authOverride: Option[AuthOverride] = None)
-    extends ReverseRelation {
+    extends GraphQLRelation {
 
-  def toAnnotation: ReverseRelationAnnotation = {
+  def toAnnotation: GraphQLRelationAnnotation = {
     val mergedArguments = arguments + ("q" -> finderName)
-    ReverseRelationAnnotation(
+    GraphQLRelationAnnotation(
       resourceName.identifier,
       mergedArguments,
       RelationType.FINDER,
@@ -644,17 +644,17 @@ case class FinderReverseRelation(
   }
 }
 
-case class MultiGetReverseRelation(
+case class MultiGetGraphQLRelation(
     resourceName: ResourceName,
     ids: String,
     arguments: Map[String, String] = Map.empty,
     description: String = "",
     authOverride: Option[AuthOverride] = None)
-    extends ReverseRelation {
+    extends GraphQLRelation {
 
-  def toAnnotation: ReverseRelationAnnotation = {
+  def toAnnotation: GraphQLRelationAnnotation = {
     val mergedArguments = arguments + ("ids" -> ids)
-    ReverseRelationAnnotation(
+    GraphQLRelationAnnotation(
       resourceName.identifier,
       mergedArguments,
       RelationType.MULTI_GET,
@@ -662,17 +662,17 @@ case class MultiGetReverseRelation(
   }
 }
 
-case class GetReverseRelation(
+case class GetGraphQLRelation(
     resourceName: ResourceName,
     id: String,
     arguments: Map[String, String] = Map.empty,
     description: String = "",
     authOverride: Option[AuthOverride] = None)
-    extends ReverseRelation {
+    extends GraphQLRelation {
 
-  def toAnnotation: ReverseRelationAnnotation = {
+  def toAnnotation: GraphQLRelationAnnotation = {
     val mergedArguments = arguments + ("ids" -> id)
-    ReverseRelationAnnotation(
+    GraphQLRelationAnnotation(
       resourceName.identifier,
       mergedArguments,
       RelationType.GET,
@@ -680,17 +680,17 @@ case class GetReverseRelation(
   }
 }
 
-case class SingleElementFinderReverseRelation(
+case class SingleElementFinderGraphQLRelation(
     resourceName: ResourceName,
     finderName: String,
     arguments: Map[String, String] = Map.empty,
     description: String = "",
     authOverride: Option[AuthOverride] = None)
-    extends ReverseRelation {
+    extends GraphQLRelation {
 
-  def toAnnotation: ReverseRelationAnnotation = {
+  def toAnnotation: GraphQLRelationAnnotation = {
     val mergedArguments = arguments + ("q" -> finderName)
-    ReverseRelationAnnotation(
+    GraphQLRelationAnnotation(
       resourceName.identifier,
       mergedArguments,
       RelationType.SINGLE_ELEMENT_FINDER,

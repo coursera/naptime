@@ -1,17 +1,18 @@
 package org.coursera.naptime.ari.graphql.schema
 
-import com.linkedin.data.DataMap
 import com.linkedin.data.schema.NamedDataSchema
 import com.linkedin.data.schema.RecordDataSchema.{Field => RecordDataSchemaField}
 import com.linkedin.data.schema.UnionDataSchema
 import org.coursera.naptime.ResourceName
 import org.coursera.naptime.ari.graphql.SangriaGraphQlContext
+import sangria.schema.Action
 import sangria.schema.Field
 import sangria.schema.ObjectType
 import sangria.schema.Schema
 import sangria.schema.UnionType
 
 import scala.collection.JavaConverters._
+import scala.util.Try
 
 object NaptimeUnionField {
 
@@ -67,6 +68,7 @@ object NaptimeUnionField {
       }
 
       val unionMemberFieldName = FieldBuilder.formatName(unionMemberKey)
+
       val subTypeField = FieldBuilder.buildField(
         schemaMetadata,
         new RecordDataSchemaField(unionMember),
@@ -80,9 +82,16 @@ object NaptimeUnionField {
         subTypeField.fieldType,
         resolve = context => {
           if (unionDataSchema.getProperties.containsKey(TYPED_DEFINITION_KEY)) {
-            Option(context.value.element.getDataMap("definition"))
-              .map(element => context.value.copy(element = element))
-              .getOrElse(subTypeField.resolve(context))
+            // In a typed definition union, the target field will reside with the key
+            // "definition". So, build a new `Field` to access this value directly.
+            val newSubTypeField = FieldBuilder.buildField(
+              schemaMetadata,
+              new RecordDataSchemaField(unionMember),
+              namespace,
+              Some("definition"),
+              resourceName = resourceName,
+              currentPath = currentPath)
+            newSubTypeField.resolve(context)
           } else {
             subTypeField.resolve(context)
           }
