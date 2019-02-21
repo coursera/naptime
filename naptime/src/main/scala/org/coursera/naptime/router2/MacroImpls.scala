@@ -471,7 +471,7 @@ class MacroImpls(val c: blackbox.Context) {
       val vagueTypes = List("Unit", "play.api.mvc.AnyContent", "Any")
       val inputBodyType = category match {
         case CreateRestActionCategory | UpdateRestActionCategory | ActionRestActionCategory |
-            DeleteRestActionCategory =>
+            DeleteRestActionCategory | PatchRestActionCategory =>
           q"""
            val paramName = ${method.returnType.typeArgs(2).toString}
            Some(paramName).filterNot($vagueTypes.contains)
