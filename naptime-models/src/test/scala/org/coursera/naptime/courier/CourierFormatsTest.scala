@@ -305,43 +305,33 @@ class CourierFormatsTest extends AssertionsForJUnit {
 
     val badRecordString =
       """{ "pair": { "first": -1, "second": 2 }, "elements": [ { "first": 3, "second": 4 } ] }"""
-    assert(
-      Json
-        .parse(badRecordString)
-        .validate[TestPositiveIntComplex]
-        .isInstanceOf[JsSuccess[TestPositiveIntComplex]])
+    assertResult(
+      JsError("Pegasus template cast error: IllegalArgumentException: -1 is not positive"))(
+      Json.parse(badRecordString).validate[TestPositiveIntComplex])
 
     val badArrayString =
       """{ "pair": { "first": 1, "second": 2 }, "elements": [ { "first": -3, "second": 4 } ] }"""
-    assert(
-      Json
-        .parse(badArrayString)
-        .validate[TestPositiveIntComplex]
-        .isInstanceOf[JsSuccess[TestPositiveIntComplex]])
+    assertResult(
+      JsError("Pegasus template cast error: IllegalArgumentException: -3 is not positive"))(
+      Json.parse(badArrayString).validate[TestPositiveIntComplex])
 
     val badStringMapKey =
       """{ "mapField": { "(first~1,second~2)": { "(first~-3,second~4)": { "first": 5, "second": 6 } } } }"""
-    assert(
-      Json
-        .parse(badStringMapKey)
-        .validate[TestPositiveIntPairMapRecord]
-        .isInstanceOf[JsSuccess[TestPositiveIntPairMapRecord]])
+    assertResult(
+      JsError("Pegasus template cast error: IllegalArgumentException: -3 is not positive"))(
+      Json.parse(badStringMapKey).validate[TestPositiveIntPairMapRecord])
 
     val badStringMapValue =
       """{ "mapField": { "(first~1,second~2)": { "(first~3,second~4)": { "first": -5, "second": 6 } } } }"""
-    assert(
-      Json
-        .parse(badStringMapValue)
-        .validate[TestPositiveIntPairMapRecord]
-        .isInstanceOf[JsSuccess[TestPositiveIntPairMapRecord]])
+    assertResult(
+      JsError("Pegasus template cast error: IllegalArgumentException: -5 is not positive"))(
+      Json.parse(badStringMapValue).validate[TestPositiveIntPairMapRecord])
 
     val badUnionString =
       """{ "org.coursera.naptime.courier.TestPositiveIntPair": { "first": -1, "second": 2 } }"""
-    assert(
-      Json
-        .parse(badUnionString)
-        .validate[TestPositiveIntPairUnion]
-        .isInstanceOf[JsSuccess[TestPositiveIntPairUnion]])
+    assertResult(
+      JsError("Pegasus template cast error: IllegalArgumentException: -1 is not positive"))(
+      Json.parse(badUnionString).validate[TestPositiveIntPairUnion])
   }
 
   @Test
