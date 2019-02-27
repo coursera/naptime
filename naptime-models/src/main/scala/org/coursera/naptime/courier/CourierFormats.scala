@@ -50,7 +50,6 @@ import com.linkedin.data.template.RecordTemplate
 import com.linkedin.data.template.TemplateOutputCastException
 import com.linkedin.data.template.UnionTemplate
 import com.typesafe.scalalogging.StrictLogging
-import org.apache.commons.lang3.exception.ExceptionUtils
 import org.coursera.common.stringkey.StringKey
 import org.coursera.common.stringkey.StringKeyFormat
 import org.coursera.courier.templates.DataValidationException
@@ -118,13 +117,7 @@ object CourierFormats extends StrictLogging {
                 case Left(validationResult) =>
                   toJsError(validationResult.getMessages.asScala.toSeq)
                 case Right(template) =>
-                  try {
-                    materialize(template)
-                  } catch {
-                    case e: TemplateOutputCastException =>
-                      logger.warn(
-                        s"Could not materialize ${clazz.getName}: ${ExceptionUtils.getStackTrace(e)}")
-                  }
+                  materialize(template)
                   JsSuccess(template)
               }
             } catch {
@@ -165,13 +158,7 @@ object CourierFormats extends StrictLogging {
                 case Left(validationResult) =>
                   toJsError(validationResult.getMessages.asScala.toSeq)
                 case Right(template) =>
-                  try {
-                    materialize(template)
-                  } catch {
-                    case castException: TemplateOutputCastException =>
-                      logger.warn(
-                        s"Could not materialize ${clazz.getName}: ${ExceptionUtils.getStackTrace(castException)}")
-                  }
+                  materialize(template)
                   JsSuccess(template)
               }
             } catch {
@@ -853,12 +840,10 @@ object CourierFormats extends StrictLogging {
         case _: Any =>
       }
     } catch {
-      case castException: TemplateOutputCastException =>
-        throw castException
-      case exception: Exception =>
-        throw new TemplateOutputCastException(
-          s"${exception.getClass.getSimpleName}: ${exception.getMessage}",
-          exception)
+      case e: TemplateOutputCastException =>
+        throw e
+      case e: Exception =>
+        throw new TemplateOutputCastException(s"${e.getClass.getSimpleName}: ${e.getMessage}", e)
     }
   }
 
