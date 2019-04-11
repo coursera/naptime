@@ -17,13 +17,14 @@
 package org.coursera.naptime.ari.graphql.controllers
 
 import javax.inject._
-
 import com.typesafe.scalalogging.Logger
 import com.typesafe.scalalogging.StrictLogging
+import io.opentracing.Tracer
 import org.coursera.naptime.ari.FetcherApi
 import org.coursera.naptime.ari.Response
 import org.coursera.naptime.ari.graphql.GraphqlSchemaProvider
 import org.coursera.naptime.ari.graphql.SangriaGraphQlContext
+import org.coursera.naptime.ari.graphql.TracerWrapper
 import org.coursera.naptime.ari.graphql.controllers.filters.FilterList
 import org.coursera.naptime.ari.graphql.controllers.filters.IncomingQuery
 import org.coursera.naptime.ari.graphql.controllers.filters.OutgoingQuery
@@ -53,13 +54,15 @@ import scala.concurrent.ExecutionContext
 import scala.concurrent.Future
 import scala.util.Failure
 import scala.util.Success
+
 @Singleton
 class GraphQLController @Inject()(
     graphqlSchemaProvider: GraphqlSchemaProvider,
     schemaProvider: GraphqlSchemaProvider,
     fetcher: FetcherApi,
     filterList: FilterList,
-    metricsCollector: GraphQLMetricsCollector)(implicit ec: ExecutionContext)
+    metricsCollector: GraphQLMetricsCollector,
+    tracerWrapper: TracerWrapper)(implicit ec: ExecutionContext)
     extends InjectedController
     with StrictLogging {
 
@@ -121,6 +124,9 @@ class GraphQLController @Inject()(
       requestHeader: RequestHeader,
       variables: JsObject,
       operation: Option[String]): Future[OutgoingQuery] = {
+    val openTracingMiddleware = tracerWrapper.tracer
+      .map(t => List(SlowLog.openTracing(defaultOperationName = "Unnamed GraphQL Query")(t)))
+      .getOrElse(List.empty)
     Future {
       val parsedQuery = metricsCollector.timeQueryParsing(operation.getOrElse("AnonymousQuery")) {
         QueryParser.parse(query)
@@ -138,9 +144,10 @@ class GraphQLController @Inject()(
                 middleware = List(
                   new ResponseMetadataMiddleware(),
                   metricsCollectionMiddleware,
-                  new SlowLogMiddleware(logger, incoming.debugMode)),
+                  new SlowLogMiddleware(logger, incoming.debugMode)) ++ openTracingMiddleware,
                 exceptionHandler = GraphQLController.exceptionHandler(logger),
-                deferredResolver = naptimeResolver)
+                deferredResolver = naptimeResolver,
+                operationName = operation)
               .map { executionResponse =>
                 OutgoingQuery(executionResponse.as[JsObject], Some(Response.empty))
               }
