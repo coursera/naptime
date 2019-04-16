@@ -9,7 +9,8 @@ libraryDependencies ++= Seq(
   junit,
   junitInterface,
   scalatest,
-  mockito
+  mockito,
+  opentracing
 )
 
 org.coursera.courier.sbt.CourierPlugin.courierSettings
