@@ -19,12 +19,10 @@ package org.coursera.naptime.ari.graphql.controllers
 import javax.inject._
 import com.typesafe.scalalogging.Logger
 import com.typesafe.scalalogging.StrictLogging
-import io.opentracing.Tracer
 import org.coursera.naptime.ari.FetcherApi
 import org.coursera.naptime.ari.Response
 import org.coursera.naptime.ari.graphql.GraphqlSchemaProvider
 import org.coursera.naptime.ari.graphql.SangriaGraphQlContext
-import org.coursera.naptime.ari.graphql.TracerWrapper
 import org.coursera.naptime.ari.graphql.controllers.filters.FilterList
 import org.coursera.naptime.ari.graphql.controllers.filters.IncomingQuery
 import org.coursera.naptime.ari.graphql.controllers.filters.OutgoingQuery
@@ -43,13 +41,12 @@ import sangria.execution.ErrorWithResolver
 import sangria.execution.ExceptionHandler
 import sangria.execution.Executor
 import sangria.execution.HandledException
+import sangria.execution.Middleware
 import sangria.execution.QueryAnalysisError
 import sangria.parser.QueryParser
 import sangria.parser.SyntaxError
 import sangria.renderer.SchemaRenderer
-import sangria.slowlog.SlowLog
 
-import scala.concurrent.duration._
 import scala.concurrent.ExecutionContext
 import scala.concurrent.Future
 import scala.util.Failure
@@ -62,7 +59,7 @@ class GraphQLController @Inject()(
     fetcher: FetcherApi,
     filterList: FilterList,
     metricsCollector: GraphQLMetricsCollector,
-    tracerWrapper: TracerWrapper)(implicit ec: ExecutionContext)
+    additionalMiddlewares: List[Middleware[Any]])(implicit ec: ExecutionContext)
     extends InjectedController
     with StrictLogging {
 
@@ -124,9 +121,6 @@ class GraphQLController @Inject()(
       requestHeader: RequestHeader,
       variables: JsObject,
       operation: Option[String]): Future[OutgoingQuery] = {
-    val openTracingMiddleware = tracerWrapper.tracer
-      .map(t => List(SlowLog.openTracing(defaultOperationName = "Unnamed GraphQL Query")(t)))
-      .getOrElse(List.empty)
     Future {
       val parsedQuery = metricsCollector.timeQueryParsing(operation.getOrElse("AnonymousQuery")) {
         QueryParser.parse(query)
@@ -144,7 +138,7 @@ class GraphQLController @Inject()(
                 middleware = List(
                   new ResponseMetadataMiddleware(),
                   metricsCollectionMiddleware,
-                  new SlowLogMiddleware(logger, incoming.debugMode)) ++ openTracingMiddleware,
+                  new SlowLogMiddleware(logger, incoming.debugMode)) ++ additionalMiddlewares,
                 exceptionHandler = GraphQLController.exceptionHandler(logger),
                 deferredResolver = naptimeResolver,
                 operationName = operation)
