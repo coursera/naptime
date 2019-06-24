@@ -38,7 +38,6 @@ trait NamedDependencies { this: PluginVersionProvider =>
   val sangriaSlowLog = "org.sangria-graphql" %% "sangria-slowlog" % "0.1.8"
   val scalaGuice = "net.codingwell" %% "scala-guice" % "4.1.1"
   val scalaLogging = "com.typesafe.scala-logging" %% "scala-logging" % "3.7.2"
-  val opentracing = "io.opentracing" % "opentracing-api" % "0.32.0"
 
   // Test dependencies
   val junitCompile = "junit" % "junit" % "4.11"
