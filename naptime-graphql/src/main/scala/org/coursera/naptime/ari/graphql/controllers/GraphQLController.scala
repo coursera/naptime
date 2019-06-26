@@ -59,7 +59,7 @@ class GraphQLController @Inject()(
     fetcher: FetcherApi,
     filterList: FilterList,
     metricsCollector: GraphQLMetricsCollector,
-    additionalMiddlewares: List[Middleware[Any]])(implicit ec: ExecutionContext)
+    additionalMiddlewareFactories: List[() => Middleware[Any]])(implicit ec: ExecutionContext)
     extends InjectedController
     with StrictLogging {
 
@@ -129,6 +129,7 @@ class GraphQLController @Inject()(
         case Success(queryAst) =>
           val baseFilter: IncomingQuery => Future[OutgoingQuery] = (incoming: IncomingQuery) => {
             val context = SangriaGraphQlContext(fetcher, requestHeader, ec, incoming.debugMode)
+            val additionalMiddlewares = additionalMiddlewareFactories.map(factory => factory.apply)
             Executor
               .execute(
                 graphqlSchemaProvider.schema,
