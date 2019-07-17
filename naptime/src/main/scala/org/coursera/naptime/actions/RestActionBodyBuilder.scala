@@ -99,6 +99,7 @@ class RestActionBodyBuilder[
       override def apply(
           context: RestContext[AuthType, BodyType]): Future[RestResponse[ResponseType]] =
         Futures.safelyCall(fn(context))
+
     }
   }
 }

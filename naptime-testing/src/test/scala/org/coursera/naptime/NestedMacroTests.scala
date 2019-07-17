@@ -291,11 +291,11 @@ class NestedMacroTests extends AssertionsForJUnit with MockitoSugar with Resourc
     val result = peopleRouter.routeRequest(request.path.substring("/api".length), request)
     assert(result.isDefined)
     val taggedRequest = result.get.tagRequest(request)
-    assert(taggedRequest.tags.contains(Router.NAPTIME_RESOURCE_NAME))
+    assert(taggedRequest.attrs.contains(Router.NAPTIME_RESOURCE_KEY))
     if (methodName != null && methodName != "") {
-      assert(taggedRequest.tags.get(Router.NAPTIME_METHOD_NAME).contains(methodName))
+      assert(taggedRequest.attrs.get(Router.NAPTIME_METHOD_KEY).contains(methodName))
     } else {
-      assert(taggedRequest.tags.get(Router.NAPTIME_METHOD_NAME).isEmpty)
+      assert(taggedRequest.attrs.get(Router.NAPTIME_METHOD_KEY).isEmpty)
     }
 
     val subResult = friendRouter.routeRequest(request.path.substring("/api".length), request)
@@ -307,8 +307,8 @@ class NestedMacroTests extends AssertionsForJUnit with MockitoSugar with Resourc
     val result = friendRouter.routeRequest(request.path.substring("/api".length), request)
     assert(result.isDefined)
     val taggedRequest = result.get.tagRequest(request)
-    assert(taggedRequest.tags.contains(Router.NAPTIME_RESOURCE_NAME))
-    assert(taggedRequest.tags.get(Router.NAPTIME_METHOD_NAME).contains(methodName))
+    assert(taggedRequest.attrs.contains(Router.NAPTIME_RESOURCE_KEY))
+    assert(taggedRequest.attrs.get(Router.NAPTIME_METHOD_KEY).contains(methodName))
 
     val parentResult = peopleRouter.routeRequest(request.path.substring("/api".length), request)
     assert(parentResult.isEmpty)

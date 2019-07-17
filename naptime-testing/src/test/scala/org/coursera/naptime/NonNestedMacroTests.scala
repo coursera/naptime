@@ -168,8 +168,8 @@ class NonNestedMacroTests extends AssertionsForJUnit with MockitoSugar with Reso
     val result = router.routeRequest(requestHeader.path.substring("/api".length), requestHeader)
     assert(result.isDefined)
     val taggedRequest = result.get.tagRequest(requestHeader)
-    assert(taggedRequest.tags.contains(Router.NAPTIME_RESOURCE_NAME))
-    assert(taggedRequest.tags.get(Router.NAPTIME_METHOD_NAME).contains(methodName))
+    assert(taggedRequest.attrs.contains(Router.NAPTIME_RESOURCE_KEY))
+    assert(taggedRequest.attrs.get(Router.NAPTIME_METHOD_KEY).contains(methodName))
   }
 
   private[this] def noCustomInputOutputAuthTypes(methodName: String): Unit = {

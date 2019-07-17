@@ -17,10 +17,15 @@
 package org.coursera.naptime
 
 import play.api.mvc.EssentialAction
-import play.api.mvc.RequestTaggingHandler
+import play.api.mvc.Handler
+import play.api.mvc.RequestHeader
 
 package object router2 {
 
-  type RouteAction = EssentialAction with RequestTaggingHandler
+  trait RouteAction extends EssentialAction with Handler {
+
+    def tagRequest(request: RequestHeader): RequestHeader
+
+  }
 
 }

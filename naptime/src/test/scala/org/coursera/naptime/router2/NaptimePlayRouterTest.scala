@@ -37,9 +37,8 @@ import play.api.mvc.Result
 import play.api.test.FakeRequest
 
 class NaptimePlayRouterTest extends AssertionsForJUnit with MockitoSugar {
-  object FakeHandler extends /* RouteAction */ EssentialAction with RequestTaggingHandler {
+  object FakeHandler extends RouteAction {
     override def tagRequest(request: RequestHeader): RequestHeader = request
-
     override def apply(v1: RequestHeader): Accumulator[ByteString, Result] = ???
   }
 

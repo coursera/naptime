@@ -418,11 +418,11 @@ class NestingCollectionResourceRouterTest
     assert(result.isDefined, s"Router did not correctly route $request")
     val taggedRequest = result.get.tagRequest(request)
     assert(
-      taggedRequest.tags.contains(Router.NAPTIME_RESOURCE_NAME),
+      taggedRequest.attrs.contains(Router.NAPTIME_RESOURCE_KEY),
       "Router result (typically a RestAction) did not tag the request properly.")
     Option(expectedMethodName).foreach { methodName =>
       assert(
-        taggedRequest.tags.get(Router.NAPTIME_METHOD_NAME).contains(methodName),
+        taggedRequest.attrs.get(Router.NAPTIME_METHOD_KEY).contains(methodName),
         "method names did not match.")
     }
   }
@@ -438,11 +438,11 @@ class NestingCollectionResourceRouterTest
     assert(result.isDefined, s"Router did not correctly route $request")
     val taggedRequest = result.get.tagRequest(request)
     assert(
-      taggedRequest.tags.contains(Router.NAPTIME_RESOURCE_NAME),
+      taggedRequest.attrs.contains(Router.NAPTIME_RESOURCE_KEY),
       "Router result (typically a RestAction) did not tag the request properly.")
     Option(expectedMethodName).foreach { methodName =>
       assert(
-        taggedRequest.tags.get(Router.NAPTIME_METHOD_NAME).contains(methodName),
+        taggedRequest.attrs.get(Router.NAPTIME_METHOD_KEY).contains(methodName),
         "method names did not match.")
     }
   }
