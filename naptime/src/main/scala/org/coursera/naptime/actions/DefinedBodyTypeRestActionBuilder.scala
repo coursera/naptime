@@ -44,8 +44,6 @@ class DefinedBodyTypeRestActionBuilder[
     errorHandler: PartialFunction[Throwable, RestError])(
     implicit keyFormat: KeyFormat[ResourceKeyType],
     resourceFormat: OFormat[ResourceType],
-    ec: ExecutionContext,
-    mat: Materializer,
     application: Application)
     extends RestActionBuilderTerminators[
       RACType,

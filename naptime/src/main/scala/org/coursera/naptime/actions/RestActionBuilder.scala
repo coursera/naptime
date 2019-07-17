@@ -51,8 +51,6 @@ class RestActionBuilder[RACType, AuthType, BodyType, ResourceKeyType, ResourceTy
     errorHandler: PartialFunction[Throwable, RestError])(
     implicit keyFormat: KeyFormat[ResourceKeyType],
     resourceFormat: OFormat[ResourceType],
-    ec: ExecutionContext,
-    mat: Materializer,
     application: Application)
     extends RestActionBuilderTerminators[
       RACType,
@@ -61,6 +59,8 @@ class RestActionBuilder[RACType, AuthType, BodyType, ResourceKeyType, ResourceTy
       ResourceKeyType,
       ResourceType,
       ResponseType] {
+
+  implicit val ec: ExecutionContext = application.actorSystem.dispatcher
 
   /**
    * Set the body type.

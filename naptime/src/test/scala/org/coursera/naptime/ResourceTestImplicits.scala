@@ -8,18 +8,19 @@ import play.api.Mode
 import play.api.inject.guice.GuiceApplicationBuilder
 
 trait ResourceTestImplicits {
-  implicit protected val application: Application = ResourceTestImplicits.application
-  @After
-  def shutDownActorSystem(): Unit = {
-    application.stop()
-  }
-}
 
-object ResourceTestImplicits {
-
-  val application: Application = GuiceApplicationBuilder()
+  implicit val application: Application = GuiceApplicationBuilder()
     .in(new File("."))
     .in(Mode.Test)
     .build()
 
+  println(application.actorSystem)
+
+  implicit val ec = application.actorSystem.dispatcher
+  implicit val materializer = application.materializer
+
+  @After
+  def shutDownActorSystem(): Unit = {
+    application.stop()
+  }
 }

@@ -102,17 +102,12 @@ object AuthBuilderTest {
     if (thing.name == name) AlwaysAccept else AlwaysReject
   }
 
-  class EngineersResource(
-      implicit ec: ExecutionContext,
-      mat: Materializer,
-      val application: Application)
+  class EngineersResource(implicit val application: Application)
       extends TopLevelCollectionResource[Int, Engineer] {
     override val keyFormat: KeyFormat[Int] = KeyFormat.intKeyFormat
     override val resourceName: String = "tests"
     override val resourceFormat = Json.format[Engineer]
     implicit val fields = Fields
-    override val executionContext = implicitly[ExecutionContext]
-    override val materializer = implicitly[Materializer]
 
     def createNoAuth() =
       Nap

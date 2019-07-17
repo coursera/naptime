@@ -2,10 +2,9 @@ package org.coursera.naptime
 
 import java.util.UUID
 
-import akka.stream.Materializer
+import org.coursera.common.jsonformat.JsonFormats.Implicits.dateTimeFormat
 import com.linkedin.data.schema.DataSchema
 import com.linkedin.data.schema.RecordDataSchema
-import org.coursera.common.jsonformat.JsonFormats.Implicits.dateTimeFormat
 import org.coursera.common.stringkey.StringKeyFormat
 import org.coursera.naptime.model.KeyFormat
 import org.coursera.naptime.resources.CourierCollectionResource
@@ -19,9 +18,8 @@ import play.api.libs.json.Json
 import play.api.libs.json.OFormat
 import play.api.libs.json.OWrites
 
-import scala.util.Try
 import scala.collection.JavaConverters._
-import scala.concurrent.ExecutionContext
+import scala.util.Try
 
 object IdInferenceMacroTests {
   sealed trait CourseId
@@ -36,10 +34,7 @@ object IdInferenceMacroTests {
   case class LegacyCourseId(id: Int) extends CourseId
   case class NewCourseId(id: String) extends CourseId
 
-  class CourseResource(
-      implicit override val executionContext: ExecutionContext,
-      override val materializer: Materializer,
-      val application: Application)
+  class CourseResource(implicit override val application: Application)
       extends CourierCollectionResource[CourseId, Course] {
     override def resourceName: String = "courses"
     def getAll = Nap.getAll(ctx => ???)
@@ -84,10 +79,7 @@ object IdInferenceMacroTests {
     implicit val jsonFormat = Json.format[Membership]
   }
 
-  class MembershipResource(
-      implicit val executionContext: ExecutionContext,
-      val materializer: Materializer,
-      val application: Application)
+  class MembershipResource(implicit val application: Application)
       extends TopLevelCollectionResource[MembershipId, Membership] {
     override def keyFormat: KeyFormat[KeyType] = MembershipId.keyFormat
     override implicit def resourceFormat: OFormat[Membership] = Membership.jsonFormat
@@ -107,10 +99,7 @@ object IdInferenceMacroTests {
     implicit val keyFormat: KeyFormat[PaymentId] = KeyFormat.idAsPrimitive(apply, unapply)
   }
 
-  class PaymentResource(
-      implicit val executionContext: ExecutionContext,
-      val materializer: Materializer,
-      val application: Application)
+  class PaymentResource(implicit val application: Application)
       extends TopLevelCollectionResource[PaymentId, Membership] {
     override def keyFormat: KeyFormat[KeyType] = PaymentId.keyFormat
     override implicit def resourceFormat: OFormat[Membership] = Membership.jsonFormat

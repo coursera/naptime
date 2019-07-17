@@ -16,7 +16,6 @@
 
 package org.coursera.naptime.router2
 
-import akka.stream.Materializer
 import org.coursera.common.stringkey.StringKeyFormat
 import org.coursera.naptime.ResourceTestImplicits
 import org.coursera.naptime.actions.NaptimeActionSerializer.AnyWrites._
@@ -39,8 +38,6 @@ import play.api.libs.json.OFormat
 import play.api.mvc.RequestHeader
 import play.api.test.FakeRequest
 
-import scala.concurrent.ExecutionContext
-
 object NestingCollectionResourceRouterTest {
   case class Person(name: String)
   object Person {
@@ -50,10 +47,7 @@ object NestingCollectionResourceRouterTest {
   /**
    * A sample top-level resource, with very standard / normal Naptime operations.
    */
-  class MyResource(
-      implicit val executionContext: ExecutionContext,
-      val materializer: Materializer,
-      val application: Application)
+  class MyResource(implicit val application: Application)
       extends TopLevelCollectionResource[String, Person] {
     override def keyFormat: KeyFormat[KeyType] = KeyFormat.stringKeyFormat
     override implicit def resourceFormat: OFormat[Person] = Person.jsonFormat
@@ -173,7 +167,7 @@ object NestingCollectionResourceRouterTest {
    * A nested resource that has more sophisticated parameters to its Naptime operations to test the
    * capabilities of the routing system.
    */
-  class MyNestedResource(val parentResource: MyResource)(val application: Application)
+  class MyNestedResource(val parentResource: MyResource)(implicit val application: Application)
       extends CollectionResource[MyResource, String, Person] {
 
     override def keyFormat: KeyFormat[KeyType] = KeyFormat.stringKeyFormat

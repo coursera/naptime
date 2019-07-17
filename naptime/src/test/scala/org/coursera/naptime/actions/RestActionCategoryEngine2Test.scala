@@ -16,7 +16,6 @@
 
 package org.coursera.naptime.actions
 
-import akka.stream.Materializer
 import com.linkedin.data.DataList
 import org.coursera.common.stringkey.StringKey
 import org.coursera.courier.templates.DataTemplates.DataConversion
@@ -58,7 +57,6 @@ import play.api.test.FakeRequest
 import play.api.test.Helpers
 import play.api.test.Helpers.defaultAwaitTimeout
 
-import scala.concurrent.ExecutionContext
 import scala.concurrent.Future
 
 object RestActionCategoryEngine2Test {
@@ -77,10 +75,7 @@ object RestActionCategoryEngine2Test {
    *
    * In general, it is a very bad idea to have multiple gets, creates, etc, in a single resource.
    */
-  class PlayJsonTestResource(
-      implicit val executionContext: ExecutionContext,
-      val materializer: Materializer,
-      val application: Application)
+  class PlayJsonTestResource(implicit val application: Application)
     extends TopLevelCollectionResource[Int, Person] {
     import RestActionCategoryEngine2._
 
@@ -134,10 +129,7 @@ object RestActionCategoryEngine2Test {
    *
    * In general, it is a very bad idea to have multiple gets, creates, etc, in a single resource.
    */
-  class CourierTestResource(
-      implicit val executionContext: ExecutionContext,
-      val materializer: Materializer,
-      val application: Application)
+  class CourierTestResource(implicit val application: Application)
     extends TopLevelCollectionResource[String, Course] {
     import RestActionCategoryEngine2._
 
@@ -187,10 +179,7 @@ object RestActionCategoryEngine2Test {
     }
   }
 
-  class courierKeyedTestResource(
-      implicit val executionContext: ExecutionContext,
-      val materializer: Materializer,
-      val application: Application)
+  class courierKeyedTestResource(implicit val application: Application)
     extends TopLevelCollectionResource[EnrollmentId, Course] {
     import RestActionCategoryEngine2._
 

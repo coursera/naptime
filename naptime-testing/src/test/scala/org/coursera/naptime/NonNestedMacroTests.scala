@@ -16,7 +16,6 @@
 
 package org.coursera.naptime
 
-import akka.stream.Materializer
 import org.coursera.common.stringkey.StringKeyFormat
 import org.coursera.naptime.actions.NaptimeActionSerializer.AnyWrites._
 import org.coursera.naptime.model.KeyFormat
@@ -37,8 +36,6 @@ import org.mockito.Mockito._
 import org.mockito.Matchers.any
 import play.api.Application
 
-import scala.concurrent.ExecutionContext
-
 case class Item(name: String, description: String)
 object Item {
   implicit val jsonFormat: OFormat[Item] = Json.format[Item]
@@ -51,10 +48,7 @@ object ComplexEmailType {
     StringKeyFormat.caseClassFormat((ComplexEmailType.apply _).tupled, ComplexEmailType.unapply)
 }
 
-class Resource(
-    implicit val executionContext: ExecutionContext,
-    val materializer: Materializer,
-    val application: Application)
+class Resource(implicit val application: Application)
     extends TopLevelCollectionResource[String, Item] {
 
   override def keyFormat: KeyFormat[String] = KeyFormat.stringKeyFormat

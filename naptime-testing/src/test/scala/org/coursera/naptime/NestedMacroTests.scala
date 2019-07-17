@@ -16,7 +16,6 @@
 
 package org.coursera.naptime
 
-import akka.stream.Materializer
 import com.linkedin.data.DataMap
 import com.linkedin.data.schema.DataSchema
 import com.linkedin.data.schema.RecordDataSchema
@@ -28,8 +27,6 @@ import org.coursera.naptime.model.KeyFormat
 import org.coursera.naptime.model.Keyed
 import org.coursera.naptime.schema.HandlerKind
 import org.coursera.naptime.schema.ResourceKind
-import org.coursera.naptime.actions.RestActionBuilder
-import org.coursera.naptime.access.HeaderAccessControl
 import org.coursera.naptime.path.ParseFailure
 import org.coursera.naptime.path.ParseSuccess
 import org.coursera.naptime.path.RootParsedPathKey
@@ -47,22 +44,16 @@ import org.scalatest.mockito.MockitoSugar
 import play.api.Application
 import play.api.libs.json.Json
 import play.api.libs.json.OFormat
-import play.api.mvc.AnyContent
 import play.api.mvc.AnyContentAsEmpty
-import play.api.mvc.BodyParsers
 import play.api.mvc.RequestHeader
 import play.api.test.FakeRequest
 
 import scala.collection.JavaConversions._
-import scala.concurrent.ExecutionContext
 
 /**
  * The top level resource in our fledgling social network.
  */
-class PersonResource(
-    implicit val executionContext: ExecutionContext,
-    val materializer: Materializer,
-    val application: Application)
+class PersonResource(implicit val application: Application)
     extends TopLevelCollectionResource[String, Person] {
 
   val PATH_KEY: PathKey = ("myPathKeyId" ::: RootParsedPathKey).asInstanceOf[PathKey]
@@ -128,10 +119,7 @@ object FriendshipInfo {
   implicit val jsonFormat: OFormat[FriendshipInfo] = Json.format[FriendshipInfo]
 }
 
-class FriendsResource(val parentResource: PersonResource)(
-    implicit val executionContext: ExecutionContext,
-    val materializer: Materializer,
-    val application: Application)
+class FriendsResource(val parentResource: PersonResource)(implicit val application: Application)
     extends CollectionResource[PersonResource, String, FriendshipInfo] {
   override def keyFormat: KeyFormat[KeyType] = KeyFormat.stringKeyFormat
 

@@ -33,7 +33,6 @@ import org.coursera.naptime.ari.Response
 import org.coursera.naptime.model.KeyFormat
 import org.coursera.naptime.router2.RouteAction
 import play.api.Application
-import play.api.Play
 import play.api.libs.json.OFormat
 import play.api.libs.streams.Accumulator
 import play.api.libs.typedmap.TypedKey
@@ -75,9 +74,9 @@ trait RestAction[RACType, AuthType, BodyType, KeyType, ResourceType, ResponseTyp
   protected def errorHandler: PartialFunction[Throwable, RestError]
   protected implicit val keyFormat: KeyFormat[KeyType]
   protected implicit val resourceFormat: OFormat[ResourceType]
-  protected implicit val executionContext: ExecutionContext
-  protected implicit val materializer: Materializer
-  protected def maybeApplication: Option[Application]
+  protected val application: Application
+  protected implicit def executionContext: ExecutionContext = application.actorSystem.dispatcher
+  protected implicit def materializer: Materializer = application.materializer
 
   /**
    * High level API, also used for testing.
@@ -147,17 +146,9 @@ trait RestAction[RACType, AuthType, BodyType, KeyType, ResourceType, ResponseTyp
                 }
 
                 // Implementation below borrowed from Play's Action.scala
-                maybeApplication
-                  .map { app =>
-                    play.utils.Threads.withContextClassLoader(app.classloader) {
-                      run()
-                    }
-                  }
-                  .getOrElse {
-                    // Run without the app class loader. This is important if we're running low-level
-                    // tests (e.g. router tests)
-                    run()
-                  }
+                play.utils.Threads.withContextClassLoader(application.classloader) {
+                  run()
+                }
               }
               responseTry.recover {
                 case e: NaptimeParseError      => Future.failed(e)
@@ -206,17 +197,9 @@ trait RestAction[RACType, AuthType, BodyType, KeyType, ResourceType, ResponseTyp
           }
 
           // Implementation below borrowed from Play's Action.scala
-          maybeApplication
-            .map { app =>
-              play.utils.Threads.withContextClassLoader(app.classloader) {
-                run()
-              }
-            }
-            .getOrElse {
-              // Run without the app class loader. This is important if we're running low-level
-              // tests (e.g. router tests)
-              run()
-            }
+          play.utils.Threads.withContextClassLoader(application.classloader) {
+            run()
+          }
         }
         responseTry.recover {
           case e: NaptimeParseError      => Future.successful(e.result)

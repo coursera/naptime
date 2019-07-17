@@ -16,7 +16,6 @@
 
 package org.coursera.naptime.router2
 
-import akka.stream.Materializer
 import com.google.inject.Guice
 import org.coursera.common.jsonformat.JsonFormats.Implicits.dateTimeFormat
 import org.coursera.naptime.actions.NaptimeActionSerializer.AnyWrites._
@@ -44,8 +43,6 @@ import play.api.mvc.AnyContentAsEmpty
 import play.api.mvc.RequestHeader
 import play.api.test.FakeRequest
 
-import scala.concurrent.ExecutionContext
-
 // TODO(saeta): De-dupe the test resources to share amongst tests.
 object PlayNaptimeRouterIntegrationTest {
   case class Person(name: String, email: String = "a@b.c")
@@ -57,10 +54,7 @@ object PlayNaptimeRouterIntegrationTest {
   /**
    * The top level resource in our fledgling social network.
    */
-  class PersonResource(
-      implicit val executionContext: ExecutionContext,
-      val materializer: Materializer,
-      val application: Application)
+  class PersonResource(implicit val application: Application)
       extends TopLevelCollectionResource[String, Person] {
 
     val PATH_KEY: PathKey = ("myPathKeyId" ::: RootParsedPathKey).asInstanceOf[PathKey]
@@ -110,10 +104,7 @@ object PlayNaptimeRouterIntegrationTest {
     implicit val jsonFormat: OFormat[FriendshipInfo] = Json.format[FriendshipInfo]
   }
 
-  class FriendsResource(val parentResource: PersonResource)(
-      implicit val executionContext: ExecutionContext,
-      val materializer: Materializer,
-      val application: Application)
+  class FriendsResource(val parentResource: PersonResource)(implicit val application: Application)
       extends CollectionResource[PersonResource, String, FriendshipInfo] {
     override def keyFormat: KeyFormat[KeyType] = KeyFormat.stringKeyFormat
 

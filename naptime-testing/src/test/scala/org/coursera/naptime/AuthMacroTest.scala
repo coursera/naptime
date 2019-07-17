@@ -16,7 +16,6 @@
 
 package org.coursera.naptime
 
-import akka.stream.Materializer
 import org.coursera.naptime.access.HeaderAccessControl
 import org.coursera.naptime.model.KeyFormat
 import org.coursera.naptime.resources.TopLevelCollectionResource
@@ -37,10 +36,7 @@ object CustomAuthorizer extends HeaderAccessControl[CustomAuth] {
   override private[naptime] def check(authInfo: CustomAuth) = ???
 }
 
-class AuthorizedResource(
-    implicit val executionContext: ExecutionContext,
-    val materializer: Materializer,
-    val application: Application)
+class AuthorizedResource(implicit val application: Application)
     extends TopLevelCollectionResource[String, Item] {
 
   override def keyFormat: KeyFormat[String] = KeyFormat.stringKeyFormat

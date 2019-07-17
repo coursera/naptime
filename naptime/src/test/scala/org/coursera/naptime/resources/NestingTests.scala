@@ -16,7 +16,6 @@
 
 package org.coursera.naptime.resources
 
-import akka.stream.Materializer
 import org.coursera.common.jsonformat.JsonFormats.Implicits.dateTimeFormat
 import org.coursera.naptime.ResourceTestImplicits
 import org.coursera.naptime.model.KeyFormat
@@ -32,18 +31,13 @@ import play.api.Application
 import play.api.libs.json.Json
 import play.api.libs.json.OFormat
 
-import scala.concurrent.ExecutionContext
-
 object NestingTests {
   case class Person(name: String)
   object Person {
     implicit val jsonFormat: OFormat[Person] = Json.format[Person]
   }
 
-  class PeopleResource(
-      implicit val executionContext: ExecutionContext,
-      val materializer: Materializer,
-      val application: Application)
+  class PeopleResource(implicit val application: Application)
       extends TopLevelCollectionResource[String, Person] {
 
     override def keyFormat = KeyFormat.stringKeyFormat
@@ -56,10 +50,7 @@ object NestingTests {
     implicit val jsonFormat: OFormat[FriendInfo] = Json.format[FriendInfo]
   }
 
-  class FriendInfoResource(peopleResource: PeopleResource)(
-      implicit val executionContext: ExecutionContext,
-      val materializer: Materializer,
-      val application: Application)
+  class FriendInfoResource(peopleResource: PeopleResource)(implicit val application: Application)
       extends CollectionResource[PeopleResource, String, FriendInfo] {
 
     override def keyFormat = KeyFormat.stringKeyFormat
