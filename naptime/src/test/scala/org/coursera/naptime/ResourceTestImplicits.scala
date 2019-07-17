@@ -14,8 +14,6 @@ trait ResourceTestImplicits {
     .in(Mode.Test)
     .build()
 
-  println(application.actorSystem)
-
   implicit val ec = application.actorSystem.dispatcher
   implicit val materializer = application.materializer
 
