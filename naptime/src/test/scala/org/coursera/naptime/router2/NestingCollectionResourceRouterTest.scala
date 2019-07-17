@@ -173,10 +173,7 @@ object NestingCollectionResourceRouterTest {
    * A nested resource that has more sophisticated parameters to its Naptime operations to test the
    * capabilities of the routing system.
    */
-  class MyNestedResource(val parentResource: MyResource)(
-      implicit val executionContext: ExecutionContext,
-      val materializer: Materializer,
-      val application: Application)
+  class MyNestedResource(val parentResource: MyResource)(val application: Application)
       extends CollectionResource[MyResource, String, Person] {
 
     override def keyFormat: KeyFormat[KeyType] = KeyFormat.stringKeyFormat

@@ -84,9 +84,9 @@ trait CollectionResource[ParentResource <: Resource[_], K, M] extends Resource[M
 
   def keyFormat: KeyFormat[KeyType]
 
-  implicit protected val executionContext: ExecutionContext
-  implicit protected val materializer: Materializer
   val application: Application
+  implicit protected val executionContext: ExecutionContext = application.actorSystem.dispatcher
+  implicit protected val materializer: Materializer = application.materializer
 
   /**
    * The (Hlist-like) collection of ancestor keys has this type.
