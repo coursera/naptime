@@ -1,8 +1,8 @@
 package org.coursera.naptime
 
 import java.util.Date
-import javax.inject.Inject
 
+import javax.inject.Inject
 import akka.stream.Materializer
 import com.google.inject.Guice
 import com.google.inject.Stage
@@ -16,6 +16,7 @@ import org.coursera.naptime.router2.NaptimeRoutes
 import org.junit.Test
 import org.mockito.Mockito.mock
 import org.scalatest.junit.AssertionsForJUnit
+import play.api.Application
 import play.api.libs.json.Json
 import play.api.libs.json.OFormat
 
@@ -26,7 +27,10 @@ object NaptimeModuleTest {
   object User {
     implicit val oFormat: OFormat[User] = Json.format[User]
   }
-  class MyResource(implicit val executionContext: ExecutionContext, val materializer: Materializer)
+  class MyResource(
+      implicit val executionContext: ExecutionContext,
+      val materializer: Materializer,
+      val application: Application)
       extends TopLevelCollectionResource[String, User] {
     override implicit def resourceFormat: OFormat[User] = User.oFormat
     override def keyFormat: KeyFormat[KeyType] = KeyFormat.stringKeyFormat

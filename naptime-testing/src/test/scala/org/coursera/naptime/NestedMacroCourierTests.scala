@@ -1,7 +1,6 @@
 package org.coursera.naptime
 
 import javax.inject.Inject
-
 import akka.stream.Materializer
 import com.google.inject.Binder
 import com.google.inject.Guice
@@ -22,6 +21,7 @@ import org.junit.Test
 import org.scalatest.concurrent.IntegrationPatience
 import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.junit.AssertionsForJUnit
+import play.api.Application
 import play.api.libs.json.JsString
 import play.api.test.FakeRequest
 
@@ -38,7 +38,8 @@ object NestedMacroCourierTests {
 
   class CoursesResource @Inject()(
       implicit executionContext: ExecutionContext,
-      materializer: Materializer)
+      materializer: Materializer,
+      val application: Application)
       extends CourierCollectionResource[String, Course] {
     override def resourceName: String = CoursesResource.ID.topLevelName
 
@@ -93,7 +94,10 @@ object NestedMacroCourierTests {
     }
   }
 
-  class InstructorsResource @Inject()(implicit ec: ExecutionContext, mat: Materializer)
+  class InstructorsResource @Inject()(
+      implicit ec: ExecutionContext,
+      mat: Materializer,
+      val application: Application)
       extends CourierCollectionResource[String, Instructor]() {
     override def resourceName: String = "instructors"
 
@@ -117,6 +121,7 @@ class NestedMacroCourierTests
     override def configure(binder: Binder): Unit = {
       binder.bind(classOf[ExecutionContext]).toInstance(executionContext)
       binder.bind(classOf[Materializer]).toInstance(materializer)
+      binder.bind(classOf[Application]).toInstance(application)
     }
   }
 

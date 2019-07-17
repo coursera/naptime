@@ -16,6 +16,8 @@
 
 package org.coursera.naptime.actions
 
+import java.io.File
+
 import akka.actor.ActorSystem
 import akka.stream.ActorMaterializer
 import akka.stream.Materializer
@@ -30,6 +32,9 @@ import org.coursera.naptime.RestResponse
 import org.junit.After
 import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.exceptions.TestFailedException
+import play.api.Application
+import play.api.Mode
+import play.api.inject.guice.GuiceApplicationBuilder
 import play.api.test.FakeRequest
 
 import scala.concurrent.ExecutionContext
@@ -46,6 +51,7 @@ trait RestActionTester { this: ScalaFutures =>
   implicit protected def actorSystem: ActorSystem = internalActorSystem
   implicit protected def executionContext: ExecutionContext = internalExecutionContext
   implicit protected def materializer: Materializer = internalMaterializer
+  implicit protected val application: Application = RestActionTester.application
 
   @After
   def shutDownActorSystem(): Unit = {
@@ -106,4 +112,13 @@ trait RestActionTester { this: ScalaFutures =>
       }.get
     }
   }
+}
+
+object RestActionTester {
+
+  val application: Application = GuiceApplicationBuilder()
+    .in(new File("."))
+    .in(Mode.Test)
+    .build()
+
 }

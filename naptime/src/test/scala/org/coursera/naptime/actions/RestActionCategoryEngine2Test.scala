@@ -134,7 +134,10 @@ object RestActionCategoryEngine2Test {
    *
    * In general, it is a very bad idea to have multiple gets, creates, etc, in a single resource.
    */
-  class CourierTestResource(implicit val executionContext: ExecutionContext, val materializer: Materializer)
+  class CourierTestResource(
+      implicit val executionContext: ExecutionContext,
+      val materializer: Materializer,
+      val application: Application)
     extends TopLevelCollectionResource[String, Course] {
     import RestActionCategoryEngine2._
 
@@ -184,7 +187,10 @@ object RestActionCategoryEngine2Test {
     }
   }
 
-  class courierKeyedTestResource(implicit val executionContext: ExecutionContext, val materializer: Materializer)
+  class courierKeyedTestResource(
+      implicit val executionContext: ExecutionContext,
+      val materializer: Materializer,
+      val application: Application)
     extends TopLevelCollectionResource[EnrollmentId, Course] {
     import RestActionCategoryEngine2._
 

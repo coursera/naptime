@@ -37,6 +37,7 @@ import org.mockito.Matchers._
 import org.mockito.Mockito._
 import org.scalatest.junit.AssertionsForJUnit
 import org.scalatest.mockito.MockitoSugar
+import play.api.Application
 import play.api.libs.json.Json
 import play.api.libs.json.OFormat
 import play.api.mvc.AnyContentAsEmpty
@@ -58,7 +59,8 @@ object PlayNaptimeRouterIntegrationTest {
    */
   class PersonResource(
       implicit val executionContext: ExecutionContext,
-      val materializer: Materializer)
+      val materializer: Materializer,
+      val application: Application)
       extends TopLevelCollectionResource[String, Person] {
 
     val PATH_KEY: PathKey = ("myPathKeyId" ::: RootParsedPathKey).asInstanceOf[PathKey]
@@ -110,7 +112,8 @@ object PlayNaptimeRouterIntegrationTest {
 
   class FriendsResource(val parentResource: PersonResource)(
       implicit val executionContext: ExecutionContext,
-      val materializer: Materializer)
+      val materializer: Materializer,
+      val application: Application)
       extends CollectionResource[PersonResource, String, FriendshipInfo] {
     override def keyFormat: KeyFormat[KeyType] = KeyFormat.stringKeyFormat
 

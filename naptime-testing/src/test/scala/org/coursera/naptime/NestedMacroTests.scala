@@ -44,6 +44,7 @@ import org.mockito.Matchers.any
 import org.mockito.Matchers.{eq => e}
 import org.scalatest.junit.AssertionsForJUnit
 import org.scalatest.mockito.MockitoSugar
+import play.api.Application
 import play.api.libs.json.Json
 import play.api.libs.json.OFormat
 import play.api.mvc.AnyContent
@@ -60,7 +61,8 @@ import scala.concurrent.ExecutionContext
  */
 class PersonResource(
     implicit val executionContext: ExecutionContext,
-    val materializer: Materializer)
+    val materializer: Materializer,
+    val application: Application)
     extends TopLevelCollectionResource[String, Person] {
 
   val PATH_KEY: PathKey = ("myPathKeyId" ::: RootParsedPathKey).asInstanceOf[PathKey]
@@ -128,7 +130,8 @@ object FriendshipInfo {
 
 class FriendsResource(val parentResource: PersonResource)(
     implicit val executionContext: ExecutionContext,
-    val materializer: Materializer)
+    val materializer: Materializer,
+    val application: Application)
     extends CollectionResource[PersonResource, String, FriendshipInfo] {
   override def keyFormat: KeyFormat[KeyType] = KeyFormat.stringKeyFormat
 

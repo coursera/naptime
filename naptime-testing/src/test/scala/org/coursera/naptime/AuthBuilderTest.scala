@@ -9,6 +9,7 @@ import org.coursera.naptime.resources.TopLevelCollectionResource
 import org.junit.Test
 import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.junit.AssertionsForJUnit
+import play.api.Application
 import play.api.libs.json.Json
 import play.api.libs.json.OFormat
 import play.api.mvc.RequestHeader
@@ -101,7 +102,10 @@ object AuthBuilderTest {
     if (thing.name == name) AlwaysAccept else AlwaysReject
   }
 
-  class EngineersResource(implicit ec: ExecutionContext, mat: Materializer)
+  class EngineersResource(
+      implicit ec: ExecutionContext,
+      mat: Materializer,
+      val application: Application)
       extends TopLevelCollectionResource[Int, Engineer] {
     override val keyFormat: KeyFormat[Int] = KeyFormat.intKeyFormat
     override val resourceName: String = "tests"

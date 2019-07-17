@@ -35,6 +35,7 @@ import play.api.mvc.RequestHeader
 import play.api.test.FakeRequest
 import org.mockito.Mockito._
 import org.mockito.Matchers.any
+import play.api.Application
 
 import scala.concurrent.ExecutionContext
 
@@ -50,7 +51,10 @@ object ComplexEmailType {
     StringKeyFormat.caseClassFormat((ComplexEmailType.apply _).tupled, ComplexEmailType.unapply)
 }
 
-class Resource(implicit val executionContext: ExecutionContext, val materializer: Materializer)
+class Resource(
+    implicit val executionContext: ExecutionContext,
+    val materializer: Materializer,
+    val application: Application)
     extends TopLevelCollectionResource[String, Item] {
 
   override def keyFormat: KeyFormat[String] = KeyFormat.stringKeyFormat

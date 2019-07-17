@@ -14,6 +14,7 @@ import org.coursera.naptime.router2.Router
 import org.joda.time.DateTime
 import org.junit.Test
 import org.scalatest.junit.AssertionsForJUnit
+import play.api.Application
 import play.api.libs.json.Json
 import play.api.libs.json.OFormat
 import play.api.libs.json.OWrites
@@ -37,7 +38,8 @@ object IdInferenceMacroTests {
 
   class CourseResource(
       implicit override val executionContext: ExecutionContext,
-      override val materializer: Materializer)
+      override val materializer: Materializer,
+      val application: Application)
       extends CourierCollectionResource[CourseId, Course] {
     override def resourceName: String = "courses"
     def getAll = Nap.getAll(ctx => ???)
@@ -84,7 +86,8 @@ object IdInferenceMacroTests {
 
   class MembershipResource(
       implicit val executionContext: ExecutionContext,
-      val materializer: Materializer)
+      val materializer: Materializer,
+      val application: Application)
       extends TopLevelCollectionResource[MembershipId, Membership] {
     override def keyFormat: KeyFormat[KeyType] = MembershipId.keyFormat
     override implicit def resourceFormat: OFormat[Membership] = Membership.jsonFormat
@@ -106,7 +109,8 @@ object IdInferenceMacroTests {
 
   class PaymentResource(
       implicit val executionContext: ExecutionContext,
-      val materializer: Materializer)
+      val materializer: Materializer,
+      val application: Application)
       extends TopLevelCollectionResource[PaymentId, Membership] {
     override def keyFormat: KeyFormat[KeyType] = PaymentId.keyFormat
     override implicit def resourceFormat: OFormat[Membership] = Membership.jsonFormat
@@ -120,7 +124,7 @@ object IdInferenceMacroTests {
   }
 }
 
-class IdInferenceMacroTests extends AssertionsForJUnit {
+class IdInferenceMacroTests extends AssertionsForJUnit with ResourceTestImplicits {
 
   @Test
   def coursesTypesGeneration(): Unit = {

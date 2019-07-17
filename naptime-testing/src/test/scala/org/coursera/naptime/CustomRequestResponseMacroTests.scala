@@ -23,6 +23,7 @@ import org.coursera.naptime.router2._
 import org.junit.Test
 import org.scalatest.junit.AssertionsForJUnit
 import org.scalatest.mockito.MockitoSugar
+import play.api.Application
 import play.api.libs.json.Json
 import play.api.libs.json.OFormat
 
@@ -44,7 +45,8 @@ object CustomResponse {
 
 class AsymmetricResource(
     implicit val executionContext: ExecutionContext,
-    val materializer: Materializer)
+    val materializer: Materializer,
+    val application: Application)
     extends TopLevelCollectionResource[String, Item] {
 
   override def keyFormat: KeyFormat[String] = KeyFormat.stringKeyFormat
