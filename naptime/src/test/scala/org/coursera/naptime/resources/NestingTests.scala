@@ -17,7 +17,7 @@
 package org.coursera.naptime.resources
 
 import org.coursera.common.jsonformat.JsonFormats.Implicits.dateTimeFormat
-import org.coursera.naptime.ResourceTestImplicits
+import org.coursera.naptime.ImplicitTestApplication
 import org.coursera.naptime.model.KeyFormat
 import org.coursera.naptime.path.ParseFailure
 import org.coursera.naptime.path.ParseSuccess
@@ -60,7 +60,7 @@ object NestingTests {
   }
 }
 
-class NestingTests extends AssertionsForJUnit with ResourceTestImplicits {
+class NestingTests extends AssertionsForJUnit with ImplicitTestApplication {
 
   @Test
   def topLevelRouting(): Unit = {

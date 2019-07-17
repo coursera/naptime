@@ -90,7 +90,7 @@ object AsymmetricResource {
 class CustomRequestResponseMacroTests
     extends AssertionsForJUnit
     with MockitoSugar
-    with ResourceTestImplicits {
+    with ImplicitTestApplication {
 
   val schema = AsymmetricResource.routerBuilder.schema
 

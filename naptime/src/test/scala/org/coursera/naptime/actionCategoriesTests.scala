@@ -118,7 +118,7 @@ object RestActionCategoryEngineTest {
 class RestActionCategoryEngineTest
     extends AssertionsForJUnit
     with ScalaFutures
-    with ResourceTestImplicits {
+    with ImplicitTestApplication {
   import RestActionCategoryEngineTest._
 
   override def spanScaleFactor: Double = 10

@@ -113,7 +113,7 @@ object IdInferenceMacroTests {
   }
 }
 
-class IdInferenceMacroTests extends AssertionsForJUnit with ResourceTestImplicits {
+class IdInferenceMacroTests extends AssertionsForJUnit with ImplicitTestApplication {
 
   @Test
   def coursesTypesGeneration(): Unit = {

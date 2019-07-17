@@ -17,7 +17,7 @@
 package org.coursera.naptime.router2
 
 import org.coursera.common.stringkey.StringKeyFormat
-import org.coursera.naptime.ResourceTestImplicits
+import org.coursera.naptime.ImplicitTestApplication
 import org.coursera.naptime.actions.NaptimeActionSerializer.AnyWrites._
 import org.coursera.naptime.model.KeyFormat
 import org.coursera.naptime.path.:::
@@ -291,7 +291,7 @@ object NestingCollectionResourceRouterTest {
 class NestingCollectionResourceRouterTest
     extends AssertionsForJUnit
     with MockitoSugar
-    with ResourceTestImplicits {
+    with ImplicitTestApplication {
   import NestingCollectionResourceRouterTest._
 
   val resourceInstance = new MyResource

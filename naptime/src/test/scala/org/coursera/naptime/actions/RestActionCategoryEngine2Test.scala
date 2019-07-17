@@ -33,7 +33,7 @@ import org.coursera.naptime.QueryFields
 import org.coursera.naptime.QueryIncludes
 import org.coursera.naptime.RequestPagination
 import org.coursera.naptime.ResourceName
-import org.coursera.naptime.ResourceTestImplicits
+import org.coursera.naptime.ImplicitTestApplication
 import org.coursera.naptime.actions.util.Validators
 import org.coursera.naptime.resources.TopLevelCollectionResource
 import org.junit.Test
@@ -304,7 +304,7 @@ object RestActionCategoryEngine2Test {
   }
 }
 
-class RestActionCategoryEngine2Test extends AssertionsForJUnit with ScalaFutures with ResourceTestImplicits {
+class RestActionCategoryEngine2Test extends AssertionsForJUnit with ScalaFutures with ImplicitTestApplication {
   import RestActionCategoryEngine2Test._
   // Increase timeout a bit.
   override def spanScaleFactor: Double = 10

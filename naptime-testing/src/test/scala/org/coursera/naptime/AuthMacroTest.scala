@@ -60,7 +60,7 @@ object AuthorizedResource {
   val routerBuilder = Router.build[AuthorizedResource]
 }
 
-class AuthMacroTest extends AssertionsForJUnit with MockitoSugar with ResourceTestImplicits {
+class AuthMacroTest extends AssertionsForJUnit with MockitoSugar with ImplicitTestApplication {
 
   val schema = AuthorizedResource.routerBuilder.schema
 

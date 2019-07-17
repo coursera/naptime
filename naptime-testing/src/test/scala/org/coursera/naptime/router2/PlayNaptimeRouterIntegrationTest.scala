@@ -24,7 +24,7 @@ import org.coursera.naptime.model.Keyed
 import org.coursera.naptime.ComplexEmailType
 import org.coursera.naptime.NaptimeModule
 import org.coursera.naptime.Ok
-import org.coursera.naptime.ResourceTestImplicits
+import org.coursera.naptime.ImplicitTestApplication
 import org.coursera.naptime.path.ParseFailure
 import org.coursera.naptime.path.ParseSuccess
 import org.coursera.naptime.path.RootParsedPathKey
@@ -151,7 +151,7 @@ object PlayNaptimeRouterIntegrationTest {
 class PlayNaptimeRouterIntegrationTest
     extends AssertionsForJUnit
     with MockitoSugar
-    with ResourceTestImplicits {
+    with ImplicitTestApplication {
   import PlayNaptimeRouterIntegrationTest._
 
   val peopleInstanceImpl = new PersonResource

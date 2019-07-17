@@ -105,7 +105,7 @@ object NestedMacroCourierTests {
 class NestedMacroCourierTests
     extends AssertionsForJUnit
     with ScalaFutures
-    with ResourceTestImplicits
+    with ImplicitTestApplication
     with IntegrationPatience {
 
   val implicitsModule = new Module {

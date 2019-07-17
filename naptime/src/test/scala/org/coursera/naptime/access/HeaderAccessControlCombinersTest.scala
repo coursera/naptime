@@ -17,7 +17,7 @@
 package org.coursera.naptime.access
 
 import org.coursera.naptime.NaptimeActionException
-import org.coursera.naptime.ResourceTestImplicits
+import org.coursera.naptime.ImplicitTestApplication
 import org.coursera.naptime.access.authenticator.Authenticator
 import org.coursera.naptime.access.authenticator.Decorator
 import org.coursera.naptime.access.authenticator.HeaderAuthenticationParser
@@ -34,7 +34,7 @@ import play.api.test.FakeRequest
 class HeaderAccessControlCombinersTest
     extends AssertionsForJUnit
     with ScalaFutures
-    with ResourceTestImplicits {
+    with ImplicitTestApplication {
 
   import HeaderAccessControlCombinersTest._
 

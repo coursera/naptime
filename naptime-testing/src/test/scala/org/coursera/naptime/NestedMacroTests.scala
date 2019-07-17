@@ -166,7 +166,7 @@ object FriendsResource {
   val routerBuilder = Router.build[FriendsResource]
 }
 
-class NestedMacroTests extends AssertionsForJUnit with MockitoSugar with ResourceTestImplicits {
+class NestedMacroTests extends AssertionsForJUnit with MockitoSugar with ImplicitTestApplication {
 
   val peopleInstanceImpl = new PersonResource
   val peopleInstance = mock[PersonResource]

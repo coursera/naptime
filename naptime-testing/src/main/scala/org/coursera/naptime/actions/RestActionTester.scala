@@ -37,25 +37,24 @@ import play.api.Mode
 import play.api.inject.guice.GuiceApplicationBuilder
 import play.api.test.FakeRequest
 
-import scala.concurrent.ExecutionContext
 import scala.util.Try
 
 /**
  * Mix in to resource unit tests to invoke resource actions with `.testAction`.
  */
 trait RestActionTester { this: ScalaFutures =>
-  private[this] val internalActorSystem: ActorSystem = ActorSystem("test")
-  private[this] val internalExecutionContext: ExecutionContext = actorSystem.dispatcher
-  private[this] val internalMaterializer: Materializer = ActorMaterializer()
+  implicit val application: Application = GuiceApplicationBuilder()
+    .in(new File("."))
+    .in(Mode.Test)
+    .build()
 
-  implicit protected def actorSystem: ActorSystem = internalActorSystem
-  implicit protected def executionContext: ExecutionContext = internalExecutionContext
-  implicit protected def materializer: Materializer = internalMaterializer
-  implicit protected val application: Application = RestActionTester.application
+  implicit val ec = application.actorSystem.dispatcher
+  implicit val materializer = application.materializer
 
   @After
-  def shutDownActorSystem(): Unit = {
-    internalActorSystem.terminate()
+  def shutDownApplication(): Unit = {
+    application.actorSystem.terminate()
+    application.stop()
   }
 
   /**
@@ -112,13 +111,4 @@ trait RestActionTester { this: ScalaFutures =>
       }.get
     }
   }
-}
-
-object RestActionTester {
-
-  val application: Application = GuiceApplicationBuilder()
-    .in(new File("."))
-    .in(Mode.Test)
-    .build()
-
 }

@@ -7,7 +7,7 @@ import play.api.Application
 import play.api.Mode
 import play.api.inject.guice.GuiceApplicationBuilder
 
-trait ResourceTestImplicits {
+trait ImplicitTestApplication {
 
   implicit val application: Application = GuiceApplicationBuilder()
     .in(new File("."))
@@ -18,7 +18,8 @@ trait ResourceTestImplicits {
   implicit val materializer = application.materializer
 
   @After
-  def shutDownActorSystem(): Unit = {
+  def shutDownApplication(): Unit = {
+    application.actorSystem.terminate()
     application.stop()
   }
 }

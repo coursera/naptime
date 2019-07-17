@@ -16,14 +16,14 @@
 
 package org.coursera.naptime.access.authenticator
 
-import org.coursera.naptime.ResourceTestImplicits
+import org.coursera.naptime.ImplicitTestApplication
 import org.junit.Test
 import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.junit.AssertionsForJUnit
 
 import scala.concurrent.Future
 
-class DecoratorTest extends AssertionsForJUnit with ScalaFutures with ResourceTestImplicits {
+class DecoratorTest extends AssertionsForJUnit with ScalaFutures with ImplicitTestApplication {
 
   @Test
   def identity(): Unit = {
