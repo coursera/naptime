@@ -33,6 +33,7 @@ import org.mockito.Mockito.when
 import org.mockito.Mockito.verify
 import org.scalatest.junit.AssertionsForJUnit
 import org.scalatest.mockito.MockitoSugar
+import play.api.Application
 import play.api.libs.json.Json
 import play.api.libs.json.OFormat
 import play.api.mvc.RequestHeader
@@ -49,7 +50,10 @@ object NestingCollectionResourceRouterTest {
   /**
    * A sample top-level resource, with very standard / normal Naptime operations.
    */
-  class MyResource(implicit val executionContext: ExecutionContext, val materializer: Materializer)
+  class MyResource(
+      implicit val executionContext: ExecutionContext,
+      val materializer: Materializer,
+      val application: Application)
       extends TopLevelCollectionResource[String, Person] {
     override def keyFormat: KeyFormat[KeyType] = KeyFormat.stringKeyFormat
     override implicit def resourceFormat: OFormat[Person] = Person.jsonFormat
@@ -171,7 +175,8 @@ object NestingCollectionResourceRouterTest {
    */
   class MyNestedResource(val parentResource: MyResource)(
       implicit val executionContext: ExecutionContext,
-      val materializer: Materializer)
+      val materializer: Materializer,
+      val application: Application)
       extends CollectionResource[MyResource, String, Person] {
 
     override def keyFormat: KeyFormat[KeyType] = KeyFormat.stringKeyFormat

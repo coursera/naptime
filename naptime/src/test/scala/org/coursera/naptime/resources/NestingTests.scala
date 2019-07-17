@@ -28,6 +28,7 @@ import org.coursera.naptime.resources.NestingTests.PeopleResource
 import org.joda.time.DateTime
 import org.junit.Test
 import org.scalatest.junit.AssertionsForJUnit
+import play.api.Application
 import play.api.libs.json.Json
 import play.api.libs.json.OFormat
 
@@ -41,7 +42,8 @@ object NestingTests {
 
   class PeopleResource(
       implicit val executionContext: ExecutionContext,
-      val materializer: Materializer)
+      val materializer: Materializer,
+      val application: Application)
       extends TopLevelCollectionResource[String, Person] {
 
     override def keyFormat = KeyFormat.stringKeyFormat
@@ -56,7 +58,8 @@ object NestingTests {
 
   class FriendInfoResource(peopleResource: PeopleResource)(
       implicit val executionContext: ExecutionContext,
-      val materializer: Materializer)
+      val materializer: Materializer,
+      val application: Application)
       extends CollectionResource[PeopleResource, String, FriendInfo] {
 
     override def keyFormat = KeyFormat.stringKeyFormat

@@ -30,9 +30,7 @@ import org.mockito.Matchers.any
 import org.scalatest.junit.AssertionsForJUnit
 import org.scalatest.mockito.MockitoSugar
 import play.api.libs.streams.Accumulator
-import play.api.mvc.EssentialAction
 import play.api.mvc.RequestHeader
-import play.api.mvc.RequestTaggingHandler
 import play.api.mvc.Result
 import play.api.test.FakeRequest
 

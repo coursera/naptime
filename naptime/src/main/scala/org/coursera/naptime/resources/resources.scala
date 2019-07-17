@@ -32,6 +32,7 @@ import org.coursera.naptime.path.RootParsedPathKey
 import org.coursera.naptime.path.RootPathParser
 import org.coursera.naptime.path.:::
 import org.coursera.naptime.path.UrlParseResult
+import play.api.Application
 import play.api.libs.json.OFormat
 import play.api.mvc.AnyContent
 import play.api.mvc.BodyParsers
@@ -85,6 +86,7 @@ trait CollectionResource[ParentResource <: Resource[_], K, M] extends Resource[M
 
   implicit protected val executionContext: ExecutionContext
   implicit protected val materializer: Materializer
+  val application: Application
 
   /**
    * The (Hlist-like) collection of ancestor keys has this type.
@@ -133,7 +135,7 @@ trait CollectionResource[ParentResource <: Resource[_], K, M] extends Resource[M
     new RestActionBuilder[RACType, Unit, AnyContent, K, M, ResponseType](
       HeaderAccessControl.allowAll,
       BodyParsers.parse.default,
-      PartialFunction.empty)(keyFormat, resourceFormat, executionContext, materializer)
+      PartialFunction.empty)(keyFormat, resourceFormat, executionContext, materializer, application)
 
   def OkIfPresent[T](a: Option[T]): RestResponse[T] = {
     a.map(Ok(_))

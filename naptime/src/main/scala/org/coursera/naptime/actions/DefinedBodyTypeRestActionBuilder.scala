@@ -20,6 +20,7 @@ import akka.stream.Materializer
 import org.coursera.naptime.RestError
 import org.coursera.naptime.access.HeaderAccessControl
 import org.coursera.naptime.model.KeyFormat
+import play.api.Application
 import play.api.libs.json.OFormat
 import play.api.mvc.BodyParser
 
@@ -44,7 +45,8 @@ class DefinedBodyTypeRestActionBuilder[
     implicit keyFormat: KeyFormat[ResourceKeyType],
     resourceFormat: OFormat[ResourceType],
     ec: ExecutionContext,
-    mat: Materializer)
+    mat: Materializer,
+    application: Application)
     extends RestActionBuilderTerminators[
       RACType,
       AuthType,

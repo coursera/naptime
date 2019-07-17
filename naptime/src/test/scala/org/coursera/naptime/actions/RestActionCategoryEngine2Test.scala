@@ -40,6 +40,7 @@ import org.coursera.naptime.resources.TopLevelCollectionResource
 import org.junit.Test
 import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.junit.AssertionsForJUnit
+import play.api.Application
 import play.api.http.HeaderNames
 import play.api.http.HttpEntity
 import play.api.http.Status
@@ -76,7 +77,10 @@ object RestActionCategoryEngine2Test {
    *
    * In general, it is a very bad idea to have multiple gets, creates, etc, in a single resource.
    */
-  class PlayJsonTestResource(implicit val executionContext: ExecutionContext, val materializer: Materializer)
+  class PlayJsonTestResource(
+      implicit val executionContext: ExecutionContext,
+      val materializer: Materializer,
+      val application: Application)
     extends TopLevelCollectionResource[Int, Person] {
     import RestActionCategoryEngine2._
 

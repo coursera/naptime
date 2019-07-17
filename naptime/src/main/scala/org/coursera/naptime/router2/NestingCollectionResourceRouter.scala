@@ -27,11 +27,8 @@ import org.coursera.naptime.resources.CollectionResource
 import play.api.http.Status
 import play.api.libs.json.Json
 import play.api.libs.streams.Accumulator
-import play.api.libs.typedmap.TypedEntry
 import play.api.libs.typedmap.TypedKey
-import play.api.mvc.EssentialAction
 import play.api.mvc.RequestHeader
-import play.api.mvc.RequestTaggingHandler
 import play.api.mvc.Result
 import play.api.mvc.Results
 

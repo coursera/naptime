@@ -24,6 +24,7 @@ import org.coursera.naptime.PaginationConfiguration
 import org.coursera.naptime.RestContext
 import org.coursera.naptime.RestError
 import org.coursera.naptime.RestResponse
+import play.api.Application
 import play.api.libs.json.OFormat
 import play.api.mvc.BodyParser
 
@@ -48,7 +49,8 @@ class RestActionBodyBuilder[
     implicit keyFormat: KeyFormat[ResourceKeyType],
     resourceFormat: OFormat[ResourceType],
     ec: ExecutionContext,
-    mat: Materializer) { self =>
+    mat: Materializer,
+    application: Application) { self =>
 
   type CategoryEngine =
     RestActionCategoryEngine[RACType, ResourceKeyType, ResourceType, ResponseType]
@@ -95,6 +97,7 @@ class RestActionBodyBuilder[
       override val resourceFormat = self.resourceFormat
       override val executionContext = ec
       override val materializer = mat
+      override val maybeApplication = Some(application)
 
       override def apply(
           context: RestContext[AuthType, BodyType]): Future[RestResponse[ResponseType]] =

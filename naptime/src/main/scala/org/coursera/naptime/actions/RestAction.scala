@@ -32,15 +32,14 @@ import org.coursera.naptime.RestResponse
 import org.coursera.naptime.ari.Response
 import org.coursera.naptime.model.KeyFormat
 import org.coursera.naptime.router2.RouteAction
+import play.api.Application
 import play.api.Play
 import play.api.libs.json.OFormat
 import play.api.libs.streams.Accumulator
 import play.api.libs.typedmap.TypedKey
 import play.api.mvc.BodyParser
-import play.api.mvc.EssentialAction
 import play.api.mvc.Request
 import play.api.mvc.RequestHeader
-import play.api.mvc.RequestTaggingHandler
 import play.api.mvc.Result
 
 import scala.concurrent.ExecutionContext
@@ -78,6 +77,7 @@ trait RestAction[RACType, AuthType, BodyType, KeyType, ResourceType, ResponseTyp
   protected implicit val resourceFormat: OFormat[ResourceType]
   protected implicit val executionContext: ExecutionContext
   protected implicit val materializer: Materializer
+  protected def maybeApplication: Option[Application]
 
   /**
    * High level API, also used for testing.
@@ -147,7 +147,7 @@ trait RestAction[RACType, AuthType, BodyType, KeyType, ResourceType, ResponseTyp
                 }
 
                 // Implementation below borrowed from Play's Action.scala
-                Play.maybeApplication
+                maybeApplication
                   .map { app =>
                     play.utils.Threads.withContextClassLoader(app.classloader) {
                       run()
@@ -206,7 +206,7 @@ trait RestAction[RACType, AuthType, BodyType, KeyType, ResourceType, ResponseTyp
           }
 
           // Implementation below borrowed from Play's Action.scala
-          Play.maybeApplication
+          maybeApplication
             .map { app =>
               play.utils.Threads.withContextClassLoader(app.classloader) {
                 run()
