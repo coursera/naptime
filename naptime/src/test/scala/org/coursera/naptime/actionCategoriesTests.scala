@@ -12,6 +12,7 @@ import org.coursera.naptime.resources.TopLevelCollectionResource
 import org.junit.Test
 import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.junit.AssertionsForJUnit
+import play.api.Application
 import play.api.http.HeaderNames
 import play.api.http.HttpEntity
 import play.api.http.Status
@@ -46,7 +47,10 @@ object RestActionCategoryEngineTest {
    * Note: because we're not using routing, we can get away with having multiple get's / etc.
    * In general, it is a very bad idea to have multiple gets / etc. in a single resource.
    */
-  class SampleResource(implicit ec: ExecutionContext, mat: Materializer)
+  class SampleResource(
+      implicit ec: ExecutionContext,
+      mat: Materializer,
+      val application: Application)
       extends TopLevelCollectionResource[Int, EngineTestResource] {
     override val keyFormat: KeyFormat[Int] = KeyFormat.intKeyFormat
     override val resourceName: String = "tests"
@@ -114,7 +118,7 @@ object RestActionCategoryEngineTest {
 class RestActionCategoryEngineTest
     extends AssertionsForJUnit
     with ScalaFutures
-    with ResourceTestImplicits {
+    with ImplicitTestApplication {
   import RestActionCategoryEngineTest._
 
   override def spanScaleFactor: Double = 10

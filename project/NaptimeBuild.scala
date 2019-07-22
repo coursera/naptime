@@ -25,8 +25,8 @@ import play.sbt.PlayScala
 
 object NaptimeBuild extends Build with NamedDependencies with PluginVersionProvider {
 
-  override def playVersion = "2.6.7" // Play version is defined here, and in project/plugins.sbt
-  override def playJsonVersion = "2.6.7"
+  override def playVersion = "2.7.2" // Play version is defined here, and in project/plugins.sbt
+  override def playJsonVersion = "2.7.2"
   override def courierVersion = "2.1.4"
 
   lazy val root = project

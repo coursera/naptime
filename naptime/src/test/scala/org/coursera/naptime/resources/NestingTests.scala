@@ -16,9 +16,8 @@
 
 package org.coursera.naptime.resources
 
-import akka.stream.Materializer
 import org.coursera.common.jsonformat.JsonFormats.Implicits.dateTimeFormat
-import org.coursera.naptime.ResourceTestImplicits
+import org.coursera.naptime.ImplicitTestApplication
 import org.coursera.naptime.model.KeyFormat
 import org.coursera.naptime.path.ParseFailure
 import org.coursera.naptime.path.ParseSuccess
@@ -28,10 +27,9 @@ import org.coursera.naptime.resources.NestingTests.PeopleResource
 import org.joda.time.DateTime
 import org.junit.Test
 import org.scalatest.junit.AssertionsForJUnit
+import play.api.Application
 import play.api.libs.json.Json
 import play.api.libs.json.OFormat
-
-import scala.concurrent.ExecutionContext
 
 object NestingTests {
   case class Person(name: String)
@@ -39,9 +37,7 @@ object NestingTests {
     implicit val jsonFormat: OFormat[Person] = Json.format[Person]
   }
 
-  class PeopleResource(
-      implicit val executionContext: ExecutionContext,
-      val materializer: Materializer)
+  class PeopleResource(implicit val application: Application)
       extends TopLevelCollectionResource[String, Person] {
 
     override def keyFormat = KeyFormat.stringKeyFormat
@@ -54,9 +50,7 @@ object NestingTests {
     implicit val jsonFormat: OFormat[FriendInfo] = Json.format[FriendInfo]
   }
 
-  class FriendInfoResource(peopleResource: PeopleResource)(
-      implicit val executionContext: ExecutionContext,
-      val materializer: Materializer)
+  class FriendInfoResource(peopleResource: PeopleResource)(implicit val application: Application)
       extends CollectionResource[PeopleResource, String, FriendInfo] {
 
     override def keyFormat = KeyFormat.stringKeyFormat
@@ -66,7 +60,7 @@ object NestingTests {
   }
 }
 
-class NestingTests extends AssertionsForJUnit with ResourceTestImplicits {
+class NestingTests extends AssertionsForJUnit with ImplicitTestApplication {
 
   @Test
   def topLevelRouting(): Unit = {

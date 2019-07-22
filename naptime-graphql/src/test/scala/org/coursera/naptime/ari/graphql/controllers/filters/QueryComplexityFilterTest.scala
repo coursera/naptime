@@ -1,9 +1,9 @@
 package org.coursera.naptime.ari.graphql.controllers.filters
 
-import org.coursera.naptime.ResourceTestImplicits
+import org.coursera.naptime.ImplicitTestApplication
 import org.junit.Test
 
-class QueryComplexityFilterTest extends FilterTest with ResourceTestImplicits {
+class QueryComplexityFilterTest extends FilterTest with ImplicitTestApplication {
 
   val config = ComplexityFilterConfiguration.DEFAULT
   val filter = new QueryComplexityFilter(graphqlSchemaProvider, config)

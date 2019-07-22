@@ -23,6 +23,7 @@ import org.coursera.naptime.model.KeyFormat
 import org.coursera.naptime.NaptimeActionException
 import org.coursera.naptime.RestError
 import org.coursera.naptime.access.HeaderAccessControl
+import play.api.Application
 import play.api.http.Status
 import play.api.libs.json.JsArray
 import play.api.libs.json.JsError
@@ -50,8 +51,7 @@ class RestActionBuilder[RACType, AuthType, BodyType, ResourceKeyType, ResourceTy
     errorHandler: PartialFunction[Throwable, RestError])(
     implicit keyFormat: KeyFormat[ResourceKeyType],
     resourceFormat: OFormat[ResourceType],
-    ec: ExecutionContext,
-    mat: Materializer)
+    application: Application)
     extends RestActionBuilderTerminators[
       RACType,
       AuthType,
@@ -59,6 +59,8 @@ class RestActionBuilder[RACType, AuthType, BodyType, ResourceKeyType, ResourceTy
       ResourceKeyType,
       ResourceType,
       ResponseType] {
+
+  implicit val ec: ExecutionContext = application.actorSystem.dispatcher
 
   /**
    * Set the body type.

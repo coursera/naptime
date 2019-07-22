@@ -16,7 +16,6 @@
 
 package org.coursera.naptime
 
-import akka.stream.Materializer
 import org.coursera.naptime.access.HeaderAccessControl
 import org.coursera.naptime.model.KeyFormat
 import org.coursera.naptime.resources.TopLevelCollectionResource
@@ -24,6 +23,7 @@ import org.coursera.naptime.router2._
 import org.junit.Test
 import org.scalatest.junit.AssertionsForJUnit
 import org.scalatest.mockito.MockitoSugar
+import play.api.Application
 import play.api.libs.json.OFormat
 import play.api.mvc.RequestHeader
 
@@ -36,9 +36,7 @@ object CustomAuthorizer extends HeaderAccessControl[CustomAuth] {
   override private[naptime] def check(authInfo: CustomAuth) = ???
 }
 
-class AuthorizedResource(
-    implicit val executionContext: ExecutionContext,
-    val materializer: Materializer)
+class AuthorizedResource(implicit val application: Application)
     extends TopLevelCollectionResource[String, Item] {
 
   override def keyFormat: KeyFormat[String] = KeyFormat.stringKeyFormat
@@ -62,7 +60,7 @@ object AuthorizedResource {
   val routerBuilder = Router.build[AuthorizedResource]
 }
 
-class AuthMacroTest extends AssertionsForJUnit with MockitoSugar with ResourceTestImplicits {
+class AuthMacroTest extends AssertionsForJUnit with MockitoSugar with ImplicitTestApplication {
 
   val schema = AuthorizedResource.routerBuilder.schema
 

@@ -24,6 +24,7 @@ import org.coursera.naptime.PaginationConfiguration
 import org.coursera.naptime.RestContext
 import org.coursera.naptime.RestError
 import org.coursera.naptime.RestResponse
+import play.api.Application
 import play.api.libs.json.OFormat
 import play.api.mvc.BodyParser
 
@@ -47,8 +48,7 @@ class RestActionBodyBuilder[
     errorHandler: PartialFunction[Throwable, RestError])(
     implicit keyFormat: KeyFormat[ResourceKeyType],
     resourceFormat: OFormat[ResourceType],
-    ec: ExecutionContext,
-    mat: Materializer) { self =>
+    application: Application) { self =>
 
   type CategoryEngine =
     RestActionCategoryEngine[RACType, ResourceKeyType, ResourceType, ResponseType]
@@ -84,6 +84,8 @@ class RestActionBodyBuilder[
       fields: ResourceFields[ResourceType],
       _paginationConfiguration: PaginationConfiguration): BuiltAction = {
 
+    val app = application
+
     new RestAction[RACType, AuthType, BodyType, ResourceKeyType, ResourceType, ResponseType] {
       override def restAuthGenerator = authGeneratorOrAuth
       override def restBodyParser = bodyParser
@@ -93,12 +95,12 @@ class RestActionBodyBuilder[
       override def errorHandler: PartialFunction[Throwable, RestError] = self.errorHandler
       override val keyFormat = self.keyFormat
       override val resourceFormat = self.resourceFormat
-      override val executionContext = ec
-      override val materializer = mat
+      override val application = app
 
       override def apply(
           context: RestContext[AuthType, BodyType]): Future[RestResponse[ResponseType]] =
         Futures.safelyCall(fn(context))
+
     }
   }
 }

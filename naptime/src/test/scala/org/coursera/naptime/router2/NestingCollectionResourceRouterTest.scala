@@ -16,9 +16,8 @@
 
 package org.coursera.naptime.router2
 
-import akka.stream.Materializer
 import org.coursera.common.stringkey.StringKeyFormat
-import org.coursera.naptime.ResourceTestImplicits
+import org.coursera.naptime.ImplicitTestApplication
 import org.coursera.naptime.actions.NaptimeActionSerializer.AnyWrites._
 import org.coursera.naptime.model.KeyFormat
 import org.coursera.naptime.path.:::
@@ -33,12 +32,11 @@ import org.mockito.Mockito.when
 import org.mockito.Mockito.verify
 import org.scalatest.junit.AssertionsForJUnit
 import org.scalatest.mockito.MockitoSugar
+import play.api.Application
 import play.api.libs.json.Json
 import play.api.libs.json.OFormat
 import play.api.mvc.RequestHeader
 import play.api.test.FakeRequest
-
-import scala.concurrent.ExecutionContext
 
 object NestingCollectionResourceRouterTest {
   case class Person(name: String)
@@ -49,7 +47,7 @@ object NestingCollectionResourceRouterTest {
   /**
    * A sample top-level resource, with very standard / normal Naptime operations.
    */
-  class MyResource(implicit val executionContext: ExecutionContext, val materializer: Materializer)
+  class MyResource(implicit val application: Application)
       extends TopLevelCollectionResource[String, Person] {
     override def keyFormat: KeyFormat[KeyType] = KeyFormat.stringKeyFormat
     override implicit def resourceFormat: OFormat[Person] = Person.jsonFormat
@@ -169,9 +167,7 @@ object NestingCollectionResourceRouterTest {
    * A nested resource that has more sophisticated parameters to its Naptime operations to test the
    * capabilities of the routing system.
    */
-  class MyNestedResource(val parentResource: MyResource)(
-      implicit val executionContext: ExecutionContext,
-      val materializer: Materializer)
+  class MyNestedResource(val parentResource: MyResource)(implicit val application: Application)
       extends CollectionResource[MyResource, String, Person] {
 
     override def keyFormat: KeyFormat[KeyType] = KeyFormat.stringKeyFormat
@@ -295,7 +291,7 @@ object NestingCollectionResourceRouterTest {
 class NestingCollectionResourceRouterTest
     extends AssertionsForJUnit
     with MockitoSugar
-    with ResourceTestImplicits {
+    with ImplicitTestApplication {
   import NestingCollectionResourceRouterTest._
 
   val resourceInstance = new MyResource
@@ -418,11 +414,11 @@ class NestingCollectionResourceRouterTest
     assert(result.isDefined, s"Router did not correctly route $request")
     val taggedRequest = result.get.tagRequest(request)
     assert(
-      taggedRequest.tags.contains(Router.NAPTIME_RESOURCE_NAME),
+      taggedRequest.attrs.contains(Router.NAPTIME_RESOURCE_KEY),
       "Router result (typically a RestAction) did not tag the request properly.")
     Option(expectedMethodName).foreach { methodName =>
       assert(
-        taggedRequest.tags.get(Router.NAPTIME_METHOD_NAME).contains(methodName),
+        taggedRequest.attrs.get(Router.NAPTIME_METHOD_KEY).contains(methodName),
         "method names did not match.")
     }
   }
@@ -438,11 +434,11 @@ class NestingCollectionResourceRouterTest
     assert(result.isDefined, s"Router did not correctly route $request")
     val taggedRequest = result.get.tagRequest(request)
     assert(
-      taggedRequest.tags.contains(Router.NAPTIME_RESOURCE_NAME),
+      taggedRequest.attrs.contains(Router.NAPTIME_RESOURCE_KEY),
       "Router result (typically a RestAction) did not tag the request properly.")
     Option(expectedMethodName).foreach { methodName =>
       assert(
-        taggedRequest.tags.get(Router.NAPTIME_METHOD_NAME).contains(methodName),
+        taggedRequest.attrs.get(Router.NAPTIME_METHOD_KEY).contains(methodName),
         "method names did not match.")
     }
   }

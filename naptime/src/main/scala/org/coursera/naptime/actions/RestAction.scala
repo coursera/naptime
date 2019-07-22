@@ -31,16 +31,15 @@ import org.coursera.naptime.RestError
 import org.coursera.naptime.RestResponse
 import org.coursera.naptime.ari.Response
 import org.coursera.naptime.model.KeyFormat
-import play.api.Play
+import org.coursera.naptime.router2.RouteAction
+import play.api.Application
 import play.api.libs.json.OFormat
 import play.api.libs.streams.Accumulator
+import play.api.libs.typedmap.TypedKey
 import play.api.mvc.BodyParser
-import play.api.mvc.EssentialAction
 import play.api.mvc.Request
 import play.api.mvc.RequestHeader
-import play.api.mvc.RequestTaggingHandler
 import play.api.mvc.Result
-import play.api.mvc.request.RequestAttrKey
 
 import scala.concurrent.ExecutionContext
 import scala.concurrent.Future
@@ -63,8 +62,7 @@ import scala.concurrent.Future
  * TODO(saeta): Enforce RACType extends from RestActionCategory.
  */
 trait RestAction[RACType, AuthType, BodyType, KeyType, ResourceType, ResponseType]
-    extends EssentialAction
-    with RequestTaggingHandler
+    extends RouteAction
     with StrictLogging {
 
   protected[actions] def restAuthGenerator: AuthGenerator[BodyType, AuthType]
@@ -76,8 +74,9 @@ trait RestAction[RACType, AuthType, BodyType, KeyType, ResourceType, ResponseTyp
   protected def errorHandler: PartialFunction[Throwable, RestError]
   protected implicit val keyFormat: KeyFormat[KeyType]
   protected implicit val resourceFormat: OFormat[ResourceType]
-  protected implicit val executionContext: ExecutionContext
-  protected implicit val materializer: Materializer
+  protected val application: Application
+  protected implicit def executionContext: ExecutionContext = application.actorSystem.dispatcher
+  protected implicit def materializer: Materializer = application.materializer
 
   /**
    * High level API, also used for testing.
@@ -147,17 +146,9 @@ trait RestAction[RACType, AuthType, BodyType, KeyType, ResourceType, ResponseTyp
                 }
 
                 // Implementation below borrowed from Play's Action.scala
-                Play.maybeApplication
-                  .map { app =>
-                    play.utils.Threads.withContextClassLoader(app.classloader) {
-                      run()
-                    }
-                  }
-                  .getOrElse {
-                    // Run without the app class loader. This is important if we're running low-level
-                    // tests (e.g. router tests)
-                    run()
-                  }
+                play.utils.Threads.withContextClassLoader(application.classloader) {
+                  run()
+                }
               }
               responseTry.recover {
                 case e: NaptimeParseError      => Future.failed(e)
@@ -206,17 +197,9 @@ trait RestAction[RACType, AuthType, BodyType, KeyType, ResourceType, ResponseTyp
           }
 
           // Implementation below borrowed from Play's Action.scala
-          Play.maybeApplication
-            .map { app =>
-              play.utils.Threads.withContextClassLoader(app.classloader) {
-                run()
-              }
-            }
-            .getOrElse {
-              // Run without the app class loader. This is important if we're running low-level
-              // tests (e.g. router tests)
-              run()
-            }
+          play.utils.Threads.withContextClassLoader(application.classloader) {
+            run()
+          }
         }
         responseTry.recover {
           case e: NaptimeParseError      => Future.successful(e.result)
@@ -235,7 +218,7 @@ trait RestAction[RACType, AuthType, BodyType, KeyType, ResourceType, ResponseTyp
    * macro-based router. Further, it should only be called once, and the `tags` value should only be
    * read at most once. (As the action is re-generated on every request.)
    */
-  @volatile private[this] var tags: Option[Map[String, String]] = None
+  @volatile private[this] var tags: Option[Map[TypedKey[String], String]] = None
 
   /**
    * Adds tags to the request.
@@ -249,7 +232,10 @@ trait RestAction[RACType, AuthType, BodyType, KeyType, ResourceType, ResponseTyp
   override def tagRequest(request: RequestHeader): RequestHeader = {
     tags
       .map { tags =>
-        request.addAttr(RequestAttrKey.Tags, tags)
+        tags.foldLeft(request) {
+          case (request, (key, value)) =>
+            request.addAttr(key, value)
+        }
       }
       .getOrElse(request)
   }
@@ -257,12 +243,12 @@ trait RestAction[RACType, AuthType, BodyType, KeyType, ResourceType, ResponseTyp
   /**
    * Retrieves the tags. Exposed for testing.
    */
-  private[naptime] def copyTags(): Option[Map[String, String]] = tags
+  private[naptime] def copyTags(): Option[Map[TypedKey[String], String]] = tags
 
   /**
    * The naptime ResourceRouter should call this function before returning the action.
    */
-  def setTags(tags: Map[String, String]): this.type = {
+  def setTags(tags: Map[TypedKey[String], String]): this.type = {
     this.tags = Some(tags)
     this
   }
