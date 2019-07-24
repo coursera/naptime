@@ -18,8 +18,6 @@ package org.coursera.naptime.actions
 
 import java.io.File
 
-import akka.actor.ActorSystem
-import akka.stream.ActorMaterializer
 import akka.stream.Materializer
 import org.coursera.naptime.NaptimeActionException
 import org.coursera.naptime.QueryFields
@@ -37,6 +35,7 @@ import play.api.Mode
 import play.api.inject.guice.GuiceApplicationBuilder
 import play.api.test.FakeRequest
 
+import scala.concurrent.ExecutionContext
 import scala.util.Try
 
 /**
@@ -48,8 +47,8 @@ trait RestActionTester { this: ScalaFutures =>
     .in(Mode.Test)
     .build()
 
-  implicit val ec = application.actorSystem.dispatcher
-  implicit val materializer = application.materializer
+  implicit val ec: ExecutionContext = application.actorSystem.dispatcher
+  implicit val materializer: Materializer = application.materializer
 
   @After
   def shutDownApplication(): Unit = {
