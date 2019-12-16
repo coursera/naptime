@@ -27,8 +27,9 @@ import org.coursera.naptime.resources.CollectionResource
 import play.api.http.Status
 import play.api.libs.json.Json
 import play.api.libs.streams.Accumulator
-import play.api.libs.typedmap.TypedKey
+import play.api.mvc.EssentialAction
 import play.api.mvc.RequestHeader
+import play.api.mvc.RequestTaggingHandler
 import play.api.mvc.Result
 import play.api.mvc.Results
 
@@ -72,12 +73,11 @@ class NestingCollectionResourceRouter[CollectionResourceType <: CollectionResour
    * @param methodName The name of the scala method invoked to handle this request.
    * @return
    */
-  protected[this] def mkRequestTags(methodName: String): Map[TypedKey[String], String] = {
-    Map[TypedKey[String], String](
-      (
-        Router.NAPTIME_RESOURCE_KEY,
-        Option(resourceInstance.getClass).map(_.getName).getOrElse("nullClass")),
-      (Router.NAPTIME_METHOD_KEY, methodName))
+  protected[this] def mkRequestTags(methodName: String): Map[String, String] = {
+    Map(
+      Router.NAPTIME_RESOURCE_NAME ->
+        Option(resourceInstance.getClass).map(_.getName).getOrElse("nullClass"),
+      Router.NAPTIME_METHOD_NAME -> methodName)
   }
 
   override def routeRequest(path: String, requestHeader: RequestHeader): Option[RouteAction] = {
@@ -320,7 +320,7 @@ object NestingCollectionResourceRouter {
       msg: String,
       statusCode: Int = Status.BAD_REQUEST): RouteAction = {
 
-    new RouteAction {
+    new EssentialAction with RequestTaggingHandler {
       override def apply(request: RequestHeader): Accumulator[ByteString, Result] = {
         Accumulator(Sink.ignore.mapMaterializedValue { _ =>
           // TODO(saeta): use standardized error response format.
@@ -329,7 +329,7 @@ object NestingCollectionResourceRouter {
       }
 
       override def tagRequest(request: RequestHeader): RequestHeader =
-        request.addAttr(Router.NAPTIME_RESOURCE_KEY, resourceClass.getName)
+        request.copy(tags = request.tags + (Router.NAPTIME_RESOURCE_NAME -> resourceClass.getName))
     }
   }
 }

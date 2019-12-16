@@ -30,13 +30,16 @@ import org.mockito.Matchers.any
 import org.scalatest.junit.AssertionsForJUnit
 import org.scalatest.mockito.MockitoSugar
 import play.api.libs.streams.Accumulator
+import play.api.mvc.EssentialAction
 import play.api.mvc.RequestHeader
+import play.api.mvc.RequestTaggingHandler
 import play.api.mvc.Result
 import play.api.test.FakeRequest
 
 class NaptimePlayRouterTest extends AssertionsForJUnit with MockitoSugar {
-  object FakeHandler extends RouteAction {
+  object FakeHandler extends /* RouteAction */ EssentialAction with RequestTaggingHandler {
     override def tagRequest(request: RequestHeader): RequestHeader = request
+
     override def apply(v1: RequestHeader): Accumulator[ByteString, Result] = ???
   }
 

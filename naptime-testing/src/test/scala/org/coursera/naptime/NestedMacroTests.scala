@@ -16,6 +16,7 @@
 
 package org.coursera.naptime
 
+import akka.stream.Materializer
 import com.linkedin.data.DataMap
 import com.linkedin.data.schema.DataSchema
 import com.linkedin.data.schema.RecordDataSchema
@@ -27,6 +28,8 @@ import org.coursera.naptime.model.KeyFormat
 import org.coursera.naptime.model.Keyed
 import org.coursera.naptime.schema.HandlerKind
 import org.coursera.naptime.schema.ResourceKind
+import org.coursera.naptime.actions.RestActionBuilder
+import org.coursera.naptime.access.HeaderAccessControl
 import org.coursera.naptime.path.ParseFailure
 import org.coursera.naptime.path.ParseSuccess
 import org.coursera.naptime.path.RootParsedPathKey
@@ -41,19 +44,23 @@ import org.mockito.Matchers.any
 import org.mockito.Matchers.{eq => e}
 import org.scalatest.junit.AssertionsForJUnit
 import org.scalatest.mockito.MockitoSugar
-import play.api.Application
 import play.api.libs.json.Json
 import play.api.libs.json.OFormat
+import play.api.mvc.AnyContent
 import play.api.mvc.AnyContentAsEmpty
+import play.api.mvc.BodyParsers
 import play.api.mvc.RequestHeader
 import play.api.test.FakeRequest
 
 import scala.collection.JavaConversions._
+import scala.concurrent.ExecutionContext
 
 /**
  * The top level resource in our fledgling social network.
  */
-class PersonResource(implicit val application: Application)
+class PersonResource(
+    implicit val executionContext: ExecutionContext,
+    val materializer: Materializer)
     extends TopLevelCollectionResource[String, Person] {
 
   val PATH_KEY: PathKey = ("myPathKeyId" ::: RootParsedPathKey).asInstanceOf[PathKey]
@@ -119,7 +126,9 @@ object FriendshipInfo {
   implicit val jsonFormat: OFormat[FriendshipInfo] = Json.format[FriendshipInfo]
 }
 
-class FriendsResource(val parentResource: PersonResource)(implicit val application: Application)
+class FriendsResource(val parentResource: PersonResource)(
+    implicit val executionContext: ExecutionContext,
+    val materializer: Materializer)
     extends CollectionResource[PersonResource, String, FriendshipInfo] {
   override def keyFormat: KeyFormat[KeyType] = KeyFormat.stringKeyFormat
 
@@ -166,7 +175,7 @@ object FriendsResource {
   val routerBuilder = Router.build[FriendsResource]
 }
 
-class NestedMacroTests extends AssertionsForJUnit with MockitoSugar with ImplicitTestApplication {
+class NestedMacroTests extends AssertionsForJUnit with MockitoSugar with ResourceTestImplicits {
 
   val peopleInstanceImpl = new PersonResource
   val peopleInstance = mock[PersonResource]
@@ -282,11 +291,11 @@ class NestedMacroTests extends AssertionsForJUnit with MockitoSugar with Implici
     val result = peopleRouter.routeRequest(request.path.substring("/api".length), request)
     assert(result.isDefined)
     val taggedRequest = result.get.tagRequest(request)
-    assert(taggedRequest.attrs.contains(Router.NAPTIME_RESOURCE_KEY))
+    assert(taggedRequest.tags.contains(Router.NAPTIME_RESOURCE_NAME))
     if (methodName != null && methodName != "") {
-      assert(taggedRequest.attrs.get(Router.NAPTIME_METHOD_KEY).contains(methodName))
+      assert(taggedRequest.tags.get(Router.NAPTIME_METHOD_NAME).contains(methodName))
     } else {
-      assert(taggedRequest.attrs.get(Router.NAPTIME_METHOD_KEY).isEmpty)
+      assert(taggedRequest.tags.get(Router.NAPTIME_METHOD_NAME).isEmpty)
     }
 
     val subResult = friendRouter.routeRequest(request.path.substring("/api".length), request)
@@ -298,8 +307,8 @@ class NestedMacroTests extends AssertionsForJUnit with MockitoSugar with Implici
     val result = friendRouter.routeRequest(request.path.substring("/api".length), request)
     assert(result.isDefined)
     val taggedRequest = result.get.tagRequest(request)
-    assert(taggedRequest.attrs.contains(Router.NAPTIME_RESOURCE_KEY))
-    assert(taggedRequest.attrs.get(Router.NAPTIME_METHOD_KEY).contains(methodName))
+    assert(taggedRequest.tags.contains(Router.NAPTIME_RESOURCE_NAME))
+    assert(taggedRequest.tags.get(Router.NAPTIME_METHOD_NAME).contains(methodName))
 
     val parentResult = peopleRouter.routeRequest(request.path.substring("/api".length), request)
     assert(parentResult.isEmpty)

@@ -1,5 +1,5 @@
 // Use the Play sbt plugin for Play projects
-addSbtPlugin("com.typesafe.play" % "sbt-plugin" % "2.7.2")
+addSbtPlugin("com.typesafe.play" % "sbt-plugin" % "2.6.7")
 
 // Courier binding generator plugin
 addSbtPlugin("org.coursera.courier" % "courier-sbt-plugin" % "2.1.4")

@@ -16,6 +16,7 @@
 
 package org.coursera.naptime.actions
 
+import akka.stream.Materializer
 import com.linkedin.data.DataList
 import org.coursera.common.stringkey.StringKey
 import org.coursera.courier.templates.DataTemplates.DataConversion
@@ -33,13 +34,12 @@ import org.coursera.naptime.QueryFields
 import org.coursera.naptime.QueryIncludes
 import org.coursera.naptime.RequestPagination
 import org.coursera.naptime.ResourceName
-import org.coursera.naptime.ImplicitTestApplication
+import org.coursera.naptime.ResourceTestImplicits
 import org.coursera.naptime.actions.util.Validators
 import org.coursera.naptime.resources.TopLevelCollectionResource
 import org.junit.Test
 import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.junit.AssertionsForJUnit
-import play.api.Application
 import play.api.http.HeaderNames
 import play.api.http.HttpEntity
 import play.api.http.Status
@@ -57,6 +57,7 @@ import play.api.test.FakeRequest
 import play.api.test.Helpers
 import play.api.test.Helpers.defaultAwaitTimeout
 
+import scala.concurrent.ExecutionContext
 import scala.concurrent.Future
 
 object RestActionCategoryEngine2Test {
@@ -75,7 +76,7 @@ object RestActionCategoryEngine2Test {
    *
    * In general, it is a very bad idea to have multiple gets, creates, etc, in a single resource.
    */
-  class PlayJsonTestResource(implicit val application: Application)
+  class PlayJsonTestResource(implicit val executionContext: ExecutionContext, val materializer: Materializer)
     extends TopLevelCollectionResource[Int, Person] {
     import RestActionCategoryEngine2._
 
@@ -129,7 +130,7 @@ object RestActionCategoryEngine2Test {
    *
    * In general, it is a very bad idea to have multiple gets, creates, etc, in a single resource.
    */
-  class CourierTestResource(implicit val application: Application)
+  class CourierTestResource(implicit val executionContext: ExecutionContext, val materializer: Materializer)
     extends TopLevelCollectionResource[String, Course] {
     import RestActionCategoryEngine2._
 
@@ -179,7 +180,7 @@ object RestActionCategoryEngine2Test {
     }
   }
 
-  class courierKeyedTestResource(implicit val application: Application)
+  class courierKeyedTestResource(implicit val executionContext: ExecutionContext, val materializer: Materializer)
     extends TopLevelCollectionResource[EnrollmentId, Course] {
     import RestActionCategoryEngine2._
 
@@ -304,7 +305,7 @@ object RestActionCategoryEngine2Test {
   }
 }
 
-class RestActionCategoryEngine2Test extends AssertionsForJUnit with ScalaFutures with ImplicitTestApplication {
+class RestActionCategoryEngine2Test extends AssertionsForJUnit with ScalaFutures with ResourceTestImplicits {
   import RestActionCategoryEngine2Test._
   // Increase timeout a bit.
   override def spanScaleFactor: Double = 10

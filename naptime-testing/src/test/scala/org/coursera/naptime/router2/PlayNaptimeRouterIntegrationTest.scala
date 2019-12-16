@@ -16,6 +16,7 @@
 
 package org.coursera.naptime.router2
 
+import akka.stream.Materializer
 import com.google.inject.Guice
 import org.coursera.common.jsonformat.JsonFormats.Implicits.dateTimeFormat
 import org.coursera.naptime.actions.NaptimeActionSerializer.AnyWrites._
@@ -24,7 +25,7 @@ import org.coursera.naptime.model.Keyed
 import org.coursera.naptime.ComplexEmailType
 import org.coursera.naptime.NaptimeModule
 import org.coursera.naptime.Ok
-import org.coursera.naptime.ImplicitTestApplication
+import org.coursera.naptime.ResourceTestImplicits
 import org.coursera.naptime.path.ParseFailure
 import org.coursera.naptime.path.ParseSuccess
 import org.coursera.naptime.path.RootParsedPathKey
@@ -36,12 +37,13 @@ import org.mockito.Matchers._
 import org.mockito.Mockito._
 import org.scalatest.junit.AssertionsForJUnit
 import org.scalatest.mockito.MockitoSugar
-import play.api.Application
 import play.api.libs.json.Json
 import play.api.libs.json.OFormat
 import play.api.mvc.AnyContentAsEmpty
 import play.api.mvc.RequestHeader
 import play.api.test.FakeRequest
+
+import scala.concurrent.ExecutionContext
 
 // TODO(saeta): De-dupe the test resources to share amongst tests.
 object PlayNaptimeRouterIntegrationTest {
@@ -54,7 +56,9 @@ object PlayNaptimeRouterIntegrationTest {
   /**
    * The top level resource in our fledgling social network.
    */
-  class PersonResource(implicit val application: Application)
+  class PersonResource(
+      implicit val executionContext: ExecutionContext,
+      val materializer: Materializer)
       extends TopLevelCollectionResource[String, Person] {
 
     val PATH_KEY: PathKey = ("myPathKeyId" ::: RootParsedPathKey).asInstanceOf[PathKey]
@@ -104,7 +108,9 @@ object PlayNaptimeRouterIntegrationTest {
     implicit val jsonFormat: OFormat[FriendshipInfo] = Json.format[FriendshipInfo]
   }
 
-  class FriendsResource(val parentResource: PersonResource)(implicit val application: Application)
+  class FriendsResource(val parentResource: PersonResource)(
+      implicit val executionContext: ExecutionContext,
+      val materializer: Materializer)
       extends CollectionResource[PersonResource, String, FriendshipInfo] {
     override def keyFormat: KeyFormat[KeyType] = KeyFormat.stringKeyFormat
 
@@ -151,7 +157,7 @@ object PlayNaptimeRouterIntegrationTest {
 class PlayNaptimeRouterIntegrationTest
     extends AssertionsForJUnit
     with MockitoSugar
-    with ImplicitTestApplication {
+    with ResourceTestImplicits {
   import PlayNaptimeRouterIntegrationTest._
 
   val peopleInstanceImpl = new PersonResource
@@ -275,8 +281,8 @@ class PlayNaptimeRouterIntegrationTest
     assert(result.isDefined)
     val routeAction = result.get.asInstanceOf[RouteAction]
     val taggedRequest = routeAction.tagRequest(request)
-    assert(taggedRequest.attrs.get(Router.NAPTIME_RESOURCE_KEY).contains(resource.getClass.getName))
-    assert(taggedRequest.attrs.get(Router.NAPTIME_METHOD_KEY).contains(methodName))
+    assert(taggedRequest.tags.get(Router.NAPTIME_RESOURCE_NAME).contains(resource.getClass.getName))
+    assert(taggedRequest.tags.get(Router.NAPTIME_METHOD_NAME).contains(methodName))
   }
 
   @Test

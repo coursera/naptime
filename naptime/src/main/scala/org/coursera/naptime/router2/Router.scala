@@ -17,9 +17,9 @@
 package org.coursera.naptime.router2
 
 import javax.inject.Inject
+
 import com.google.inject.Injector
 import org.coursera.naptime.resources.CollectionResource
-import play.api.libs.typedmap.TypedKey
 import play.api.mvc.RequestHeader
 
 import scala.annotation.tailrec
@@ -32,12 +32,12 @@ object Router {
   /**
    * Key for the [[RequestHeader.tags]] map filled in with the resource's class name
    */
-  val NAPTIME_RESOURCE_KEY: TypedKey[String] = TypedKey("NAPTIME_RESOURCE_NAME")
+  val NAPTIME_RESOURCE_NAME = "NAPTIME_RESOURCE_NAME"
 
   /**
    * Key for the [[RequestHeader.tags]] map filled in with the name of the invoked method.
    */
-  val NAPTIME_METHOD_KEY: TypedKey[String] = TypedKey("NAPTIME_METHOD_NAME")
+  val NAPTIME_METHOD_NAME = "NAPTIME_METHOD_NAME"
 }
 
 /**
