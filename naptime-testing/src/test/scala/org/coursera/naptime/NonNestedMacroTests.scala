@@ -115,10 +115,7 @@ object Resource {
   val routerBuilder = Router.build[Resource]
 }
 
-class NonNestedMacroTests
-    extends AssertionsForJUnit
-    with MockitoSugar
-    with ImplicitTestApplication {
+class NonNestedMacroTests extends AssertionsForJUnit with MockitoSugar with ImplicitTestApplication {
 
   val instance = mock[Resource]
   val instanceImpl = new Resource
