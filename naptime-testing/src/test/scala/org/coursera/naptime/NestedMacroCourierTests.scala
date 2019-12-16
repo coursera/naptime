@@ -1,12 +1,14 @@
 package org.coursera.naptime
 
+import javax.inject.Inject
+
+import akka.stream.Materializer
 import com.google.inject.Binder
 import com.google.inject.Guice
 import com.google.inject.Module
 import com.linkedin.data.DataMap
 import com.linkedin.data.schema.DataSchema
 import com.linkedin.data.schema.RecordDataSchema
-import javax.inject.Inject
 import org.coursera.naptime.NestedMacroCourierTests.CoursesResource
 import org.coursera.naptime.ari.FetcherError
 import org.coursera.naptime.ari.Request
@@ -20,9 +22,10 @@ import org.junit.Test
 import org.scalatest.concurrent.IntegrationPatience
 import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.junit.AssertionsForJUnit
-import play.api.Application
 import play.api.libs.json.JsString
 import play.api.test.FakeRequest
+
+import scala.concurrent.ExecutionContext
 
 /**
  * This test suite uses Courier to exercise advanced use cases for Naptime.
@@ -33,7 +36,9 @@ object NestedMacroCourierTests {
     val ID = ResourceName("courses", 1)
   }
 
-  class CoursesResource @Inject()(implicit override val application: Application)
+  class CoursesResource @Inject()(
+      implicit executionContext: ExecutionContext,
+      materializer: Materializer)
       extends CourierCollectionResource[String, Course] {
     override def resourceName: String = CoursesResource.ID.topLevelName
 
@@ -88,7 +93,7 @@ object NestedMacroCourierTests {
     }
   }
 
-  class InstructorsResource @Inject()(implicit override val application: Application)
+  class InstructorsResource @Inject()(implicit ec: ExecutionContext, mat: Materializer)
       extends CourierCollectionResource[String, Instructor]() {
     override def resourceName: String = "instructors"
 
@@ -105,12 +110,13 @@ object NestedMacroCourierTests {
 class NestedMacroCourierTests
     extends AssertionsForJUnit
     with ScalaFutures
-    with ImplicitTestApplication
+    with ResourceTestImplicits
     with IntegrationPatience {
 
   val implicitsModule = new Module {
     override def configure(binder: Binder): Unit = {
-      binder.bind(classOf[Application]).toInstance(application)
+      binder.bind(classOf[ExecutionContext]).toInstance(executionContext)
+      binder.bind(classOf[Materializer]).toInstance(materializer)
     }
   }
 

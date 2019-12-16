@@ -32,7 +32,6 @@ import org.coursera.naptime.path.RootParsedPathKey
 import org.coursera.naptime.path.RootPathParser
 import org.coursera.naptime.path.:::
 import org.coursera.naptime.path.UrlParseResult
-import play.api.Application
 import play.api.libs.json.OFormat
 import play.api.mvc.AnyContent
 import play.api.mvc.BodyParsers
@@ -84,9 +83,8 @@ trait CollectionResource[ParentResource <: Resource[_], K, M] extends Resource[M
 
   def keyFormat: KeyFormat[KeyType]
 
-  val application: Application
-  implicit protected val executionContext: ExecutionContext = application.actorSystem.dispatcher
-  implicit protected val materializer: Materializer = application.materializer
+  implicit protected val executionContext: ExecutionContext
+  implicit protected val materializer: Materializer
 
   /**
    * The (Hlist-like) collection of ancestor keys has this type.
@@ -135,7 +133,7 @@ trait CollectionResource[ParentResource <: Resource[_], K, M] extends Resource[M
     new RestActionBuilder[RACType, Unit, AnyContent, K, M, ResponseType](
       HeaderAccessControl.allowAll,
       BodyParsers.parse.default,
-      PartialFunction.empty)(keyFormat, resourceFormat, application)
+      PartialFunction.empty)(keyFormat, resourceFormat, executionContext, materializer)
 
   def OkIfPresent[T](a: Option[T]): RestResponse[T] = {
     a.map(Ok(_))
@@ -204,10 +202,14 @@ abstract class NestedCourierCollectionResource[
     M <: ScalaRecordTemplate]()(
     implicit kf: KeyFormat[K],
     classTag: ClassTag[M],
-    val application: Application)
+    ec: ExecutionContext,
+    mat: Materializer)
     extends CollectionResource[ParentResource, K, M] {
 
   final override implicit val keyFormat = kf
+
+  override implicit protected val executionContext: ExecutionContext = ec
+  override implicit protected val materializer: Materializer = mat
 
   // When we use the serializer constructor, the classTag parameter is never initialized, and
   // thus, we get NPEs when working with schemas. Because the OFormat isn't actually needed
@@ -235,8 +237,9 @@ abstract class NestedCourierCollectionResource[
 abstract class CourierCollectionResource[K, M <: ScalaRecordTemplate](
     implicit kf: KeyFormat[K],
     classTag: ClassTag[M],
-    application: Application)
-    extends NestedCourierCollectionResource[RootResource, K, M]()(kf, classTag, application) {
+    ec: ExecutionContext,
+    mat: Materializer)
+    extends NestedCourierCollectionResource[RootResource, K, M]()(kf, classTag, ec, mat) {
 
   final override val parentResource: RootResource = RootResource
 }

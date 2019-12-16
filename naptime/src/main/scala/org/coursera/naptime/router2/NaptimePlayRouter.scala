@@ -108,7 +108,7 @@ case class NaptimePlayRouter(
    * [[apply]], which would result in request routing and URL parsing occuring twice for a single
    * request when it wouldn't need to.
    */
-  override lazy val routes: Routes = Function.unlift(handlerForImpl)
+  override lazy val routes: Routes = Function.unlift(handlerFor)
 
   override def withPrefix(prefix: String): routing.Router = copy(prefix = prefix)
 
@@ -242,7 +242,7 @@ case class NaptimePlayRouter(
    * @param request The request to route.
    * @return If this is a naptime request for one of the routers, return the handler, otherwise None
    */
-  def handlerForImpl(request: RequestHeader): Option[Handler] = {
+  override def handlerFor(request: RequestHeader): Option[Handler] = {
     if (request.path.startsWith(prefix)) {
       val path = request.path.substring(prefix.length)
 

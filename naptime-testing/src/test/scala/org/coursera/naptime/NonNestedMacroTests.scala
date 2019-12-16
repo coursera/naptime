@@ -16,6 +16,7 @@
 
 package org.coursera.naptime
 
+import akka.stream.Materializer
 import org.coursera.common.stringkey.StringKeyFormat
 import org.coursera.naptime.actions.NaptimeActionSerializer.AnyWrites._
 import org.coursera.naptime.model.KeyFormat
@@ -34,7 +35,8 @@ import play.api.mvc.RequestHeader
 import play.api.test.FakeRequest
 import org.mockito.Mockito._
 import org.mockito.Matchers.any
-import play.api.Application
+
+import scala.concurrent.ExecutionContext
 
 case class Item(name: String, description: String)
 object Item {
@@ -48,7 +50,7 @@ object ComplexEmailType {
     StringKeyFormat.caseClassFormat((ComplexEmailType.apply _).tupled, ComplexEmailType.unapply)
 }
 
-class Resource(implicit val application: Application)
+class Resource(implicit val executionContext: ExecutionContext, val materializer: Materializer)
     extends TopLevelCollectionResource[String, Item] {
 
   override def keyFormat: KeyFormat[String] = KeyFormat.stringKeyFormat
@@ -115,10 +117,7 @@ object Resource {
   val routerBuilder = Router.build[Resource]
 }
 
-class NonNestedMacroTests
-    extends AssertionsForJUnit
-    with MockitoSugar
-    with ImplicitTestApplication {
+class NonNestedMacroTests extends AssertionsForJUnit with MockitoSugar with ResourceTestImplicits {
 
   val instance = mock[Resource]
   val instanceImpl = new Resource
@@ -169,8 +168,8 @@ class NonNestedMacroTests
     val result = router.routeRequest(requestHeader.path.substring("/api".length), requestHeader)
     assert(result.isDefined)
     val taggedRequest = result.get.tagRequest(requestHeader)
-    assert(taggedRequest.attrs.contains(Router.NAPTIME_RESOURCE_KEY))
-    assert(taggedRequest.attrs.get(Router.NAPTIME_METHOD_KEY).contains(methodName))
+    assert(taggedRequest.tags.contains(Router.NAPTIME_RESOURCE_NAME))
+    assert(taggedRequest.tags.get(Router.NAPTIME_METHOD_NAME).contains(methodName))
   }
 
   private[this] def noCustomInputOutputAuthTypes(methodName: String): Unit = {
