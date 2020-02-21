@@ -363,14 +363,18 @@ sealed case class ResourceFields[T](
     withRelated(newRelations.toMap)
   }
 
-  @deprecated("Coursera is moving away from automatic GraphQL inclusion. Reach out in the #graphql channel if you need guidance.", "2019-12-16")
+  @deprecated(
+    "Coursera is moving away from automatic GraphQL inclusion. Reach out in the #graphql channel if you need guidance.",
+    "2019-12-16")
   def withGraphQLRelations(newRelations: Map[String, GraphQLRelation]): ResourceFields[T] = {
     val intersection = newRelations.keySet.intersect(graphQLRelations.keySet)
     require(intersection.isEmpty, s"Duplicate relations provided for: $intersection")
     copy(graphQLRelations = graphQLRelations ++ newRelations)
   }
 
-  @deprecated("Coursera is moving away from automatic GraphQL inclusion. Reach out in the #graphql channel if you need guidance.", "2019-12-16")
+  @deprecated(
+    "Coursera is moving away from automatic GraphQL inclusion. Reach out in the #graphql channel if you need guidance.",
+    "2019-12-16")
   def withGraphQLRelations(newRelations: (String, GraphQLRelation)*): ResourceFields[T] = {
     withGraphQLRelations(newRelations.toMap)
   }
@@ -619,7 +623,9 @@ private[naptime] object QueryStringParser extends RegexParsers {
     parse(includesAllContent, input)
 }
 
-@deprecated("Coursera is moving away from automatic GraphQL inclusion. Reach out in the #graphql channel if you need guidance.", "2019-12-16")
+@deprecated(
+  "Coursera is moving away from automatic GraphQL inclusion. Reach out in the #graphql channel if you need guidance.",
+  "2019-12-16")
 trait GraphQLRelation {
   val resourceName: ResourceName
   val arguments: Map[String, String]
@@ -629,7 +635,9 @@ trait GraphQLRelation {
   def toAnnotation: GraphQLRelationAnnotation
 }
 
-@deprecated("Coursera is moving away from automatic GraphQL inclusion. Reach out in the #graphql channel if you need guidance.", "2019-12-16")
+@deprecated(
+  "Coursera is moving away from automatic GraphQL inclusion. Reach out in the #graphql channel if you need guidance.",
+  "2019-12-16")
 case class FinderGraphQLRelation(
     resourceName: ResourceName,
     finderName: String,
@@ -648,7 +656,9 @@ case class FinderGraphQLRelation(
   }
 }
 
-@deprecated("Coursera is moving away from automatic GraphQL inclusion. Reach out in the #graphql channel if you need guidance.", "2019-12-16")
+@deprecated(
+  "Coursera is moving away from automatic GraphQL inclusion. Reach out in the #graphql channel if you need guidance.",
+  "2019-12-16")
 case class MultiGetGraphQLRelation(
     resourceName: ResourceName,
     ids: String,
@@ -667,7 +677,9 @@ case class MultiGetGraphQLRelation(
   }
 }
 
-@deprecated("Coursera is moving away from automatic GraphQL inclusion. Reach out in the #graphql channel if you need guidance.", "2019-12-16")
+@deprecated(
+  "Coursera is moving away from automatic GraphQL inclusion. Reach out in the #graphql channel if you need guidance.",
+  "2019-12-16")
 case class GetGraphQLRelation(
     resourceName: ResourceName,
     id: String,
@@ -686,7 +698,9 @@ case class GetGraphQLRelation(
   }
 }
 
-@deprecated("Coursera is moving away from automatic GraphQL inclusion. Reach out in the #graphql channel if you need guidance.", "2019-12-16")
+@deprecated(
+  "Coursera is moving away from automatic GraphQL inclusion. Reach out in the #graphql channel if you need guidance.",
+  "2019-12-16")
 case class SingleElementFinderGraphQLRelation(
     resourceName: ResourceName,
     finderName: String,
