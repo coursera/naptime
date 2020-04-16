@@ -464,6 +464,7 @@ object CourierFormats extends StrictLogging {
       case (_, JsNull) =>
         // We don't check the schema when deserializing a NULL, since we can encode any optional schema into NULL.
         // See `jsObjectToRecord` for where we set com.linkedin.data.Null to `None`...
+        // This implies that we treat JSON null the same as the absence of a value.
         Null.getInstance
       case (arraySchema: ArrayDataSchema, jsArray: JsArray) =>
         jsArrayToDataList(schemaPath, jsArray, arraySchema)
