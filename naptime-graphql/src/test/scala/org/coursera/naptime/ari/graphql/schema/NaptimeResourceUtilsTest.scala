@@ -149,4 +149,23 @@ class NaptimeResourceUtilsTest extends AssertionsForJUnit with MockitoSugar {
         JsString(s"OLD_COURSE~${Models.oldCourseIdB}")))
     assert(interpolatedArguments("ids") === expectedCourseIds)
   }
+
+  @Test
+  def interpolateArgumentsWithDollarSignsEscaped(): Unit = {
+    val courseWithDollarSignInId = Models.COURSE_A.copy(id = "course$A")
+
+    val testCourse = DataMapWithParent(
+      courseWithDollarSignInId.data(),
+      ParentModel(ResourceName("courses", 1), courseWithDollarSignInId.data(), MergedCourse.SCHEMA))
+
+    val finderRelation = GraphQLRelationAnnotation(
+      resourceName = "courses.v1",
+      arguments = StringMap(Map("id" -> "COURSE~$id", "q" -> "byId")),
+      relationType = RelationType.FINDER)
+
+    val interpolatedArguments =
+      NaptimeResourceUtils.interpolateArguments(testCourse, finderRelation).toMap
+    assert(interpolatedArguments("id") === JsString(s"COURSE~${courseWithDollarSignInId.id}"))
+    assert(interpolatedArguments("q") === JsString("byId"))
+  }
 }

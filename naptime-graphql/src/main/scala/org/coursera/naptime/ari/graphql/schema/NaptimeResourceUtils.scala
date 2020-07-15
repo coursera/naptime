@@ -16,6 +16,8 @@
 
 package org.coursera.naptime.ari.graphql.schema
 
+import java.util.regex.Matcher
+
 import com.typesafe.scalalogging.StrictLogging
 import org.coursera.naptime.ResourceName
 import org.coursera.naptime.ari.engine.Utilities
@@ -222,7 +224,9 @@ object NaptimeResourceUtils extends StrictLogging {
         val variableName = withoutBraces.orElse(withBraces).getOrElse("")
         Try {
           val interpolatedIds = variableNameToInterpolatedIds(variableName)
-          interpolatedIds(i % interpolatedIds.size)
+          // REMARK: `quoteReplacement` properly escapes `$`  and `\`, which is necessary
+          // when the ID has these special characters.
+          Matcher.quoteReplacement(interpolatedIds(i % interpolatedIds.size))
         } match {
           case Success(v) => v
           case Failure(f) =>
