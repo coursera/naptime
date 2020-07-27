@@ -40,7 +40,7 @@ class SlowLogMiddleware(logger: Logger, isDebugMode: Boolean)
     if (isDebugMode) {
       SlowLog.extension
     } else {
-      SlowLog(logger.underlying, threshold = 6 seconds)
+      SlowLog(logger.underlying, threshold = SlowLogMiddleware.threshold)
     }
   }
 
@@ -96,4 +96,8 @@ class SlowLogMiddleware(logger: Logger, isDebugMode: Boolean)
       mctx: MiddlewareQueryContext[SangriaGraphQlContext, _, _],
       ctx: Context[SangriaGraphQlContext, _]): BeforeFieldResult[SangriaGraphQlContext, Long] =
     continue(System.nanoTime())
+}
+
+object SlowLogMiddleware {
+  val threshold = 6 seconds
 }
