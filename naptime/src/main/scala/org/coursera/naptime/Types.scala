@@ -29,6 +29,7 @@ import com.linkedin.data.schema.StringDataSchema
 import com.linkedin.data.schema.TyperefDataSchema
 import com.linkedin.data.schema.UnionDataSchema
 import com.typesafe.scalalogging.StrictLogging
+import org.coursera.naptime.schema.LinkedRelationAnnotation
 import org.coursera.naptime.schema.RelationType.FINDER
 import org.coursera.naptime.schema.RelationType.GET
 import org.coursera.naptime.schema.RelationType.MULTI_GET
@@ -40,6 +41,7 @@ object Types extends StrictLogging {
 
   object Relations {
     val RELATION_PROPERTY_NAME = "relatedOn"
+    val INCLUDES_PROPERTY_NAME = "includes"
   }
 
   @deprecated("Please use the one with fields included", "0.2.4")
@@ -91,34 +93,39 @@ object Types extends StrictLogging {
       case unknown: DataSchema =>
         throw new RuntimeException(s"Cannot compute asymmetric type for key type: $unknown")
     }
-    for ((name, graphQLRelation) <- fields.graphQLRelations) {
-      Option(mergedSchema.getField(name)) match {
-        case Some(field) =>
-          logger.warn(
-            s"Fields for resource $typeName tries to add graphql relation on field " +
-              s"'$name', but that field is already defined on the model")
-        case None =>
-          val errorMessageBuilder = new StringBuilder
-          val newField = graphQLRelation.toAnnotation.relationType match {
-            case FINDER | MULTI_GET =>
-              val newField = new RecordDataSchema.Field(new ArrayDataSchema(new StringDataSchema)) // TODO(bryan): fix type here
-              newField.setOptional(false)
-              newField
-            case SINGLE_ELEMENT_FINDER | GET =>
-              val newField = new RecordDataSchema.Field(new StringDataSchema) // TODO(bryan): fix type here
-              newField.setOptional(true)
-              newField
-            case _ =>
-              throw new RuntimeException(
-                "unknown relation type: " +
-                  graphQLRelation.toAnnotation.relationType.toString)
-          }
-          val relationMap = Map[String, AnyRef](
-            Relations.RELATION_PROPERTY_NAME -> graphQLRelation.toAnnotation.data())
-          newField.setProperties(relationMap.asJava)
-          newField.setDoc(graphQLRelation.description)
-          newField.setName(name.split("/").last, errorMessageBuilder)
-          insertFieldAtLocation(mergedSchema, name.split("/").dropRight(1).toList, newField)
+    val relationKeys = fields.relations.keys ++ fields.graphQLRelations.keys
+    for (name <- relationKeys) {
+      val relationOption = fields.relations.get(name)
+      var graphQLRelationOption = fields.graphQLRelations.get(name)
+      if (mergedSchema.contains(name)) {
+        logger.warn(
+          s"Fields for resource $typeName tries to add Include/GraphQL relation on field " +
+            s"'$name', but that field is already defined on the model")
+      } else {
+        val nameSegments = name.split("/")
+        val errorMessageBuilder = new StringBuilder
+        val effectiveRelationType = graphQLRelationOption.map(_.toAnnotation.relationType)
+        val newField = effectiveRelationType match {
+          case None | Some(FINDER) | Some(MULTI_GET) =>
+            val newField = new RecordDataSchema.Field(new ArrayDataSchema(new StringDataSchema))
+            newField.setOptional(false)
+            newField
+          case Some(SINGLE_ELEMENT_FINDER) | Some(GET) =>
+            val newField = new RecordDataSchema.Field(new StringDataSchema)
+            newField.setOptional(true)
+            newField
+          case Some(unknown) =>
+            throw new RuntimeException(s"Unknown relation type: ${unknown.toString}")
+        }
+        val graphQLProperty =
+          graphQLRelationOption.map(Relations.RELATION_PROPERTY_NAME -> _.toAnnotation.data)
+        val includeProperty =
+          relationOption.map(Relations.INCLUDES_PROPERTY_NAME -> _.toAnnotation.data)
+        newField.setProperties(
+          List(graphQLProperty, includeProperty).flatten.toMap[String, AnyRef].asJava)
+        graphQLRelationOption.map(_.description).foreach(newField.setDoc)
+        newField.setName(nameSegments.last, errorMessageBuilder)
+        insertFieldAtLocation(mergedSchema, nameSegments.dropRight(1).toList, newField)
       }
     }
     mergedSchema
