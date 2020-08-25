@@ -99,58 +99,41 @@ class TypesTest extends AssertionsForJUnit {
 
   @Test
   def relations(): Unit = {
-    val includeOnlyResourceName = ResourceName("includeOnly", 1)
-    val includeSharedResourceName = ResourceName("shared", 2)
-    val includeRelations =
-      Map("includeOnly" -> includeOnlyResourceName, "shared" -> includeSharedResourceName)
-    val graphQLOnlyResourceName = ResourceName("graphQLOnly", 1)
-    val graphQLOnly = FinderGraphQLRelation(
-      graphQLOnlyResourceName,
-      "find",
-      Map("foo" -> "bar"),
-      "greetings from graphql")
-    val graphQLSharedResourceName = ResourceName("shared", 2)
-    val graphQLShared = GetGraphQLRelation(
-      graphQLSharedResourceName,
-      "get",
-      Map("foo" -> "bar"),
-      "greetings from graphql")
-    val graphQLRelations = Map(
-      "graphQLOnly" -> graphQLOnly,
-      "shared" -> graphQLShared
-    )
-    val resourceFields =
-      ResourceFields(Set.empty, FieldsFunction.default, includeRelations, graphQLRelations)
-    val resultingType = Types.computeAsymType(
-      "org.coursera.naptime.Relations.Model",
-      Empty.SCHEMA,
-      Empty.SCHEMA,
-      resourceFields)
+    val resourceFields = ResourceFields[Empty]
+      .withRelated(
+        "includeOnly" -> ResourceName("includeOnly", 1),
+        "shared" -> ResourceName("shared", 2))
+      .withGraphQLRelations(
+        "gqlOnly" -> FinderGraphQLRelation(ResourceName("gqlOnly", 1), "find"),
+        "shared" -> GetGraphQLRelation(ResourceName("shared", 2), "get")
+      )
+    val resultingType =
+      Types.computeAsymType("Relations", Empty.SCHEMA, Empty.SCHEMA, resourceFields)
 
-    val fieldsExpectedNames = List("id", "includeOnly", "shared", "graphQLOnly")
-    val includeOnlyExpectedProperties = Map("included" -> includeOnlyResourceName.toAnnotation.data)
-    val sharedExpectedProperties = Map(
-      "included" -> includeSharedResourceName.toAnnotation.data,
-      "relatedOn" -> graphQLShared.toAnnotation.data
-    )
-    val graphQLOnlyExpectedProperties = Map("relatedOn" -> graphQLOnly.toAnnotation.data)
-
-    assert(!resultingType.isErrorRecord)
+    val fieldsExpectedNames = List("id", "includeOnly", "shared", "gqlOnly")
     assert(resultingType.getFields.asScala.map(_.getName) === fieldsExpectedNames)
     val includeOnlyField = resultingType.getField("includeOnly")
+    val includeOnlyExpectedProperties = Map(
+      "included" -> ResourceName("includeOnly", 1).toAnnotation.data)
     assert(includeOnlyField != null)
     assert(!includeOnlyField.getOptional)
     assert(includeOnlyField.getType == new ArrayDataSchema(new StringDataSchema))
     assert(includeOnlyField.getProperties.asScala === includeOnlyExpectedProperties)
     val sharedField = resultingType.getField("shared")
+    val sharedExpectedProperties = Map(
+      "included" -> ResourceName("shared", 2).toAnnotation.data,
+      "relatedOn" -> GetGraphQLRelation(ResourceName("shared", 2), "get").toAnnotation.data
+    )
     assert(sharedField != null)
     assert(sharedField.getOptional)
     assert(sharedField.getType == new StringDataSchema)
     assert(sharedField.getProperties.asScala === sharedExpectedProperties)
-    val graphQLOnlyField = resultingType.getField("graphQLOnly")
-    assert(graphQLOnlyField != null)
-    assert(!graphQLOnlyField.getOptional)
-    assert(graphQLOnlyField.getType == new ArrayDataSchema(new StringDataSchema))
-    assert(graphQLOnlyField.getProperties.asScala === graphQLOnlyExpectedProperties)
+    val gqlOnlyField = resultingType.getField("gqlOnly")
+    val gqlOnlyExpectedProperties = Map(
+      "relatedOn" -> FinderGraphQLRelation(ResourceName("gqlOnly", 1), "find").toAnnotation.data)
+    assert(gqlOnlyField != null)
+    assert(!gqlOnlyField.getOptional)
+    assert(gqlOnlyField.getType == new ArrayDataSchema(new StringDataSchema))
+    assert(gqlOnlyField.getProperties.asScala === gqlOnlyExpectedProperties)
   }
 }

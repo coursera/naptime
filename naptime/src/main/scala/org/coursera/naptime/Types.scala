@@ -40,7 +40,7 @@ object Types extends StrictLogging {
 
   object Relations {
     val RELATION_PROPERTY_NAME = "relatedOn"
-    val INCLUDES_PROPERTY_NAME = "included"
+    val includedPropertyName = "included"
   }
 
   @deprecated("Please use the one with fields included", "0.2.4")
@@ -119,7 +119,7 @@ object Types extends StrictLogging {
         val graphQLProperty =
           graphQLRelationOption.map(Relations.RELATION_PROPERTY_NAME -> _.toAnnotation.data)
         val includeProperty =
-          relationOption.map(Relations.INCLUDES_PROPERTY_NAME -> _.toAnnotation.data)
+          relationOption.map(Relations.includedPropertyName -> _.toAnnotation.data)
         newField.setProperties(
           List(graphQLProperty, includeProperty).flatten.toMap[String, AnyRef].asJava)
         graphQLRelationOption.map(_.description).foreach(newField.setDoc)
