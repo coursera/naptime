@@ -126,9 +126,9 @@ class TypesTest extends AssertionsForJUnit {
       ResourceFields(Set.empty, FieldsFunction.default, includeRelations, graphQLRelations)(null))
 
     val fieldsExpectedNames = List("id", "includeOnly", "shared", "graphQLOnly")
-    val includeOnlyExpectedProperties = Map("includes" -> includeOnlyResourceName.toAnnotation.data)
+    val includeOnlyExpectedProperties = Map("included" -> includeOnlyResourceName.toAnnotation.data)
     val sharedExpectedProperties = Map(
-      "includes" -> includeSharedResourceName.toAnnotation.data,
+      "included" -> includeSharedResourceName.toAnnotation.data,
       "relatedOn" -> graphQLShared.toAnnotation.data
     )
     val graphQLOnlyExpectedProperties = Map("relatedOn" -> graphQLOnly.toAnnotation.data)

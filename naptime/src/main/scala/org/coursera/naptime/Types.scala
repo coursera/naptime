@@ -29,7 +29,6 @@ import com.linkedin.data.schema.StringDataSchema
 import com.linkedin.data.schema.TyperefDataSchema
 import com.linkedin.data.schema.UnionDataSchema
 import com.typesafe.scalalogging.StrictLogging
-import org.coursera.naptime.schema.LinkedRelationAnnotation
 import org.coursera.naptime.schema.RelationType.FINDER
 import org.coursera.naptime.schema.RelationType.GET
 import org.coursera.naptime.schema.RelationType.MULTI_GET
@@ -41,7 +40,7 @@ object Types extends StrictLogging {
 
   object Relations {
     val RELATION_PROPERTY_NAME = "relatedOn"
-    val INCLUDES_PROPERTY_NAME = "includes"
+    val INCLUDES_PROPERTY_NAME = "included"
   }
 
   @deprecated("Please use the one with fields included", "0.2.4")
