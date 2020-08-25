@@ -16,18 +16,20 @@
 
 package org.coursera.naptime
 
-import com.linkedin.data.schema.ArrayDataSchema
-import com.linkedin.data.schema.IntegerDataSchema
-import com.linkedin.data.schema.StringDataSchema
+import com.linkedin.data.schema.{ArrayDataSchema, IntegerDataSchema, StringDataSchema}
 import org.coursera.naptime.actions.Course
 import org.coursera.naptime.actions.EnrollmentId
 import org.coursera.naptime.actions.SessionId
+import org.coursera.naptime.courier.CourierFormats
 import org.junit.Test
 import org.scalatest.junit.AssertionsForJUnit
+import play.api.libs.json.OFormat
 
 import scala.collection.JavaConverters._
 
 class TypesTest extends AssertionsForJUnit {
+
+  implicit val emptyFormat: OFormat[Empty] = CourierFormats.recordTemplateFormats[Empty]
 
   @Test
   def primitiveSchema(): Unit = {
@@ -102,28 +104,28 @@ class TypesTest extends AssertionsForJUnit {
     val includeRelations =
       Map("includeOnly" -> includeOnlyResourceName, "shared" -> includeSharedResourceName)
     val graphQLOnlyResourceName = ResourceName("graphQLOnly", 1)
-    val graphQLOnly =
-      FinderGraphQLRelation(
-        graphQLOnlyResourceName,
-        "find",
-        Map("foo" -> "bar"),
-        "greetings from graphql")
+    val graphQLOnly = FinderGraphQLRelation(
+      graphQLOnlyResourceName,
+      "find",
+      Map("foo" -> "bar"),
+      "greetings from graphql")
     val graphQLSharedResourceName = ResourceName("shared", 2)
-    val graphQLShared =
-      GetGraphQLRelation(
-        graphQLSharedResourceName,
-        "get",
-        Map("foo" -> "bar"),
-        "greetings from graphql")
+    val graphQLShared = GetGraphQLRelation(
+      graphQLSharedResourceName,
+      "get",
+      Map("foo" -> "bar"),
+      "greetings from graphql")
     val graphQLRelations = Map(
       "graphQLOnly" -> graphQLOnly,
       "shared" -> graphQLShared
     )
+    val resourceFields =
+      ResourceFields(Set.empty, FieldsFunction.default, includeRelations, graphQLRelations)
     val resultingType = Types.computeAsymType(
       "org.coursera.naptime.Relations.Model",
       Empty.SCHEMA,
       Empty.SCHEMA,
-      ResourceFields(Set.empty, FieldsFunction.default, includeRelations, graphQLRelations)(null))
+      resourceFields)
 
     val fieldsExpectedNames = List("id", "includeOnly", "shared", "graphQLOnly")
     val includeOnlyExpectedProperties = Map("included" -> includeOnlyResourceName.toAnnotation.data)

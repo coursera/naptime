@@ -95,7 +95,7 @@ object Types extends StrictLogging {
     val relationKeys = fields.relations.keys ++ fields.graphQLRelations.keys
     for (name <- relationKeys) {
       val relationOption = fields.relations.get(name)
-      var graphQLRelationOption = fields.graphQLRelations.get(name)
+      val graphQLRelationOption = fields.graphQLRelations.get(name)
       if (mergedSchema.contains(name)) {
         logger.warn(
           s"Fields for resource $typeName tries to add Include/GraphQL relation on field " +
