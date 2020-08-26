@@ -16,7 +16,12 @@
 
 package org.coursera.naptime
 
-import com.linkedin.data.schema.{ArrayDataSchema, IntegerDataSchema, StringDataSchema}
+import com.linkedin.data.schema.{
+  ArrayDataSchema,
+  IntegerDataSchema,
+  NullDataSchema,
+  StringDataSchema
+}
 import org.coursera.naptime.actions.Course
 import org.coursera.naptime.actions.EnrollmentId
 import org.coursera.naptime.actions.SessionId
@@ -116,24 +121,24 @@ class TypesTest extends AssertionsForJUnit {
     val includeOnlyExpectedProperties = Map(
       "included" -> ResourceName("includeOnly", 1).toAnnotation.data)
     assert(includeOnlyField != null)
-    assert(!includeOnlyField.getOptional)
-    assert(includeOnlyField.getType == new ArrayDataSchema(new StringDataSchema))
+    assert(includeOnlyField.getOptional)
+    assert(includeOnlyField.getType == new NullDataSchema())
     assert(includeOnlyField.getProperties.asScala === includeOnlyExpectedProperties)
-    val sharedField = resultingType.getField("shared")
+    val sharedScalarField = resultingType.getField("shared")
     val sharedExpectedProperties = Map(
       "included" -> ResourceName("shared", 2).toAnnotation.data,
       "relatedOn" -> GetGraphQLRelation(ResourceName("shared", 2), "get").toAnnotation.data
     )
-    assert(sharedField != null)
-    assert(sharedField.getOptional)
-    assert(sharedField.getType == new StringDataSchema)
-    assert(sharedField.getProperties.asScala === sharedExpectedProperties)
-    val gqlOnlyField = resultingType.getField("gqlOnly")
+    assert(sharedScalarField != null)
+    assert(sharedScalarField.getOptional)
+    assert(sharedScalarField.getType == new StringDataSchema)
+    assert(sharedScalarField.getProperties.asScala === sharedExpectedProperties)
+    val graphQLOnlyArrayField = resultingType.getField("gqlOnly")
     val gqlOnlyExpectedProperties = Map(
       "relatedOn" -> FinderGraphQLRelation(ResourceName("gqlOnly", 1), "find").toAnnotation.data)
-    assert(gqlOnlyField != null)
-    assert(!gqlOnlyField.getOptional)
-    assert(gqlOnlyField.getType == new ArrayDataSchema(new StringDataSchema))
-    assert(gqlOnlyField.getProperties.asScala === gqlOnlyExpectedProperties)
+    assert(graphQLOnlyArrayField != null)
+    assert(!graphQLOnlyArrayField.getOptional)
+    assert(graphQLOnlyArrayField.getType == new ArrayDataSchema(new StringDataSchema))
+    assert(graphQLOnlyArrayField.getProperties.asScala === gqlOnlyExpectedProperties)
   }
 }

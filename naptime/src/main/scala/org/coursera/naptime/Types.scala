@@ -22,6 +22,7 @@ import com.linkedin.data.schema.ArrayDataSchema
 import com.linkedin.data.schema.DataSchema
 import com.linkedin.data.schema.MapDataSchema
 import com.linkedin.data.schema.Name
+import com.linkedin.data.schema.NullDataSchema
 import com.linkedin.data.schema.PrimitiveDataSchema
 import com.linkedin.data.schema.RecordDataSchema
 import com.linkedin.data.schema.RecordDataSchema.RecordType
@@ -40,7 +41,7 @@ object Types extends StrictLogging {
 
   object Relations {
     val RELATION_PROPERTY_NAME = "relatedOn"
-    val includedPropertyName = "included"
+    val INCLUDED_PROPERTY_NAME = "included"
   }
 
   @deprecated("Please use the one with fields included", "0.2.4")
@@ -92,8 +93,8 @@ object Types extends StrictLogging {
       case unknown: DataSchema =>
         throw new RuntimeException(s"Cannot compute asymmetric type for key type: $unknown")
     }
-    val relationKeys = fields.relations.keys ++ fields.graphQLRelations.keys
-    for (name <- relationKeys) {
+    val relationNameSet = fields.relations.keySet ++ fields.graphQLRelations.keySet
+    for (name <- relationNameSet) {
       val relationOption = fields.relations.get(name)
       val graphQLRelationOption = fields.graphQLRelations.get(name)
       if (mergedSchema.contains(name)) {
@@ -103,9 +104,13 @@ object Types extends StrictLogging {
       } else {
         val nameSegments = name.split("/")
         val errorMessageBuilder = new StringBuilder
-        val effectiveRelationType = graphQLRelationOption.map(_.toAnnotation.relationType)
-        val newField = effectiveRelationType match {
-          case None | Some(FINDER) | Some(MULTI_GET) =>
+        val graphQLRelationTypeOption = graphQLRelationOption.map(_.toAnnotation.relationType)
+        val newField = graphQLRelationTypeOption match {
+          case None => // include-only relation
+            val newField = new RecordDataSchema.Field(new NullDataSchema)
+            newField.setOptional(true)
+            newField
+          case Some(FINDER) | Some(MULTI_GET) =>
             val newField = new RecordDataSchema.Field(new ArrayDataSchema(new StringDataSchema))
             newField.setOptional(false)
             newField
@@ -116,12 +121,12 @@ object Types extends StrictLogging {
           case Some(unknown) =>
             throw new RuntimeException(s"Unknown relation type: ${unknown.toString}")
         }
-        val graphQLProperty =
+        val graphQLPropertyOption =
           graphQLRelationOption.map(Relations.RELATION_PROPERTY_NAME -> _.toAnnotation.data)
-        val includeProperty =
-          relationOption.map(Relations.includedPropertyName -> _.toAnnotation.data)
+        val includePropertyOption =
+          relationOption.map(Relations.INCLUDED_PROPERTY_NAME -> _.toAnnotation.data)
         newField.setProperties(
-          List(graphQLProperty, includeProperty).flatten.toMap[String, AnyRef].asJava)
+          List(graphQLPropertyOption, includePropertyOption).flatten.toMap[String, AnyRef].asJava)
         graphQLRelationOption.map(_.description).foreach(newField.setDoc)
         newField.setName(nameSegments.last, errorMessageBuilder)
         insertFieldAtLocation(mergedSchema, nameSegments.dropRight(1).toList, newField)
