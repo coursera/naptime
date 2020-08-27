@@ -1,0 +1,13 @@
+namespace org.coursera.naptime.schema
+
+/**
+ * The schema for a linked relation annotation.
+ */
+record IncludedRelationAnnotation {
+
+  /**
+   * The name of the resource.
+   */
+  resourceName: string
+
+}

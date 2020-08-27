@@ -22,6 +22,7 @@ import com.linkedin.data.schema.ArrayDataSchema
 import com.linkedin.data.schema.DataSchema
 import com.linkedin.data.schema.MapDataSchema
 import com.linkedin.data.schema.Name
+import com.linkedin.data.schema.NullDataSchema
 import com.linkedin.data.schema.PrimitiveDataSchema
 import com.linkedin.data.schema.RecordDataSchema
 import com.linkedin.data.schema.RecordDataSchema.RecordType
@@ -40,6 +41,7 @@ object Types extends StrictLogging {
 
   object Relations {
     val RELATION_PROPERTY_NAME = "relatedOn"
+    val INCLUDED_PROPERTY_NAME = "included"
   }
 
   @deprecated("Please use the one with fields included", "0.2.4")
@@ -91,34 +93,43 @@ object Types extends StrictLogging {
       case unknown: DataSchema =>
         throw new RuntimeException(s"Cannot compute asymmetric type for key type: $unknown")
     }
-    for ((name, graphQLRelation) <- fields.graphQLRelations) {
-      Option(mergedSchema.getField(name)) match {
-        case Some(field) =>
-          logger.warn(
-            s"Fields for resource $typeName tries to add graphql relation on field " +
-              s"'$name', but that field is already defined on the model")
-        case None =>
-          val errorMessageBuilder = new StringBuilder
-          val newField = graphQLRelation.toAnnotation.relationType match {
-            case FINDER | MULTI_GET =>
-              val newField = new RecordDataSchema.Field(new ArrayDataSchema(new StringDataSchema)) // TODO(bryan): fix type here
-              newField.setOptional(false)
-              newField
-            case SINGLE_ELEMENT_FINDER | GET =>
-              val newField = new RecordDataSchema.Field(new StringDataSchema) // TODO(bryan): fix type here
-              newField.setOptional(true)
-              newField
-            case _ =>
-              throw new RuntimeException(
-                "unknown relation type: " +
-                  graphQLRelation.toAnnotation.relationType.toString)
-          }
-          val relationMap = Map[String, AnyRef](
-            Relations.RELATION_PROPERTY_NAME -> graphQLRelation.toAnnotation.data())
-          newField.setProperties(relationMap.asJava)
-          newField.setDoc(graphQLRelation.description)
-          newField.setName(name.split("/").last, errorMessageBuilder)
-          insertFieldAtLocation(mergedSchema, name.split("/").dropRight(1).toList, newField)
+    val relationNameSet = fields.relations.keySet ++ fields.graphQLRelations.keySet
+    for (name <- relationNameSet) {
+      val relationOption = fields.relations.get(name)
+      val graphQLRelationOption = fields.graphQLRelations.get(name)
+      if (mergedSchema.contains(name)) {
+        logger.warn(
+          s"Fields for resource $typeName tries to add Include/GraphQL relation on field " +
+            s"'$name', but that field is already defined on the model")
+      } else {
+        val nameSegments = name.split("/")
+        val errorMessageBuilder = new StringBuilder
+        val graphQLRelationTypeOption = graphQLRelationOption.map(_.toAnnotation.relationType)
+        val newField = graphQLRelationTypeOption match {
+          case None => // include-only relation
+            val newField = new RecordDataSchema.Field(new NullDataSchema)
+            newField.setOptional(true)
+            newField
+          case Some(FINDER) | Some(MULTI_GET) =>
+            val newField = new RecordDataSchema.Field(new ArrayDataSchema(new StringDataSchema))
+            newField.setOptional(false)
+            newField
+          case Some(SINGLE_ELEMENT_FINDER) | Some(GET) =>
+            val newField = new RecordDataSchema.Field(new StringDataSchema)
+            newField.setOptional(true)
+            newField
+          case Some(unknown) =>
+            throw new RuntimeException(s"Unknown relation type: ${unknown.toString}")
+        }
+        val graphQLPropertyOption =
+          graphQLRelationOption.map(Relations.RELATION_PROPERTY_NAME -> _.toAnnotation.data)
+        val includePropertyOption =
+          relationOption.map(Relations.INCLUDED_PROPERTY_NAME -> _.toAnnotation.data)
+        newField.setProperties(
+          List(graphQLPropertyOption, includePropertyOption).flatten.toMap[String, AnyRef].asJava)
+        graphQLRelationOption.map(_.description).foreach(newField.setDoc)
+        newField.setName(nameSegments.last, errorMessageBuilder)
+        insertFieldAtLocation(mergedSchema, nameSegments.dropRight(1).toList, newField)
       }
     }
     mergedSchema

@@ -22,6 +22,7 @@ import org.coursera.naptime.schema.AuthOverride
 import org.coursera.naptime.schema.RelationType
 import org.coursera.naptime.schema.Resource
 import org.coursera.naptime.schema.GraphQLRelationAnnotation
+import org.coursera.naptime.schema.IncludedRelationAnnotation
 import play.api.http.Status
 import play.api.i18n.Lang
 import play.api.libs.json.JsObject
@@ -442,6 +443,7 @@ case class ResourceName(
     val suffix = if (resourcePath.isEmpty) "" else resourcePath.mkString("/", "/", "")
     s"$topLevelName.v$version$suffix"
   }
+  def toAnnotation: IncludedRelationAnnotation = IncludedRelationAnnotation(identifier)
 }
 
 object ResourceName {
