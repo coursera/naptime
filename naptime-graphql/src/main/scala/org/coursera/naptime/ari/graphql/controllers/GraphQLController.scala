@@ -16,6 +16,7 @@
 
 package org.coursera.naptime.ari.graphql.controllers
 
+import java.util.UUID.randomUUID
 import javax.inject._
 import com.typesafe.scalalogging.Logger
 import com.typesafe.scalalogging.StrictLogging
@@ -147,11 +148,9 @@ class GraphQLController @Inject()(
               }
           }.recover {
             case error: QueryAnalysisError =>
-              OutgoingQuery(
-                Json.obj(
-                  "error" -> "QueryAnalysisError",
-                  "message" -> "message omitted for security"),
-                None)
+              val uuid = randomUUID().toString
+              logger.error("QueryAnalysisError- " + uuid, error)
+              OutgoingQuery(Json.obj("error" -> "QueryAnalysisError", "message" -> uuid), None)
             case error: ErrorWithResolver =>
               OutgoingQuery(error.resolveError.as[JsObject], None)
             case error: Exception =>
