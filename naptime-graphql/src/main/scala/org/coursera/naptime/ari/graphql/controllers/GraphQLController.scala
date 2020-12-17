@@ -147,7 +147,7 @@ class GraphQLController @Inject()(
               }
           }.recover {
             case error: QueryAnalysisError =>
-              OutgoingQuery(error.resolveError.as[JsObject], None)
+              OutgoingQuery(Json.obj("error" -> "QueryAnalysisError", "message" -> "message omitted for security"),None)
             case error: ErrorWithResolver =>
               OutgoingQuery(error.resolveError.as[JsObject], None)
             case error: Exception =>
