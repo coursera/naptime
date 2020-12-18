@@ -1,0 +1,13 @@
+syntax = "proto2";
+
+package examples;
+
+option java_package = "org.example.coursera.proto2";
+option java_outer_classname = "UserProto";
+
+message User {
+  // unique "tag" that field uses in the binary encoding
+  required string name = 1;
+  required string email = 2;
+  optional string selfDescription = 3 [default = ""];
+}
