@@ -1,0 +1,6 @@
+namespace org.coursera.naptime.courier
+
+enum TestEnum {
+  FIRST
+  SECOND
+}
