@@ -160,7 +160,7 @@ object ValidateDataAgainstSchema {
         obj: AnyRef): AnyRef = {
       val primitiveClass = _primitiveTypeToClassMap(schema.getType)
       var fixed = obj
-      if (obj.getClass != primitiveClass) {
+      if (obj.getClass ne primitiveClass) {
         fixed = fixupPrimitive(schema, obj)
         if (fixed eq obj) {
           addMessage(
