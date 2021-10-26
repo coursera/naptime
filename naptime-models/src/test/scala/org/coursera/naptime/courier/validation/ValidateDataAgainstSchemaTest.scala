@@ -254,8 +254,9 @@ class ValidateDataAgainstSchemaTest extends AssertionsForJUnit {
 
   @Test
   def testLongNormalCoercionValidation(): Unit = {
-    val schemaText = "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : " +
-      "[ { \"name\" : \"bar\", \"type\" : \"long\" } ] }"
+    val schemaText =
+      """{ "type" : "record", "name" : "foo", "fields" :
+        |[ { "name" : "bar", "type" : "long" }]}""".stripMargin
     val inputs = List(
       (new java.lang.Long(1), new java.lang.Long(1)),
       (new java.lang.Long(-1), new java.lang.Long(-1)),
@@ -273,8 +274,9 @@ class ValidateDataAgainstSchemaTest extends AssertionsForJUnit {
 
   @Test
   def testLongStringToPrimitiveCoercionValidation(): Unit = {
-    val schemaText = "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : " +
-      "[ { \"name\" : \"bar\", \"type\" : \"long\" } ] }"
+    val schemaText =
+      """{ "type" : "record", "name" : "foo", "fields" :
+        |[ { "name" : "bar", "type" : "long" } ] }""".stripMargin
     val inputs = List(
       (new java.lang.String("1"), new java.lang.Long(1)),
       (new java.lang.String("-1"), new java.lang.Long(-1)),
@@ -295,8 +297,9 @@ class ValidateDataAgainstSchemaTest extends AssertionsForJUnit {
 
   @Test
   def testFloatNormalCoercionValidation(): Unit = {
-    val schemaText = "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : " +
-      "[ { \"name\" : \"bar\", \"type\" : \"float\" } ] }"
+    val schemaText =
+      """{ "type" : "record", "name" : "foo", "fields" :
+        |[ { "name" : "bar", "type" : "float" } ] }""".stripMargin
     val inputs = List(
       (new java.lang.Float(1), new java.lang.Float(1)),
       (new java.lang.Float(-1), new java.lang.Float(-1)),
@@ -314,8 +317,9 @@ class ValidateDataAgainstSchemaTest extends AssertionsForJUnit {
 
   @Test
   def testFloatStringToPrimitiveCoercionValidation(): Unit = {
-    val schemaText = "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : " +
-      "[ { \"name\" : \"bar\", \"type\" : \"float\" } ] }"
+    val schemaText =
+      """{ "type" : "record", "name" : "foo", "fields" :
+        |[ { "name" : "bar", "type" : "float" } ] }""".stripMargin
     val inputs = List(
       (new java.lang.String("1"), new java.lang.Float(1)),
       (new java.lang.String("-1"), new java.lang.Float(-1)),
@@ -339,8 +343,9 @@ class ValidateDataAgainstSchemaTest extends AssertionsForJUnit {
 
   @Test
   def testDoubleNormalCoercionValidation(): Unit = {
-    val schemaText = "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : " +
-      "[ { \"name\" : \"bar\", \"type\" : \"double\" } ] }"
+    val schemaText =
+      """{ "type" : "record", "name" : "foo", "fields" :
+        |[ { "name" : "bar", "type" : "double" } ] }""".stripMargin
     val inputs = List(
       (new java.lang.Double(1), new java.lang.Double(1)),
       (new java.lang.Double(-1), new java.lang.Double(-1)),
@@ -358,8 +363,9 @@ class ValidateDataAgainstSchemaTest extends AssertionsForJUnit {
 
   @Test
   def testDoubleStringToPrimitiveCoercionValidation(): Unit = {
-    val schemaText = "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : " +
-      "[ { \"name\" : \"bar\", \"type\" : \"double\" } ] }"
+    val schemaText =
+      """{ "type" : "record", "name" : "foo", "fields" :
+        |[ { "name" : "bar", "type" : "double" } ] }""".stripMargin
     val inputs = List(
       (new java.lang.String("1"), new java.lang.Double(1)),
       (new java.lang.String("-1"), new java.lang.Double(-1)),
@@ -382,8 +388,9 @@ class ValidateDataAgainstSchemaTest extends AssertionsForJUnit {
 
   @Test
   def testBytesValidation(): Unit = {
-    val schemaText = "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : " +
-      "[ { \"name\" : \"bar\", \"type\" : \"bytes\" } ] }"
+    val schemaText =
+      """{ "type" : "record", "name" : "foo", "fields" :
+        |[ { "name" : "bar", "type" : "bytes" } ] }""".stripMargin
     val badObjects = List(
       new java.lang.Boolean(true),
       new java.lang.Integer(1),
@@ -404,9 +411,10 @@ class ValidateDataAgainstSchemaTest extends AssertionsForJUnit {
 
   @Test
   def testFixedValidation(): Unit = {
-    val schemaText = "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : " +
-      "[ { \"name\" : \"bar\", \"type\" : { \"name\" : \"fixed4\", \"type\" : \"fixed\", \"size\"" +
-      " : 4 } } ] }"
+    val schemaText =
+      """{ "type" : "record", "name" : "foo", "fields" :
+        |[ { "name" : "bar", "type" : { "name" : "fixed4", "type" : "fixed", "size" : 4 } } ] }
+        |""".stripMargin
     val badObjects = List(
       new java.lang.Boolean(true),
       new java.lang.Integer(1),
@@ -441,9 +449,13 @@ class ValidateDataAgainstSchemaTest extends AssertionsForJUnit {
 
   @Test
   def testEnumCoercionValidation(): Unit = {
-    val schemaText = "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : " +
-      "[ { \"name\" : \"bar\", \"type\" : { \"name\" : \"fruits\", \"type\" : \"enum\", " +
-      "\"symbols\" : [ \"apple\", \"orange\", \"banana\" ] } } ] }"
+    val schemaText =
+      """{ "type": "record", "name": "foo", "fields":
+        |[ { "name": "bar",
+        |    "type": { "name" : "fruits",
+        |              "type" : "enum",
+        |              "symbols" : [ "apple", "orange", "banana" ] }
+        |      } ] }""".stripMargin
     val goodObjects = List(
       new java.lang.String("apple"),
       new java.lang.String("orange"),
@@ -476,8 +488,9 @@ class ValidateDataAgainstSchemaTest extends AssertionsForJUnit {
 
   @Test
   def testArrayNormalCoercionValidation(): Unit = {
-    val schemaText = "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : " +
-      "[ { \"name\" : \"bar\", \"type\" : { \"type\" : \"array\", \"items\" : \"int\" } } ] }"
+    val schemaText =
+      """{ "type" : "record", "name" : "foo", "fields" :
+        | [ { "name" : "bar", "type" : { "type" : "array", "items" : "int" } } ] }""".stripMargin
     val inputs = List(
       (new DataList, new DataList),
       (new DataList(asList(1)), new DataList(asList(1))),
@@ -504,8 +517,9 @@ class ValidateDataAgainstSchemaTest extends AssertionsForJUnit {
 
   @Test
   def testArrayStringToPrimitiveCoercionValidation(): Unit = {
-    val schemaText = "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : " +
-      "[ { \"name\" : \"bar\", \"type\" : { \"type\" : \"array\", \"items\" : \"int\" } } ] }"
+    val schemaText =
+      """{ "type" : "record", "name" : "foo", "fields" :
+        |[ { "name" : "bar", "type" : { "type" : "array", "items" : "int" } } ] }""".stripMargin
     val inputs = List(
       (new DataList(asList("1")), new DataList(asList(1))),
       (new DataList(asList("1", "2", "3")), new DataList(asList(1, 2, 3))),
@@ -533,8 +547,9 @@ class ValidateDataAgainstSchemaTest extends AssertionsForJUnit {
 
   @Test
   def testMapNormalCoercionValidation(): Unit = {
-    val schemaText = "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : " +
-      "[ { \"name\" : \"bar\", \"type\" : { \"type\" : \"map\", \"values\" : \"int\" } } ] }"
+    val schemaText =
+      """{ "type" : "record", "name" : "foo", "fields" :
+        |[ { "name" : "bar", "type" : { "type" : "map", "values" : "int" } } ] }""".stripMargin
     val inputs = List(
       (new DataMap, new DataMap),
       (new DataMap(asMap("key1" -> 1)), new DataMap(asMap("key1" -> 1))),
@@ -563,8 +578,9 @@ class ValidateDataAgainstSchemaTest extends AssertionsForJUnit {
 
   @Test
   def testMapStringToPrimitiveValidation(): Unit = {
-    val schemaText = "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : " +
-      "[ { \"name\" : \"bar\", \"type\" : { \"type\" : \"map\", \"values\" : \"int\" } } ] }"
+    val schemaText =
+      """{ "type" : "record", "name" : "foo", "fields" :
+        |[ { "name" : "bar", "type" : { "type" : "map", "values" : "int" } } ] }""".stripMargin
     val inputs = List(
       (new DataMap(asMap("key1" -> "1")), new DataMap(asMap("key1" -> 1))),
       (
@@ -596,6 +612,9 @@ class ValidateDataAgainstSchemaTest extends AssertionsForJUnit {
 
   @Test
   def testUnionNormalCoercionValidation(): Unit = {
+    val schemaText =
+      """{"type": "record", "name": "foo", "fields": [{"name": "bar", "type": ["null", "int",
+        |"string", {"type": "enum", "name": "Fruits", "symbols": ["APPLE", "ORANGE"]}]}]}""".stripMargin
     val inputs = List(
       (Data.NULL, Data.NULL),
       (new DataMap(asMap("int" -> 1)), new DataMap(asMap("int" -> 1))),
@@ -629,7 +648,7 @@ class ValidateDataAgainstSchemaTest extends AssertionsForJUnit {
       new DataMap(asMap("Fruits" -> new DataList)),
       new DataMap(asMap("int" -> I1, "string" -> "x")),
       new DataMap(asMap("x" -> I1, "y" -> L1)))
-    testNormalCoercionValidation(UNION_SCHEMA, "bar", inputs, badObjects)
+    testNormalCoercionValidation(schemaText, "bar", inputs, badObjects)
   }
 
   @Test
@@ -676,17 +695,16 @@ class ValidateDataAgainstSchemaTest extends AssertionsForJUnit {
 
   @Test
   def testRecordValidation(): Unit = {
-    val schemaText = "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : " + "[ " +
-      "{ \"name\" : \"bar\", \"type\" : { \"name\" : \"barType\", \"type\" : \"record\", " +
-      "\"fields\" : [" +
-      "{ \"name\" : \"requiredInt\", \"type\" : \"int\" }," +
-      "{ \"name\" : \"requiredString\", \"type\" : \"string\" }," +
-      "{ \"name\" : \"defaultString\", \"type\" : \"string\", \"default\" : \"apple\" }," +
-      "{ \"name\" : \"optionalBoolean\", \"type\" : \"boolean\", \"optional\" : true }," +
-      "{ \"name\" : \"optionalDouble\", \"type\" : \"double\", \"optional\" : true }," +
-      "{ \"name\" : \"optionalWithDefaultString\", \"type\" : \"string\", \"optional\" : true, " +
-      "\"default\" : \"orange\" }" +
-      "] } } ] }"
+    val schemaText =
+      """{ "type" : "record", "name" : "foo", "fields" :
+        |[{ "name" : "bar", "type" : { "name" : "barType", "type" : "record", "fields" :
+        |  [{ "name" : "requiredInt", "type" : "int" },
+        |   { "name" : "requiredString", "type" : "string" },
+        |   { "name" : "defaultString", "type" : "string", "default" : "apple" },
+        |   { "name" : "optionalBoolean", "type" : "boolean", "optional" : true },
+        |   { "name" : "optionalDouble", "type" : "double", "optional" : true },
+        |   { "name" : "optionalWithDefaultString", "type" : "string", "optional" : true,
+        |     "default" : "orange" }] } } ] }""".stripMargin
     val good = List(
       List(
         ValidationOptions(
@@ -849,35 +867,35 @@ class ValidateDataAgainstSchemaTest extends AssertionsForJUnit {
 
   @Test
   def testValidationWithFixupAbsentWithDefault(): Unit = {
-    val schemaText = "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : \n" +
-      "[ { \"name\" : \"bar\", \"type\" : { \"name\" : \"barType\", \"type\" : \"record\", " +
-      "\"fields\" : [ \n" +
-      "{ \"name\" : \"boolean\", \"type\" : \"boolean\", \"default\" : true }, \n" +
-      "{ \"name\" : \"int\", \"type\" : \"int\", \"default\" : 1 }, \n" +
-      "{ \"name\" : \"long\", \"type\" : \"long\", \"default\" : 2 }, \n" +
-      "{ \"name\" : \"float\", \"type\" : \"float\", \"default\" : 3.0 }, \n" +
-      "{ \"name\" : \"double\", \"type\" : \"double\", \"default\" : 4.0 }, \n" +
-      "{ \"name\" : \"string\", \"type\" : \"string\", \"default\" : \"cow\" }, \n" +
-      "{ \"name\" : \"bytes\", \"type\" : \"bytes\", \"default\" : \"dog\" }, \n" +
-      "{ \"name\" : \"array\", \"type\" : { \"type\" : \"array\", \"items\" : \"int\" }, " +
-      "\"default\" : [ -1, -2, -3 ] }, \n" +
-      "{ \"name\" : \"enum\", \"type\" : { \"type\" : \"enum\", \"name\" : \"enumType\", " +
-      "\"symbols\" : [ \"apple\", \"orange\", \"banana\" ] }, \"default\" : \"apple\" }, \n" +
-      "{ \"name\" : \"fixed\", \"type\" : { \"type\" : \"fixed\", \"name\" : \"fixedType\", " +
-      "\"size\" : 4 }, \"default\" : \"1234\" }, \n" +
-      "{ \"name\" : \"map\", \"type\" : { \"type\" : \"map\", \"values\" : \"int\" }, \"default\"" +
-      " : { \"1\" : 1, \"2\" : 2 } }, \n" +
-      "{ \"name\" : \"record\", \"type\" : { \"type\" : \"record\", \"name\" : \"recordType\", " +
-      "\"fields\" : [ { \"name\" : \"int\", \"type\" : \"int\" } ] }, \"default\" : { \"int\" : 1" +
-      " } }, \n" +
-      "{ \"name\" : \"union\", \"type\" : [ \"int\", \"recordType\", \"enumType\", \"fixedType\" " +
-      "], \"default\" : { \"enumType\" : \"orange\" } }, \n" +
-      "{ \"name\" : \"unionWithNull\", \"type\" : [ \"null\", \"enumType\", \"fixedType\" ], " +
-      "\"default\" : null }, \n" +
-      "{ \"name\" : \"optionalInt\", \"type\" : \"int\", \"optional\" : true }, \n" +
-      "{ \"name\" : \"optionalDefaultInt\", \"type\" : \"int\", \"optional\" : true, \"default\" " +
-      ": 42 } \n" +
-      "] } } ] }"
+    val schemaText =
+      """{ "type": "record", "name": "foo", "fields":
+        | [ { "name": "bar", "type": { "name": "barType", "type": "record", "fields":
+        |   [ {"name": "boolean", "type": "boolean", "default": true },
+        |     {"name": "int", "type": "int", "default": 1 },
+        |     {"name": "long", "type": "long", "default": 2 },
+        |     {"name": "float", "type": "float", "default": 3.0 },
+        |     {"name": "double", "type": "double", "default": 4.0 },
+        |     {"name": "string", "type": "string", "default": "cow" },
+        |     {"name": "bytes", "type": "bytes", "default": "dog" },
+        |     {"name": "array", "type": { "type": "array", "items": "int" },
+        |      "default": [ -1, -2, -3 ] },
+        |     {"name": "enum", "type": { "type": "enum", "name": "enumType",
+        |        "symbols": [ "apple", "orange", "banana" ] },
+        |      "default": "apple" },
+        |     {"name": "fixed", "type": { "type": "fixed", "name": "fixedType", "size": 4 },
+        |      "default": "1234" },
+        |     {"name": "map", "type": { "type": "map", "values": "int" },
+        |      "default": { "1": 1, "2": 2 } },
+        |     {"name": "record", "type": { "type": "record", "name": "recordType",
+        |        "fields": [ { "name": "int", "type": "int" } ] },
+        |      "default": { "int": 1 } },
+        |     {"name" : "union", "type" : [ "int", "recordType", "enumType", "fixedType"],
+        |      "default" : { "enumType" : "orange" } },
+        |     {"name" : "unionWithNull", "type" : [ "null", "enumType", "fixedType" ],
+        |      "default" : null },
+        |     {"name" : "optionalInt", "type" : "int", "optional" : true },
+        |     {"name" : "optionalDefaultInt", "type" : "int", "optional" : true,
+        |      "default": 42 } ] } } ] }""".stripMargin
     val key = "bar"
     val schema = dataSchemaFromString(schemaText)
     assert(schema != null)
@@ -920,54 +938,51 @@ class ValidateDataAgainstSchemaTest extends AssertionsForJUnit {
 
   @Test
   def testNonRootStartDataElement(): Unit = {
-    val schemaText = "{\n" + "  \"name\" : \"Foo\",\n" + "  \"type\" : \"record\",\n" +
-      "  \"fields\" : [\n" +
-      "    { \"name\" : \"intField\", \"type\" : \"int\", \"optional\" : true },\n" +
-      "    { \"name\" : \"stringField\", \"type\" : \"string\", \"optional\" : true },\n" +
-      "    { \"name\" : \"arrayField\", \"type\" : { \"type\" : \"array\", \"items\" : \"Foo\" }," +
-      " \"optional\" : true },\n" +
-      "    { \"name\" : \"mapField\", \"type\" : { \"type\" : \"map\", \"values\" : \"Foo\" }, " +
-      "\"optional\" : true },\n" +
-      "    { \"name\" : \"unionField\", \"type\" : [ \"int\", \"string\", \"Foo\" ], \"optional\"" +
-      " : true },\n" +
-      "    { \"name\" : \"fooField\", \"type\" : \"Foo\", \"optional\" : true }\n" + "  ]\n" + "}\n"
+    val schemaText =
+      """{ "name": "Foo", "type": "record", "fields":
+        |[{ "name": "intField", "type": "int", "optional": true },
+        | { "name": "stringField", "type": "string", "optional": true },
+        | { "name": "arrayField", "type": { "type": "array", "items": "Foo" }, "optional": true },
+        | { "name": "mapField", "type": { "type": "map", "values": "Foo" }, "optional": true },
+        | { "name": "unionField", "type": [ "int", "string", "Foo" ], "optional": true },
+        | { "name": "fooField", "type": "Foo", "optional": true } ]}""".stripMargin
     val input: List[(String, String, List[String], List[String])] = List(
       (
-        "{ \"intField\" : \"bad\", \"fooField\" : { \"intField\" : 32 } }",
+        """{ "intField" : "bad", "fooField" : { "intField" : 32 } }""",
         "/fooField",
         List.empty,
         List("ERROR")),
       (
-        "{ \"intField\" : 32, \"fooField\" : { \"intField\" : \"bad\" } }",
+        """{ "intField" : 32, "fooField" : { "intField" : "bad" } }""",
         "/fooField",
         List[String]("ERROR", "/fooField/intField"),
         List.empty),
       (
-        "{\n" + "  \"stringField\" : 32,\n" +
-          "  \"arrayField\" : [ { \"intField\" : \"bad0\" }, { \"intField\" : \"bad1\" } ]\n" +
-          "}\n",
+        """{"stringField": 32, "arrayField": [{"intField": "bad0"}, {"intField": "bad1"}]}""",
         "/arrayField/0",
         List[String]("ERROR", "/arrayField/0/intField"),
         List[String]("/stringField", "/arrayField/1/intField")),
       (
-        "{\n" + "  \"stringField\" : 32,\n" +
-          "  \"mapField\" : { \"m0\" : { \"intField\" : \"bad0\" }, \"m1\" : { \"intField\" " +
-          ": \"bad1\" } }\n" +
-          "}\n",
+        """{"stringField" : 32,
+          | "mapField" : { "m0" : { "intField" : "bad0" },
+          |                "m1" : { "intField" : "bad1" } }}"""
+          .stripMargin,
         "/mapField/m1",
         List[String]("ERROR", "/mapField/m1/intField"),
         List[String]("/stringField", "/mapField/m0/intField")),
       (
-        "{\n" + "  \"stringField\" : 32,\n" + "  \"arrayField\" : [\n" +
-          "    { \"unionField\" : { \"Foo\" : { \"intField\" : \"bad0\" } } },\n" +
-          "    { \"unionField\" : { \"int\" : \"bad1\" } }\n" + "  ]\n" + "}\n",
+        """
+          |{"stringField": 32,
+          | "arrayField": [{"unionField": {"Foo": {"intField": "bad0"}}},
+          |                 { "unionField": {"int": "bad1"}}]}""".stripMargin,
         "/arrayField/0/unionField",
         List[String]("ERROR", "/arrayField/0/unionField/Foo/intField"),
         List[String]("/stringField", "/arrayField/1/unionField/int")),
       (
-        "{\n" + "  \"stringField\" : 32,\n" + "  \"fooField\" : {\n" +
-          "    \"stringField\" : 45,\n" + "    \"fooField\" : { \"intField\" : \"bad1\" } }\n" +
-          "  }\n" + "}\n",
+        """
+          |{"stringField" : 32,
+          | "fooField" : {"stringField" : 45,
+          |               "fooField" : {"intField" : "bad1" }}}}""".stripMargin,
         "/fooField/fooField",
         List[String]("ERROR", "/fooField/fooField/intField"),
         List[String]("/stringField", "/fooField/stringField")))
@@ -1195,10 +1210,6 @@ object ValidateDataAgainstSchemaTest {
   val INTEGER_SCHEMA: String =
     """{"type": "record", "name": "foo", "fields": [{"name": "bar", "type": "int"}]}"""
 
-  val UNION_SCHEMA: String =
-    """{"type": "record", "name": "foo", "fields": [{"name": "bar", "type": ["null", "int",
-      |"string", {"type": "enum", "name": "Fruits", "symbols": ["APPLE", "ORANGE"]}]}]}""".stripMargin
-
   val TYPEREF_SCHEMA: String =
     """{ "type" : "record", "name" : "foo", "fields" : [
       | { "name" : "bar1", "type" : { "type" : "typeref", "name" : "int2", "ref": "int" }, "optional" : true },
@@ -1206,7 +1217,7 @@ object ValidateDataAgainstSchemaTest {
       | { "name" : "bar3", "type" : { "type" : "typeref", "name" : "int3", "ref": "int2" }, "optional" : true },
       | { "name" : "bar4", "type" : "int3", "optional" : true }] }""".stripMargin
 
-  val SCHEMA_FOR_NORMAL_COERCION =
+  val SCHEMA_FOR_NORMAL_COERCION: String =
     """ {
       |  "type": "record",
       |  "name": "foo",

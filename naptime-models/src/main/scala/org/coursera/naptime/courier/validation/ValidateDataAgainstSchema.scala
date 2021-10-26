@@ -83,13 +83,11 @@ object ValidateDataAgainstSchema {
 
     def validate(element: DataElement): Unit = validateIterative(element)
 
-    // maybe don't need this?
     def validateIterative(element: DataElement): Unit = {
       _fixed = element.getValue
       val it = new ObjectIterator(element, IterationOrder.POST_ORDER)
       var nextElement: DataElement = it.next()
       while (nextElement != null) {
-        // do stuff here
         val nextElementSchema = nextElement.getSchema
         if (nextElementSchema != null) {
           validate(nextElement, nextElementSchema, nextElement.getValue)
@@ -99,7 +97,6 @@ object ValidateDataAgainstSchema {
     }
 
     def validate(element: DataElement, schema: DataSchema, obj: AnyRef): AnyRef = {
-      // can we do dynamic dispatch here?
       val fixed: AnyRef = schema.getType match {
         case DataSchema.Type.ARRAY =>
           validateArray(element, obj)
