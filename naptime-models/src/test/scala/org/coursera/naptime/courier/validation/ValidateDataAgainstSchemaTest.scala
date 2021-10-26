@@ -1092,8 +1092,7 @@ object ValidateDataAgainstSchemaTest {
     assert(schema != null)
     val map = new DataMap
     for (rows <- goodInput) {
-      val modes = rows._1
-      val dataObjects = rows._2
+      val (modes, dataObjects) = rows
       for (mode <- modes) {
         for (dataObject <- dataObjects) {
           map.put(key, dataObject)
@@ -1106,10 +1105,7 @@ object ValidateDataAgainstSchemaTest {
       }
     }
     for (rows <- badInput) {
-      val modes = rows._1
-      val dataObjects = rows._2
-      val expectedString = rows._3
-      val errorPaths = rows._4
+      val (modes, dataObjects, expectedString, errorPaths) = rows
       for (mode <- modes) {
         var index = 0
         for (dataObject <- dataObjects) {
