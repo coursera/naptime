@@ -745,33 +745,8 @@ class ValidateDataAgainstSchemaTest extends AssertionsForJUnit {
 
   @Test
   def testValidationWithNormalCoercion(): Unit = {
-    val schemaText = "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : \n" +
-      "[ { \"name\" : \"bar\", \"type\" : { \"name\" : \"barType\", \"type\" : \"record\", " +
-      "\"fields\" : [ \n" +
-      "{ \"name\" : \"boolean\", \"type\" : \"boolean\", \"optional\" : true }, \n" +
-      "{ \"name\" : \"int\", \"type\" : \"int\", \"optional\" : true }, \n" +
-      "{ \"name\" : \"long\", \"type\" : \"long\", \"optional\" : true }, \n" +
-      "{ \"name\" : \"float\", \"type\" : \"float\", \"optional\" : true }, \n" +
-      "{ \"name\" : \"double\", \"type\" : \"double\", \"optional\" : true }, \n" +
-      "{ \"name\" : \"string\", \"type\" : \"string\", \"optional\" : true }, \n" +
-      "{ \"name\" : \"bytes\", \"type\" : \"bytes\", \"optional\" : true }, \n" +
-      "{ \"name\" : \"array\", \"type\" : { \"type\" : \"array\", \"items\" : \"int\" }, " +
-      "\"optional\" : true }, \n" +
-      "{ \"name\" : \"enum\", \"type\" : { \"type\" : \"enum\", \"name\" : \"enumType\", " +
-      "\"symbols\" : [ \"apple\", \"orange\", \"banana\" ] }, \"optional\" : true }, \n" +
-      "{ \"name\" : \"fixed\", \"type\" : { \"type\" : \"fixed\", \"name\" : \"fixedType\", " +
-      "\"size\" : 4 }, \"optional\" : true }, \n" +
-      "{ \"name\" : \"map\", \"type\" : { \"type\" : \"map\", \"values\" : \"int\" }, " +
-      "\"optional\" : true }, \n" +
-      "{ \"name\" : \"record\", \"type\" : { \"type\" : \"record\", \"name\" : \"recordType\", " +
-      "\"fields\" : [ { \"name\" : \"int\", \"type\" : \"int\" } ] }, \"optional\" : true }, \n" +
-      "{ \"name\" : \"union\", \"type\" : [ \"int\", \"recordType\", \"enumType\", \"fixedType\" " +
-      "], \"optional\" : true }, \n" +
-      "{ \"name\" : \"unionWithNull\", \"type\" : [ \"null\", \"enumType\", \"fixedType\" ], " +
-      "\"optional\" : true } \n" +
-      "] } } ] }"
     val key = "bar"
-    val schema = dataSchemaFromString(schemaText)
+    val schema = dataSchemaFromString(SCHEMA_FOR_NORMAL_COERCION)
     val input =
       List(
         ValidationOptions(requiredMode = RequiredMode.CAN_BE_ABSENT_IF_HAS_DEFAULT),
@@ -956,18 +931,17 @@ class ValidateDataAgainstSchemaTest extends AssertionsForJUnit {
       "    { \"name\" : \"unionField\", \"type\" : [ \"int\", \"string\", \"Foo\" ], \"optional\"" +
       " : true },\n" +
       "    { \"name\" : \"fooField\", \"type\" : \"Foo\", \"optional\" : true }\n" + "  ]\n" + "}\n"
-    val empty = List()
     val input: List[(String, String, List[String], List[String])] = List(
       (
         "{ \"intField\" : \"bad\", \"fooField\" : { \"intField\" : 32 } }",
         "/fooField",
-        empty,
+        List.empty,
         List("ERROR")),
       (
         "{ \"intField\" : 32, \"fooField\" : { \"intField\" : \"bad\" } }",
         "/fooField",
         List[String]("ERROR", "/fooField/intField"),
-        empty),
+        List.empty),
       (
         "{\n" + "  \"stringField\" : 32,\n" +
           "  \"arrayField\" : [ { \"intField\" : \"bad0\" }, { \"intField\" : \"bad1\" } ]\n" +
@@ -1017,26 +991,6 @@ class ValidateDataAgainstSchemaTest extends AssertionsForJUnit {
 
 object ValidateDataAgainstSchemaTest {
   import collection.JavaConverters._
-
-  val STRING_SCHEMA: String =
-    """{"type": "record", "name": "foo", "fields": [{"name": "bar", "type": "string"}]}"""
-
-  val BOOLEAN_SCHEMA: String =
-    """{"type": "record", "name": "foo", "fields": [{"name": "bar", "type": "boolean"}]}"""
-
-  val INTEGER_SCHEMA: String =
-    """{"type": "record", "name": "foo", "fields": [{"name": "bar", "type": "int"}]}"""
-
-  val UNION_SCHEMA: String =
-    """{"type": "record", "name": "foo", "fields": [{"name": "bar", "type": ["null", "int",
-      |"string", {"type": "enum", "name": "Fruits", "symbols": ["APPLE", "ORANGE"]}]}]}""".stripMargin
-
-  val TYPEREF_SCHEMA: String =
-    """{ "type" : "record", "name" : "foo", "fields" : [
-      | { "name" : "bar1", "type" : { "type" : "typeref", "name" : "int2", "ref": "int" }, "optional" : true },
-      | { "name" : "bar2", "type" : "int2", "optional" : true },
-      | { "name" : "bar3", "type" : { "type" : "typeref", "name" : "int3", "ref": "int2" }, "optional" : true },
-      | { "name" : "bar4", "type" : "int3", "optional" : true }] }""".stripMargin
 
   val FALSE = new java.lang.Boolean(false)
   val TRUE = new java.lang.Boolean(true)
@@ -1184,6 +1138,7 @@ object ValidateDataAgainstSchemaTest {
     val (optionsList, pairs) = input
     for (options <- optionsList) {
       // Data object is read-only.
+      assert(options.coercionMode == CoercionMode.NORMAL)
       for (pair <- pairs) {
         val foo = new DataMap
         foo.put(key, pair._1)
@@ -1192,7 +1147,6 @@ object ValidateDataAgainstSchemaTest {
         assert(pair._1.asInstanceOf[DataComplex].isReadOnly)
         assert(foo.get(key) eq pair._1)
         val result = ValidateDataAgainstSchema.validate(foo, schema, options)
-        System.out.println(result)
         assert(!result.isValid)
         assert(result.hasFix)
         assert(result.hasFixupReadOnlyError)
@@ -1224,13 +1178,154 @@ object ValidateDataAgainstSchemaTest {
         assert(!pair0.isReadOnly)
         assert(pair._2 == barFixed)
         assert(result.getFixed eq foo) // modify in place
-
         assert(!barFixed.asInstanceOf[DataComplex].isReadOnly)
         assert(barFixed eq pair0)
       }
     }
-
   }
 
   def dataMapFromString(json: String): DataMap = codec.stringToMap(json)
+
+  val STRING_SCHEMA: String =
+    """{"type": "record", "name": "foo", "fields": [{"name": "bar", "type": "string"}]}"""
+
+  val BOOLEAN_SCHEMA: String =
+    """{"type": "record", "name": "foo", "fields": [{"name": "bar", "type": "boolean"}]}"""
+
+  val INTEGER_SCHEMA: String =
+    """{"type": "record", "name": "foo", "fields": [{"name": "bar", "type": "int"}]}"""
+
+  val UNION_SCHEMA: String =
+    """{"type": "record", "name": "foo", "fields": [{"name": "bar", "type": ["null", "int",
+      |"string", {"type": "enum", "name": "Fruits", "symbols": ["APPLE", "ORANGE"]}]}]}""".stripMargin
+
+  val TYPEREF_SCHEMA: String =
+    """{ "type" : "record", "name" : "foo", "fields" : [
+      | { "name" : "bar1", "type" : { "type" : "typeref", "name" : "int2", "ref": "int" }, "optional" : true },
+      | { "name" : "bar2", "type" : "int2", "optional" : true },
+      | { "name" : "bar3", "type" : { "type" : "typeref", "name" : "int3", "ref": "int2" }, "optional" : true },
+      | { "name" : "bar4", "type" : "int3", "optional" : true }] }""".stripMargin
+
+  val SCHEMA_FOR_NORMAL_COERCION =
+    """ {
+      |  "type": "record",
+      |  "name": "foo",
+      |  "fields": [
+      |    {
+      |      "name": "bar",
+      |      "type": {
+      |        "name": "barType",
+      |        "type": "record",
+      |        "fields": [
+      |          {
+      |            "name": "boolean",
+      |            "type": "boolean",
+      |            "optional": true
+      |          },
+      |          {
+      |            "name": "int",
+      |            "type": "int",
+      |            "optional": true
+      |          },
+      |          {
+      |            "name": "long",
+      |            "type": "long",
+      |            "optional": true
+      |          },
+      |          {
+      |            "name": "float",
+      |            "type": "float",
+      |            "optional": true
+      |          },
+      |          {
+      |            "name": "double",
+      |            "type": "double",
+      |            "optional": true
+      |          },
+      |          {
+      |            "name": "string",
+      |            "type": "string",
+      |            "optional": true
+      |          },
+      |          {
+      |            "name": "bytes",
+      |            "type": "bytes",
+      |            "optional": true
+      |          },
+      |          {
+      |            "name": "array",
+      |            "type": {
+      |              "type": "array",
+      |              "items": "int"
+      |            },
+      |            "optional": true
+      |          },
+      |          {
+      |            "name": "enum",
+      |            "type": {
+      |              "type": "enum",
+      |              "name": "enumType",
+      |              "symbols": [
+      |                "apple",
+      |                "orange",
+      |                "banana"
+      |              ]
+      |            },
+      |            "optional": true
+      |          },
+      |          {
+      |            "name": "fixed",
+      |            "type": {
+      |              "type": "fixed",
+      |              "name": "fixedType",
+      |              "size": 4
+      |            },
+      |            "optional": true
+      |          },
+      |          {
+      |            "name": "map",
+      |            "type": {
+      |              "type": "map",
+      |              "values": "int"
+      |            },
+      |            "optional": true
+      |          },
+      |          {
+      |            "name": "record",
+      |            "type": {
+      |              "type": "record",
+      |              "name": "recordType",
+      |              "fields": [
+      |                {
+      |                  "name": "int",
+      |                  "type": "int"
+      |                }
+      |              ]
+      |            },
+      |            "optional": true
+      |          },
+      |          {
+      |            "name": "union",
+      |            "type": [
+      |              "int",
+      |              "recordType",
+      |              "enumType",
+      |              "fixedType"
+      |            ],
+      |            "optional": true
+      |          },
+      |          {
+      |            "name": "unionWithNull",
+      |            "type": [
+      |              "null",
+      |              "enumType",
+      |              "fixedType"
+      |            ],
+      |            "optional": true
+      |          }
+      |        ]
+      |      }
+      |    }
+      |  ]
+      |} """.stripMargin
 }

@@ -133,7 +133,7 @@ object ValidateDataAgainstSchema {
             obj)
         case _ => validatePrimitive(element, schema, obj)
       }
-      if (fixed != obj) {
+      if (fixed ne obj) {
         fixValue(element, fixed)
       }
       if (validator != null && element.getSchema == schema) {
