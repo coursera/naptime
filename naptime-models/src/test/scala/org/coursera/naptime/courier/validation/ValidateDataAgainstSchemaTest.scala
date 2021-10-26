@@ -946,6 +946,8 @@ class ValidateDataAgainstSchemaTest extends AssertionsForJUnit {
         | { "name": "mapField", "type": { "type": "map", "values": "Foo" }, "optional": true },
         | { "name": "unionField", "type": [ "int", "string", "Foo" ], "optional": true },
         | { "name": "fooField", "type": "Foo", "optional": true } ]}""".stripMargin
+    val stringField = "/stringField"
+    val error = "ERROR"
     val input: List[(String, String, List[String], List[String])] = List(
       (
         """{ "intField" : "bad", "fooField" : { "intField" : 32 } }""",
@@ -955,37 +957,37 @@ class ValidateDataAgainstSchemaTest extends AssertionsForJUnit {
       (
         """{ "intField" : 32, "fooField" : { "intField" : "bad" } }""",
         "/fooField",
-        List[String]("ERROR", "/fooField/intField"),
+        List[String](error, "/fooField/intField"),
         List.empty),
       (
         """{"stringField": 32, "arrayField": [{"intField": "bad0"}, {"intField": "bad1"}]}""",
         "/arrayField/0",
-        List[String]("ERROR", "/arrayField/0/intField"),
-        List[String]("/stringField", "/arrayField/1/intField")),
+        List[String](error, "/arrayField/0/intField"),
+        List[String](stringField, "/arrayField/1/intField")),
       (
         """{"stringField" : 32,
           | "mapField" : { "m0" : { "intField" : "bad0" },
           |                "m1" : { "intField" : "bad1" } }}"""
           .stripMargin,
         "/mapField/m1",
-        List[String]("ERROR", "/mapField/m1/intField"),
-        List[String]("/stringField", "/mapField/m0/intField")),
+        List[String](error, "/mapField/m1/intField"),
+        List[String](stringField, "/mapField/m0/intField")),
       (
         """
           |{"stringField": 32,
           | "arrayField": [{"unionField": {"Foo": {"intField": "bad0"}}},
-          |                 { "unionField": {"int": "bad1"}}]}""".stripMargin,
+          |                { "unionField": {"int": "bad1"}}]}""".stripMargin,
         "/arrayField/0/unionField",
-        List[String]("ERROR", "/arrayField/0/unionField/Foo/intField"),
-        List[String]("/stringField", "/arrayField/1/unionField/int")),
+        List[String](error, "/arrayField/0/unionField/Foo/intField"),
+        List[String](stringField, "/arrayField/1/unionField/int")),
       (
         """
           |{"stringField" : 32,
           | "fooField" : {"stringField" : 45,
-          |               "fooField" : {"intField" : "bad1" }}}}""".stripMargin,
+          |               "fooField": {"intField": "bad1" }}}}""".stripMargin,
         "/fooField/fooField",
-        List[String]("ERROR", "/fooField/fooField/intField"),
-        List[String]("/stringField", "/fooField/stringField")))
+        List[String](error, "/fooField/fooField/intField"),
+        List[String](stringField, "/fooField/stringField")))
     val schema = dataSchemaFromString(schemaText)
     for (row <- input) {
       val (dataString, startPath, expectedStrings, notExpectedStrings) = row
