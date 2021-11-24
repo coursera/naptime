@@ -1,22 +1,21 @@
 package org.coursera.naptime.courier.validation
 
-import org.scalatest.junit.AssertionsForJUnit
-import com.linkedin.data.element.DataElement
-import com.linkedin.data.schema.validation.ValidationResult
-import com.linkedin.data.schema.DataSchema
-import com.linkedin.data.DataMap
-import com.linkedin.data.schema.RecordDataSchema
-import com.linkedin.data.schema.SchemaParser
-import com.linkedin.data.ByteString
-import org.junit.Test
-import com.linkedin.data.message.Message
-import com.linkedin.data.Data
 import java.io.ByteArrayInputStream
-import com.linkedin.data.codec.JacksonDataCodec
 
+import com.linkedin.data.ByteString
+import com.linkedin.data.Data
 import com.linkedin.data.DataComplex
 import com.linkedin.data.DataList
+import com.linkedin.data.DataMap
+import com.linkedin.data.codec.JacksonDataCodec
+import com.linkedin.data.element.DataElement
 import com.linkedin.data.element.DataElementUtil
+import com.linkedin.data.schema.DataSchema
+import com.linkedin.data.schema.RecordDataSchema
+import com.linkedin.data.schema.SchemaParser
+import com.linkedin.data.schema.validation.ValidationResult
+import org.junit.Test
+import org.scalatest.junit.AssertionsForJUnit
 
 class ValidateDataAgainstSchemaTest extends AssertionsForJUnit {
   import ValidateDataAgainstSchemaTest._
@@ -257,19 +256,7 @@ class ValidateDataAgainstSchemaTest extends AssertionsForJUnit {
     val schemaText =
       """{ "type" : "record", "name" : "foo", "fields" :
         |[ { "name" : "bar", "type" : "long" }]}""".stripMargin
-    val inputs = List(
-      (new java.lang.Long(1), new java.lang.Long(1)),
-      (new java.lang.Long(-1), new java.lang.Long(-1)),
-      (new java.lang.Integer(1), new java.lang.Long(1)),
-      (new java.lang.Float(1), new java.lang.Long(1)),
-      (new java.lang.Double(1), new java.lang.Long(1)))
-    val badObjects = List(
-      new java.lang.Boolean(true),
-      new java.lang.String("abc"),
-      ByteString.copyAvroString("bytes", false),
-      new DataMap,
-      new DataList)
-    testNormalCoercionValidation(schemaText, "bar", inputs, badObjects)
+    testNormalCoercionValidation(schemaText, "bar", LONG_TEST_INPUTS, BAD_OBJECTS_FOR_NUMERIC)
   }
 
   @Test
@@ -280,19 +267,9 @@ class ValidateDataAgainstSchemaTest extends AssertionsForJUnit {
     val inputs = List(
       (new java.lang.String("1"), new java.lang.Long(1)),
       (new java.lang.String("-1"), new java.lang.Long(-1)),
-      (new java.lang.String("" + Long.MaxValue), new java.lang.Long(Long.MaxValue)),
-      (new java.lang.Long(1), new java.lang.Long(1)),
-      (new java.lang.Long(-1), new java.lang.Long(-1)),
-      (new java.lang.Integer(1), new java.lang.Long(1)),
-      (new java.lang.Float(1), new java.lang.Long(1)),
-      (new java.lang.Double(1), new java.lang.Long(1)))
-    val badObjects = List(
-      new java.lang.Boolean(true),
-      new java.lang.String("abc"),
-      ByteString.copyAvroString("bytes", false),
-      new DataMap,
-      new DataList)
-    testStringToPrimitiveCoercionValidation(schemaText, "bar", inputs, badObjects)
+      (new java.lang.String("" + Long.MaxValue), new java.lang.Long(Long.MaxValue))) ++
+      LONG_TEST_INPUTS
+    testStringToPrimitiveCoercionValidation(schemaText, "bar", inputs, BAD_OBJECTS_FOR_NUMERIC)
   }
 
   @Test
@@ -300,19 +277,7 @@ class ValidateDataAgainstSchemaTest extends AssertionsForJUnit {
     val schemaText =
       """{ "type" : "record", "name" : "foo", "fields" :
         |[ { "name" : "bar", "type" : "float" } ] }""".stripMargin
-    val inputs = List(
-      (new java.lang.Float(1), new java.lang.Float(1)),
-      (new java.lang.Float(-1), new java.lang.Float(-1)),
-      (new java.lang.Integer(1), new java.lang.Float(1)),
-      (new java.lang.Long(1), new java.lang.Float(1)),
-      (new java.lang.Double(1), new java.lang.Float(1)))
-    val badObjects = List(
-      new java.lang.Boolean(true),
-      new java.lang.String("abc"),
-      ByteString.copyAvroString("bytes", false),
-      new DataMap,
-      new DataList)
-    testNormalCoercionValidation(schemaText, "bar", inputs, badObjects)
+    testNormalCoercionValidation(schemaText, "bar", FLOAT_TEST_INPUTS, BAD_OBJECTS_FOR_NUMERIC)
   }
 
   @Test
@@ -325,20 +290,9 @@ class ValidateDataAgainstSchemaTest extends AssertionsForJUnit {
       (new java.lang.String("-1"), new java.lang.Float(-1)),
       (new java.lang.String("1.01"), new java.lang.Float(1.01)),
       (new java.lang.String("-1.01"), new java.lang.Float(-1.01)),
-      (new java.lang.String("" + Float.MaxValue), new java.lang.Float(Float.MaxValue)),
-      (new java.lang.Float(1), new java.lang.Float(1)),
-      (new java.lang.Float(1), new java.lang.Float(1)),
-      (new java.lang.Float(-1), new java.lang.Float(-1)),
-      (new java.lang.Integer(1), new java.lang.Float(1)),
-      (new java.lang.Long(1), new java.lang.Float(1)),
-      (new java.lang.Double(1), new java.lang.Float(1)))
-    val badObjects = List(
-      new java.lang.Boolean(true),
-      new java.lang.String("abc"),
-      ByteString.copyAvroString("bytes", false),
-      new DataMap,
-      new DataList)
-    testStringToPrimitiveCoercionValidation(schemaText, "bar", inputs, badObjects)
+      (new java.lang.String("" + Float.MaxValue), new java.lang.Float(Float.MaxValue))) ++
+      FLOAT_TEST_INPUTS
+    testStringToPrimitiveCoercionValidation(schemaText, "bar", inputs, BAD_OBJECTS_FOR_NUMERIC)
   }
 
   @Test
@@ -346,19 +300,7 @@ class ValidateDataAgainstSchemaTest extends AssertionsForJUnit {
     val schemaText =
       """{ "type" : "record", "name" : "foo", "fields" :
         |[ { "name" : "bar", "type" : "double" } ] }""".stripMargin
-    val inputs = List(
-      (new java.lang.Double(1), new java.lang.Double(1)),
-      (new java.lang.Double(-1), new java.lang.Double(-1)),
-      (new java.lang.Integer(1), new java.lang.Double(1)),
-      (new java.lang.Long(1), new java.lang.Double(1)),
-      (new java.lang.Float(1), new java.lang.Double(1)))
-    val badObjects = List(
-      new java.lang.Boolean(true),
-      new java.lang.String("abc"),
-      ByteString.copyAvroString("bytes", false),
-      new DataMap,
-      new DataList)
-    testNormalCoercionValidation(schemaText, "bar", inputs, badObjects)
+    testNormalCoercionValidation(schemaText, "bar", DOUBLE_TEST_INPUTS, BAD_OBJECTS_FOR_NUMERIC)
   }
 
   @Test
@@ -371,19 +313,9 @@ class ValidateDataAgainstSchemaTest extends AssertionsForJUnit {
       (new java.lang.String("-1"), new java.lang.Double(-1)),
       (new java.lang.String("1.01"), new java.lang.Double(1.01)),
       (new java.lang.String("-1.01"), new java.lang.Double(-1.01)),
-      (new java.lang.String("" + Double.MaxValue), new java.lang.Double(Double.MaxValue)),
-      (new java.lang.Double(1), new java.lang.Double(1)),
-      (new java.lang.Double(-1), new java.lang.Double(-1)),
-      (new java.lang.Integer(1), new java.lang.Double(1)),
-      (new java.lang.Long(1), new java.lang.Double(1)),
-      (new java.lang.Float(1), new java.lang.Double(1)))
-    val badObjects = List(
-      new java.lang.Boolean(true),
-      new java.lang.String("abc"),
-      ByteString.copyAvroString("bytes", false),
-      new DataMap,
-      new DataList)
-    testStringToPrimitiveCoercionValidation(schemaText, "bar", inputs, badObjects)
+      (new java.lang.String("" + Double.MaxValue), new java.lang.Double(Double.MaxValue))) ++
+      DOUBLE_TEST_INPUTS
+    testStringToPrimitiveCoercionValidation(schemaText, "bar", inputs, BAD_OBJECTS_FOR_NUMERIC)
   }
 
   @Test
@@ -491,28 +423,8 @@ class ValidateDataAgainstSchemaTest extends AssertionsForJUnit {
     val schemaText =
       """{ "type" : "record", "name" : "foo", "fields" :
         | [ { "name" : "bar", "type" : { "type" : "array", "items" : "int" } } ] }""".stripMargin
-    val inputs = List(
-      (new DataList, new DataList),
-      (new DataList(asList(1)), new DataList(asList(1))),
-      (new DataList(asList(2, 3)), new DataList(asList(2, 3))),
-      (new DataList(asList(1L)), new DataList(asList(1))),
-      (new DataList(asList(1.0f)), new DataList(asList(1))),
-      (new DataList(asList(1.0)), new DataList(asList(1))))
-    val badObjects = List(
-      new java.lang.Boolean(true),
-      new java.lang.Integer(1),
-      new java.lang.Long(1),
-      new java.lang.Float(1),
-      new java.lang.Double(1),
-      new java.lang.String,
-      new DataMap,
-      new DataList(asList(TRUE)),
-      new DataList(asList(new String("1"))),
-      new DataList(asList(new DataMap)),
-      new DataList(asList(new DataList)),
-      new DataList(asList(TRUE, I1)),
-      new DataList(asList(new Integer(1), TRUE)))
-    testNormalCoercionValidation(schemaText, "bar", inputs, badObjects)
+    val badObjects = List(new DataList(asList(new String("1")))) ++ ARRAY_BAD_OBJECTS
+    testNormalCoercionValidation(schemaText, "bar", ARRAY_TEST_INPUTS, badObjects)
   }
 
   @Test
@@ -522,27 +434,9 @@ class ValidateDataAgainstSchemaTest extends AssertionsForJUnit {
         |[ { "name" : "bar", "type" : { "type" : "array", "items" : "int" } } ] }""".stripMargin
     val inputs = List(
       (new DataList(asList("1")), new DataList(asList(1))),
-      (new DataList(asList("1", "2", "3")), new DataList(asList(1, 2, 3))),
-      (new DataList, new DataList),
-      (new DataList(asList(1)), new DataList(asList(1))),
-      (new DataList(asList(2, 3)), new DataList(asList(2, 3))),
-      (new DataList(asList(1L)), new DataList(asList(1))),
-      (new DataList(asList(1.0f)), new DataList(asList(1))),
-      (new DataList(asList(1.0)), new DataList(asList(1))))
-    val badObjects = List(
-      TRUE,
-      I1,
-      L1,
-      F1,
-      D1,
-      new java.lang.String,
-      new DataMap,
-      new DataList(asList(TRUE)),
-      new DataList(asList(new DataMap)),
-      new DataList(asList(new DataList)),
-      new DataList(asList(TRUE, I1)),
-      new DataList(asList(I1, TRUE)))
-    testStringToPrimitiveCoercionValidation(schemaText, "bar", inputs, badObjects)
+      (new DataList(asList("1", "2", "3")), new DataList(asList(1, 2, 3)))) ++
+      ARRAY_TEST_INPUTS
+    testStringToPrimitiveCoercionValidation(schemaText, "bar", inputs, ARRAY_BAD_OBJECTS)
   }
 
   @Test
@@ -550,30 +444,9 @@ class ValidateDataAgainstSchemaTest extends AssertionsForJUnit {
     val schemaText =
       """{ "type" : "record", "name" : "foo", "fields" :
         |[ { "name" : "bar", "type" : { "type" : "map", "values" : "int" } } ] }""".stripMargin
-    val inputs = List(
-      (new DataMap, new DataMap),
-      (new DataMap(asMap("key1" -> 1)), new DataMap(asMap("key1" -> 1))),
-      (new DataMap(asMap("key1" -> 1, "key2" -> 2)), new DataMap(asMap("key1" -> 1, "key2" -> 2))),
-      (new DataMap(asMap("key1" -> 1L)), new DataMap(asMap("key1" -> 1))),
-      (new DataMap(asMap("key1" -> 1.0)), new DataMap(asMap("key1" -> 1))),
-      (new DataMap(asMap("key1" -> 1.0f)), new DataMap(asMap("key1" -> 1))),
-      (new DataMap(asMap("key1" -> 1, "key2" -> 2L)), new DataMap(asMap("key1" -> 1, "key2" -> 2))),
-      (
-        new DataMap(asMap("key1" -> 1L, "key2" -> 2.0)),
-        new DataMap(asMap("key1" -> 1, "key2" -> 2))))
-    val badObjects = List(
-      TRUE,
-      I1,
-      L1,
-      F1,
-      D1,
-      new java.lang.String,
-      new DataList,
-      new DataMap(asMap("key1" -> TRUE)),
-      new DataMap(asMap("key1" -> new java.lang.String("1"))),
-      new DataMap(asMap("key1" -> new DataMap)),
-      new DataMap(asMap("key1" -> new DataList)))
-    testNormalCoercionValidation(schemaText, "bar", inputs, badObjects)
+    val badObjects = MAP_BAD_OBJECTS ++
+      List(new DataMap(asMap("key1" -> new java.lang.String("1"))))
+    testNormalCoercionValidation(schemaText, "bar", MAP_TEST_INPUTS, badObjects)
   }
 
   @Test
@@ -585,29 +458,9 @@ class ValidateDataAgainstSchemaTest extends AssertionsForJUnit {
       (new DataMap(asMap("key1" -> "1")), new DataMap(asMap("key1" -> 1))),
       (
         new DataMap(asMap("key1" -> "1", "key2" -> "2")),
-        new DataMap(asMap("key1" -> 1, "key2" -> 2))),
-      (new DataMap, new DataMap),
-      (new DataMap(asMap("key1" -> 1)), new DataMap(asMap("key1" -> 1))),
-      (new DataMap(asMap("key1" -> 1, "key2" -> 2)), new DataMap(asMap("key1" -> 1, "key2" -> 2))),
-      (new DataMap(asMap("key1" -> 1L)), new DataMap(asMap("key1" -> 1))),
-      (new DataMap(asMap("key1" -> 1.0)), new DataMap(asMap("key1" -> 1))),
-      (new DataMap(asMap("key1" -> 1.0f)), new DataMap(asMap("key1" -> 1))),
-      (new DataMap(asMap("key1" -> 1, "key2" -> 2L)), new DataMap(asMap("key1" -> 1, "key2" -> 2))),
-      (
-        new DataMap(asMap("key1" -> 1L, "key2" -> 2.0)),
-        new DataMap(asMap("key1" -> 1, "key2" -> 2))))
-    val badObjects = List(
-      TRUE,
-      I1,
-      L1,
-      F1,
-      D1,
-      new java.lang.String,
-      new DataList,
-      new DataMap(asMap("key1" -> TRUE)),
-      new DataMap(asMap("key1" -> new DataMap)),
-      new DataMap(asMap("key1" -> new DataList)))
-    testStringToPrimitiveCoercionValidation(schemaText, "bar", inputs, badObjects)
+        new DataMap(asMap("key1" -> 1, "key2" -> 2)))) ++
+      MAP_TEST_INPUTS
+    testStringToPrimitiveCoercionValidation(schemaText, "bar", inputs, MAP_BAD_OBJECTS)
   }
 
   @Test
@@ -676,8 +529,8 @@ class ValidateDataAgainstSchemaTest extends AssertionsForJUnit {
   def testTyperefStringToPrimitiveCoercionValidation(): Unit = {
     val inputs = List(
       (new java.lang.String("1"), I1),
-      (I1, new Integer(1)),
-      (new Integer(-1), new Integer(-1)),
+      (I1, I1),
+      (IM1, IM1),
       (L1, I1),
       (F1, I1),
       (D1, I1))
@@ -705,11 +558,10 @@ class ValidateDataAgainstSchemaTest extends AssertionsForJUnit {
         |   { "name" : "optionalDouble", "type" : "double", "optional" : true },
         |   { "name" : "optionalWithDefaultString", "type" : "string", "optional" : true,
         |     "default" : "orange" }] } } ] }""".stripMargin
-    val good = List(
-      List(
+    val input = List(
         ValidationOptions(
           requiredMode = RequiredMode.FIXUP_ABSENT_WITH_DEFAULT,
-          coercionMode = CoercionMode.NORMAL)) ->
+          coercionMode = CoercionMode.NORMAL) ->
         List(
           new DataMap(asMap("requiredInt" -> 12, "requiredString" -> "")),
           new DataMap(asMap("requiredInt" -> 34, "requiredString" -> "cow")),
@@ -758,7 +610,7 @@ class ValidateDataAgainstSchemaTest extends AssertionsForJUnit {
               "extra1" ->
                 TRUE))))
     // All bad examples used CoercionMode.OFF which is unimplemented. So they have been skipped.
-    testValidationWithDifferentValidationOptions(schemaText, "bar", good, List())
+    testValidationWithDifferentValidationOptions(schemaText, "bar", input)
   }
 
   @Test
@@ -1007,15 +859,89 @@ class ValidateDataAgainstSchemaTest extends AssertionsForJUnit {
 }
 
 object ValidateDataAgainstSchemaTest {
-  import collection.JavaConverters._
 
   val FALSE = new java.lang.Boolean(false)
   val TRUE = new java.lang.Boolean(true)
 
   val I1 = new java.lang.Integer(1)
+  val IM1 = new java.lang.Integer(-1)
   val F1 = new java.lang.Float(1)
   val L1 = new java.lang.Long(1)
   val D1 = new java.lang.Double(1)
+
+  val LONG_TEST_INPUTS = List(
+    (new java.lang.Long(1), new java.lang.Long(1)),
+    (new java.lang.Long(-1), new java.lang.Long(-1)),
+    (new java.lang.Integer(1), new java.lang.Long(1)),
+    (new java.lang.Float(1), new java.lang.Long(1)),
+    (new java.lang.Double(1), new java.lang.Long(1)))
+
+  val BAD_OBJECTS_FOR_NUMERIC = List(
+    new java.lang.Boolean(true),
+    new java.lang.String("abc"),
+    ByteString.copyAvroString("bytes", false),
+    new DataMap,
+    new DataList)
+
+  val FLOAT_TEST_INPUTS = List(
+    (new java.lang.Float(1), new java.lang.Float(1)),
+    (new java.lang.Float(-1), new java.lang.Float(-1)),
+    (new java.lang.Integer(1), new java.lang.Float(1)),
+    (new java.lang.Long(1), new java.lang.Float(1)),
+    (new java.lang.Double(1), new java.lang.Float(1)))
+
+  val DOUBLE_TEST_INPUTS = List(
+    (new java.lang.Double(1), new java.lang.Double(1)),
+    (new java.lang.Double(-1), new java.lang.Double(-1)),
+    (new java.lang.Integer(1), new java.lang.Double(1)),
+    (new java.lang.Long(1), new java.lang.Double(1)),
+    (new java.lang.Float(1), new java.lang.Double(1)))
+
+  val MAP_TEST_INPUTS = List(
+    (new DataMap, new DataMap),
+    (new DataMap(asMap("key1" -> 1)), new DataMap(asMap("key1" -> 1))),
+    (new DataMap(asMap("key1" -> 1, "key2" -> 2)), new DataMap(asMap("key1" -> 1, "key2" -> 2))),
+    (new DataMap(asMap("key1" -> 1L)), new DataMap(asMap("key1" -> 1))),
+    (new DataMap(asMap("key1" -> 1.0)), new DataMap(asMap("key1" -> 1))),
+    (new DataMap(asMap("key1" -> 1.0f)), new DataMap(asMap("key1" -> 1))),
+    (new DataMap(asMap("key1" -> 1, "key2" -> 2L)), new DataMap(asMap("key1" -> 1, "key2" -> 2))),
+    (
+      new DataMap(asMap("key1" -> 1L, "key2" -> 2.0)),
+      new DataMap(asMap("key1" -> 1, "key2" -> 2))))
+
+  val MAP_BAD_OBJECTS = List(
+      TRUE,
+      I1,
+      L1,
+      F1,
+      D1,
+      new java.lang.String,
+      new DataList,
+      new DataMap(asMap("key1" -> TRUE)),
+      new DataMap(asMap("key1" -> new DataMap)),
+      new DataMap(asMap("key1" -> new DataList)))
+
+  val ARRAY_TEST_INPUTS = List(
+    (new DataList, new DataList),
+    (new DataList(asList(1)), new DataList(asList(1))),
+    (new DataList(asList(2, 3)), new DataList(asList(2, 3))),
+    (new DataList(asList(1L)), new DataList(asList(1))),
+    (new DataList(asList(1.0f)), new DataList(asList(1))),
+    (new DataList(asList(1.0)), new DataList(asList(1))))
+
+  val ARRAY_BAD_OBJECTS = List(
+    TRUE,
+    I1,
+    L1,
+    F1,
+    D1,
+    new java.lang.String,
+    new DataMap,
+    new DataList(asList(TRUE)),
+    new DataList(asList(new DataMap)),
+    new DataList(asList(new DataList)),
+    new DataList(asList(TRUE, I1)),
+    new DataList(asList(I1, TRUE)))
 
   private val codec = new JacksonDataCodec()
 
@@ -1084,64 +1010,23 @@ object ValidateDataAgainstSchemaTest {
   }
 
   def testValidationWithDifferentValidationOptions(
-      schemaText: String,
-      key: String,
-      goodInput: Seq[(Seq[ValidationOptions], Seq[AnyRef])],
-      badInput: Seq[(Seq[ValidationOptions], Seq[AnyRef], String, Seq[Seq[String]])]): Unit = {
+    schemaText: String,
+    key: String,
+    input: Seq[(ValidationOptions, Seq[AnyRef])]): Unit = {
     val schema = dataSchemaFromString(schemaText)
     assert(schema != null)
     val map = new DataMap
-    for (rows <- goodInput) {
-      val (modes, dataObjects) = rows
-      for (mode <- modes) {
-        for (dataObject <- dataObjects) {
-          map.put(key, dataObject)
-          val result = validate(map, schema, mode)
-          assert(result.isValid)
-          if (!result.hasFix) {
-            assert(map eq result.getFixed)
-          }
-        }
-      }
-    }
-    for (rows <- badInput) {
-      val (modes, dataObjects, expectedString, errorPaths) = rows
-      for (mode <- modes) {
-        var index = 0
-        for (dataObject <- dataObjects) {
-          map.put(key, dataObject)
-          val result = validate(map, schema, mode)
-          assert(!result.isValid)
+    for (rows <- input) {
+      val (mode, dataObjects) = rows
+      for (dataObject <- dataObjects) {
+        map.put(key, dataObject)
+        val result = validate(map, schema, mode)
+        assert(result.isValid)
+        if (!result.hasFix) {
           assert(map eq result.getFixed)
-          checkMessages(result.getMessages.asScala, expectedString)
-          if (index < errorPaths.length)
-            checkMessagesErrorPath(result.getMessages.asScala, errorPaths(index))
-          index += 1
         }
       }
     }
-  }
-
-  private def checkMessages(messages: Iterable[Message], expectedString: String): Unit = {
-    for (m <- messages) {
-      assert(m.getFormat.contains(expectedString))
-    }
-  }
-
-  private def checkMessagesErrorPath(messages: Iterable[Message], errorPaths: Seq[String]): Unit = {
-    for ((m, errorPath) <- messages.zip(errorPaths)) {
-      val path = pathAsString(m.getPath)
-      assert(path == errorPath)
-    }
-  }
-
-  private def pathAsString(path: Array[AnyRef]): String = {
-    val sb = new StringBuilder
-    for (component <- path) {
-      sb.append(DataElement.SEPARATOR)
-      sb.append(component.toString)
-    }
-    sb.toString
   }
 
   private def testValidationWithNormalCoercionHelper(
