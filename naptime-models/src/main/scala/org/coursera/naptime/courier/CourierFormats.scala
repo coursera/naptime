@@ -17,7 +17,6 @@
 package org.coursera.naptime.courier
 
 import java.io.IOException
-import java.time.Clock
 
 import com.linkedin.data.ByteString
 import com.linkedin.data.DataList
