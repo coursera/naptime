@@ -1,0 +1,6 @@
+namespace org.coursera.naptime.courier
+
+@passthroughExempt
+record TestPassthroughExemptRecord {
+
+}

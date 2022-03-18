@@ -39,6 +39,39 @@ class CourierFormatsTest extends AssertionsForJUnit {
   }
 
   @Test
+  def testRecordTemplateFormats_PassthroughExemptRecord_PassesThroughAllFields(): Unit = {
+    implicit val converter = CourierFormats.recordTemplateFormats[TestPassthroughExemptRecord]
+
+    val json = """ { "string": "value", "int": 1 } """
+    val parsed = Json.parse(json)
+    val record = Json.fromJson[TestPassthroughExemptRecord](parsed).get
+    val roundTripped = Json.toJson(record)
+    assert(parsed === roundTripped)
+  }
+
+  @Test
+  def testRecordTemplateFormat_RecordWithDefaultValueSet_SerializesUsingSetValue(): Unit = {
+    implicit val converter = CourierFormats.recordTemplateFormats[TestRecordWithDefaultValue]
+
+    val fieldValue = 123
+    val record = TestRecordWithDefaultValue(fieldValue)
+    val serialized = Json.toJson(record)
+    val expected = Json.parse(s""" { "field": $fieldValue } """)
+    assert(expected === serialized)
+  }
+
+  @Test
+  def testRecordTemplateFormat_RecordWithDefaultValueUnset_SerializesUsingDefaultValue(): Unit = {
+    implicit val converter = CourierFormats.recordTemplateFormats[TestRecordWithDefaultValue]
+
+    val defaultFieldValue = 100
+    val record = TestRecordWithDefaultValue()
+    val serialized = Json.toJson(record)
+    val expected = Json.parse(s""" { "field": $defaultFieldValue } """)
+    assert(expected === serialized)
+  }
+
+  @Test
   def testFlatTypedDefinition(): Unit = {
     implicit val converter = CourierFormats.recordTemplateFormats[MockWithFlatTypedDefinition]
 

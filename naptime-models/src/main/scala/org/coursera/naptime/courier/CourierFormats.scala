@@ -234,22 +234,32 @@ object CourierFormats extends StrictLogging {
       recordSchema.getProperties.get(passthroughAnnotation) ==
         java.lang.Boolean.TRUE.asInstanceOf[AnyRef]
 
-    val newSchemaPath = schemaPath.push(recordSchema)
+    val fieldMapping = if (passthrough) {
+      // The record is annotated with the @passthroughExempt annotation, so we propagate all
+      // fields in the underlying DataMap when serializing to JSON.
+      dataMap.entrySet.asScala.map { field =>
+        field.getKey -> schemalessDataToJsValue(field.getValue)
+      }.toSeq
+    } else {
+      // The record is not annotated with the @passthroughExempt annotation so we rely on the
+      // schema to get the list of possible fields and propagate their associated values in the
+      // underlying DataMap, falling back to the field's default value when possible.
+      val newSchemaPath = schemaPath.push(recordSchema)
 
-    JsObject(dataMap.entrySet.asScala.flatMap { field =>
-      val fieldName = field.getKey
-      val fieldData = field.getValue
-      val fieldSchema = recordSchema.getField(fieldName)
-      if (fieldSchema != null) {
-        Some(fieldName -> dataToJsValue(newSchemaPath, fieldData, fieldSchema.getType))
-      } else {
-        if (passthrough) {
-          Some(fieldName -> schemalessDataToJsValue(fieldData))
+      recordSchema.getFields.asScala.flatMap { field =>
+        val fieldName = field.getName
+        val fieldData = dataMap.get(fieldName)
+        if (fieldData != null) {
+          Some(fieldName -> dataToJsValue(newSchemaPath, fieldData, field.getType))
+        } else if (field.getDefault != null) {
+          Some(fieldName -> dataToJsValue(newSchemaPath, field.getDefault, field.getType))
         } else {
           None
         }
       }
-    }.toSeq)
+    }
+
+    JsObject(fieldMapping)
   }
 
   def unionToJsObject(dataMap: DataMap, unionSchema: UnionDataSchema): JsObject = {
