@@ -64,15 +64,25 @@ class SangriaGraphQlSchemaBuilder(resources: Set[Resource], schemas: Map[String,
       lookupTypeAndErrors.copy(data = fields)
     }
 
-    val topLevelResourceObjects = topLevelResourceObjectsAndErrors.filter(_.errors.errors.isEmpty).flatMap(_.data)
+    val topLevelResourceObjects = topLevelResourceObjectsAndErrors.flatMap(_.data)
     val schemaErrors = topLevelResourceObjectsAndErrors.foldLeft(SchemaErrors.empty)(_ ++ _.errors)
 
     val dedupedResources = topLevelResourceObjects.groupBy(_.name).map(_._2.head).toList
 
+    // first, try to individually generate graphql schemas from each resource, and discard
+    // invalid schemas. this is done so that assembler can start even if some upstreams expose
+    // invalid schemas.
+    val validResources = dedupedResources.filter {resource =>
+      val resourceRootObject = ObjectType[SangriaGraphQlContext, DataMap](
+        name = resource.name,
+        fields = dedupedResources)
+      Try(Schema(resourceRootObject)).isSuccess
+    }
+
     val rootObject = ObjectType[SangriaGraphQlContext, DataMap](
       name = "root",
       description = "Top-level accessor for Naptime resources",
-      fields = dedupedResources)
+      fields = validResources)
 
     WithSchemaErrors(Schema(rootObject), schemaErrors)
   }
