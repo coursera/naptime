@@ -25,7 +25,7 @@ import org.scalatest.mockito.MockitoSugar
 
 class SangriaGraphQlSchemaBuilderTest extends AssertionsForJUnit {
   @Test
-  def checkEmptySchema(): Unit = {
+  def badResourceSchema_omitFromGraphqlSchema(): Unit = {
     val schemaTypes = Map(
       "org.coursera.naptime.ari.graphql.models.MergedCourse" -> MergedCourse.SCHEMA,
       "org.coursera.naptime.ari.graphql.models.FakeModel" -> RecordWithUnionTypes.SCHEMA,
