@@ -35,7 +35,7 @@ import scala.annotation.tailrec
 import scala.collection.immutable
 
 @Singleton
-case class NaptimeRoutes @Inject()(
+private[naptime] case class NaptimeRoutes @Inject()(
     injector: Injector,
     routerBuilders: immutable.Set[ResourceRouterBuilder]) {
 
