@@ -30,6 +30,8 @@ import sangria.schema.Value
 import sangria.schema.Field
 import sangria.schema.ObjectType
 
+import scala.util.Failure
+import scala.util.Success
 import scala.util.Try
 
 class SangriaGraphQlSchemaBuilder(resources: Set[Resource], schemas: Map[String, RecordDataSchema])
@@ -72,12 +74,17 @@ class SangriaGraphQlSchemaBuilder(resources: Set[Resource], schemas: Map[String,
     // first, try to individually generate graphql schemas from each resource, and discard
     // invalid schemas. this is done so that assembler can start even if some upstreams expose
     // invalid schemas.
-    val validResources = dedupedResources.filter {resource =>
-      val resourceRootObject = ObjectType[SangriaGraphQlContext, DataMap](
-        name = resource.name,
-        fields = dedupedResources)
-      Try(Schema(resourceRootObject)).isSuccess
-    }
+    val validResources = dedupedResources
+      .filter { resource =>
+        val resourceRootObject =
+          ObjectType[SangriaGraphQlContext, DataMap](name = "root", fields = List(resource))
+        Try(Schema(resourceRootObject)) match {
+          case Success(_) => true
+          case Failure(exception) =>
+            this.logger.error(s"schema validation failed for ${resource.name}", exception)
+            false
+        }
+      }
 
     val rootObject = ObjectType[SangriaGraphQlContext, DataMap](
       name = "root",
