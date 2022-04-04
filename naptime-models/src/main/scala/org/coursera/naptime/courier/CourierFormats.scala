@@ -39,10 +39,6 @@ import com.linkedin.data.schema.RecordDataSchema
 import com.linkedin.data.schema.StringDataSchema
 import com.linkedin.data.schema.TyperefDataSchema
 import com.linkedin.data.schema.UnionDataSchema
-import com.linkedin.data.schema.validation.CoercionMode
-import com.linkedin.data.schema.validation.RequiredMode
-import com.linkedin.data.schema.validation.ValidateDataAgainstSchema
-import com.linkedin.data.schema.validation.ValidationOptions
 import com.linkedin.data.template.DataTemplate
 import com.linkedin.data.template.DataTemplateUtil
 import com.linkedin.data.template.RecordTemplate
@@ -56,6 +52,10 @@ import org.coursera.courier.templates.ScalaEnumTemplate
 import org.coursera.courier.templates.ScalaEnumTemplateSymbol
 import org.coursera.naptime.courier.CourierUtils._
 import org.coursera.naptime.courier.Exceptions._
+import org.coursera.naptime.courier.validation.CoercionMode
+import org.coursera.naptime.courier.validation.RequiredMode
+import org.coursera.naptime.courier.validation.ValidationOptions
+import org.coursera.naptime.courier.validation.ValidateDataAgainstSchema
 import play.api.libs.json.JsonValidationError
 import play.api.libs.json.Format
 import play.api.libs.json.IdxPathNode
@@ -855,10 +855,11 @@ object CourierFormats extends StrictLogging {
     }
   }
 
-  private[this] val validationOptions =
-    new ValidationOptions(RequiredMode.FIXUP_ABSENT_WITH_DEFAULT, CoercionMode.STRING_TO_PRIMITIVE)
+  private[this] val validationOptions = ValidationOptions(
+      requiredMode = RequiredMode.FIXUP_ABSENT_WITH_DEFAULT,
+      coercionMode = CoercionMode.STRING_TO_PRIMITIVE)
 
-  private[this] def validateAndFixUp(data: Any, schema: DataSchema): Unit = {
+  private[this] def validateAndFixUp(data: AnyRef, schema: DataSchema): Unit = {
     val result = ValidateDataAgainstSchema.validate(data, schema, validationOptions)
     if (!result.isValid) {
       throw new DataValidationException(result)

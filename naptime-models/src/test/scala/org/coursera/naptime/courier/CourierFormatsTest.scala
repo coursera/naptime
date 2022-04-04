@@ -410,6 +410,26 @@ class CourierFormatsTest extends AssertionsForJUnit {
   }
 
   @Test
+  def testStringKeyWithEnum(): Unit = {
+    implicit val converter =
+      CourierFormats.recordTemplateStringKeyFormat[TestRecordWithEnum]
+
+    val validString = "FIRST~value"
+    val validStringKey = StringKey(validString)
+    val validRecord = validStringKey.asOpt[TestRecordWithEnum].get
+    assert(validRecord.data().size() === 2)
+    assert(validRecord.enumField == TestEnum.FIRST)
+    assert(validRecord.stringField == "value")
+
+    val unknownEnumString = "THIRD~value"
+    val unknownEnumStringKey = StringKey(unknownEnumString)
+    val unknownEnumRecord = unknownEnumStringKey.asOpt[TestRecordWithEnum].get
+    assert(unknownEnumRecord.data().size() === 2)
+    assert(unknownEnumRecord.enumField == TestEnum.$UNKNOWN)
+    assert(unknownEnumRecord.stringField == "value")
+  }
+
+  @Test
   def deserializeUnknownNestedEnum(): Unit = {
     val reader = CourierFormats.recordTemplateFormats[TestWrappedEnum]
     val value = """ {"value": "FOO_BAR"} """
