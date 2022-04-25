@@ -1,6 +1,0 @@
-namespace org.coursera.naptime.courier
-
-record TestRecordWithEnum {
-  enumField: TestEnum
-  stringField: string
-}

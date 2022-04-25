@@ -21,14 +21,14 @@ import com.linkedin.data.codec.JacksonDataCodec
 import com.linkedin.data.codec.TextDataCodec
 import com.linkedin.data.schema.DataSchema
 import com.linkedin.data.schema.TyperefDataSchema
+import com.linkedin.data.schema.validation.ValidateDataAgainstSchema
+import com.linkedin.data.schema.validation.ValidationOptions
 import com.linkedin.data.schema.validation.ValidationResult
 import com.linkedin.data.schema.validator.DataSchemaAnnotationValidator
 import com.linkedin.data.template.DataTemplate
 import com.linkedin.data.template.UnionTemplate
 import org.coursera.courier.templates.DataTemplates.DataConversion
 import org.coursera.courier.templates.DataValidationException
-import org.coursera.naptime.courier.validation.ValidateDataAgainstSchema
-import org.coursera.naptime.courier.validation.ValidationOptions
 import org.coursera.pegasus.TypedDefinitionCodec
 
 import scala.reflect.ClassTag
@@ -97,7 +97,7 @@ object CourierSerializer {
     }
   }
 
-  private[this] val recordValidationOptions = ValidationOptions()
+  private[this] val recordValidationOptions = new ValidationOptions()
 
   class TemplateBuilder[T <: DataTemplate[_ <: AnyRef]](private val clazz: Class[T]) {
     private[this] val companionInstance = companion(clazz)
@@ -122,7 +122,6 @@ object CourierSerializer {
           schema,
           recordValidationOptions,
           annotationValidator)
-
       if (!validationResult.isValid) {
         Left(validationResult)
       } else {
