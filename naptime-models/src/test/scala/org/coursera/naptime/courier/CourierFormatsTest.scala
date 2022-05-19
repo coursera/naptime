@@ -16,8 +16,6 @@ import org.coursera.naptime.courier.Exceptions.ReadException
 import org.junit.Test
 import org.scalatest.junit.AssertionsForJUnit
 import play.api.libs.json.JsError
-import play.api.libs.json.JsObject
-import play.api.libs.json.JsString
 import play.api.libs.json.JsSuccess
 import play.api.libs.json.Json
 import play.api.libs.json.OFormat
@@ -385,71 +383,6 @@ class CourierFormatsTest extends AssertionsForJUnit {
   def testDecimalOutsideDoubleRangeToNumber(): Unit = {
     assertThrows[ReadException](CourierFormats.bigDecimalToNumber(decimalTooBigForDouble))
     assertThrows[ReadException](CourierFormats.bigDecimalToNumber(decimalTooSmallForDouble))
-  }
-
-  @Test
-  def testEnum(): Unit = {
-    val reader = CourierFormats.enumerationFormat(TestEnum)
-    val enum = """ "FIRST" """
-    assertResult(JsSuccess(TestEnum.FIRST))(Json.parse(enum).validate[TestEnum](reader))
-  }
-
-  @Test
-  def testUnknownEnum(): Unit = {
-    val reader = CourierFormats.enumerationFormat(TestEnum)
-    val enum = """ "FOO_BAR" """
-    assertResult(JsSuccess(TestEnum.$UNKNOWN))(Json.parse(enum).validate[TestEnum](reader))
-  }
-
-  @Test
-  def testNestedEnum(): Unit = {
-    val reader = CourierFormats.recordTemplateFormats[TestWrappedEnum]
-    val recordOfEnum = """ {"value": "FIRST"} """
-    assertResult(JsSuccess(TestWrappedEnum(TestEnum.FIRST)))(
-      Json.parse(recordOfEnum).validate[TestWrappedEnum](reader))
-  }
-
-  @Test
-  def testStringKeyWithEnum(): Unit = {
-    implicit val converter =
-      CourierFormats.recordTemplateStringKeyFormat[TestRecordWithEnum]
-
-    val validString = "FIRST~value"
-    val validStringKey = StringKey(validString)
-    val validRecord = validStringKey.asOpt[TestRecordWithEnum].get
-    assert(validRecord.data().size() === 2)
-    assert(validRecord.enumField == TestEnum.FIRST)
-    assert(validRecord.stringField == "value")
-
-    val unknownEnumString = "THIRD~value"
-    val unknownEnumStringKey = StringKey(unknownEnumString)
-    val unknownEnumRecord = unknownEnumStringKey.asOpt[TestRecordWithEnum].get
-    assert(unknownEnumRecord.data().size() === 2)
-    assert(unknownEnumRecord.enumField == TestEnum.$UNKNOWN)
-    assert(unknownEnumRecord.stringField == "value")
-  }
-
-  @Test
-  def deserializeUnknownNestedEnum(): Unit = {
-    val reader = CourierFormats.recordTemplateFormats[TestWrappedEnum]
-    val value = """ {"value": "FOO_BAR"} """
-    assertResult(JsSuccess(TestWrappedEnum(TestEnum.$UNKNOWN)))(
-      Json.parse(value).validate[TestWrappedEnum](reader))
-  }
-
-  @Test
-  def serializeUnknownNestedEnum(): Unit = {
-    val writer = CourierFormats.recordTemplateFormats[TestWrappedEnum]
-    assertResult(JsObject(List("value" -> JsString("$UNKNOWN"))))(
-      writer.writes(TestWrappedEnum(TestEnum.$UNKNOWN)))
-  }
-
-  @Test
-  def deserializeUnknownArrayOfEnum(): Unit = {
-    val reader = CourierFormats.recordTemplateFormats[TestArrayOfEnum]
-    val record = """ {"value": ["FOO_BAR"]} """
-    assertResult(JsSuccess(TestArrayOfEnum(List(TestEnum.$UNKNOWN))))(
-      Json.parse(record).validate[TestArrayOfEnum](reader))
   }
 }
 
