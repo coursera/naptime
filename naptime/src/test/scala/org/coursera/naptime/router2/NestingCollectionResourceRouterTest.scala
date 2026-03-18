@@ -27,12 +27,12 @@ import org.coursera.naptime.path.RootParsedPathKey
 import org.coursera.naptime.resources.CollectionResource
 import org.coursera.naptime.resources.TopLevelCollectionResource
 import org.junit.Test
-import org.mockito.Matchers.any
-import org.mockito.Matchers.{eq => e}
+import org.mockito.ArgumentMatchers.any
+import org.mockito.ArgumentMatchers.{eq => e}
 import org.mockito.Mockito.when
 import org.mockito.Mockito.verify
-import org.scalatest.junit.AssertionsForJUnit
-import org.scalatest.mockito.MockitoSugar
+import org.scalatestplus.junit.AssertionsForJUnit
+import org.scalatestplus.mockito.MockitoSugar
 import play.api.libs.json.Json
 import play.api.libs.json.OFormat
 import play.api.mvc.RequestHeader

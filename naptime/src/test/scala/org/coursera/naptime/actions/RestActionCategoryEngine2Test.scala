@@ -39,7 +39,7 @@ import org.coursera.naptime.actions.util.Validators
 import org.coursera.naptime.resources.TopLevelCollectionResource
 import org.junit.Test
 import org.scalatest.concurrent.ScalaFutures
-import org.scalatest.junit.AssertionsForJUnit
+import org.scalatestplus.junit.AssertionsForJUnit
 import play.api.http.HeaderNames
 import play.api.http.HttpEntity
 import play.api.http.Status

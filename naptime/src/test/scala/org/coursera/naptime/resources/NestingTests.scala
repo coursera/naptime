@@ -27,7 +27,7 @@ import org.coursera.naptime.resources.NestingTests.FriendInfoResource
 import org.coursera.naptime.resources.NestingTests.PeopleResource
 import org.joda.time.DateTime
 import org.junit.Test
-import org.scalatest.junit.AssertionsForJUnit
+import org.scalatestplus.junit.AssertionsForJUnit
 import play.api.libs.json.Json
 import play.api.libs.json.OFormat
 

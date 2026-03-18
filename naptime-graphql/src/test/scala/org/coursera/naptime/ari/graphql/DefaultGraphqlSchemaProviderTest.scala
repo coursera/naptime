@@ -19,8 +19,8 @@ import org.coursera.naptime.schema.Resource
 import org.coursera.naptime.schema.ResourceKind
 import org.junit.Test
 import org.mockito.Mockito._
-import org.scalatest.junit.AssertionsForJUnit
-import org.scalatest.mockito.MockitoSugar
+import org.scalatestplus.junit.AssertionsForJUnit
+import org.scalatestplus.mockito.MockitoSugar
 
 class DefaultGraphqlSchemaProviderTest extends AssertionsForJUnit {
   import DefaultGraphqlSchemaProviderTest._

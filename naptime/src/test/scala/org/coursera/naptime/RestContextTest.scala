@@ -4,8 +4,8 @@ import org.junit.Test
 import play.api.i18n.Lang
 import play.api.mvc.Request
 import org.mockito.Mockito.when
-import org.scalatest.junit.AssertionsForJUnit
-import org.scalatest.mockito.MockitoSugar
+import org.scalatestplus.junit.AssertionsForJUnit
+import org.scalatestplus.mockito.MockitoSugar
 
 class RestContextTest extends AssertionsForJUnit with MockitoSugar {
 

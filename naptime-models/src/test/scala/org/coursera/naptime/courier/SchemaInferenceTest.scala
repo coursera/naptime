@@ -3,7 +3,7 @@ package org.coursera.naptime.courier
 import com.linkedin.data.schema.EnumDataSchema
 import com.linkedin.data.template.DataTemplateUtil
 import org.junit.Test
-import org.scalatest.junit.AssertionsForJUnit
+import org.scalatestplus.junit.AssertionsForJUnit
 import play.api.libs.json.Json
 
 class SchemaInferenceTest extends AssertionsForJUnit {

@@ -21,7 +21,7 @@ import org.coursera.naptime.router2.Router
 import org.junit.Test
 import org.scalatest.concurrent.IntegrationPatience
 import org.scalatest.concurrent.ScalaFutures
-import org.scalatest.junit.AssertionsForJUnit
+import org.scalatestplus.junit.AssertionsForJUnit
 import play.api.libs.json.JsString
 import play.api.test.FakeRequest
 

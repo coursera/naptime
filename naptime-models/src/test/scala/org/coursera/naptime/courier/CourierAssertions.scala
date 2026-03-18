@@ -2,7 +2,7 @@ package org.coursera.naptime.courier
 
 import com.linkedin.data.DataMap
 import org.coursera.courier.templates.DataTemplates
-import org.scalatest.junit.AssertionsForJUnit
+import org.scalatestplus.junit.AssertionsForJUnit
 
 object CourierAssertions extends AssertionsForJUnit {
 

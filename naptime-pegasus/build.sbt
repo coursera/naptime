@@ -11,7 +11,7 @@ autoScalaLibrary := false
 
 // fork in Compile := true
 
-// javacOptions in Compile ++= Seq("-source", "1.7", "-target", "1.7")
+javacOptions in Compile ++= Seq("-source", "1.8", "-target", "1.8")
 
 // javaHome in Compile := Some(file("/Library/Java/JavaVirtualMachines/jdk1.7.0_75.jdk/Contents/Home"))
 

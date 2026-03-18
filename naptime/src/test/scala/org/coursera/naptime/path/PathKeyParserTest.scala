@@ -20,7 +20,7 @@ import org.coursera.common.stringkey.StringKey
 import org.coursera.common.stringkey.StringKeyFormat
 import org.coursera.naptime.model.KeyFormat
 import org.junit.Test
-import org.scalatest.junit.AssertionsForJUnit
+import org.scalatestplus.junit.AssertionsForJUnit
 
 class PathKeyParserTest extends AssertionsForJUnit {
   import PathKeyParserTest._

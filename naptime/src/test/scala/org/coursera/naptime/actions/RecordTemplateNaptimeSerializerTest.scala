@@ -20,7 +20,7 @@ import com.linkedin.data.DataList
 import com.linkedin.data.DataMap
 import org.coursera.naptime.schema.Parameter
 import org.junit.Test
-import org.scalatest.junit.AssertionsForJUnit
+import org.scalatestplus.junit.AssertionsForJUnit
 
 class RecordTemplateNaptimeSerializerTest extends AssertionsForJUnit {
 

@@ -18,7 +18,7 @@ package org.coursera.naptime
 
 import org.junit.Ignore
 import org.junit.Test
-import org.scalatest.junit.AssertionsForJUnit
+import org.scalatestplus.junit.AssertionsForJUnit
 
 class QueryStringParserTest extends AssertionsForJUnit {
 

@@ -6,8 +6,8 @@ import org.coursera.naptime.ari.graphql.models.MergedCourse
 import org.coursera.naptime.ari.graphql.models.MergedCourses
 import org.coursera.naptime.courier.CourierFormats
 import org.junit.Test
-import org.scalatest.junit.AssertionsForJUnit
-import org.scalatest.mockito.MockitoSugar
+import org.scalatestplus.junit.AssertionsForJUnit
+import org.scalatestplus.mockito.MockitoSugar
 
 class UtilitiesTest extends AssertionsForJUnit with MockitoSugar {
 

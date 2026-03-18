@@ -3,7 +3,7 @@ package org.coursera.naptime
 import org.coursera.naptime.model.KeyFormat
 import org.coursera.naptime.model.Keyed
 import org.junit._
-import org.scalatest.junit.AssertionsForJUnit
+import org.scalatestplus.junit.AssertionsForJUnit
 import play.api.libs.json.Json
 
 case class TestResource(name: String, description: String, author: Int)

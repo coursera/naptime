@@ -21,8 +21,8 @@ import org.coursera.naptime.model.KeyFormat
 import org.coursera.naptime.resources.TopLevelCollectionResource
 import org.coursera.naptime.router2._
 import org.junit.Test
-import org.scalatest.junit.AssertionsForJUnit
-import org.scalatest.mockito.MockitoSugar
+import org.scalatestplus.junit.AssertionsForJUnit
+import org.scalatestplus.mockito.MockitoSugar
 import play.api.libs.json.Json
 import play.api.libs.json.OFormat
 

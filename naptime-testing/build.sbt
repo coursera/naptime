@@ -7,6 +7,8 @@ libraryDependencies ++= Seq(
   scalatestCompile,
   playTestCompile,
   mockitoCompile,
+  "org.scalatestplus" %% "junit-4-13" % "3.2.19.0" % "test",
+  "org.scalatestplus" %% "mockito-4-11" % "3.2.18.0" % "test",
   "com.chuusai" %% "shapeless" % "2.3.2" % "test" // Added for illTyped macro.
 )
 

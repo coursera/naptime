@@ -2,7 +2,7 @@ package org.coursera.naptime.courier
 
 import org.coursera.courier.templates.DataTemplates
 import org.junit.Test
-import org.scalatest.junit.AssertionsForJUnit
+import org.scalatestplus.junit.AssertionsForJUnit
 
 class CourierFiltersTest extends AssertionsForJUnit {
 

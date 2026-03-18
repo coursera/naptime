@@ -17,7 +17,7 @@
 package org.coursera.naptime.path
 
 import org.junit.Test
-import org.scalatest.junit.AssertionsForJUnit
+import org.scalatestplus.junit.AssertionsForJUnit
 
 class CollectionResourcePathParserTest extends AssertionsForJUnit {
 

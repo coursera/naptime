@@ -8,7 +8,7 @@ import com.linkedin.data.schema.RecordDataSchema
 import com.linkedin.data.schema.UnionDataSchema
 import org.coursera.naptime.ari.graphql.models.MergedCourse
 import org.junit._
-import org.scalatest.junit.AssertionsForJUnit
+import org.scalatestplus.junit.AssertionsForJUnit
 
 import scala.collection.immutable
 

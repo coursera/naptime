@@ -21,7 +21,7 @@ import org.coursera.naptime.ResourceName
 import org.coursera.naptime.actions.RestActionCategoryEngine2.FlattenedFilteringJacksonDataCodec
 import org.junit.Ignore
 import org.junit.Test
-import org.scalatest.junit.AssertionsForJUnit
+import org.scalatestplus.junit.AssertionsForJUnit
 import play.api.libs.json.Json
 
 class FlattenedFilteringJacksonDataCodecTest extends AssertionsForJUnit {

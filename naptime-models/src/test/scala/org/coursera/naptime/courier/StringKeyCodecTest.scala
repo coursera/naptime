@@ -21,7 +21,7 @@ import com.linkedin.data.schema.RecordDataSchema
 import com.linkedin.data.schema.TyperefDataSchema
 import com.linkedin.data.template.DataTemplateUtil
 import org.coursera.courier.templates.DataTemplates
-import org.scalatest.junit.AssertionsForJUnit
+import org.scalatestplus.junit.AssertionsForJUnit
 import org.junit.Test
 
 class StringKeyCodecTest extends AssertionsForJUnit {

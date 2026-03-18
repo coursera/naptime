@@ -19,8 +19,8 @@ package org.coursera.naptime.ari.graphql.schema
 import com.linkedin.data.schema.EnumDataSchema
 import com.linkedin.data.schema.Name
 import org.junit.Test
-import org.scalatest.junit.AssertionsForJUnit
-import org.scalatest.mockito.MockitoSugar
+import org.scalatestplus.junit.AssertionsForJUnit
+import org.scalatestplus.mockito.MockitoSugar
 import sangria.schema.EnumType
 
 import scala.collection.JavaConverters._

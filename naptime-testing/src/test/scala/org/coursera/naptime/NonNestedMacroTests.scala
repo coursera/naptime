@@ -26,15 +26,15 @@ import org.coursera.naptime.path.RootParsedPathKey
 import org.coursera.naptime.resources.TopLevelCollectionResource
 import org.coursera.naptime.router2._
 import org.junit.Test
-import org.scalatest.junit.AssertionsForJUnit
-import org.scalatest.mockito.MockitoSugar
+import org.scalatestplus.junit.AssertionsForJUnit
+import org.scalatestplus.mockito.MockitoSugar
 import play.api.libs.json.Json
 import play.api.libs.json.OFormat
 import play.api.mvc.AnyContentAsEmpty
 import play.api.mvc.RequestHeader
 import play.api.test.FakeRequest
 import org.mockito.Mockito._
-import org.mockito.Matchers.any
+import org.mockito.ArgumentMatchers.any
 
 import scala.concurrent.ExecutionContext
 

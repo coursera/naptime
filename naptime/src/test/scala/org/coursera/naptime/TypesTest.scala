@@ -27,7 +27,7 @@ import org.coursera.naptime.actions.EnrollmentId
 import org.coursera.naptime.actions.SessionId
 import org.coursera.naptime.courier.CourierFormats
 import org.junit.Test
-import org.scalatest.junit.AssertionsForJUnit
+import org.scalatestplus.junit.AssertionsForJUnit
 import play.api.libs.json.OFormat
 
 import scala.collection.JavaConverters._

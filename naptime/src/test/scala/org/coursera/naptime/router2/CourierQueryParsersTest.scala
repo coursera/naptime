@@ -21,7 +21,7 @@ import org.coursera.courier.templates.DataTemplates.DataConversion
 import org.coursera.naptime.courier.StringKeyCodec
 import org.coursera.naptime.actions.SortOrder
 import org.junit.Test
-import org.scalatest.junit.AssertionsForJUnit
+import org.scalatestplus.junit.AssertionsForJUnit
 import play.api.test.FakeRequest
 
 class CourierQueryParsersTest extends AssertionsForJUnit {

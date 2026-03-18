@@ -22,8 +22,8 @@ import com.linkedin.data.schema.StringDataSchema
 import org.coursera.naptime.ari.graphql.SangriaGraphQlContext
 import org.coursera.naptime.ari.graphql.helpers.ArgumentBuilder
 import org.junit.Test
-import org.scalatest.junit.AssertionsForJUnit
-import org.scalatest.mockito.MockitoSugar
+import org.scalatestplus.junit.AssertionsForJUnit
+import org.scalatestplus.mockito.MockitoSugar
 import sangria.ast.Document
 import sangria.execution.DeprecationTracker
 import sangria.execution.ExecutionPath

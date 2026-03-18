@@ -18,7 +18,7 @@ package org.coursera.naptime.path
 
 import org.coursera.naptime.path.ParsedPathKeyTest.User
 import org.junit.Test
-import org.scalatest.junit.AssertionsForJUnit
+import org.scalatestplus.junit.AssertionsForJUnit
 
 object ParsedPathKeyTest {
   case class User(name: String, email: String)

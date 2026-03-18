@@ -40,10 +40,10 @@ import org.coursera.naptime.schema.ArbitraryValue.StringMember
 import org.joda.time.DateTime
 import org.junit.Test
 import org.mockito.Mockito._
-import org.mockito.Matchers.any
-import org.mockito.Matchers.{eq => e}
-import org.scalatest.junit.AssertionsForJUnit
-import org.scalatest.mockito.MockitoSugar
+import org.mockito.ArgumentMatchers.any
+import org.mockito.ArgumentMatchers.{eq => e}
+import org.scalatestplus.junit.AssertionsForJUnit
+import org.scalatestplus.mockito.MockitoSugar
 import play.api.libs.json.Json
 import play.api.libs.json.OFormat
 import play.api.mvc.AnyContent

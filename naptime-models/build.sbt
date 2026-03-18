@@ -6,6 +6,10 @@ libraryDependencies ++= Seq(
   playJson,
   scalaLogging,
   junitInterface,
-  scalatest)
+  junit,
+  scalatest,
+  scalatestPlusJunit,
+  scalatestPlusMockito,
+  mockito)
 
 org.coursera.courier.sbt.CourierPlugin.courierSettings

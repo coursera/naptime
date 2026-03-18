@@ -24,7 +24,7 @@ import org.coursera.naptime.ari.graphql.models.MergedInstructor
 import org.coursera.naptime.ari.graphql.models.MergedMultigetFreeEntity
 import org.coursera.naptime.ari.graphql.models.MergedPartner
 import org.junit.Test
-import org.scalatest.junit.AssertionsForJUnit
+import org.scalatestplus.junit.AssertionsForJUnit
 import sangria.schema.ObjectType
 import sangria.schema.Schema
 import sangria.schema.UnionType

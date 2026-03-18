@@ -13,7 +13,7 @@ import org.coursera.naptime.resources.TopLevelCollectionResource
 import org.coursera.naptime.router2.Router
 import org.joda.time.DateTime
 import org.junit.Test
-import org.scalatest.junit.AssertionsForJUnit
+import org.scalatestplus.junit.AssertionsForJUnit
 import play.api.libs.json.Json
 import play.api.libs.json.OFormat
 import play.api.libs.json.OWrites

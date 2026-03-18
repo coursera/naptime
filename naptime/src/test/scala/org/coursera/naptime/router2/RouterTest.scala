@@ -18,10 +18,10 @@ package org.coursera.naptime.router2
 
 import com.google.inject.Injector
 import org.junit.Test
-import org.scalatest.junit.AssertionsForJUnit
-import org.scalatest.mockito.MockitoSugar
+import org.scalatestplus.junit.AssertionsForJUnit
+import org.scalatestplus.mockito.MockitoSugar
 import org.mockito.Mockito._
-import org.mockito.Matchers._
+import org.mockito.ArgumentMatchers._
 import play.api.test.FakeRequest
 
 object RouterTest {
@@ -76,7 +76,7 @@ class RouterTest extends AssertionsForJUnit with MockitoSugar {
     when(resourceRouter1.routeRequest(any(), any())).thenReturn(Some(null))
     val result = router.onRouteRequest(fakeRequest)
     assert(result.isDefined, "Expected result to be defined.")
-    verifyZeroInteractions(resourceRouter2, resourceRouter3)
+    verifyNoInteractions(resourceRouter2, resourceRouter3)
   }
 
   @Test
@@ -85,7 +85,7 @@ class RouterTest extends AssertionsForJUnit with MockitoSugar {
     when(resourceRouter2.routeRequest(any(), any())).thenReturn(Some(null))
     val result = router.onRouteRequest(fakeRequest)
     assert(result.isDefined, "Expected result to be defined.")
-    verifyZeroInteractions(resourceRouter3)
+    verifyNoInteractions(resourceRouter3)
   }
 
   @Test

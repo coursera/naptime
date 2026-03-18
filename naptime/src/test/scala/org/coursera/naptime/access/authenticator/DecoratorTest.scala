@@ -19,7 +19,7 @@ package org.coursera.naptime.access.authenticator
 import org.coursera.naptime.ResourceTestImplicits
 import org.junit.Test
 import org.scalatest.concurrent.ScalaFutures
-import org.scalatest.junit.AssertionsForJUnit
+import org.scalatestplus.junit.AssertionsForJUnit
 
 import scala.concurrent.Future
 

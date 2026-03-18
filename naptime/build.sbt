@@ -14,6 +14,8 @@ libraryDependencies ++= Seq(
   junit,
   junitInterface,
   scalatest,
+  scalatestPlusJunit,
+  scalatestPlusMockito,
   mockito
 )
 

@@ -40,12 +40,14 @@ trait NamedDependencies { this: PluginVersionProvider =>
   val scalaLogging = "com.typesafe.scala-logging" %% "scala-logging" % "3.7.2"
 
   // Test dependencies
-  val junitCompile = "junit" % "junit" % "4.11"
+  val junitCompile = "junit" % "junit" % "4.13.2"
   val junit = junitCompile % "test"
   val junitInterface = "com.novocode" % "junit-interface" % "0.11" % "test"
-  val mockitoCompile = "org.mockito" % "mockito-all" % "1.9.5"
+  val mockitoCompile = "org.mockito" % "mockito-core" % "4.11.0"
   val mockito = mockitoCompile % "test"
-  val scalatestCompile = "org.scalatest" %% "scalatest" % "3.0.4"
+  val scalatestCompile = "org.scalatest" %% "scalatest" % "3.2.19"
   val scalatest = scalatestCompile % "test"
+  val scalatestPlusJunit = "org.scalatestplus" %% "junit-4-13" % "3.2.19.0" % "test"
+  val scalatestPlusMockito = "org.scalatestplus" %% "mockito-4-11" % "3.2.18.0" % "test"
 
 }

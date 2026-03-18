@@ -3,7 +3,7 @@ package org.coursera.naptime.actions.util
 import com.linkedin.data.DataList
 import com.linkedin.data.DataMap
 import org.junit.Test
-import org.scalatest.junit.AssertionsForJUnit
+import org.scalatestplus.junit.AssertionsForJUnit
 
 class DataMapUtilsTests extends AssertionsForJUnit {
 

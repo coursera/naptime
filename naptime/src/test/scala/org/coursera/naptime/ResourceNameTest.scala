@@ -1,7 +1,7 @@
 package org.coursera.naptime
 
 import org.junit.Test
-import org.scalatest.junit.AssertionsForJUnit
+import org.scalatestplus.junit.AssertionsForJUnit
 
 class ResourceNameTest extends AssertionsForJUnit {
 

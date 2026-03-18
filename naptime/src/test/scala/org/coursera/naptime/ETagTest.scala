@@ -18,7 +18,7 @@ package org.coursera.naptime
 
 import org.coursera.common.stringkey.StringKey
 import org.junit.Test
-import org.scalatest.junit.AssertionsForJUnit
+import org.scalatestplus.junit.AssertionsForJUnit
 
 class ETagTest extends AssertionsForJUnit {
 

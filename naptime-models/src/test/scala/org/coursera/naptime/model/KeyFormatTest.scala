@@ -3,7 +3,7 @@ package org.coursera.naptime.model
 import org.coursera.common.jsonformat.JsonFormats
 import org.coursera.naptime.model.KeyFormatTest.MembershipId
 import org.junit.Test
-import org.scalatest.junit.AssertionsForJUnit
+import org.scalatestplus.junit.AssertionsForJUnit
 import play.api.libs.json.JsString
 import play.api.libs.json.JsSuccess
 import play.api.libs.json.Json

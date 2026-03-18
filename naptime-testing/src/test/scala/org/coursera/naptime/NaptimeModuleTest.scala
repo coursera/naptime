@@ -15,7 +15,7 @@ import org.coursera.naptime.resources.TopLevelCollectionResource
 import org.coursera.naptime.router2.NaptimeRoutes
 import org.junit.Test
 import org.mockito.Mockito.mock
-import org.scalatest.junit.AssertionsForJUnit
+import org.scalatestplus.junit.AssertionsForJUnit
 import play.api.libs.json.Json
 import play.api.libs.json.OFormat
 

@@ -17,7 +17,7 @@
 package org.coursera.naptime.router2
 
 import org.junit.Test
-import org.scalatest.junit.AssertionsForJUnit
+import org.scalatestplus.junit.AssertionsForJUnit
 import play.api.test.FakeRequest
 
 class QueryParserTests extends AssertionsForJUnit {

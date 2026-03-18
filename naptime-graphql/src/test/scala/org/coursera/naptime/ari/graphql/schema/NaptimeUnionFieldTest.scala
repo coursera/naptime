@@ -25,8 +25,8 @@ import com.linkedin.data.schema.RecordDataSchema.Field
 import com.linkedin.data.schema.RecordDataSchema.RecordType
 import com.linkedin.data.schema.StringDataSchema
 import org.junit.Test
-import org.scalatest.junit.AssertionsForJUnit
-import org.scalatest.mockito.MockitoSugar
+import org.scalatestplus.junit.AssertionsForJUnit
+import org.scalatestplus.mockito.MockitoSugar
 import com.linkedin.data.schema.UnionDataSchema
 import org.coursera.naptime.ResourceName
 import org.coursera.naptime.ari.graphql.Models

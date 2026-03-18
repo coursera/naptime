@@ -26,7 +26,7 @@ import org.coursera.naptime.access.authorizer.AuthorizeResult
 import org.coursera.naptime.access.authorizer.Authorizer
 import org.junit.Test
 import org.scalatest.concurrent.ScalaFutures
-import org.scalatest.junit.AssertionsForJUnit
+import org.scalatestplus.junit.AssertionsForJUnit
 import play.api.http.Status
 import play.api.mvc.RequestHeader
 import play.api.test.FakeRequest

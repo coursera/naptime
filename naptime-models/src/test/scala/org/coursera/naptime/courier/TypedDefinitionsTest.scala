@@ -3,7 +3,7 @@ package org.coursera.naptime.courier
 import org.coursera.naptime.courier.TestTypedDefinition.TestTypedDefinitionAlphaMember
 import org.coursera.naptime.courier.TestTypedDefinition.TestTypedDefinitionBetaMember
 import org.junit.Test
-import org.scalatest.junit.AssertionsForJUnit
+import org.scalatestplus.junit.AssertionsForJUnit
 
 class TypedDefinitionsTest extends AssertionsForJUnit {
   @Test

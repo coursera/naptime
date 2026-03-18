@@ -19,8 +19,8 @@ package org.coursera.naptime.ari.graphql.schema
 import org.coursera.courier.data.StringMap
 import org.coursera.naptime.ResourceName
 import org.junit.Test
-import org.scalatest.junit.AssertionsForJUnit
-import org.scalatest.mockito.MockitoSugar
+import org.scalatestplus.junit.AssertionsForJUnit
+import org.scalatestplus.mockito.MockitoSugar
 import org.coursera.naptime.ari.graphql.Models
 import org.coursera.naptime.ari.graphql.models.MergedCourse
 import org.coursera.naptime.ari.graphql.models.MergedCourses
