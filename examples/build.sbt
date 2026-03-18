@@ -12,4 +12,4 @@ libraryDependencies ++= Seq(
 
 org.coursera.courier.sbt.CourierPlugin.courierSettings
 
-sourceDirectories in (Compile, TwirlKeys.compileTemplates) := (unmanagedSourceDirectories in Compile).value
+Compile / TwirlKeys.compileTemplates / sourceDirectories := (Compile / unmanagedSourceDirectories).value
