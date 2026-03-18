@@ -1,5 +1,7 @@
 name := "naptime-tests"
 
+javacOptions in Test ++= Seq("-source", "1.8", "-target", "1.8")
+
 libraryDependencies ++= Seq(
   scalaLogging,
   junitCompile,
