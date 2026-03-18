@@ -23,7 +23,3 @@ libraryDependencies ++= Seq(
 // Disable deprecation warnings entirely so they don't turn into errors.
 scalacOptions := scalacOptions.value.filterNot(_.startsWith("-deprecation"))
 scalacOptions ++= Seq("-deprecation:false", "-Xfatal-warnings")
-
-// Target Java 8 bytecode: compatible with infra-services (Java 8) and Android, and
-// also satisfies JaCoCo's ASM (which can't process Java 25 class files).
-javacOptions ++= Seq("--release", "8")
