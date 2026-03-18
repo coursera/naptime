@@ -28,45 +28,32 @@ class StringKeyCodecExtendedTest extends AssertionsForJUnit {
 
   // ─── Schemas ─────────────────────────────────────────────────────────────────
 
-  private val booleanRecordSchema = DataTemplateUtil
-    .parseSchema(
-      """{"name":"BoolRec","type":"record","fields":[{"name":"flag","type":"boolean"}]}"""
-    )
-    .asInstanceOf[RecordDataSchema]
+  private val booleanRecordSchema = DataTemplateUtil.parseSchema(
+    """{"name":"BoolRec","type":"record","fields":[{"name":"flag","type":"boolean"}]}"""
+  ).asInstanceOf[RecordDataSchema]
 
-  private val intRecordSchema = DataTemplateUtil
-    .parseSchema(
-      """{"name":"IntRec","type":"record","fields":[{"name":"num","type":"int"}]}"""
-    )
-    .asInstanceOf[RecordDataSchema]
+  private val intRecordSchema = DataTemplateUtil.parseSchema(
+    """{"name":"IntRec","type":"record","fields":[{"name":"num","type":"int"}]}"""
+  ).asInstanceOf[RecordDataSchema]
 
-  private val longRecordSchema = DataTemplateUtil
-    .parseSchema(
-      """{"name":"LongRec","type":"record","fields":[{"name":"num","type":"long"}]}"""
-    )
-    .asInstanceOf[RecordDataSchema]
+  private val longRecordSchema = DataTemplateUtil.parseSchema(
+    """{"name":"LongRec","type":"record","fields":[{"name":"num","type":"long"}]}"""
+  ).asInstanceOf[RecordDataSchema]
 
-  private val floatRecordSchema = DataTemplateUtil
-    .parseSchema(
-      """{"name":"FloatRec","type":"record","fields":[{"name":"val","type":"float"}]}"""
-    )
-    .asInstanceOf[RecordDataSchema]
+  private val floatRecordSchema = DataTemplateUtil.parseSchema(
+    """{"name":"FloatRec","type":"record","fields":[{"name":"val","type":"float"}]}"""
+  ).asInstanceOf[RecordDataSchema]
 
-  private val doubleRecordSchema = DataTemplateUtil
-    .parseSchema(
-      """{"name":"DoubleRec","type":"record","fields":[{"name":"val","type":"double"}]}"""
-    )
-    .asInstanceOf[RecordDataSchema]
+  private val doubleRecordSchema = DataTemplateUtil.parseSchema(
+    """{"name":"DoubleRec","type":"record","fields":[{"name":"val","type":"double"}]}"""
+  ).asInstanceOf[RecordDataSchema]
 
-  private val nullRecordSchema = DataTemplateUtil
-    .parseSchema(
-      """{"name":"NullRec","type":"record","fields":[{"name":"nothing","type":"null"}]}"""
-    )
-    .asInstanceOf[RecordDataSchema]
+  private val nullRecordSchema = DataTemplateUtil.parseSchema(
+    """{"name":"NullRec","type":"record","fields":[{"name":"nothing","type":"null"}]}"""
+  ).asInstanceOf[RecordDataSchema]
 
-  private val enumRecordSchema = DataTemplateUtil
-    .parseSchema(
-      """
+  private val enumRecordSchema = DataTemplateUtil.parseSchema(
+    """
       |{
       |  "name":"EnumRec","type":"record",
       |  "fields":[{
@@ -75,50 +62,35 @@ class StringKeyCodecExtendedTest extends AssertionsForJUnit {
       |  }]
       |}
       |""".stripMargin
-    )
-    .asInstanceOf[RecordDataSchema]
+  ).asInstanceOf[RecordDataSchema]
 
-  private val stringArraySchema = DataTemplateUtil
-    .parseSchema(
-      """{"name":"StrArr","type":"typeref","ref":{"type":"array","items":"string"}}"""
-    )
-    .asInstanceOf[TyperefDataSchema]
+  private val stringArraySchema = DataTemplateUtil.parseSchema(
+    """{"name":"StrArr","type":"typeref","ref":{"type":"array","items":"string"}}"""
+  ).asInstanceOf[TyperefDataSchema]
 
-  private val intArraySchema = DataTemplateUtil
-    .parseSchema(
-      """{"name":"IntArr","type":"typeref","ref":{"type":"array","items":"int"}}"""
-    )
-    .asInstanceOf[TyperefDataSchema]
+  private val intArraySchema = DataTemplateUtil.parseSchema(
+    """{"name":"IntArr","type":"typeref","ref":{"type":"array","items":"int"}}"""
+  ).asInstanceOf[TyperefDataSchema]
 
-  private val longArraySchema = DataTemplateUtil
-    .parseSchema(
-      """{"name":"LongArr","type":"typeref","ref":{"type":"array","items":"long"}}"""
-    )
-    .asInstanceOf[TyperefDataSchema]
+  private val longArraySchema = DataTemplateUtil.parseSchema(
+    """{"name":"LongArr","type":"typeref","ref":{"type":"array","items":"long"}}"""
+  ).asInstanceOf[TyperefDataSchema]
 
-  private val floatArraySchema = DataTemplateUtil
-    .parseSchema(
-      """{"name":"FloatArr","type":"typeref","ref":{"type":"array","items":"float"}}"""
-    )
-    .asInstanceOf[TyperefDataSchema]
+  private val floatArraySchema = DataTemplateUtil.parseSchema(
+    """{"name":"FloatArr","type":"typeref","ref":{"type":"array","items":"float"}}"""
+  ).asInstanceOf[TyperefDataSchema]
 
-  private val doubleArraySchema = DataTemplateUtil
-    .parseSchema(
-      """{"name":"DoubleArr","type":"typeref","ref":{"type":"array","items":"double"}}"""
-    )
-    .asInstanceOf[TyperefDataSchema]
+  private val doubleArraySchema = DataTemplateUtil.parseSchema(
+    """{"name":"DoubleArr","type":"typeref","ref":{"type":"array","items":"double"}}"""
+  ).asInstanceOf[TyperefDataSchema]
 
-  private val booleanArraySchema = DataTemplateUtil
-    .parseSchema(
-      """{"name":"BoolArr","type":"typeref","ref":{"type":"array","items":"boolean"}}"""
-    )
-    .asInstanceOf[TyperefDataSchema]
+  private val booleanArraySchema = DataTemplateUtil.parseSchema(
+    """{"name":"BoolArr","type":"typeref","ref":{"type":"array","items":"boolean"}}"""
+  ).asInstanceOf[TyperefDataSchema]
 
-  private val nullArraySchema = DataTemplateUtil
-    .parseSchema(
-      """{"name":"NullArr","type":"typeref","ref":{"type":"array","items":"null"}}"""
-    )
-    .asInstanceOf[TyperefDataSchema]
+  private val nullArraySchema = DataTemplateUtil.parseSchema(
+    """{"name":"NullArr","type":"typeref","ref":{"type":"array","items":"null"}}"""
+  ).asInstanceOf[TyperefDataSchema]
 
   // ─── Parser: various primitive types ────────────────────────────────────────
 
@@ -235,11 +207,9 @@ class StringKeyCodecExtendedTest extends AssertionsForJUnit {
 
   @Test
   def parser_bytesType_throwsIOException(): Unit = {
-    val bytesRecordSchema = DataTemplateUtil
-      .parseSchema(
-        """{"name":"BytesRec","type":"record","fields":[{"name":"data","type":"bytes"}]}"""
-      )
-      .asInstanceOf[RecordDataSchema]
+    val bytesRecordSchema = DataTemplateUtil.parseSchema(
+      """{"name":"BytesRec","type":"record","fields":[{"name":"data","type":"bytes"}]}"""
+    ).asInstanceOf[RecordDataSchema]
 
     val codec = new StringKeyCodec(bytesRecordSchema)
     intercept[IOException] {
@@ -251,11 +221,9 @@ class StringKeyCodecExtendedTest extends AssertionsForJUnit {
 
   @Test
   def parser_prefixMismatch_throwsIOException(): Unit = {
-    val stringRecordSchema = DataTemplateUtil
-      .parseSchema(
-        """{"name":"StrRec","type":"record","fields":[{"name":"val","type":"string"}]}"""
-      )
-      .asInstanceOf[RecordDataSchema]
+    val stringRecordSchema = DataTemplateUtil.parseSchema(
+      """{"name":"StrRec","type":"record","fields":[{"name":"val","type":"string"}]}"""
+    ).asInstanceOf[RecordDataSchema]
 
     val codec = new StringKeyCodec(stringRecordSchema, Some("expectedPrefix"))
     intercept[IOException] {
@@ -267,11 +235,9 @@ class StringKeyCodecExtendedTest extends AssertionsForJUnit {
 
   @Test
   def parser_tupleLengthMismatch_throwsIOException(): Unit = {
-    val tuple2Schema = DataTemplateUtil
-      .parseSchema(
-        """{"name":"T2","type":"record","fields":[{"name":"a","type":"string"},{"name":"b","type":"string"}]}"""
-      )
-      .asInstanceOf[RecordDataSchema]
+    val tuple2Schema = DataTemplateUtil.parseSchema(
+      """{"name":"T2","type":"record","fields":[{"name":"a","type":"string"},{"name":"b","type":"string"}]}"""
+    ).asInstanceOf[RecordDataSchema]
 
     val codec = new StringKeyCodec(tuple2Schema)
     // Provide only one value instead of two
@@ -284,11 +250,9 @@ class StringKeyCodecExtendedTest extends AssertionsForJUnit {
 
   @Test
   def generator_missingField_throwsIOException(): Unit = {
-    val schema = DataTemplateUtil
-      .parseSchema(
-        """{"name":"Req","type":"record","fields":[{"name":"required","type":"string"}]}"""
-      )
-      .asInstanceOf[RecordDataSchema]
+    val schema = DataTemplateUtil.parseSchema(
+      """{"name":"Req","type":"record","fields":[{"name":"required","type":"string"}]}"""
+    ).asInstanceOf[RecordDataSchema]
 
     val codec = new StringKeyCodec(schema)
     val emptyDataMap = new DataMap()
@@ -301,11 +265,9 @@ class StringKeyCodecExtendedTest extends AssertionsForJUnit {
 
   @Test
   def generator_bytesInList_throwsIOException(): Unit = {
-    val bytesArraySchema = DataTemplateUtil
-      .parseSchema(
-        """{"name":"BytesArr","type":"typeref","ref":{"type":"array","items":"bytes"}}"""
-      )
-      .asInstanceOf[TyperefDataSchema]
+    val bytesArraySchema = DataTemplateUtil.parseSchema(
+      """{"name":"BytesArr","type":"typeref","ref":{"type":"array","items":"bytes"}}"""
+    ).asInstanceOf[TyperefDataSchema]
 
     val codec = new StringKeyCodec(bytesArraySchema)
     val dataList = new DataList()
@@ -320,11 +282,9 @@ class StringKeyCodecExtendedTest extends AssertionsForJUnit {
   @Test
   def requireSchemaType_incompatible_throwsIllegalArgumentException(): Unit = {
     // StringKeyCodec wraps a record schema but we call writeList (which requires ArrayDataSchema)
-    val recordSchema = DataTemplateUtil
-      .parseSchema(
-        """{"name":"Rec","type":"record","fields":[{"name":"x","type":"string"}]}"""
-      )
-      .asInstanceOf[RecordDataSchema]
+    val recordSchema = DataTemplateUtil.parseSchema(
+      """{"name":"Rec","type":"record","fields":[{"name":"x","type":"string"}]}"""
+    ).asInstanceOf[RecordDataSchema]
 
     val codec = new StringKeyCodec(recordSchema)
     val dataList = new DataList()
@@ -336,11 +296,9 @@ class StringKeyCodecExtendedTest extends AssertionsForJUnit {
   @Test
   def requireSchemaType_incompatibleForMap_throwsIllegalArgumentException(): Unit = {
     // StringKeyCodec wraps an array schema but we call writeMap (which requires RecordDataSchema)
-    val arraySchema = DataTemplateUtil
-      .parseSchema(
-        """{"name":"Arr","type":"typeref","ref":{"type":"array","items":"string"}}"""
-      )
-      .asInstanceOf[TyperefDataSchema]
+    val arraySchema = DataTemplateUtil.parseSchema(
+      """{"name":"Arr","type":"typeref","ref":{"type":"array","items":"string"}}"""
+    ).asInstanceOf[TyperefDataSchema]
 
     val codec = new StringKeyCodec(arraySchema)
     val dataMap = new DataMap()
@@ -353,11 +311,9 @@ class StringKeyCodecExtendedTest extends AssertionsForJUnit {
 
   @Test
   def roundTrip_withPrefix_succeeds(): Unit = {
-    val schema = DataTemplateUtil
-      .parseSchema(
-        """{"name":"Prefixed","type":"record","fields":[{"name":"val","type":"string"}]}"""
-      )
-      .asInstanceOf[RecordDataSchema]
+    val schema = DataTemplateUtil.parseSchema(
+      """{"name":"Prefixed","type":"record","fields":[{"name":"val","type":"string"}]}"""
+    ).asInstanceOf[RecordDataSchema]
 
     val codec = new StringKeyCodec(schema, Some("myPrefix"))
     val dataMap = new DataMap()
@@ -382,11 +338,9 @@ class StringKeyCodecExtendedTest extends AssertionsForJUnit {
 
   @Test
   def readMap_fromInputStream_parsesCorrectly(): Unit = {
-    val schema = DataTemplateUtil
-      .parseSchema(
-        """{"name":"StrRec2","type":"record","fields":[{"name":"val","type":"string"}]}"""
-      )
-      .asInstanceOf[RecordDataSchema]
+    val schema = DataTemplateUtil.parseSchema(
+      """{"name":"StrRec2","type":"record","fields":[{"name":"val","type":"string"}]}"""
+    ).asInstanceOf[RecordDataSchema]
 
     val codec = new StringKeyCodec(schema)
     val input = new ByteArrayInputStream("hello".getBytes(StringKeyCodec.charset))

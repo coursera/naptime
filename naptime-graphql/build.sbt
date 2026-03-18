@@ -1,3 +1,6 @@
+import NaptimeBuild._
+import NamedDependencies._
+
 name := "naptime-graphql"
 
 libraryDependencies ++= Seq(

@@ -133,7 +133,7 @@ private[courier] class ScalaClassTraverser(rootType: ru.Type) {
       }
     } else if (typ <:< ru.typeOf[Map[_, _]]) {
       inferMap(typ)
-    } else if (typ <:< ru.typeOf[Traversable[_]] || typ <:< ru.typeOf[Array[_]]) {
+    } else if (typ <:< ru.typeOf[Iterable[_]] || typ <:< ru.typeOf[Array[_]]) {
       inferArray(typ)
     } else if (isUnion(typ)) {
       inferUnion(typ)
@@ -363,9 +363,9 @@ private[courier] class ScalaClassTraverser(rootType: ru.Type) {
   private[this] def inferEnum(typ: ru.Type): InferredSchema = {
     inferEnumObjectFromValue(typ)
       .map { enumInfo =>
-        val symbols = enumInfo.enum.values.map { v =>
+        val symbols = enumInfo.enum.values.toList.map { v =>
           Json.toJson(v.toString)
-        }.toList
+        }
         val enumSymbol = runtimeMirror.classSymbol(enumInfo.enum.getClass)
         val name = enumSymbol.asType.name.decodedName.toString
         val namespace = packageName(enumSymbol)

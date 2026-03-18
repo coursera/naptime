@@ -15,29 +15,25 @@
  */
 
 import sbt._
-import sbt.Keys._
 
-trait PluginVersionProvider {
-  def playVersion: String
-  def playJsonVersion: String
-  def courierVersion: String
-}
+object NamedDependencies {
+  import NaptimeBuild._
 
-trait NamedDependencies { this: PluginVersionProvider =>
   val courierRuntime = "org.coursera.courier" %% "courier-runtime" % courierVersion
-  val courscala = "org.coursera" %% "courscala" % "0.1.3"
+  val courscala = "org.coursera" %% "courscala" % "0.2.0"
   val governator = "com.netflix.governator" % "governator" % "1.10.5"
-  val guice = "com.google.inject" % "guice" % "4.1.0"
-  val guiceMultibindings = "com.google.inject.extensions" % "guice-multibindings" % "4.1.0"
-  val jodaConvert = "org.joda" % "joda-convert" % "1.9.2"
-  val jodaTime = "joda-time" % "joda-time" % "2.9.9"
+  // Prefixed with "dep" to avoid collision with Play's auto-imported `guice` value.
+  val guiceDep = "com.google.inject" % "guice" % "4.2.3"
+  val guiceMultibindingsDep = "com.google.inject.extensions" % "guice-multibindings" % "4.2.3"
+  val jodaConvert = "org.joda" % "joda-convert" % "2.2.3"
+  val jodaTime = "joda-time" % "joda-time" % "2.12.5"
   val playJson = "com.typesafe.play" %% "play-json" % playJsonVersion
   val playTestCompile = ("com.typesafe.play" %% "play-test" % playVersion)
-    .excludeAll(new ExclusionRule(organization="org.specs2"))
-  val sangria = "org.sangria-graphql" %% "sangria" % "1.4.2"
-  val sangriaSlowLog = "org.sangria-graphql" %% "sangria-slowlog" % "0.1.8"
-  val scalaGuice = "net.codingwell" %% "scala-guice" % "4.1.1"
-  val scalaLogging = "com.typesafe.scala-logging" %% "scala-logging" % "3.7.2"
+    .excludeAll(ExclusionRule(organization = "org.specs2"))
+  val sangria = "org.sangria-graphql" %% "sangria" % "2.1.6"
+  val sangriaSlowLog = "org.sangria-graphql" %% "sangria-slowlog" % "2.0.2"
+  val scalaGuice = "net.codingwell" %% "scala-guice" % "5.1.1"
+  val scalaLogging = "com.typesafe.scala-logging" %% "scala-logging" % "3.9.5"
 
   // Test dependencies
   val junitCompile = "junit" % "junit" % "4.13.2"
@@ -49,5 +45,4 @@ trait NamedDependencies { this: PluginVersionProvider =>
   val scalatest = scalatestCompile % "test"
   val scalatestPlusJunit = "org.scalatestplus" %% "junit-4-13" % "3.2.19.0" % "test"
   val scalatestPlusMockito = "org.scalatestplus" %% "mockito-4-11" % "3.2.18.0" % "test"
-
 }

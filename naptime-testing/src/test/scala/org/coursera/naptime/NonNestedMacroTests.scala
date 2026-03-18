@@ -25,6 +25,7 @@ import org.coursera.naptime.path.ParseSuccess
 import org.coursera.naptime.path.RootParsedPathKey
 import org.coursera.naptime.resources.TopLevelCollectionResource
 import org.coursera.naptime.router2._
+import org.coursera.naptime.router2.RouterTestHelpers
 import org.junit.Test
 import org.scalatestplus.junit.AssertionsForJUnit
 import org.scalatestplus.mockito.MockitoSugar
@@ -35,6 +36,7 @@ import play.api.mvc.RequestHeader
 import play.api.test.FakeRequest
 import org.mockito.Mockito._
 import org.mockito.ArgumentMatchers.any
+import org.coursera.naptime.router2.NaptimeAttrKey
 
 import scala.concurrent.ExecutionContext
 
@@ -117,7 +119,7 @@ object Resource {
   val routerBuilder = Router.build[Resource]
 }
 
-class NonNestedMacroTests extends AssertionsForJUnit with MockitoSugar with ResourceTestImplicits {
+class NonNestedMacroTests extends AssertionsForJUnit with MockitoSugar with ResourceTestImplicits with RouterTestHelpers {
 
   val instance = mock[Resource]
   val instanceImpl = new Resource
@@ -168,8 +170,8 @@ class NonNestedMacroTests extends AssertionsForJUnit with MockitoSugar with Reso
     val result = router.routeRequest(requestHeader.path.substring("/api".length), requestHeader)
     assert(result.isDefined)
     val taggedRequest = result.get.tagRequest(requestHeader)
-    assert(taggedRequest.tags.contains(Router.NAPTIME_RESOURCE_NAME))
-    assert(taggedRequest.tags.get(Router.NAPTIME_METHOD_NAME).contains(methodName))
+    assert(taggedRequest.attrs.get(NaptimeAttrKey.tags).getOrElse(Map.empty).contains(Router.NAPTIME_RESOURCE_NAME))
+    assert(taggedRequest.attrs.get(NaptimeAttrKey.tags).getOrElse(Map.empty).get(Router.NAPTIME_METHOD_NAME).contains(methodName))
   }
 
   private[this] def noCustomInputOutputAuthTypes(methodName: String): Unit = {
@@ -284,6 +286,26 @@ class NonNestedMacroTests extends AssertionsForJUnit with MockitoSugar with Reso
     noCustomInputOutputAuthTypes("delete")
     noCustomInputOutputAuthTypes("complex")
     noCustomInputOutputAuthTypes("actionWithoutParams")
+  }
+
+  // ─── RouterTestHelpers ────────────────────────────────────────────────────────
+
+  @Test
+  def assertRouted_elementPath_accepted(): Unit = {
+    assertRouted(instanceImpl, "/items.v1/someId")
+  }
+
+  @Test
+  def assertNotRouted_wrongResource_rejected(): Unit = {
+    assertNotRouted(instanceImpl, "/other-resource.v99/someId")
+  }
+
+  @Test
+  def setupParentMockCalls_setsResourceProperties(): Unit = {
+    val freshMock = mock[Resource]
+    setupParentMockCalls(freshMock, instanceImpl)
+    assertResult("items")(freshMock.resourceName)
+    assertResult(1)(freshMock.resourceVersion)
   }
 
 }

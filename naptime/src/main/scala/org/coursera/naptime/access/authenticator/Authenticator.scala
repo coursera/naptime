@@ -66,7 +66,7 @@ trait Authenticator[+A] {
     }
   }
 
-  def map[B](f: A => B): Authenticator[B] = collect(PartialFunction(f))
+  def map[B](f: A => B): Authenticator[B] = collect { case a => f(a) }
 
 }
 

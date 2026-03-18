@@ -117,7 +117,7 @@ object NaptimeResourceField extends StrictLogging {
           .getOrElse {
             Set("ids" -> NaptimeResourceUtils.parseToJson(context.arg("id")))
           }
-        val args = context.args.raw.mapValues(NaptimeResourceUtils.parseToJson).toSet ++
+        val args = context.args.raw.map { case (k, v) => k -> NaptimeResourceUtils.parseToJson(v) }.toSet ++
           extraArguments
         val idArg = args.find(_._1 == "ids").map(_._2)
         val nonIdArgs = args.filter(_._1 != "ids")

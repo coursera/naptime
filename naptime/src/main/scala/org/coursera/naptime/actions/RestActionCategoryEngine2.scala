@@ -54,7 +54,7 @@ import org.coursera.naptime.ari.{Response => AriResponse}
 import org.coursera.naptime.model.KeyFormat
 import org.coursera.naptime.model.Keyed
 
-import scala.collection.JavaConversions._
+import scala.collection.JavaConverters._
 import scala.concurrent.Future
 
 object RestActionCategoryEngine2 extends RestActionCategoryEngine2Impls
@@ -187,14 +187,14 @@ trait RestActionCategoryEngine2Impls {
     val valueDataMap = serializer.serialize(thing.value)
     val keyMap = NaptimeSerializer.PlayJson.serialize(key)
     // Insert all the value entries into the data map.
-    for (elem <- valueDataMap.entrySet) {
+    for (elem <- valueDataMap.entrySet.asScala) {
       into.put(elem.getKey, DataMapUtils.ensureMutable(elem.getValue))
     }
     wireConverter.foreach { converter =>
       converter.convertUnionToTypedDefinitionInPlace(into)
     }
     // Insert all the key entries into the data map, overriding any previously set values.
-    for (elem <- keyMap.entrySet()) {
+    for (elem <- keyMap.entrySet().asScala) {
       into.put(elem.getKey, elem.getValue)
     }
     // Include the id field if it hasn't been included already.
@@ -340,7 +340,7 @@ trait RestActionCategoryEngine2Impls {
     if (request.includeFieldsRelatedResource("_links")) {
       val links = new DataMap()
       response.put("links", links)
-      val visibleIncludes = ok.related.filterKeys(requestFields.forResource(_).isDefined)
+      val visibleIncludes = ok.related.filter { case (name, _) => requestFields.forResource(name).isDefined }
       visibleIncludes.foreach {
         case (name, related) =>
           related.fields.makeLinksRelationsMap(

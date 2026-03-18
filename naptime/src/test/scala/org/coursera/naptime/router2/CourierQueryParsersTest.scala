@@ -141,4 +141,34 @@ class CourierQueryParsersTest extends AssertionsForJUnit {
     val parsedSortOrder = SortOrder.build(parsedDataMap.right.get.get, DataConversion.SetReadOnly)
     assert(sortOrder === parsedSortOrder)
   }
+
+  // ─────────────────────────────────────────────────────────────────────────────
+  // strictParse missing / too-many branches (lines 75, 80)
+  // ─────────────────────────────────────────────────────────────────────────────
+
+  @Test
+  def strictParse_missingParam_returnsLeft(): Unit = {
+    val fakeRequest = FakeRequest("GET", "/foo?other=value")
+    val result = CourierQueryParsers.strictParse("sort", SortOrder.SCHEMA, getClass, fakeRequest)
+    assert(result.isLeft, "Missing required param should return Left")
+  }
+
+  @Test
+  def strictParse_tooManyValues_returnsLeft(): Unit = {
+    // Manually build a request with two values for the same query param name.
+    val fakeRequest = FakeRequest("GET", "/foo?sort=val1&sort=val2")
+    val result = CourierQueryParsers.strictParse("sort", SortOrder.SCHEMA, getClass, fakeRequest)
+    assert(result.isLeft, "Too many values for param should return Left")
+  }
+
+  // ─────────────────────────────────────────────────────────────────────────────
+  // optParse too-many branch (line 96)
+  // ─────────────────────────────────────────────────────────────────────────────
+
+  @Test
+  def optParse_tooManyValues_returnsLeft(): Unit = {
+    val fakeRequest = FakeRequest("GET", "/foo?sort=val1&sort=val2")
+    val result = CourierQueryParsers.optParse("sort", SortOrder.SCHEMA, getClass, fakeRequest)
+    assert(result.isLeft, "Too many values for optional param should return Left")
+  }
 }

@@ -44,7 +44,7 @@ class AuthenticatorTest extends AssertionsForJUnit with ScalaFutures with Resour
     new Authenticator[A] {
       override def maybeAuthenticate(rh: RequestHeader)(
           implicit ec: scala.concurrent.ExecutionContext)
-        : Future[Option[Either[NaptimeActionException, A]]] =
+          : Future[Option[Either[NaptimeActionException, A]]] =
         Future.successful(Some(Right(value)))
     }
 
@@ -53,7 +53,7 @@ class AuthenticatorTest extends AssertionsForJUnit with ScalaFutures with Resour
     new Authenticator[A] {
       override def maybeAuthenticate(rh: RequestHeader)(
           implicit ec: scala.concurrent.ExecutionContext)
-        : Future[Option[Either[NaptimeActionException, A]]] =
+          : Future[Option[Either[NaptimeActionException, A]]] =
         Future.successful(None)
     }
 
@@ -62,7 +62,7 @@ class AuthenticatorTest extends AssertionsForJUnit with ScalaFutures with Resour
     new Authenticator[A] {
       override def maybeAuthenticate(rh: RequestHeader)(
           implicit ec: scala.concurrent.ExecutionContext)
-        : Future[Option[Either[NaptimeActionException, A]]] =
+          : Future[Option[Either[NaptimeActionException, A]]] =
         Future.successful(Some(Left(ex)))
     }
 

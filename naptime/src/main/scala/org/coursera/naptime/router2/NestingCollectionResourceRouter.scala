@@ -29,7 +29,6 @@ import play.api.libs.json.Json
 import play.api.libs.streams.Accumulator
 import play.api.mvc.EssentialAction
 import play.api.mvc.RequestHeader
-import play.api.mvc.RequestTaggingHandler
 import play.api.mvc.Result
 import play.api.mvc.Results
 
@@ -301,7 +300,7 @@ class NestingCollectionResourceRouter[CollectionResourceType <: CollectionResour
     var error: Option[RouteAction] = None
     // TODO(saeta): check length of idStrings to make sure it's not too long. (Potential DoS.)
     val idStrings = queryString.split("(?<!\\\\),")
-    val ids = idStrings.flatMap { idStr =>
+    val ids = idStrings.toSeq.flatMap { idStr =>
       val parsed = parser.reads(StringKey(idStr))
       if (parsed.isEmpty) {
         error = Some(errorRoute(s"Could not parse key '$idStr'")) // TODO: truncate if too long.
@@ -320,7 +319,7 @@ object NestingCollectionResourceRouter {
       msg: String,
       statusCode: Int = Status.BAD_REQUEST): RouteAction = {
 
-    new EssentialAction with RequestTaggingHandler {
+    new EssentialAction with NaptimeRequestTaggingHandler {
       override def apply(request: RequestHeader): Accumulator[ByteString, Result] = {
         Accumulator(Sink.ignore.mapMaterializedValue { _ =>
           // TODO(saeta): use standardized error response format.
@@ -329,7 +328,9 @@ object NestingCollectionResourceRouter {
       }
 
       override def tagRequest(request: RequestHeader): RequestHeader =
-        request.copy(tags = request.tags + (Router.NAPTIME_RESOURCE_NAME -> resourceClass.getName))
+        request.addAttr(
+          NaptimeAttrKey.tags,
+          Map(Router.NAPTIME_RESOURCE_NAME -> resourceClass.getName))
     }
   }
 }

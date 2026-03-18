@@ -46,7 +46,7 @@ class AuthenticatorCombinersTest
     new Authenticator[A] {
       override def maybeAuthenticate(rh: RequestHeader)(
           implicit ec: scala.concurrent.ExecutionContext)
-        : Future[Option[Either[NaptimeActionException, A]]] =
+          : Future[Option[Either[NaptimeActionException, A]]] =
         Future.successful(Some(Right(value)))
     }
 
@@ -54,7 +54,7 @@ class AuthenticatorCombinersTest
     new Authenticator[A] {
       override def maybeAuthenticate(rh: RequestHeader)(
           implicit ec: scala.concurrent.ExecutionContext)
-        : Future[Option[Either[NaptimeActionException, A]]] =
+          : Future[Option[Either[NaptimeActionException, A]]] =
         Future.successful(None)
     }
 
@@ -62,7 +62,7 @@ class AuthenticatorCombinersTest
     new Authenticator[A] {
       override def maybeAuthenticate(rh: RequestHeader)(
           implicit ec: scala.concurrent.ExecutionContext)
-        : Future[Option[Either[NaptimeActionException, A]]] =
+          : Future[Option[Either[NaptimeActionException, A]]] =
         Future.successful(Some(Left(ex)))
     }
 
@@ -138,8 +138,7 @@ class AuthenticatorCombinersTest
 
   @Test
   def anyOf_set_allFail_returnsError(): Unit = {
-    val combined =
-      Authenticator.anyOf(Set(alwaysFail[String](error401), alwaysFail[String](error403)))
+    val combined = Authenticator.anyOf(Set(alwaysFail[String](error401), alwaysFail[String](error403)))
     val result = combined.maybeAuthenticate(fakeRequest).futureValue
     result match {
       case Some(Left(_)) => // expected

@@ -64,8 +64,7 @@ class SchemaModelsTest extends AssertionsForJUnit {
       handlers = HandlerArray(),
       className = "org.coursera.SessionResource",
       attributes = AttributeArray())
-    assert(
-      resource.parentClass === Some("org.coursera.naptime.resources.TopLevelCollectionResource"))
+    assert(resource.parentClass === Some("org.coursera.naptime.resources.TopLevelCollectionResource"))
   }
 
   @Test
@@ -273,8 +272,11 @@ class SchemaModelsTest extends AssertionsForJUnit {
 
   @Test
   def parameter_apply_andAccessFields(): Unit = {
-    val param =
-      Parameter(name = "limit", `type` = "int", attributes = AttributeArray(), required = false)
+    val param = Parameter(
+      name = "limit",
+      `type` = "int",
+      attributes = AttributeArray(),
+      required = false)
     assert(param.name === "limit")
     assert(param.`type` === "int")
     assert(param.required === false)
@@ -282,8 +284,11 @@ class SchemaModelsTest extends AssertionsForJUnit {
 
   @Test
   def parameter_required(): Unit = {
-    val param =
-      Parameter(name = "id", `type` = "string", attributes = AttributeArray(), required = true)
+    val param = Parameter(
+      name = "id",
+      `type` = "string",
+      attributes = AttributeArray(),
+      required = true)
     assert(param.required === true)
   }
 
@@ -304,8 +309,7 @@ class SchemaModelsTest extends AssertionsForJUnit {
 
   @Test
   def parameter_toString(): Unit = {
-    val p =
-      Parameter(name = "limit", `type` = "int", attributes = AttributeArray(), required = false)
+    val p = Parameter(name = "limit", `type` = "int", attributes = AttributeArray(), required = false)
     assert(p.toString.contains("Parameter"))
   }
 
@@ -334,8 +338,7 @@ class SchemaModelsTest extends AssertionsForJUnit {
     val empty = ParameterArray()
     assert(empty.isEmpty)
 
-    val param =
-      Parameter(name = "q", `type` = "string", attributes = AttributeArray(), required = false)
+    val param = Parameter(name = "q", `type` = "string", attributes = AttributeArray(), required = false)
     val withParam = ParameterArray(param)
     assert(!withParam.isEmpty)
     assert(withParam.size === 1)
@@ -862,28 +865,29 @@ class SchemaModelsTest extends AssertionsForJUnit {
   def resourceDataSchemaMap_removed(): Unit = {
     val schema = ResourceDataSchema()
     val m = ResourceDataSchemaMap("key" -> schema)
-    val after = m - "key"
+    val after = m.removed("key")
     assert(after.isEmpty)
   }
 
   // ─── ResourceSchemas ──────────────────────────────────────────────────────
 
-  private def makeResource(): Resource =
-    Resource(
-      kind = ResourceKind.COLLECTION,
-      name = "items",
-      version = None,
-      parentClass = None,
-      keyType = "string",
-      valueType = "org.coursera.Item",
-      mergedType = "org.coursera.MergedItem",
-      handlers = HandlerArray(),
-      className = "org.coursera.ItemResource",
-      attributes = AttributeArray())
+  private def makeResource(): Resource = Resource(
+    kind = ResourceKind.COLLECTION,
+    name = "items",
+    version = None,
+    parentClass = None,
+    keyType = "string",
+    valueType = "org.coursera.Item",
+    mergedType = "org.coursera.MergedItem",
+    handlers = HandlerArray(),
+    className = "org.coursera.ItemResource",
+    attributes = AttributeArray())
 
   @Test
   def resourceSchemas_apply_andAccessFields(): Unit = {
-    val rs = ResourceSchemas(resourceSchema = makeResource(), dataSchemas = ResourceDataSchemaMap())
+    val rs = ResourceSchemas(
+      resourceSchema = makeResource(),
+      dataSchemas = ResourceDataSchemaMap())
     assert(rs.resourceSchema.name === "items")
     assert(rs.dataSchemas.isEmpty)
   }
@@ -974,11 +978,7 @@ class SchemaModelsTest extends AssertionsForJUnit {
   @Test
   def parameterArray_dataBuilder_addElement(): Unit = {
     val builder = ParameterArray.newBuilder
-    builder += Parameter(
-      name = "p",
-      `type` = "string",
-      attributes = AttributeArray(),
-      required = false)
+    builder += Parameter(name = "p", `type` = "string", attributes = AttributeArray(), required = false)
     val result = builder.result()
     assert(result.size === 1)
   }
@@ -1003,17 +1003,7 @@ class SchemaModelsTest extends AssertionsForJUnit {
   @Test
   def resource_unapply(): Unit = {
     val resource = makeResource()
-    val Resource(
-      kind,
-      name,
-      version,
-      parentClass,
-      keyType,
-      valueType,
-      mergedType,
-      handlers,
-      className,
-      attributes) = resource
+    val Resource(kind, name, version, parentClass, keyType, valueType, mergedType, handlers, className, attributes) = resource
     assert(kind === ResourceKind.COLLECTION)
     assert(name === "items")
     assert(version === None)
@@ -1029,33 +1019,27 @@ class SchemaModelsTest extends AssertionsForJUnit {
       customOutputBodyType = None,
       authType = None,
       attributes = AttributeArray())
-    val hKind = h.kind
-    val hName = h.name
-    val hInputBodyType = h.inputBodyType
-    assert(hKind === HandlerKind.GET)
-    assert(hName === "get")
-    assert(hInputBodyType === None)
+    val Handler(kind, name, params, inputBodyType, customOutputBodyType, authType, attrs) = h
+    assert(kind === HandlerKind.GET)
+    assert(name === "get")
+    assert(inputBodyType === None)
   }
 
   @Test
   def parameter_unapply(): Unit = {
-    val p =
-      Parameter(name = "limit", `type` = "int", attributes = AttributeArray(), required = false)
-    val pName = p.name
-    val pTyp = p.`type`
-    val pRequired = p.required
-    assert(pName === "limit")
-    assert(pTyp === "int")
-    assert(pRequired === false)
+    val p = Parameter(name = "limit", `type` = "int", attributes = AttributeArray(), required = false)
+    val Parameter(name, typ, typeSchema, attributes, default, required) = p
+    assert(name === "limit")
+    assert(typ === "int")
+    assert(required === false)
   }
 
   @Test
   def attribute_unapply(): Unit = {
     val a = Attribute(name = "deprecated", value = None)
-    val aName = a.name
-    val aValue = a.value
-    assert(aName === "deprecated")
-    assert(aValue === None)
+    val Attribute(name, value) = a
+    assert(name === "deprecated")
+    assert(value === None)
   }
 
   @Test
@@ -1077,8 +1061,8 @@ class SchemaModelsTest extends AssertionsForJUnit {
   @Test
   def arbitraryBytesBody_unapply(): Unit = {
     val body = ArbitraryBytesBody(mimeType = Some("image/png"))
-    val bodyMimeType = body.mimeType
-    assert(bodyMimeType === Some("image/png"))
+    val ArbitraryBytesBody(mimeType) = body
+    assert(mimeType === Some("image/png"))
   }
 
   @Test
@@ -1153,8 +1137,7 @@ class SchemaModelsTest extends AssertionsForJUnit {
 
   @Test
   def parameter_productElement_allFields(): Unit = {
-    val p =
-      Parameter(name = "limit", `type` = "int", attributes = AttributeArray(), required = true)
+    val p = Parameter(name = "limit", `type` = "int", attributes = AttributeArray(), required = true)
     assert(p.productElement(0) === "limit")
     assert(p.productElement(1) === "int")
     assert(p.productElement(2) === None)
@@ -1460,8 +1443,7 @@ class SchemaModelsTest extends AssertionsForJUnit {
 
   @Test
   def parameterArray_iteration(): Unit = {
-    val p =
-      Parameter(name = "q", `type` = "string", attributes = AttributeArray(), required = false)
+    val p = Parameter(name = "q", `type` = "string", attributes = AttributeArray(), required = false)
     val arr = ParameterArray(p)
     val elems = arr.toList
     assert(elems.size === 1)
@@ -1772,8 +1754,7 @@ class SchemaModelsTest extends AssertionsForJUnit {
   def graphQLRelationAnnotation_withAuthOverride_setFields(): Unit = {
     val auth = InternalAuth()
     val authOverride = AuthOverride.InternalAuthMember(auth)
-    val a =
-      GraphQLRelationAnnotation("courses.v1", StringMap(), RelationType.GET, Some(authOverride))
+    val a = GraphQLRelationAnnotation("courses.v1", StringMap(), RelationType.GET, Some(authOverride))
     assert(a.authOverride === Some(authOverride))
   }
 
@@ -2175,14 +2156,7 @@ class SchemaModelsTest extends AssertionsForJUnit {
   @Test
   def handlerArray_applyIdx_returnsElement(): Unit = {
     // Exercises HandlerArray.apply(idx) (coerceInput + apply).
-    val h = Handler(
-      kind = HandlerKind.GET,
-      name = "get",
-      parameters = ParameterArray(),
-      inputBodyType = None,
-      customOutputBodyType = None,
-      authType = None,
-      attributes = AttributeArray())
+    val h = Handler(kind = HandlerKind.GET, name = "get", parameters = ParameterArray())
     val arr = HandlerArray(h)
     assert(arr(0).name === "get")
   }
@@ -2191,14 +2165,7 @@ class SchemaModelsTest extends AssertionsForJUnit {
   def handlerArray_copy_withDataList(): Unit = {
     // Exercises HandlerArray.copy(dataList, conversion).
     import org.coursera.courier.templates.DataTemplates.DataConversion
-    val h = Handler(
-      kind = HandlerKind.GET,
-      name = "get",
-      parameters = ParameterArray(),
-      inputBodyType = None,
-      customOutputBodyType = None,
-      authType = None,
-      attributes = AttributeArray())
+    val h = Handler(kind = HandlerKind.GET, name = "get", parameters = ParameterArray())
     val arr = HandlerArray(h)
     val copied = arr.copy(arr.data(), DataConversion.SetReadOnly)
     assert(copied.length === 1)
@@ -2207,14 +2174,7 @@ class SchemaModelsTest extends AssertionsForJUnit {
   @Test
   def handlerArray_applyIterable_createsArray(): Unit = {
     // Exercises HandlerArray.apply(Iterable).
-    val h = Handler(
-      kind = HandlerKind.GET,
-      name = "getAll",
-      parameters = ParameterArray(),
-      inputBodyType = None,
-      customOutputBodyType = None,
-      authType = None,
-      attributes = AttributeArray())
+    val h = Handler(kind = HandlerKind.GET, name = "getAll", parameters = ParameterArray())
     val arr = HandlerArray(List(h))
     assert(arr.length === 1)
     assert(arr(0).name === "getAll")

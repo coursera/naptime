@@ -32,12 +32,11 @@ import org.scalatestplus.mockito.MockitoSugar
 import play.api.libs.streams.Accumulator
 import play.api.mvc.EssentialAction
 import play.api.mvc.RequestHeader
-import play.api.mvc.RequestTaggingHandler
 import play.api.mvc.Result
 import play.api.test.FakeRequest
 
 class NaptimePlayRouterTest extends AssertionsForJUnit with MockitoSugar {
-  object FakeHandler extends /* RouteAction */ EssentialAction with RequestTaggingHandler {
+  object FakeHandler extends /* RouteAction */ EssentialAction with NaptimeRequestTaggingHandler {
     override def tagRequest(request: RequestHeader): RequestHeader = request
 
     override def apply(v1: RequestHeader): Accumulator[ByteString, Result] = ???
@@ -97,4 +96,41 @@ class NaptimePlayRouterTest extends AssertionsForJUnit with MockitoSugar {
         "[NAPTIME] org.coursera.naptime.FakeResource.get(id: String)") ===
         documentation.head)
   }
+
+  @Test
+  def withPrefix_returnsNewRouterWithPrefix(): Unit = {
+    val prefixed = router.withPrefix("/api")
+    assert(prefixed != null)
+    // Verify that the prefixed router does not route a request to a path that
+    // does NOT start with the prefix.
+    when(resourceRouter.routeRequest(any(), any())).thenReturn(Some(FakeHandler))
+    val request = FakeRequest("GET", "/other/fakeResource.v1/someId")
+    val handler = prefixed.handlerFor(request)
+    assert(handler.isEmpty, "Prefixed router should not match a path outside its prefix")
+  }
+
+  @Test
+  def handlerFor_pathOutsidePrefix_returnsNone(): Unit = {
+    val prefixed = router.withPrefix("/api")
+    when(resourceRouter.routeRequest(any(), any())).thenReturn(Some(FakeHandler))
+    // Path does not start with "/api"
+    val request = FakeRequest("GET", "/unrelated/path")
+    val handler = prefixed.handlerFor(request)
+    assert(handler.isEmpty)
+  }
+
+  @Test
+  def naptimeRoutes_className_replacesDollarSign(): Unit = {
+    // Verify that className strips '$' from inner class names
+    val mockBuilder = mock[ResourceRouterBuilder]
+    when(mockBuilder.resourceClass()).thenReturn(
+      classOf[NaptimePlayRouterTest.InnerClass].asInstanceOf[Class[mockBuilder.ResourceClass]])
+    val name = naptimeRoutes.className(mockBuilder)
+    assert(!name.contains("$"), s"className should not contain '$$': $name")
+  }
+}
+
+object NaptimePlayRouterTest {
+  // A nested class whose JVM name contains a '$'
+  class InnerClass
 }

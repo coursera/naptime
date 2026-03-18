@@ -113,7 +113,7 @@ private[naptime] object JsonUtilities {
       fields: ResourceFields[_],
       ok: Ok[_]): JsObject = {
     // Don't bother outputting metadata if there are no fields present in the response.
-    val visibleIncludes = ok.related.filterKeys(requestFields.forResource(_).isDefined)
+    val visibleIncludes = ok.related.filter { case (name, _) => requestFields.forResource(name).isDefined }
     val formatted = visibleIncludes.map {
       case (name, related) =>
         name.identifier ->

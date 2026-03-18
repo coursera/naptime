@@ -16,11 +16,27 @@
 
 package org.coursera.naptime
 
+import play.api.libs.typedmap.TypedKey
 import play.api.mvc.EssentialAction
-import play.api.mvc.RequestTaggingHandler
+import play.api.mvc.RequestHeader
 
 package object router2 {
 
-  type RouteAction = EssentialAction with RequestTaggingHandler
+  /**
+   * Naptime's replacement for Play's removed RequestTaggingHandler.
+   * Allows route actions to annotate the request with resource metadata.
+   */
+  trait NaptimeRequestTaggingHandler {
+    def tagRequest(request: RequestHeader): RequestHeader
+  }
+
+  type RouteAction = EssentialAction with NaptimeRequestTaggingHandler
+
+  /**
+   * Typed attribute keys for naptime request metadata (replaces RequestAttrKey.Tags).
+   */
+  object NaptimeAttrKey {
+    val tags: TypedKey[Map[String, String]] = TypedKey("Naptime.Tags")
+  }
 
 }

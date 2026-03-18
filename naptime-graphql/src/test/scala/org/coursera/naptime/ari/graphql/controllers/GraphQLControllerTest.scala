@@ -111,7 +111,8 @@ class GraphQLControllerTest
   @Test
   def graphqlBody_validQuery_returnsOk(): Unit = {
     val controller = buildController()
-    val body = Json.obj("query" -> """{ __schema { queryType { name } } }""")
+    val body = Json.obj(
+      "query" -> """{ __schema { queryType { name } } }""")
     val request = FakeRequest("POST", "/graphql")
       .withBody(body.as[play.api.libs.json.JsValue])
     val result = controller.graphqlBody.apply(request)
@@ -157,7 +158,9 @@ class GraphQLControllerTest
   @Test
   def graphqlBody_withEmptyVariablesString_returnsOk(): Unit = {
     val controller = buildController()
-    val body = Json.obj("query" -> """{ __schema { queryType { name } } }""", "variables" -> "")
+    val body = Json.obj(
+      "query" -> """{ __schema { queryType { name } } }""",
+      "variables" -> "")
     val request = FakeRequest("POST", "/graphql")
       .withBody(body.as[play.api.libs.json.JsValue])
     val result = controller.graphqlBody.apply(request)
@@ -167,7 +170,9 @@ class GraphQLControllerTest
   @Test
   def graphqlBody_withNullVariablesString_returnsOk(): Unit = {
     val controller = buildController()
-    val body = Json.obj("query" -> """{ __schema { queryType { name } } }""", "variables" -> "null")
+    val body = Json.obj(
+      "query" -> """{ __schema { queryType { name } } }""",
+      "variables" -> "null")
     val request = FakeRequest("POST", "/graphql")
       .withBody(body.as[play.api.libs.json.JsValue])
     val result = controller.graphqlBody.apply(request)
@@ -177,7 +182,8 @@ class GraphQLControllerTest
   @Test
   def graphqlBody_withInvalidQuery_returnsOkWithSyntaxError(): Unit = {
     val controller = buildController()
-    val body = Json.obj("query" -> """{ not valid graphql {{{{ """)
+    val body = Json.obj(
+      "query" -> """{ not valid graphql {{{{ """)
     val request = FakeRequest("POST", "/graphql")
       .withBody(body.as[play.api.libs.json.JsValue])
     val result = controller.graphqlBody.apply(request)
@@ -195,7 +201,8 @@ class GraphQLControllerTest
   def graphqlBatch_singleQuery_returnsArrayOfResults(): Unit = {
     val controller = buildController()
     val body: play.api.libs.json.JsValue = JsArray(
-      Seq(Json.obj("query" -> """{ __schema { queryType { name } } }""")))
+      Seq(
+        Json.obj("query" -> """{ __schema { queryType { name } } }""")))
     val request = FakeRequest("POST", "/graphql")
       .withBody(body)
     val result = controller.graphqlBatch.apply(request)
@@ -237,8 +244,10 @@ class GraphQLControllerTest
   def graphqlBatch_withVariablesAsJsonString_returnsOk(): Unit = {
     val controller = buildController()
     val body: play.api.libs.json.JsValue = JsArray(
-      Seq(Json
-        .obj("query" -> """{ __schema { queryType { name } } }""", "variables" -> """{"x": 1}""")))
+      Seq(
+        Json.obj(
+          "query" -> """{ __schema { queryType { name } } }""",
+          "variables" -> """{"x": 1}""")))
     val request = FakeRequest("POST", "/graphql")
       .withBody(body)
     val result = controller.graphqlBatch.apply(request)
@@ -248,8 +257,11 @@ class GraphQLControllerTest
   @Test
   def graphqlBatch_withOperationName_returnsOk(): Unit = {
     val controller = buildController()
-    val body: play.api.libs.json.JsValue = JsArray(Seq(Json
-      .obj("query" -> """query Op { __schema { queryType { name } } }""", "operationName" -> "Op")))
+    val body: play.api.libs.json.JsValue = JsArray(
+      Seq(
+        Json.obj(
+          "query" -> """query Op { __schema { queryType { name } } }""",
+          "operationName" -> "Op")))
     val request = FakeRequest("POST", "/graphql")
       .withBody(body)
     val result = controller.graphqlBatch.apply(request)
@@ -270,7 +282,8 @@ class GraphQLControllerTest
       }
     }
     val controller = buildController(FilterList(immutable.Seq(trackingFilter)))
-    val body = Json.obj("query" -> """{ __schema { queryType { name } } }""")
+    val body = Json.obj(
+      "query" -> """{ __schema { queryType { name } } }""")
     val request = FakeRequest("POST", "/graphql")
       .withBody(body.as[play.api.libs.json.JsValue])
     controller.graphqlBody.apply(request).futureValue
@@ -298,7 +311,8 @@ class GraphQLControllerTest
   def graphqlBody_queryAnalysisError_returnsOkWithErrorInBody(): Unit = {
     // A query that references nonexistent fields causes QueryAnalysisError inside executor
     val controller = buildController()
-    val body = Json.obj("query" -> """{ NonExistentField { badField } }""")
+    val body = Json.obj(
+      "query" -> """{ NonExistentField { badField } }""")
     val request = FakeRequest("POST", "/graphql")
       .withBody(body.as[play.api.libs.json.JsValue])
     val result = controller.graphqlBody.apply(request)

@@ -317,7 +317,8 @@ class MacroImpls(val c: blackbox.Context) {
                     new com.linkedin.data.schema.Name(${keyType.toString}),
                     com.linkedin.data.schema.RecordDataSchema.RecordType.RECORD)
                   val fields = $fields.flatten
-                  val fieldsJava = scala.collection.convert.WrapAsJava.seqAsJavaList(fields)
+                  import scala.collection.JavaConverters._
+                  val fieldsJava = fields.asJava
                   keyRecord.setFields(fieldsJava, null)
                   Some(keyRecord)
                  """

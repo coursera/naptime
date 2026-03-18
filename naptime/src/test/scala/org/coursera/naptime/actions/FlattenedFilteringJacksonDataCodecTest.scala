@@ -87,7 +87,7 @@ class FlattenedFilteringJacksonDataCodecTest extends AssertionsForJUnit {
     assert(expected === Json.parse(serialized))
   }
 
-  @Ignore
+  @Ignore // The codec does not yet strip empty top-level paging/linked sections.
   @Test
   def testEmptyTopLevels(): Unit = {
     val unfiltered = Json.obj(

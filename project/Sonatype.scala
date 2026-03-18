@@ -31,7 +31,7 @@ object Sonatype {
         Some("releases" at s"$nexus/service/local/staging/deploy/maven2")
       }
     },
-    publishArtifact in Test := false,
+    Test / publishArtifact := false,
     pomIncludeRepository := { _ => false },
 
     pomExtra := {

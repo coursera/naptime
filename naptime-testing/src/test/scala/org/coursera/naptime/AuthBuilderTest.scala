@@ -71,6 +71,76 @@ class AuthBuilderTest extends AssertionsForJUnit with ScalaFutures with RestActi
         .testAction(makeRequestContext(Engineer("Costello")))
         .isError)
   }
+
+  // ─── testActionPassAuth bypasses auth checks entirely ────────────────────────
+
+  @Test
+  def testActionPassAuth_bypassesHeaderAuth(): Unit = {
+    // AlwaysReject would fail testAction, but testActionPassAuth skips auth
+    assert(
+      resource
+        .createHeaderAuthReject()
+        .testActionPassAuth(makeRequestContext(Engineer("Anybody")))
+        .isOk)
+  }
+
+  @Test
+  def testActionPassAuth_bypassesBodyAuth(): Unit = {
+    // Name doesn't match "Brennan", but auth is bypassed so it succeeds
+    assert(
+      resource
+        .createBodyAuthNamedBrennan()
+        .testActionPassAuth(makeRequestContext(Engineer("Abbot")))
+        .isOk)
+  }
+
+  @Test
+  def testActionPassAuth_noAuth_stillSucceeds(): Unit = {
+    assert(
+      resource
+        .createNoAuth()
+        .testActionPassAuth(makeRequestContext(Engineer("Anyone")))
+        .isOk)
+  }
+
+  // ─── NaptimeActionException recovery inside testAction ───────────────────────
+
+  @Test
+  def testAction_actionThrowsNaptimeException_returnsRestError(): Unit = {
+    val result = resource
+      .createThrowsNaptimeException()
+      .testAction(makeRequestContext(Engineer("Anyone")))
+    assert(result.isError)
+  }
+
+  @Test
+  def testActionPassAuth_actionThrowsNaptimeException_returnsRestError(): Unit = {
+    val result = resource
+      .createThrowsNaptimeException()
+      .testActionPassAuth(makeRequestContext(Engineer("Anyone")))
+    assert(result.isError)
+  }
+
+  // ─── TestFailedException recovery: uncaught RuntimeException propagates ────────
+
+  @Test
+  def testAction_actionThrowsRuntimeException_propagatesException(): Unit = {
+    intercept[RuntimeException] {
+      resource
+        .createThrowsRuntimeException()
+        .testAction(makeRequestContext(Engineer("Anyone")))
+    }
+  }
+
+  @Test
+  def testActionPassAuth_actionThrowsRuntimeException_propagatesException(): Unit = {
+    intercept[RuntimeException] {
+      resource
+        .createThrowsRuntimeException()
+        .testActionPassAuth(makeRequestContext(Engineer("Anyone")))
+    }
+  }
+
 }
 
 object AuthBuilderTest {
@@ -148,6 +218,21 @@ object AuthBuilderTest {
         .create { ctx =>
           Ok(Keyed(1, Some(ctx.body)))
         }
+
+    def createThrowsNaptimeException() =
+      Nap
+        .jsonBody[Engineer]
+        .create { ctx =>
+          throw Errors.NotFound()
+        }
+
+    def createThrowsRuntimeException() =
+      Nap
+        .jsonBody[Engineer]
+        .create { ctx =>
+          throw new RuntimeException("Uncaught runtime error for coverage")
+        }
+
   }
 
 }

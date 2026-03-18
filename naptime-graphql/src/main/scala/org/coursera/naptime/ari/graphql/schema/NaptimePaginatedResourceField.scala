@@ -113,7 +113,7 @@ object NaptimePaginatedResourceField extends StrictLogging {
                 }
               }
 
-            val args = context.args.raw.mapValues(NaptimeResourceUtils.parseToJson).toSet ++
+            val args = context.args.raw.map { case (k, v) => k -> NaptimeResourceUtils.parseToJson(v) }.toSet ++
               extraArguments
 
             val hasIds = fieldRelationOpt.exists(_.relationType == RelationType.MULTI_GET) ||

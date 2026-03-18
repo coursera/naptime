@@ -33,9 +33,8 @@ class CourierFormatsSerializationTest extends AssertionsForJUnit {
 
   // ─── Schemas for serialization ────────────────────────────────────────────────
 
-  private val arrayRecordSchema = DataTemplateUtil
-    .parseSchema(
-      """
+  private val arrayRecordSchema = DataTemplateUtil.parseSchema(
+    """
       |{
       |  "name": "ArrRec",
       |  "type": "record",
@@ -46,12 +45,10 @@ class CourierFormatsSerializationTest extends AssertionsForJUnit {
       |  }]
       |}
       |""".stripMargin
-    )
-    .asInstanceOf[RecordDataSchema]
+  ).asInstanceOf[RecordDataSchema]
 
-  private val mapRecordSchema = DataTemplateUtil
-    .parseSchema(
-      """
+  private val mapRecordSchema = DataTemplateUtil.parseSchema(
+    """
       |{
       |  "name": "MapRec",
       |  "type": "record",
@@ -62,12 +59,10 @@ class CourierFormatsSerializationTest extends AssertionsForJUnit {
       |  }]
       |}
       |""".stripMargin
-    )
-    .asInstanceOf[RecordDataSchema]
+  ).asInstanceOf[RecordDataSchema]
 
-  private val unionRecordSchema = DataTemplateUtil
-    .parseSchema(
-      """
+  private val unionRecordSchema = DataTemplateUtil.parseSchema(
+    """
       |{
       |  "name": "UnionRec",
       |  "type": "record",
@@ -78,36 +73,26 @@ class CourierFormatsSerializationTest extends AssertionsForJUnit {
       |  }]
       |}
       |""".stripMargin
-    )
-    .asInstanceOf[RecordDataSchema]
+  ).asInstanceOf[RecordDataSchema]
 
-  private val boolRecordSchema = DataTemplateUtil
-    .parseSchema(
-      """{"name":"BR","type":"record","fields":[{"name":"flag","type":"boolean"}]}"""
-    )
-    .asInstanceOf[RecordDataSchema]
+  private val boolRecordSchema = DataTemplateUtil.parseSchema(
+    """{"name":"BR","type":"record","fields":[{"name":"flag","type":"boolean"}]}"""
+  ).asInstanceOf[RecordDataSchema]
 
-  private val floatRecordSchema = DataTemplateUtil
-    .parseSchema(
-      """{"name":"FR","type":"record","fields":[{"name":"f","type":"float"}]}"""
-    )
-    .asInstanceOf[RecordDataSchema]
+  private val floatRecordSchema = DataTemplateUtil.parseSchema(
+    """{"name":"FR","type":"record","fields":[{"name":"f","type":"float"}]}"""
+  ).asInstanceOf[RecordDataSchema]
 
-  private val bytesRecordSchema = DataTemplateUtil
-    .parseSchema(
-      """{"name":"BytR","type":"record","fields":[{"name":"b","type":"bytes"}]}"""
-    )
-    .asInstanceOf[RecordDataSchema]
+  private val bytesRecordSchema = DataTemplateUtil.parseSchema(
+    """{"name":"BytR","type":"record","fields":[{"name":"b","type":"bytes"}]}"""
+  ).asInstanceOf[RecordDataSchema]
 
-  private val nullRecordSchema = DataTemplateUtil
-    .parseSchema(
-      """{"name":"NR","type":"record","fields":[{"name":"n","type":"null","optional":true}]}"""
-    )
-    .asInstanceOf[RecordDataSchema]
+  private val nullRecordSchema = DataTemplateUtil.parseSchema(
+    """{"name":"NR","type":"record","fields":[{"name":"n","type":"null","optional":true}]}"""
+  ).asInstanceOf[RecordDataSchema]
 
-  private val stringKeyRecordSchema = DataTemplateUtil
-    .parseSchema(
-      """
+  private val stringKeyRecordSchema = DataTemplateUtil.parseSchema(
+    """
       |{
       |  "name": "StrKeyRec",
       |  "type": "record",
@@ -118,12 +103,10 @@ class CourierFormatsSerializationTest extends AssertionsForJUnit {
       |  "codec": "StringKey"
       |}
       |""".stripMargin
-    )
-    .asInstanceOf[RecordDataSchema]
+  ).asInstanceOf[RecordDataSchema]
 
-  private val outerStringKeySchema = DataTemplateUtil
-    .parseSchema(
-      """
+  private val outerStringKeySchema = DataTemplateUtil.parseSchema(
+    """
       |{
       |  "name": "Outer",
       |  "type": "record",
@@ -141,8 +124,7 @@ class CourierFormatsSerializationTest extends AssertionsForJUnit {
       |  }]
       |}
       |""".stripMargin
-    )
-    .asInstanceOf[RecordDataSchema]
+  ).asInstanceOf[RecordDataSchema]
 
   // ─── recordToJsObject: array field ────────────────────────────────────────────
 
@@ -214,11 +196,9 @@ class CourierFormatsSerializationTest extends AssertionsForJUnit {
 
   @Test
   def recordToJsObject_withStringField_serializes(): Unit = {
-    val simpleSchema = DataTemplateUtil
-      .parseSchema(
-        """{"name":"S","type":"record","fields":[{"name":"msg","type":"string"}]}"""
-      )
-      .asInstanceOf[RecordDataSchema]
+    val simpleSchema = DataTemplateUtil.parseSchema(
+      """{"name":"S","type":"record","fields":[{"name":"msg","type":"string"}]}"""
+    ).asInstanceOf[RecordDataSchema]
     val dataMap = new DataMap()
     dataMap.put("msg", "hello")
 
@@ -263,11 +243,9 @@ class CourierFormatsSerializationTest extends AssertionsForJUnit {
 
   @Test
   def jsObjectToRecord_withNullValue_fieldOmitted(): Unit = {
-    val schema = DataTemplateUtil
-      .parseSchema(
-        """{"name":"Opt","type":"record","fields":[{"name":"opt","type":"string","optional":true}]}"""
-      )
-      .asInstanceOf[RecordDataSchema]
+    val schema = DataTemplateUtil.parseSchema(
+      """{"name":"Opt","type":"record","fields":[{"name":"opt","type":"string","optional":true}]}"""
+    ).asInstanceOf[RecordDataSchema]
     val jsObj = JsObject(Seq("opt" -> JsNull))
     val result = CourierFormats.jsObjectToRecord(jsObj, schema)
     assert(result.get("opt") == null)
@@ -340,9 +318,7 @@ class CourierFormatsSerializationTest extends AssertionsForJUnit {
     dataList.add(Integer.valueOf(1))
     dataList.add(Integer.valueOf(2))
     dataList.add(Integer.valueOf(3))
-    val arr = IntArray.build(
-      dataList,
-      org.coursera.courier.templates.DataTemplates.DataConversion.SetReadOnly)
+    val arr = IntArray.build(dataList, org.coursera.courier.templates.DataTemplates.DataConversion.SetReadOnly)
     val key = fmt.writes(arr)
     val parsed = fmt.reads(key)
     assert(parsed.isDefined)

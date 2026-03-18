@@ -26,8 +26,8 @@ import play.api.http.Status
 class AuthorizerTest extends AssertionsForJUnit {
 
   private val allowAll: Authorizer[String] = Authorizer(_ => AuthorizeResult.Authorized)
-  private val denyAll: Authorizer[String] = Authorizer(_ => AuthorizeResult.Rejected("denied"))
-  private val failAll: Authorizer[String] = Authorizer(_ => AuthorizeResult.Failed("failed"))
+  private val denyAll: Authorizer[String]  = Authorizer(_ => AuthorizeResult.Rejected("denied"))
+  private val failAll: Authorizer[String]  = Authorizer(_ => AuthorizeResult.Failed("failed"))
 
   // ─── AuthorizeResult predicates ────────────────────────────────────────────
 
@@ -82,8 +82,8 @@ class AuthorizerTest extends AssertionsForJUnit {
 
   @Test
   def on_transformsInputBeforeAuthorizing(): Unit = {
-    val lengthAuthorizer: Authorizer[Int] = Authorizer(
-      n => if (n > 0) AuthorizeResult.Authorized else AuthorizeResult.Rejected("empty"))
+    val lengthAuthorizer: Authorizer[Int] = Authorizer(n =>
+      if (n > 0) AuthorizeResult.Authorized else AuthorizeResult.Rejected("empty"))
     val strAuthorizer = lengthAuthorizer.on[String](_.length)
     assertResult(AuthorizeResult.Authorized)(strAuthorizer.authorize("hello"))
     assertResult(AuthorizeResult.Rejected("empty"))(strAuthorizer.authorize(""))

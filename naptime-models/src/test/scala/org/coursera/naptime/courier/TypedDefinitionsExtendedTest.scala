@@ -39,11 +39,9 @@ class TypedDefinitionsExtendedTest extends AssertionsForJUnit {
   @Test
   def typeName_instance_noDeclaringTyperef_throwsIllegalArgumentException(): Unit = {
     // Build a raw union schema (no typeref wrapper)
-    val rawUnionSchema = DataTemplateUtil
-      .parseSchema(
-        """["string","int"]"""
-      )
-      .asInstanceOf[UnionDataSchema]
+    val rawUnionSchema = DataTemplateUtil.parseSchema(
+      """["string","int"]"""
+    ).asInstanceOf[UnionDataSchema]
 
     val dataMap = new DataMap()
     dataMap.put("string", "hello")
@@ -58,9 +56,8 @@ class TypedDefinitionsExtendedTest extends AssertionsForJUnit {
 
   @Test
   def typeName_instance_noAnnotation_throwsIllegalArgumentException(): Unit = {
-    val schemaWithNoAnnotation = DataTemplateUtil
-      .parseSchema(
-        """
+    val schemaWithNoAnnotation = DataTemplateUtil.parseSchema(
+      """
         |{
         |  "name": "NoAnnotationTyperef",
         |  "namespace": "org.example",
@@ -75,8 +72,7 @@ class TypedDefinitionsExtendedTest extends AssertionsForJUnit {
         |  ]
         |}
         |""".stripMargin
-      )
-      .asInstanceOf[TyperefDataSchema]
+    ).asInstanceOf[TyperefDataSchema]
 
     val dataMap = new DataMap()
     dataMap.put("org.coursera.naptime.courier.TestTypedDefinitionAlpha", new DataMap())
@@ -91,9 +87,8 @@ class TypedDefinitionsExtendedTest extends AssertionsForJUnit {
 
   @Test
   def typeName_instance_emptyTypedDefinitionMapping_throwsIllegalArgumentException(): Unit = {
-    val schemaWithEmptyMapping = DataTemplateUtil
-      .parseSchema(
-        """
+    val schemaWithEmptyMapping = DataTemplateUtil.parseSchema(
+      """
         |{
         |  "name": "TyperefEmptyMapping",
         |  "namespace": "org.example",
@@ -109,8 +104,7 @@ class TypedDefinitionsExtendedTest extends AssertionsForJUnit {
         |  "typedDefinition": {}
         |}
         |""".stripMargin
-      )
-      .asInstanceOf[TyperefDataSchema]
+    ).asInstanceOf[TyperefDataSchema]
 
     val dataMap = new DataMap()
     dataMap.put("org.coursera.naptime.courier.TestTypedDefinitionAlpha", new DataMap())
@@ -125,9 +119,8 @@ class TypedDefinitionsExtendedTest extends AssertionsForJUnit {
 
   @Test
   def typeName_instance_emptyFlatTypedDefinitionMapping_throwsIllegalArgumentException(): Unit = {
-    val schemaWithEmptyFlatMapping = DataTemplateUtil
-      .parseSchema(
-        """
+    val schemaWithEmptyFlatMapping = DataTemplateUtil.parseSchema(
+      """
         |{
         |  "name": "TyperefEmptyFlatMapping",
         |  "namespace": "org.example",
@@ -143,8 +136,7 @@ class TypedDefinitionsExtendedTest extends AssertionsForJUnit {
         |  "flatTypedDefinition": {}
         |}
         |""".stripMargin
-      )
-      .asInstanceOf[TyperefDataSchema]
+    ).asInstanceOf[TyperefDataSchema]
 
     val dataMap = new DataMap()
     dataMap.put("org.coursera.naptime.courier.TestTypedDefinitionAlpha", new DataMap())

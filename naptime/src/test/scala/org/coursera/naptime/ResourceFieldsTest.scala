@@ -109,4 +109,27 @@ class ResourceFieldsTest extends AssertionsForJUnit {
         .withRelated("author" -> ResourceName("user", 1))
     }
   }
+
+  @Test
+  def headerFieldsOverride_invalidValue_returnsFailure(): Unit = {
+    // Exercises line 306-310: invalid header value for FIELDS_HEADER should return Failure.
+    val request = FakeRequest("GET", "/foo/bar")
+      .withHeaders(ResourceFields.FIELDS_HEADER -> "invalid-value")
+    val parsed = sampleFields.computeFields(request)
+    assert(parsed.isFailure)
+  }
+
+  @Test
+  def withDefaultFields_iterableOverload_addFields(): Unit = {
+    // Exercises line 354: withDefaultFields(Iterable[String]) overload.
+    val fields = ResourceFields[ResourceFieldsTestModel]
+      .withDefaultFields(List("b", "c"))
+    val request = FakeRequest("GET", "/foo/bar")
+    val parsed = fields.computeFields(request)
+    assert(parsed.isSuccess)
+    // Default fields b and c should be included
+    val queryFields = parsed.get
+    assert(queryFields.hasField("b"))
+    assert(queryFields.hasField("c"))
+  }
 }

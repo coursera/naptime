@@ -81,9 +81,7 @@ class UrlParseResultTest extends AssertionsForJUnit {
   }
 
   @Test def parseSuccess_flatMap_canReturnFailure(): Unit = {
-    val result = ParseSuccess(None, "hello").flatMap { (_, _) =>
-      ParseFailure
-    }
+    val result = ParseSuccess(None, "hello").flatMap { (_, _) => ParseFailure }
     assertResult(ParseFailure)(result)
   }
 

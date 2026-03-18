@@ -69,9 +69,7 @@ object RestActionTesterTimeoutTest {
     implicit val fmt: OFormat[Stub] = Json.format[Stub]
   }
 
-  class NeverResource(
-      implicit val executionContext: ExecutionContext,
-      val materializer: Materializer)
+  class NeverResource(implicit val executionContext: ExecutionContext, val materializer: Materializer)
       extends TopLevelCollectionResource[Int, Stub] {
 
     override def keyFormat: KeyFormat[Int] = KeyFormat.intKeyFormat

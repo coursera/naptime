@@ -33,10 +33,11 @@ import play.api.libs.json.Json
 import play.api.libs.json.OFormat
 import play.api.libs.json.Reads
 import play.api.libs.streams.Accumulator
+import play.api.http.Status
 import play.api.mvc.BodyParser
-import play.api.mvc.BodyParsers
 import play.api.mvc.RequestHeader
 import play.api.mvc.Result
+import play.api.mvc.Results
 
 import scala.concurrent.ExecutionContext
 import scala.util.control.NonFatal
@@ -110,7 +111,18 @@ class RestActionBuilder[RACType, AuthType, BodyType, ResourceKeyType, ResourceTy
     NewResponseType] =
     new RestActionBuilder(auth, bodyParser, errorHandler)
 
-  def rawJsonBody(maxLength: Int = 100 * 1024) = body(BodyParsers.parse.tolerantJson(maxLength))
+  def rawJsonBody(maxLength: Int = 100 * 1024) = body(tolerantJsonParser(maxLength))
+
+  private[this] def tolerantJsonParser(maxLength: Int): BodyParser[JsValue] =
+    BodyParser("tolerantJson, maxLength=" + maxLength) { _ =>
+      import akka.stream.scaladsl.Sink
+      import scala.util.Try
+      Accumulator(Sink.fold[ByteString, ByteString](ByteString.empty)(_ ++ _))
+        .map { bytes =>
+          if (bytes.size > maxLength) Left(Results.EntityTooLarge)
+          else Try(Right(Json.parse(bytes.toArray))).getOrElse(Left(Results.BadRequest("Invalid JSON")))
+        }(ec)
+    }
 
   def jsonBody[NewBodyType](implicit reads: Reads[NewBodyType]): DefinedBodyTypeRestActionBuilder[
     RACType,
@@ -134,7 +146,7 @@ class RestActionBuilder[RACType, AuthType, BodyType, ResourceKeyType, ResourceTy
     val parser: BodyParser[NewBodyType] = new BodyParser[NewBodyType] with StrictLogging {
       override def apply(
           rh: RequestHeader): Accumulator[ByteString, Either[Result, NewBodyType]] = {
-        val innerParser = BodyParsers.parse.tolerantJson(maxLength)
+        val innerParser = tolerantJsonParser(maxLength)
         innerParser(rh).map(_.right.map(toJsObj).joinRight)
       }
 

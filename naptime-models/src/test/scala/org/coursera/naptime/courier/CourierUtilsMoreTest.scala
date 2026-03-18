@@ -76,11 +76,9 @@ class CourierUtilsMoreTest extends AssertionsForJUnit {
 
   @Test
   def getUnionMemberTypeName_noDeclaringTyperef_returnsMemberKey(): Unit = {
-    val rawUnionSchema = DataTemplateUtil
-      .parseSchema(
-        """["string","int"]"""
-      )
-      .asInstanceOf[UnionDataSchema]
+    val rawUnionSchema = DataTemplateUtil.parseSchema(
+      """["string","int"]"""
+    ).asInstanceOf[UnionDataSchema]
 
     val dataMap = new DataMap()
     dataMap.put("string", "hello")
@@ -95,9 +93,8 @@ class CourierUtilsMoreTest extends AssertionsForJUnit {
 
   @Test
   def getUnionMemberTypeName_typerefWithoutAnnotation_returnsMemberKey(): Unit = {
-    val plainTyperefSchema = DataTemplateUtil
-      .parseSchema(
-        """
+    val plainTyperefSchema = DataTemplateUtil.parseSchema(
+      """
         |{
         |  "name": "PlainTyperef2",
         |  "namespace": "org.example",
@@ -112,8 +109,7 @@ class CourierUtilsMoreTest extends AssertionsForJUnit {
         |  ]
         |}
         |""".stripMargin
-      )
-      .asInstanceOf[TyperefDataSchema]
+    ).asInstanceOf[TyperefDataSchema]
 
     val unionSchema = plainTyperefSchema.getDereferencedDataSchema.asInstanceOf[UnionDataSchema]
     val dataMap = new DataMap()
@@ -168,8 +164,7 @@ class CourierUtilsMoreTest extends AssertionsForJUnit {
         |  "flatTypedDefinition": { "org.example.SomeMember": "someMember" }
         |}
         |""".stripMargin
-    val schema =
-      DataTemplateUtil.parseSchema(bothAnnotationsSchemaJson).asInstanceOf[TyperefDataSchema]
+    val schema = DataTemplateUtil.parseSchema(bothAnnotationsSchemaJson).asInstanceOf[TyperefDataSchema]
 
     intercept[SerializationException] {
       CourierUtils.getTypedDefinition(schema)

@@ -38,21 +38,19 @@ import scala.concurrent.duration.Duration
 class GraphQLSchemaIntegrationTest extends AssertionsForJUnit {
 
   // A fetcher that returns data based on resource name, ignoring arguments
-  private def buildFetcher(dataByResource: Map[String, List[DataMap]]): FetcherApi =
-    new FetcherApi {
-      override def data(request: Request, isDebugMode: Boolean)(
-          implicit executionContext: ExecutionContext): Future[FetcherResponse] = {
-        val elements = dataByResource.getOrElse(request.resource.topLevelName, List.empty)
-        Future.successful(
-          Right(Response(elements, ResponsePagination(None), Some("http://test.com"))))
-      }
+  private def buildFetcher(
+      dataByResource: Map[String, List[DataMap]]): FetcherApi = new FetcherApi {
+    override def data(request: Request, isDebugMode: Boolean)(
+        implicit executionContext: ExecutionContext): Future[FetcherResponse] = {
+      val elements = dataByResource.getOrElse(request.resource.topLevelName, List.empty)
+      Future.successful(Right(Response(elements, ResponsePagination(None), Some("http://test.com"))))
     }
+  }
 
   private def buildErrorFetcher(code: Int, msg: String): FetcherApi = new FetcherApi {
     override def data(request: Request, isDebugMode: Boolean)(
         implicit executionContext: ExecutionContext): Future[FetcherResponse] = {
-      Future.successful(
-        Left(org.coursera.naptime.ari.FetcherError(code, msg, Some("http://error.com"))))
+      Future.successful(Left(org.coursera.naptime.ari.FetcherError(code, msg, Some("http://error.com"))))
     }
   }
 
@@ -73,8 +71,7 @@ class GraphQLSchemaIntegrationTest extends AssertionsForJUnit {
     val builder = new SangriaGraphQlSchemaBuilder(allResources, schemaTypes)
     val schema = builder.generateSchema().data.asInstanceOf[Schema[SangriaGraphQlContext, Any]]
     val queryAst = QueryParser.parse(queryString).get
-    val context =
-      SangriaGraphQlContext(fetcher, null, ExecutionContext.global, debugMode = debugMode)
+    val context = SangriaGraphQlContext(fetcher, null, ExecutionContext.global, debugMode = debugMode)
 
     Await
       .result(
@@ -195,7 +192,7 @@ class GraphQLSchemaIntegrationTest extends AssertionsForJUnit {
     courseDataMap.put("id", "courseAId")
     courseDataMap.put("name", "Machine Learning")
     courseDataMap.put("slug", "ml")
-    courseDataMap.put("partnerId", Integer.valueOf(123))
+    courseDataMap.put("partnerId", 123)
 
     val fetcher = buildFetcher(Map("courses" -> List(courseDataMap)))
 
@@ -318,8 +315,7 @@ class GraphQLSchemaIntegrationTest extends AssertionsForJUnit {
       "org.coursera.naptime.ari.graphql.models.MergedCourse" -> MergedCourse.SCHEMA,
       "org.coursera.naptime.ari.graphql.models.MergedPartner" -> MergedPartner.SCHEMA,
       "org.coursera.naptime.ari.graphql.models.MergedInstructor" -> MergedInstructor.SCHEMA)
-    val allResources =
-      Set(Models.courseResource, Models.instructorResource, Models.partnersResource)
+    val allResources = Set(Models.courseResource, Models.instructorResource, Models.partnersResource)
     val builder = new SangriaGraphQlSchemaBuilder(allResources, schemaTypes)
     val result = builder.generateSchema()
     assert(result.data != null)
@@ -557,7 +553,6 @@ class GraphQLSchemaIntegrationTest extends AssertionsForJUnit {
     val result = executeQuery(query, fetcher)
     val elements = (result \\ "elements").head.as[List[JsObject]]
     assert(elements.head.value("id").as[String] === "courseAId")
-    assert(
-      elements.head.value("description").as[String] === "An awesome course on machine learning.")
+    assert(elements.head.value("description").as[String] === "An awesome course on machine learning.")
   }
 }

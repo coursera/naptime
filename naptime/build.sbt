@@ -1,10 +1,13 @@
+import NaptimeBuild._
+import NamedDependencies._
+
 name := "naptime"
 
 libraryDependencies ++= Seq(
   courierRuntime,
   governator,
-  NaptimeBuild.guice,
-  guiceMultibindings,
+  guiceDep,
+  guiceMultibindingsDep,
   jodaTime,
   jodaConvert,
   playJson,
@@ -18,7 +21,5 @@ libraryDependencies ++= Seq(
   scalatestPlusMockito,
   mockito
 )
-
-dependencyOverrides += playJson
 
 org.coursera.courier.sbt.CourierPlugin.courierSettings

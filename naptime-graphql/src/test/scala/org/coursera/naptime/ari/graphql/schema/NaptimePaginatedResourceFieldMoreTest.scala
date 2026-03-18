@@ -50,7 +50,7 @@ class NaptimePaginatedResourceFieldMoreTest extends AssertionsForJUnit with Mock
 
     // The "getAll" finder exists in courseResource handlers
     result match {
-      case Right(_)  => // expected
+      case Right(_) => // expected
       case Left(err) => fail(s"Expected Right but got Left($err)")
     }
   }
@@ -77,8 +77,8 @@ class NaptimePaginatedResourceFieldMoreTest extends AssertionsForJUnit with Mock
 
     result match {
       case Left(MissingQParameterOnFinderRelation(_, _)) => // expected
-      case Left(err)                                     => // Another error type is also acceptable
-      case Right(_)                                      => fail("Expected Left but got Right")
+      case Left(err) => // Another error type is also acceptable
+      case Right(_)  => fail("Expected Left but got Right")
     }
   }
 
@@ -102,7 +102,7 @@ class NaptimePaginatedResourceFieldMoreTest extends AssertionsForJUnit with Mock
       List.empty)
 
     result match {
-      case Left(_)  => // expected - finder not found
+      case Left(_) => // expected - finder not found
       case Right(_) => fail("Expected Left but got Right")
     }
   }
@@ -154,7 +154,7 @@ class NaptimePaginatedResourceFieldMoreTest extends AssertionsForJUnit with Mock
     result match {
       case Left(UnhandledSchemaError(_, _)) => // expected
       case Left(err)                        => // other error type also acceptable
-      case Right(_)                         => fail("Expected Left but got Right")
+      case Right(_) => fail("Expected Left but got Right")
     }
   }
 
@@ -231,8 +231,8 @@ class NaptimePaginatedResourceFieldMoreTest extends AssertionsForJUnit with Mock
 
     result match {
       case Left(HasForwardRelationButMissingMultiGet(_, _)) => // expected
-      case Left(err)                                        => // other error type acceptable
-      case Right(_)                                         => fail("Expected Left but got Right")
+      case Left(err) => // other error type acceptable
+      case Right(_)  => fail("Expected Left but got Right")
     }
   }
 

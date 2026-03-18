@@ -190,10 +190,7 @@ class UtilitiesTest extends AssertionsForJUnit {
 
   @Test
   def getValuesAtPath_emptyArray_returnsEmptyList(): Unit = {
-    val dm = makeCourseDataMap(
-      id = "courseA",
-      name = "My Course",
-      slug = "my-course",
+    val dm = makeCourseDataMap(id = "courseA", name = "My Course", slug = "my-course",
       instructorIds = Seq.empty)
     val result = Utilities.getValuesAtPath(dm, MergedCourse.SCHEMA, Seq("instructorIds"))
     assert(result.isEmpty)
@@ -222,8 +219,7 @@ class UtilitiesTest extends AssertionsForJUnit {
 
   @Test
   def getValuesAtPath_intField_returnsStringRepresentation(): Unit = {
-    val dm =
-      makeCourseDataMap(id = "courseA", name = "My Course", slug = "my-course", partnerId = 42)
+    val dm = makeCourseDataMap(id = "courseA", name = "My Course", slug = "my-course", partnerId = 42)
     val result = Utilities.getValuesAtPath(dm, MergedCourse.SCHEMA, Seq("partnerId"))
     assert(result.contains("42"))
   }

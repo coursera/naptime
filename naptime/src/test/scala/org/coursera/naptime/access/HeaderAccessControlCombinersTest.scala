@@ -319,6 +319,59 @@ class HeaderAccessControlCombinersTest
     }
   }
 
+  // ---------------------------------------------------------------------------
+  // check() method coverage — exercised post-authentication (inside StructuredAccessControl)
+  // ---------------------------------------------------------------------------
+
+  @Test
+  def anyOfCheck_bothPresent_returnsRight(): Unit = {
+    val anyOf = HeaderAccessControl.anyOf(leftSuccess, rightSuccess)
+    val result = anyOf.check((Some("left"), Some("right")))
+    assertResult(Right((Some("left"), Some("right"))))(result)
+  }
+
+  @Test
+  def anyOfCheck_leftMissing_returnsRight(): Unit = {
+    val anyOf = HeaderAccessControl.anyOf(leftSuccess, rightSuccess)
+    val result = anyOf.check((None, Some("right")))
+    assertResult(Right((None, Some("right"))))(result)
+  }
+
+  @Test
+  def anyOfCheck_bothMissing_returnsLeft(): Unit = {
+    val anyOf = HeaderAccessControl.anyOf(leftSuccess, rightSuccess)
+    val result = anyOf.check((None, None))
+    assert(result.isLeft)
+  }
+
+  @Test
+  def successfulOfCheck_nonEmpty_returnsRight(): Unit = {
+    val successfulOf = HeaderAccessControl.successfulOf(List(leftSuccess, rightSuccess))
+    val result = successfulOf.check(Set("left", "right"))
+    assertResult(Right(Set("left", "right")))(result)
+  }
+
+  @Test
+  def successfulOfCheck_empty_returnsLeft(): Unit = {
+    val successfulOf = HeaderAccessControl.successfulOf(List(leftSuccess, rightSuccess))
+    val result = successfulOf.check(Set.empty[String])
+    assert(result.isLeft)
+  }
+
+  @Test
+  def andCheck_bothSucceed_returnsRight(): Unit = {
+    val and = HeaderAccessControl.and(leftSuccess, rightSuccess)
+    val result = and.check(("left", "right"))
+    assertResult(Right(("left", "right")))(result)
+  }
+
+  @Test
+  def andCheck_leftDenies_returnsLeft(): Unit = {
+    val and = HeaderAccessControl.and(leftDeny, rightSuccess)
+    val result = and.check(("left", "right"))
+    assert(result.isLeft)
+  }
+
   @Test
   def complexTest(): Unit = {
     val acceptingParser =

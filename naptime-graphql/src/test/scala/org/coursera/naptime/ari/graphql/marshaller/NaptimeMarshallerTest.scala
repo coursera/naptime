@@ -290,8 +290,7 @@ class NaptimeMarshallerTest extends AssertionsForJUnit {
   @Test
   def playJsonToInput_works(): Unit = {
     val jsVal: JsString = JsString("test")
-    val (value, unmarshaller) =
-      implicitly[sangria.marshalling.ToInput[JsString, JsValue]].toInput(jsVal)
+    val (value, unmarshaller) = implicitly[sangria.marshalling.ToInput[JsString, JsValue]].toInput(jsVal)
     assert(value === JsString("test"))
   }
 
@@ -376,8 +375,7 @@ class NaptimeMarshallerTest extends AssertionsForJUnit {
     case class IntWrapper(n: Int)
     // Manually create the FromInput using playJsonReaderFromInput
     implicit val intWrapperReads: Reads[IntWrapper] = Reads { js =>
-      JsError(
-        play.api.libs.json.JsPath \ "n" -> play.api.libs.json.JsonValidationError("always fails"))
+      JsError(play.api.libs.json.JsPath \ "n" -> play.api.libs.json.JsonValidationError("always fails"))
     }
     val fromInput = NaptimeMarshaller.playJsonReaderFromInput[IntWrapper]
     val node = JsNumber(42).asInstanceOf[fromInput.marshaller.Node]

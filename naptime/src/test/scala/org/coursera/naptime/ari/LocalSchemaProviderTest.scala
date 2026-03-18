@@ -66,18 +66,15 @@ class LocalSchemaProviderTest extends AssertionsForJUnit with MockitoSugar {
 
   private def makeNaptimeRoutes(resources: Seq[Resource]): NaptimeRoutes = {
     val injector = mock[Injector]
-    val builders = resources.zipWithIndex.map {
-      case (resource, idx) =>
-        val builder = mock[ResourceRouterBuilder]
-        val router = mock[ResourceRouter]
-        // NaptimeRoutes.className calls resourceClass().getName(), so we must return a real class
-        when(builder.resourceClass())
-          .thenReturn(classOf[AnyRef].asInstanceOf[Class[builder.ResourceClass]])
-        when(builder.schema).thenReturn(resource)
-        when(builder.types)
-          .thenReturn(immutable.Seq.empty[Keyed[String, com.linkedin.data.schema.DataSchema]])
-        when(builder.build(any())).thenReturn(router)
-        builder
+    val builders = resources.zipWithIndex.map { case (resource, idx) =>
+      val builder = mock[ResourceRouterBuilder]
+      val router = mock[ResourceRouter]
+      // NaptimeRoutes.className calls resourceClass().getName(), so we must return a real class
+      when(builder.resourceClass()).thenReturn(classOf[AnyRef].asInstanceOf[Class[builder.ResourceClass]])
+      when(builder.schema).thenReturn(resource)
+      when(builder.types).thenReturn(immutable.Seq.empty[Keyed[String, com.linkedin.data.schema.DataSchema]])
+      when(builder.build(any())).thenReturn(router)
+      builder
     }
     NaptimeRoutes(injector, builders.toSet)
   }
@@ -121,8 +118,9 @@ class LocalSchemaProviderTest extends AssertionsForJUnit with MockitoSugar {
   @Test
   def localSchemaProvider_withNestedResource_skipsNested(): Unit = {
     // A resource whose parentClass is neither None nor RootResource
-    val nestedResource =
-      makeResource("sessions", 1L, parentClass = Some("org.coursera.CourseResource"))
+    val nestedResource = makeResource(
+      "sessions", 1L,
+      parentClass = Some("org.coursera.CourseResource"))
     val routes = makeNaptimeRoutes(Seq(nestedResource))
     val provider = new LocalSchemaProvider(routes)
     // Nested resources are not added to the resourceSchemaMap
@@ -166,13 +164,11 @@ class LocalSchemaProviderTest extends AssertionsForJUnit with MockitoSugar {
     val injector = mock[Injector]
     val builder = mock[ResourceRouterBuilder]
     val router = mock[ResourceRouter]
-    when(builder.resourceClass())
-      .thenReturn(classOf[AnyRef].asInstanceOf[Class[builder.ResourceClass]])
+    when(builder.resourceClass()).thenReturn(classOf[AnyRef].asInstanceOf[Class[builder.ResourceClass]])
     when(builder.schema).thenReturn(resource)
     // Return a non-empty types sequence so the filter/map paths are exercised
     when(builder.types).thenReturn(
-      immutable.Seq(
-        Keyed(mergedTypeName, schema.asInstanceOf[com.linkedin.data.schema.DataSchema])))
+      immutable.Seq(Keyed(mergedTypeName, schema.asInstanceOf[com.linkedin.data.schema.DataSchema])))
     when(builder.build(any())).thenReturn(router)
 
     val routes = NaptimeRoutes(injector, Set(builder))

@@ -129,8 +129,7 @@ class KeyFormatExtendedTest extends AssertionsForJUnit {
 
   @Test
   def caseClassFormat_reads_wrapsValue(): Unit = {
-    val kf = KeyFormat
-      .caseClassFormat[PrimitiveWrapped, Int](PrimitiveWrapped.apply, PrimitiveWrapped.unapply)
+    val kf = KeyFormat.caseClassFormat[PrimitiveWrapped, Int](PrimitiveWrapped.apply, PrimitiveWrapped.unapply)
     val json = JsNumber(5)
     val result = kf.reads(json)
     assert(result.isSuccess)
@@ -139,16 +138,14 @@ class KeyFormatExtendedTest extends AssertionsForJUnit {
 
   @Test
   def caseClassFormat_writes_unwrapsValue(): Unit = {
-    val kf = KeyFormat
-      .caseClassFormat[PrimitiveWrapped, Int](PrimitiveWrapped.apply, PrimitiveWrapped.unapply)
+    val kf = KeyFormat.caseClassFormat[PrimitiveWrapped, Int](PrimitiveWrapped.apply, PrimitiveWrapped.unapply)
     val result = kf.writes(PrimitiveWrapped(5))
     assertResult(JsNumber(5))(result)
   }
 
   @Test
   def caseClassFormat_format_reads_fromObject(): Unit = {
-    val kf = KeyFormat
-      .caseClassFormat[PrimitiveWrapped, Int](PrimitiveWrapped.apply, PrimitiveWrapped.unapply)
+    val kf = KeyFormat.caseClassFormat[PrimitiveWrapped, Int](PrimitiveWrapped.apply, PrimitiveWrapped.unapply)
     val json = Json.obj("id" -> 5)
     val result = kf.format.reads(json)
     assert(result.isSuccess)
@@ -157,16 +154,14 @@ class KeyFormatExtendedTest extends AssertionsForJUnit {
 
   @Test
   def caseClassFormat_format_writes_toObject(): Unit = {
-    val kf = KeyFormat
-      .caseClassFormat[PrimitiveWrapped, Int](PrimitiveWrapped.apply, PrimitiveWrapped.unapply)
+    val kf = KeyFormat.caseClassFormat[PrimitiveWrapped, Int](PrimitiveWrapped.apply, PrimitiveWrapped.unapply)
     val result = kf.format.writes(PrimitiveWrapped(5))
     assertResult(JsNumber(5))((result \ "id").get)
   }
 
   @Test
   def caseClassFormat_stringKeyFormat_roundTrip(): Unit = {
-    val kf = KeyFormat
-      .caseClassFormat[PrimitiveWrapped, Int](PrimitiveWrapped.apply, PrimitiveWrapped.unapply)
+    val kf = KeyFormat.caseClassFormat[PrimitiveWrapped, Int](PrimitiveWrapped.apply, PrimitiveWrapped.unapply)
     val key = kf.stringKeyFormat.writes(PrimitiveWrapped(42))
     val parsed = kf.stringKeyFormat.reads(key)
     assertResult(Some(PrimitiveWrapped(42)))(parsed)
@@ -331,7 +326,7 @@ class KeyFormatExtendedTest extends AssertionsForJUnit {
   def idAsStringWithFields_format_overwriteIdField_throwsException(): Unit = {
     val kf = KeyFormat.idAsStringWithFields(
       OWrites[SimpleId] { id =>
-        Json.obj("id" -> "conflict") // Collides with the auto-added "id" field
+        Json.obj("id" -> "conflict")  // Collides with the auto-added "id" field
       }
     )
     val id = SimpleId("test")

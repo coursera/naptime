@@ -129,9 +129,7 @@ object DefinedBodyTypeRestActionBuilderTest {
     StructuredAccessControl(Authenticator(parser, Decorator.identity[Unit]), authorizer)
   }
 
-  class TestResource(
-      implicit val executionContext: ExecutionContext,
-      val materializer: akka.stream.Materializer)
+  class TestResource(implicit val executionContext: ExecutionContext, val materializer: akka.stream.Materializer)
       extends TopLevelCollectionResource[Int, SimpleModel] {
 
     override def keyFormat: KeyFormat[Int] = KeyFormat.intKeyFormat
@@ -145,15 +143,13 @@ object DefinedBodyTypeRestActionBuilderTest {
     }
 
     /** Uses body-dependent auth (denies). */
-    def bodyDependentAuthDenyAction = Nap.jsonBody[Payload].auth(denyingBodyAuth).action[Unit] {
-      ctx =>
-        Ok(())
+    def bodyDependentAuthDenyAction = Nap.jsonBody[Payload].auth(denyingBodyAuth).action[Unit] { ctx =>
+      Ok(())
     }
 
     /** Uses `catching` on a DefinedBodyTypeRestActionBuilder. */
     def catchingAction =
-      Nap
-        .jsonBody[Payload]
+      Nap.jsonBody[Payload]
         .catching {
           case _: IllegalStateException =>
             RestError(NaptimeActionException(Status.CONFLICT, Some("conflict"), None))

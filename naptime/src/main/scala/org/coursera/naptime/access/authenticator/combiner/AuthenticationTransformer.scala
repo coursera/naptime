@@ -37,7 +37,10 @@ object AuthenticationTransformer {
     }
   }
 
-  def function[I, O](f: I => O): AuthenticationTransformer[I, O] = apply(PartialFunction(f))
+  def function[I, O](f: I => O): AuthenticationTransformer[I, O] = apply(new PartialFunction[I, O] {
+    override def isDefinedAt(x: I): Boolean = true
+    override def apply(x: I): O = f(x)
+  })
 
   implicit def identityTransformer[T]: AuthenticationTransformer[T, T] = function(identity)
 

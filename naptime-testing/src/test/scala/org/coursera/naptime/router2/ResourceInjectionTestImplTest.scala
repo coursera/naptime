@@ -52,9 +52,7 @@ object ResourceInjectionTestImplTest {
     implicit val jsonFormat: OFormat[Widget] = Json.format[Widget]
   }
 
-  class WidgetsResource(
-      implicit val executionContext: ExecutionContext,
-      val materializer: Materializer)
+  class WidgetsResource(implicit val executionContext: ExecutionContext, val materializer: Materializer)
       extends TopLevelCollectionResource[Int, Widget] {
 
     override def keyFormat: KeyFormat[Int] = KeyFormat.intKeyFormat

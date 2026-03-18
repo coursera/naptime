@@ -150,7 +150,7 @@ object NaptimeResourceUtils extends StrictLogging {
       case None                          => JsNull
       case Some(someValue)               => parseToJson(someValue)
       case str: String                   => Try(JsNumber(str.toInt)).toOption.getOrElse(JsString(str))
-      case traversable: Traversable[Any] => JsArray(traversable.map(parseToJson).toSeq)
+      case iterable: Iterable[Any] => JsArray(iterable.map(parseToJson).toSeq)
       case int: Int                      => JsNumber(int)
       case long: Long                    => JsNumber(long)
       case float: Float                  => JsNumber(float.toLong)
@@ -165,7 +165,7 @@ object NaptimeResourceUtils extends StrictLogging {
       relation: GraphQLRelationAnnotation): Set[(String, JsValue)] = {
 
     relation.arguments
-      .mapValues { value =>
+      .map { case (key, value) =>
         val matches = InterpolationRegex.findAllMatchIn(value).toList
         val variableNameToInterpolatedIds: Map[String, List[String]] =
           matches.map { regexMatch =>
@@ -178,25 +178,23 @@ object NaptimeResourceUtils extends StrictLogging {
               variableName.split(INTERPOLATION_PATH_SPLIT_REGEX))
             variableName -> interpolatedIds
           }.toMap
-        if (variableNameToInterpolatedIds.values.flatten.isEmpty) {
-          logger.debug(s"Arguments: $value did not result in id interpolation")
-          // If we wanted to interpolate but no value is found for the data, then return an empty list.
-          // Else, return the original value, which we take to be a hard coded constant.
-          if (matches.nonEmpty) List.empty else List(value)
-        } else {
-          interpolate(
-            argumentValue = value,
-            variableNameToInterpolatedIds = variableNameToInterpolatedIds
-          )
-        }
+        val interpolated =
+          if (variableNameToInterpolatedIds.values.flatten.isEmpty) {
+            logger.debug(s"Arguments: $value did not result in id interpolation")
+            // If we wanted to interpolate but no value is found for the data, then return an empty list.
+            // Else, return the original value, which we take to be a hard coded constant.
+            if (matches.nonEmpty) List.empty else List(value)
+          } else {
+            interpolate(
+              argumentValue = value,
+              variableNameToInterpolatedIds = variableNameToInterpolatedIds
+            )
+          }
+        key -> interpolated
       }
-      .mapValues { value =>
+      .map { case (key, value) =>
         val values = value.map(NaptimeResourceUtils.parseToJson)
-        if (values.length > 1) {
-          JsArray(values)
-        } else {
-          values.headOption.getOrElse(JsNull)
-        }
+        key -> (if (values.length > 1) JsArray(values) else values.headOption.getOrElse(JsNull))
       }
       .toSet
   }

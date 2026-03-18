@@ -103,7 +103,7 @@ object NaptimeUnionField {
         fields = List(field))
     }.toList
     val unionName = buildFullyQualifiedName(resourceName, fieldName)
-    new UnionType(unionName, None, objects) {
+    new UnionType(unionName, None, () => objects) {
       // write a custom type mapper to use field names to determine the union member type
       override def typeOf[Ctx](value: Any, schema: Schema[Ctx, _]): Option[ObjectType[Ctx, _]] = {
         (if (unionDataSchema.getProperties.containsKey(TYPED_DEFINITION_KEY)) {

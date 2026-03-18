@@ -118,10 +118,8 @@ class NaptimeResourceUtilsMoreTest extends AssertionsForJUnit {
   @Test
   def generateHandlerArguments_withPagination_includesPaginationArgs(): Unit = {
     val handler = makeHandler("String")
-    val argsNoPagination =
-      NaptimeResourceUtils.generateHandlerArguments(handler, includePagination = false)
-    val argsWithPagination =
-      NaptimeResourceUtils.generateHandlerArguments(handler, includePagination = true)
+    val argsNoPagination = NaptimeResourceUtils.generateHandlerArguments(handler, includePagination = false)
+    val argsWithPagination = NaptimeResourceUtils.generateHandlerArguments(handler, includePagination = true)
     assert(argsWithPagination.size > argsNoPagination.size)
   }
 

@@ -34,7 +34,9 @@ import org.coursera.naptime.path.:::
 import org.coursera.naptime.path.UrlParseResult
 import play.api.libs.json.OFormat
 import play.api.mvc.AnyContent
-import play.api.mvc.BodyParsers
+import play.api.mvc.AnyContentAsEmpty
+import play.api.mvc.BodyParser
+import play.api.libs.streams.Accumulator
 
 import scala.concurrent.ExecutionContext
 import scala.reflect.ClassTag
@@ -132,7 +134,9 @@ trait CollectionResource[ParentResource <: Resource[_], K, M] extends Resource[M
   def Nap[RACType, ResponseType] =
     new RestActionBuilder[RACType, Unit, AnyContent, K, M, ResponseType](
       HeaderAccessControl.allowAll,
-      BodyParsers.parse.default,
+      BodyParser[AnyContent]("anyContent") { _ =>
+        Accumulator.done(Right(AnyContentAsEmpty: AnyContent))
+      },
       PartialFunction.empty)(keyFormat, resourceFormat, executionContext, materializer)
 
   def OkIfPresent[T](a: Option[T]): RestResponse[T] = {

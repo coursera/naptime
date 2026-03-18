@@ -48,8 +48,9 @@ class NaptimeRecordFieldTest extends AssertionsForJUnit with MockitoSugar {
     Context[SangriaGraphQlContext, DataMapWithParent](
       value = value,
       ctx = SangriaGraphQlContext(null, null, ExecutionContext.global, debugMode = false),
-      args =
-        ArgumentBuilder.buildArgs(NaptimePaginationField.paginationArguments, Map("limit" -> 100)),
+      args = ArgumentBuilder.buildArgs(
+        NaptimePaginationField.paginationArguments,
+        Map("limit" -> 100)),
       schema = mockSchema,
       field = mockField,
       parentType = mockParent,
@@ -175,8 +176,12 @@ class NaptimeRecordFieldTest extends AssertionsForJUnit with MockitoSugar {
   def getType_emptyRecordSchema_returnsEmptyFieldsFallback(): Unit = {
     val emptyRecord = buildEmptyRecordSchema("EmptyRecord")
 
-    val objectType =
-      NaptimeRecordField.getType(schemaMetadata, emptyRecord, None, resourceName, List.empty)
+    val objectType = NaptimeRecordField.getType(
+      schemaMetadata,
+      emptyRecord,
+      None,
+      resourceName,
+      List.empty)
 
     // When fields are empty, the fieldsFn returns EMPTY_FIELDS_FALLBACK
     val fields = objectType.fieldsFn()
@@ -202,8 +207,9 @@ class NaptimeRecordFieldTest extends AssertionsForJUnit with MockitoSugar {
     val ctx = Context[SangriaGraphQlContext, DataMapWithParent](
       value = dmWithParent,
       ctx = SangriaGraphQlContext(null, null, ExecutionContext.global, debugMode = false),
-      args =
-        ArgumentBuilder.buildArgs(NaptimePaginationField.paginationArguments, Map("limit" -> 100)),
+      args = ArgumentBuilder.buildArgs(
+        NaptimePaginationField.paginationArguments,
+        Map("limit" -> 100)),
       schema = mockSchema,
       field = mockField,
       parentType = mockParent,

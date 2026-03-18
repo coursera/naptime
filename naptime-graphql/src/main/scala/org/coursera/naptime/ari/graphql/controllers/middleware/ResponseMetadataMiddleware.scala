@@ -50,7 +50,7 @@ class ResponseMetadataMiddleware
       queryVal: Unit,
       mctx: MiddlewareQueryContext[SangriaGraphQlContext, _, _],
       ctx: Context[SangriaGraphQlContext, _]): BeforeFieldResult[SangriaGraphQlContext, FieldVal] =
-    BeforeFieldResult(Unit, None)
+    BeforeFieldResult((), None)
 
   override def afterField(
       queryVal: Unit,

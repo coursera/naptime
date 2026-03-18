@@ -35,6 +35,7 @@ import org.coursera.naptime.path.ParseSuccess
 import org.coursera.naptime.path.RootParsedPathKey
 import org.coursera.naptime.resources.CollectionResource
 import org.coursera.naptime.resources.TopLevelCollectionResource
+import org.coursera.naptime.router2.NaptimeAttrKey
 import org.coursera.naptime.router2.Router
 import org.coursera.naptime.schema.ArbitraryValue.StringMember
 import org.joda.time.DateTime
@@ -52,7 +53,7 @@ import play.api.mvc.BodyParsers
 import play.api.mvc.RequestHeader
 import play.api.test.FakeRequest
 
-import scala.collection.JavaConversions._
+import scala.collection.JavaConverters._
 import scala.concurrent.ExecutionContext
 
 /**
@@ -291,11 +292,11 @@ class NestedMacroTests extends AssertionsForJUnit with MockitoSugar with Resourc
     val result = peopleRouter.routeRequest(request.path.substring("/api".length), request)
     assert(result.isDefined)
     val taggedRequest = result.get.tagRequest(request)
-    assert(taggedRequest.tags.contains(Router.NAPTIME_RESOURCE_NAME))
+    assert(taggedRequest.attrs.get(NaptimeAttrKey.tags).getOrElse(Map.empty).contains(Router.NAPTIME_RESOURCE_NAME))
     if (methodName != null && methodName != "") {
-      assert(taggedRequest.tags.get(Router.NAPTIME_METHOD_NAME).contains(methodName))
+      assert(taggedRequest.attrs.get(NaptimeAttrKey.tags).getOrElse(Map.empty).get(Router.NAPTIME_METHOD_NAME).contains(methodName))
     } else {
-      assert(taggedRequest.tags.get(Router.NAPTIME_METHOD_NAME).isEmpty)
+      assert(taggedRequest.attrs.get(NaptimeAttrKey.tags).getOrElse(Map.empty).get(Router.NAPTIME_METHOD_NAME).isEmpty)
     }
 
     val subResult = friendRouter.routeRequest(request.path.substring("/api".length), request)
@@ -307,8 +308,8 @@ class NestedMacroTests extends AssertionsForJUnit with MockitoSugar with Resourc
     val result = friendRouter.routeRequest(request.path.substring("/api".length), request)
     assert(result.isDefined)
     val taggedRequest = result.get.tagRequest(request)
-    assert(taggedRequest.tags.contains(Router.NAPTIME_RESOURCE_NAME))
-    assert(taggedRequest.tags.get(Router.NAPTIME_METHOD_NAME).contains(methodName))
+    assert(taggedRequest.attrs.get(NaptimeAttrKey.tags).getOrElse(Map.empty).contains(Router.NAPTIME_RESOURCE_NAME))
+    assert(taggedRequest.attrs.get(NaptimeAttrKey.tags).getOrElse(Map.empty).get(Router.NAPTIME_METHOD_NAME).contains(methodName))
 
     val parentResult = peopleRouter.routeRequest(request.path.substring("/api".length), request)
     assert(parentResult.isEmpty)
@@ -681,7 +682,7 @@ class NestedMacroTests extends AssertionsForJUnit with MockitoSugar with Resourc
     assert(resourceType.value.isInstanceOf[RecordDataSchema])
     assert(resourceType.value.asInstanceOf[RecordDataSchema].getFields.size() === 3)
     assert(
-      resourceType.value.asInstanceOf[RecordDataSchema].getFields.toList.map(_.getName).toSet ===
+      resourceType.value.asInstanceOf[RecordDataSchema].getFields.asScala.toList.map(_.getName).toSet ===
         Set("id", "name", "email"))
   }
 
@@ -729,7 +730,7 @@ class NestedMacroTests extends AssertionsForJUnit with MockitoSugar with Resourc
     assert(resourceModel.value.isInstanceOf[RecordDataSchema])
     assert(resourceModel.value.asInstanceOf[RecordDataSchema].getFields.size() === 3)
     assert(
-      resourceModel.value.asInstanceOf[RecordDataSchema].getFields.toList.map(_.getName).toSet ===
+      resourceModel.value.asInstanceOf[RecordDataSchema].getFields.asScala.toList.map(_.getName).toSet ===
         Set("id", "friendshipQuality", "friendsSince"))
   }
 

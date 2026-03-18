@@ -67,8 +67,7 @@ class SlowLogMiddlewareTest extends AssertionsForJUnit with MockitoSugar {
       path = executionPath,
       deferredResolverState = None)
 
-  private def buildMqCtx(
-      ctx: SangriaGraphQlContext): MiddlewareQueryContext[SangriaGraphQlContext, _, _] =
+  private def buildMqCtx(ctx: SangriaGraphQlContext): MiddlewareQueryContext[SangriaGraphQlContext, _, _] =
     MiddlewareQueryContext[SangriaGraphQlContext, Any, Unit](
       ctx = ctx,
       executor = null,

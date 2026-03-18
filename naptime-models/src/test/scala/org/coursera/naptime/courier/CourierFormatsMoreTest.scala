@@ -34,15 +34,12 @@ class CourierFormatsMoreTest extends AssertionsForJUnit {
 
   // ─── Schemas ─────────────────────────────────────────────────────────────────
 
-  private val simpleRecordSchema = DataTemplateUtil
-    .parseSchema(
-      """{"name":"SR","type":"record","fields":[{"name":"val","type":"string"}]}"""
-    )
-    .asInstanceOf[RecordDataSchema]
+  private val simpleRecordSchema = DataTemplateUtil.parseSchema(
+    """{"name":"SR","type":"record","fields":[{"name":"val","type":"string"}]}"""
+  ).asInstanceOf[RecordDataSchema]
 
-  private val passthroughRecordSchema = DataTemplateUtil
-    .parseSchema(
-      """
+  private val passthroughRecordSchema = DataTemplateUtil.parseSchema(
+    """
       |{
       |  "name": "Passthrough",
       |  "type": "record",
@@ -50,8 +47,7 @@ class CourierFormatsMoreTest extends AssertionsForJUnit {
       |  "passthroughExempt": true
       |}
       |""".stripMargin
-    )
-    .asInstanceOf[RecordDataSchema]
+  ).asInstanceOf[RecordDataSchema]
 
   // ─── enumerationFormat ────────────────────────────────────────────────────────
 
@@ -144,11 +140,9 @@ class CourierFormatsMoreTest extends AssertionsForJUnit {
 
   @Test
   def unionToJsObject_multipleEntries_throwsWriteException(): Unit = {
-    val unionSchema = DataTemplateUtil
-      .parseSchema(
-        """["string","int"]"""
-      )
-      .asInstanceOf[UnionDataSchema]
+    val unionSchema = DataTemplateUtil.parseSchema(
+      """["string","int"]"""
+    ).asInstanceOf[UnionDataSchema]
 
     val dataMap = new DataMap()
     dataMap.put("string", "hello")
@@ -161,11 +155,9 @@ class CourierFormatsMoreTest extends AssertionsForJUnit {
 
   @Test
   def unionToJsObject_zeroEntries_throwsWriteException(): Unit = {
-    val unionSchema = DataTemplateUtil
-      .parseSchema(
-        """["string","int"]"""
-      )
-      .asInstanceOf[UnionDataSchema]
+    val unionSchema = DataTemplateUtil.parseSchema(
+      """["string","int"]"""
+    ).asInstanceOf[UnionDataSchema]
 
     val dataMap = new DataMap()
     intercept[WriteException] {
@@ -244,11 +236,10 @@ class CourierFormatsMoreTest extends AssertionsForJUnit {
     val typerefSchema = typerefField.getType.asInstanceOf[TyperefDataSchema]
     val unionSchema = typerefSchema.getDereferencedDataSchema.asInstanceOf[UnionDataSchema]
 
-    val jsObj = JsObject(
-      Seq(
-        "typeName" -> JsString("memberOne"),
-        "definition" -> JsObject(Seq("x" -> JsNumber(1)))
-      ))
+    val jsObj = JsObject(Seq(
+      "typeName" -> JsString("memberOne"),
+      "definition" -> JsObject(Seq("x" -> JsNumber(1)))
+    ))
 
     val result = CourierFormats.jsObjectToTyperefUnion(typerefSchema, jsObj, unionSchema)
     assert(result.isInstanceOf[DataMap])
@@ -287,7 +278,7 @@ sealed abstract class TestCourierEnum(name: String, properties: Option[DataMap])
 
 object TestCourierEnum extends ScalaEnumTemplate[TestCourierEnum] {
   case object ALPHA extends TestCourierEnum("ALPHA", None)
-  case object BETA extends TestCourierEnum("BETA", None)
+  case object BETA  extends TestCourierEnum("BETA", None)
   case object $UNKNOWN extends TestCourierEnum("$UNKNOWN", None)
 
   override def withName(s: String): TestCourierEnum =
@@ -296,7 +287,6 @@ object TestCourierEnum extends ScalaEnumTemplate[TestCourierEnum] {
     }
 
   val SCHEMA: EnumDataSchema = DataTemplateUtil
-    .parseSchema(
-      """{"type":"enum","name":"TestCourierEnum","namespace":"org.coursera.naptime.courier","symbols":["ALPHA","BETA"]}""")
+    .parseSchema("""{"type":"enum","name":"TestCourierEnum","namespace":"org.coursera.naptime.courier","symbols":["ALPHA","BETA"]}""")
     .asInstanceOf[EnumDataSchema]
 }

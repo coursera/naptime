@@ -14,6 +14,7 @@ import sangria.slowlog.SlowLog
 import sangria.slowlog.QueryMetrics
 
 import scala.concurrent.duration._
+import scala.language.postfixOps
 import scala.util.Failure
 import scala.util.Success
 import scala.util.Try

@@ -74,7 +74,8 @@ class RestActionBuilderTest
       request: FakeRequest[_],
       body: ByteString = ByteString.empty): Result = {
     val accumulator = action(request.withBody(()))
-    val resultFuture = accumulator.run(akka.stream.scaladsl.Source.single(body))
+    val resultFuture = accumulator.run(
+      akka.stream.scaladsl.Source.single(body))
     Helpers.await(resultFuture)
   }
 
@@ -235,14 +236,10 @@ object RestActionBuilderTest {
     implicit val fields = Fields
 
     def throwingIllegalArgJsonAction =
-      Nap.jsonBody[ThrowsIllegalArg].action[Unit] { ctx =>
-        Ok(())
-      }
+      Nap.jsonBody[ThrowsIllegalArg].action[Unit] { ctx => Ok(()) }
   }
 
-  class TestResource(
-      implicit val executionContext: ExecutionContext,
-      val materializer: akka.stream.Materializer)
+  class TestResource(implicit val executionContext: ExecutionContext, val materializer: akka.stream.Materializer)
       extends TopLevelCollectionResource[Int, SimpleModel] {
 
     override def keyFormat: KeyFormat[Int] = KeyFormat.intKeyFormat

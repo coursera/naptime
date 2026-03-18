@@ -225,11 +225,10 @@ class CourierUtilsExtendedTest extends AssertionsForJUnit {
   def destructureTypedDefinition_nonStringTypeName_throwsReadException(): Unit = {
     import play.api.libs.json.{JsNumber, JsObject, JsString}
     // Cover the last case branch: typeName present but not a JsString, and definition present
-    val obj = JsObject(
-      Seq(
-        "typeName" -> JsNumber(42),
-        "definition" -> JsObject(Seq("x" -> JsString("y")))
-      ))
+    val obj = JsObject(Seq(
+      "typeName" -> JsNumber(42),
+      "definition" -> JsObject(Seq("x" -> JsString("y")))
+    ))
     intercept[ReadException] {
       CourierUtils.destructureTypedDefinitionJsObject(obj)
     }

@@ -39,9 +39,7 @@ class FieldBuilderTest extends AssertionsForJUnit with MockitoSugar {
   when(schemaMetadata.getResourceOpt(resourceName)).thenReturn(Some(resource))
   when(schemaMetadata.getSchema(resource)).thenReturn(Some(null))
 
-  private def buildSimpleRecordField(
-      name: String,
-      schema: com.linkedin.data.schema.DataSchema): RecordDataSchemaField = {
+  private def buildSimpleRecordField(name: String, schema: com.linkedin.data.schema.DataSchema): RecordDataSchemaField = {
     val record = new RecordDataSchema(
       new Name(s"${name}Record", "org.test", new java.lang.StringBuilder()),
       RecordType.RECORD)
@@ -51,16 +49,14 @@ class FieldBuilderTest extends AssertionsForJUnit with MockitoSugar {
     f
   }
 
-  private def buildContext(
-      value: DataMapWithParent): Context[SangriaGraphQlContext, DataMapWithParent] = {
+  private def buildContext(value: DataMapWithParent): Context[SangriaGraphQlContext, DataMapWithParent] = {
     val mockSchema = mock[sangria.schema.Schema[SangriaGraphQlContext, DataMapWithParent]]
     val mockField = mock[sangria.schema.Field[SangriaGraphQlContext, DataMapWithParent]]
     val mockParent = mock[ObjectType[SangriaGraphQlContext, Any]]
     Context[SangriaGraphQlContext, DataMapWithParent](
       value = value,
       ctx = SangriaGraphQlContext(null, null, ExecutionContext.global, debugMode = false),
-      args =
-        ArgumentBuilder.buildArgs(NaptimePaginationField.paginationArguments, Map("limit" -> 100)),
+      args = ArgumentBuilder.buildArgs(NaptimePaginationField.paginationArguments, Map("limit" -> 100)),
       schema = mockSchema,
       field = mockField,
       parentType = mockParent,
@@ -199,11 +195,8 @@ class FieldBuilderTest extends AssertionsForJUnit with MockitoSugar {
 
   @Test
   def buildField_enumDataSchema_returnsEnumField(): Unit = {
-    val enumSchema = new EnumDataSchema(
-      new Name("Status", "org.test", new java.lang.StringBuilder()))
-    enumSchema.setSymbols(
-      java.util.Arrays.asList("ACTIVE", "INACTIVE"),
-      new java.lang.StringBuilder())
+    val enumSchema = new EnumDataSchema(new Name("Status", "org.test", new java.lang.StringBuilder()))
+    enumSchema.setSymbols(java.util.Arrays.asList("ACTIVE", "INACTIVE"), new java.lang.StringBuilder())
     val enumField = buildSimpleRecordField("status", enumSchema)
 
     val result = FieldBuilder.buildField(
@@ -217,11 +210,8 @@ class FieldBuilderTest extends AssertionsForJUnit with MockitoSugar {
 
   @Test
   def buildField_enumDataSchema_resolve_returnsEnumString(): Unit = {
-    val enumSchema = new EnumDataSchema(
-      new Name("Status", "org.test", new java.lang.StringBuilder()))
-    enumSchema.setSymbols(
-      java.util.Arrays.asList("ACTIVE", "INACTIVE"),
-      new java.lang.StringBuilder())
+    val enumSchema = new EnumDataSchema(new Name("Status", "org.test", new java.lang.StringBuilder()))
+    enumSchema.setSymbols(java.util.Arrays.asList("ACTIVE", "INACTIVE"), new java.lang.StringBuilder())
     val enumField = buildSimpleRecordField("status", enumSchema)
 
     val result = FieldBuilder.buildField(

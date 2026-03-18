@@ -62,7 +62,7 @@ class KeyedTest extends AssertionsForJUnit {
     implicit val valueWrites = Json.writes[KeyedTest.Item]
     val keyed = Keyed(10, KeyedTest.Item("bar"))
     val json = Json.toJson(keyed)
-    assertResult(Some(10))((json \ "id").asOpt[Int])
+    assertResult(Some(10))(  (json \ "id").asOpt[Int])
     assertResult(Some("bar"))((json \ "name").asOpt[String])
   }
 }

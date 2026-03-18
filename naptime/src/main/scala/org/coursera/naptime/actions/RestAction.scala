@@ -31,16 +31,15 @@ import org.coursera.naptime.RestError
 import org.coursera.naptime.RestResponse
 import org.coursera.naptime.ari.Response
 import org.coursera.naptime.model.KeyFormat
-import play.api.Play
+import org.coursera.naptime.router2.NaptimeAttrKey
+import org.coursera.naptime.router2.NaptimeRequestTaggingHandler
 import play.api.libs.json.OFormat
 import play.api.libs.streams.Accumulator
 import play.api.mvc.BodyParser
 import play.api.mvc.EssentialAction
 import play.api.mvc.Request
 import play.api.mvc.RequestHeader
-import play.api.mvc.RequestTaggingHandler
 import play.api.mvc.Result
-import play.api.mvc.request.RequestAttrKey
 
 import scala.concurrent.ExecutionContext
 import scala.concurrent.Future
@@ -64,7 +63,7 @@ import scala.concurrent.Future
  */
 trait RestAction[RACType, AuthType, BodyType, KeyType, ResourceType, ResponseType]
     extends EssentialAction
-    with RequestTaggingHandler
+    with NaptimeRequestTaggingHandler
     with StrictLogging {
 
   protected[actions] def restAuthGenerator: AuthGenerator[BodyType, AuthType]
@@ -146,18 +145,7 @@ trait RestAction[RACType, AuthType, BodyType, KeyType, ResourceType, ResponseTyp
                   }
                 }
 
-                // Implementation below borrowed from Play's Action.scala
-                Play.maybeApplication
-                  .map { app =>
-                    play.utils.Threads.withContextClassLoader(app.classloader) {
-                      run()
-                    }
-                  }
-                  .getOrElse {
-                    // Run without the app class loader. This is important if we're running low-level
-                    // tests (e.g. router tests)
-                    run()
-                  }
+                run()
               }
               responseTry.recover {
                 case e: NaptimeParseError      => Future.failed(e)
@@ -205,18 +193,7 @@ trait RestAction[RACType, AuthType, BodyType, KeyType, ResourceType, ResponseTyp
             }
           }
 
-          // Implementation below borrowed from Play's Action.scala
-          Play.maybeApplication
-            .map { app =>
-              play.utils.Threads.withContextClassLoader(app.classloader) {
-                run()
-              }
-            }
-            .getOrElse {
-              // Run without the app class loader. This is important if we're running low-level
-              // tests (e.g. router tests)
-              run()
-            }
+          run()
         }
         responseTry.recover {
           case e: NaptimeParseError      => Future.successful(e.result)
@@ -249,7 +226,7 @@ trait RestAction[RACType, AuthType, BodyType, KeyType, ResourceType, ResponseTyp
   override def tagRequest(request: RequestHeader): RequestHeader = {
     tags
       .map { tags =>
-        request.addAttr(RequestAttrKey.Tags, tags)
+        request.addAttr(NaptimeAttrKey.tags, tags)
       }
       .getOrElse(request)
   }

@@ -57,8 +57,7 @@ class SchemaInferenceExtendedTest extends AssertionsForJUnit {
     assert(result.isInstanceOf[JsObject])
     val resultStr = result.toString
     // UUID maps to a typeref with coercer
-    assert(
-      resultStr.contains("UUID") || resultStr.contains("typeref") || resultStr.contains("string"))
+    assert(resultStr.contains("UUID") || resultStr.contains("typeref") || resultStr.contains("string"))
   }
 
   // ─── String predef type ──────────────────────────────────────────────────────

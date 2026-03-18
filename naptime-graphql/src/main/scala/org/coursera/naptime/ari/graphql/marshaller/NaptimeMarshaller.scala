@@ -78,7 +78,7 @@ object NaptimeMarshaller extends PlayJsonSupportLowPrioImplicits {
     def getRootMapValue(node: JsValue, key: String) = node.asInstanceOf[JsObject].value get key
 
     def isListNode(node: JsValue) = node.isInstanceOf[JsArray]
-    def getListValue(node: JsValue) = node.asInstanceOf[JsArray].value
+    def getListValue(node: JsValue) = node.asInstanceOf[JsArray].value.toSeq
 
     def isMapNode(node: JsValue) = node.isInstanceOf[JsObject]
     def getMapValue(node: JsValue, key: String) = node.asInstanceOf[JsObject].value get key

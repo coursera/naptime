@@ -34,11 +34,12 @@ class NaptimeResolverTest extends AssertionsForJUnit with MockitoSugar {
   private val resourceName = ResourceName("courses", 1)
   // RecordDataSchema is final — use DataTemplateUtil to parse a minimal schema
   private val realSchema =
-    DataTemplateUtil
-      .parseSchema("""{"name":"TestRecord","type":"record","fields":[]}""")
+    DataTemplateUtil.parseSchema("""{"name":"TestRecord","type":"record","fields":[]}""")
       .asInstanceOf[RecordDataSchema]
 
-  private def makeRequest(idx: Int, args: Set[(String, JsValue)] = Set.empty): NaptimeRequest =
+  private def makeRequest(
+      idx: Int,
+      args: Set[(String, JsValue)] = Set.empty): NaptimeRequest =
     NaptimeRequest(
       idx = RequestId(idx),
       resourceName = resourceName,
@@ -111,8 +112,7 @@ class NaptimeResolverTest extends AssertionsForJUnit with MockitoSugar {
       }
     }
 
-    val ctx =
-      SangriaGraphQlContext(fetcher, FakeRequest(), ExecutionContext.global, debugMode = false)
+    val ctx = SangriaGraphQlContext(fetcher, FakeRequest(), ExecutionContext.global, debugMode = false)
     val requests = Vector(makeRequest(0))
 
     val resultFut = resolver.fetchNonMultiGetRelations(requests, resourceName, ctx)
@@ -142,8 +142,7 @@ class NaptimeResolverTest extends AssertionsForJUnit with MockitoSugar {
       }
     }
 
-    val ctx =
-      SangriaGraphQlContext(fetcher, FakeRequest(), ExecutionContext.global, debugMode = false)
+    val ctx = SangriaGraphQlContext(fetcher, FakeRequest(), ExecutionContext.global, debugMode = false)
     val requests = Vector(makeRequest(0))
 
     val resultFut = resolver.fetchNonMultiGetRelations(requests, resourceName, ctx)

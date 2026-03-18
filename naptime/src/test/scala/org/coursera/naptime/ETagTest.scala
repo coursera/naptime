@@ -50,4 +50,32 @@ class ETagTest extends AssertionsForJUnit {
     assertResult(stringKey.asOpt[ETag.Weak])(None)
   }
 
+  @Test
+  def applyFactory_createsWeak(): Unit = {
+    assertResult(ETag.Weak("xyz"))(ETag("xyz"))
+  }
+
+  @Test
+  def weakDeserializationNoMatch_returnsNone(): Unit = {
+    // A string that matches neither W/"..." nor "..." format
+    val stringKey = StringKey("plain-string")
+    assertResult(None)(stringKey.asOpt[ETag.Weak])
+    assertResult(None)(stringKey.asOpt[ETag.Strong])
+    assertResult(None)(stringKey.asOpt[ETag])
+  }
+
+  @Test
+  def weakRequire_invalidChars_throwsException(): Unit = {
+    intercept[IllegalArgumentException] {
+      ETag.Weak("abc\"\\def")
+    }
+  }
+
+  @Test
+  def strongRequire_invalidChars_throwsException(): Unit = {
+    intercept[IllegalArgumentException] {
+      ETag.Strong("abc\"\\def")
+    }
+  }
+
 }

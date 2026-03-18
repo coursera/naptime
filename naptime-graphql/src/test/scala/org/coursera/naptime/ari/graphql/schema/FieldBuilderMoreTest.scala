@@ -57,10 +57,7 @@ class FieldBuilderMoreTest extends AssertionsForJUnit with MockitoSugar {
       schema: com.linkedin.data.schema.DataSchema,
       optional: Boolean = false): RecordDataSchemaField = {
     val record = new RecordDataSchema(
-      new Name(
-        s"${name}Record${scala.util.Random.nextInt(Int.MaxValue)}",
-        "org.test",
-        new java.lang.StringBuilder()),
+      new Name(s"${name}Record${scala.util.Random.nextInt(Int.MaxValue)}", "org.test", new java.lang.StringBuilder()),
       RecordType.RECORD)
     val f = new RecordDataSchemaField(schema)
     f.setName(name, new java.lang.StringBuilder())
@@ -77,8 +74,9 @@ class FieldBuilderMoreTest extends AssertionsForJUnit with MockitoSugar {
     Context[SangriaGraphQlContext, DataMapWithParent](
       value = value,
       ctx = SangriaGraphQlContext(null, null, ExecutionContext.global, debugMode = false),
-      args =
-        ArgumentBuilder.buildArgs(NaptimePaginationField.paginationArguments, Map("limit" -> 100)),
+      args = ArgumentBuilder.buildArgs(
+        NaptimePaginationField.paginationArguments,
+        Map("limit" -> 100)),
       schema = mockSchema,
       field = mockField,
       parentType = mockParent,
@@ -100,8 +98,11 @@ class FieldBuilderMoreTest extends AssertionsForJUnit with MockitoSugar {
     val bytesSchema = new BytesDataSchema()
     val field = buildSimpleRecordField("myBytes", bytesSchema)
 
-    val result =
-      FieldBuilder.buildField(schemaMetadata, field, namespace = None, resourceName = resourceName)
+    val result = FieldBuilder.buildField(
+      schemaMetadata,
+      field,
+      namespace = None,
+      resourceName = resourceName)
 
     assert(result.name === "myBytes")
     assert(result.fieldType === StringType)
@@ -112,8 +113,11 @@ class FieldBuilderMoreTest extends AssertionsForJUnit with MockitoSugar {
     val bytesSchema = new BytesDataSchema()
     val field = buildSimpleRecordField("myBytes", bytesSchema)
 
-    val result =
-      FieldBuilder.buildField(schemaMetadata, field, namespace = None, resourceName = resourceName)
+    val result = FieldBuilder.buildField(
+      schemaMetadata,
+      field,
+      namespace = None,
+      resourceName = resourceName)
 
     // Don't put the key → Option(null) → getOrElse(null)
     val dm = new DataMap()
@@ -133,8 +137,11 @@ class FieldBuilderMoreTest extends AssertionsForJUnit with MockitoSugar {
     val longSchema = new LongDataSchema()
     val field = buildSimpleRecordField("myLong", longSchema)
 
-    val result =
-      FieldBuilder.buildField(schemaMetadata, field, namespace = None, resourceName = resourceName)
+    val result = FieldBuilder.buildField(
+      schemaMetadata,
+      field,
+      namespace = None,
+      resourceName = resourceName)
 
     assert(result.name === "myLong")
   }
@@ -144,8 +151,11 @@ class FieldBuilderMoreTest extends AssertionsForJUnit with MockitoSugar {
     val longSchema = new LongDataSchema()
     val field = buildSimpleRecordField("myLong", longSchema)
 
-    val result =
-      FieldBuilder.buildField(schemaMetadata, field, namespace = None, resourceName = resourceName)
+    val result = FieldBuilder.buildField(
+      schemaMetadata,
+      field,
+      namespace = None,
+      resourceName = resourceName)
 
     val dm = new DataMap()
     // Key not set → null → getOrElse(null)
@@ -165,8 +175,11 @@ class FieldBuilderMoreTest extends AssertionsForJUnit with MockitoSugar {
     val boolSchema = new BooleanDataSchema()
     val field = buildSimpleRecordField("myBool", boolSchema)
 
-    val result =
-      FieldBuilder.buildField(schemaMetadata, field, namespace = None, resourceName = resourceName)
+    val result = FieldBuilder.buildField(
+      schemaMetadata,
+      field,
+      namespace = None,
+      resourceName = resourceName)
 
     assert(result.name === "myBool")
   }
@@ -176,8 +189,11 @@ class FieldBuilderMoreTest extends AssertionsForJUnit with MockitoSugar {
     val boolSchema = new BooleanDataSchema()
     val field = buildSimpleRecordField("myBool", boolSchema)
 
-    val result =
-      FieldBuilder.buildField(schemaMetadata, field, namespace = None, resourceName = resourceName)
+    val result = FieldBuilder.buildField(
+      schemaMetadata,
+      field,
+      namespace = None,
+      resourceName = resourceName)
 
     val dm = new DataMap()
     // Key not set → null → getOrElse(null)
@@ -197,8 +213,11 @@ class FieldBuilderMoreTest extends AssertionsForJUnit with MockitoSugar {
     val floatSchema = new FloatDataSchema()
     val field = buildSimpleRecordField("myFloat", floatSchema)
 
-    val result =
-      FieldBuilder.buildField(schemaMetadata, field, namespace = None, resourceName = resourceName)
+    val result = FieldBuilder.buildField(
+      schemaMetadata,
+      field,
+      namespace = None,
+      resourceName = resourceName)
 
     assert(result.name === "myFloat")
   }
@@ -208,8 +227,11 @@ class FieldBuilderMoreTest extends AssertionsForJUnit with MockitoSugar {
     val floatSchema = new FloatDataSchema()
     val field = buildSimpleRecordField("myFloat", floatSchema)
 
-    val result =
-      FieldBuilder.buildField(schemaMetadata, field, namespace = None, resourceName = resourceName)
+    val result = FieldBuilder.buildField(
+      schemaMetadata,
+      field,
+      namespace = None,
+      resourceName = resourceName)
 
     val dm = new DataMap()
     // Key not set → null → getOrElse(null)
@@ -235,13 +257,15 @@ class FieldBuilderMoreTest extends AssertionsForJUnit with MockitoSugar {
 
     val field = new RecordDataSchemaField(record)
     field.setName("myPassthrough", new java.lang.StringBuilder())
-    field.setRecord(
-      new RecordDataSchema(
-        new Name("ParentRecord", "org.test", new java.lang.StringBuilder()),
-        RecordType.RECORD))
+    field.setRecord(new RecordDataSchema(
+      new Name("ParentRecord", "org.test", new java.lang.StringBuilder()),
+      RecordType.RECORD))
 
-    val result =
-      FieldBuilder.buildField(schemaMetadata, field, namespace = None, resourceName = resourceName)
+    val result = FieldBuilder.buildField(
+      schemaMetadata,
+      field,
+      namespace = None,
+      resourceName = resourceName)
 
     assert(result.name === "myPassthrough")
     assert(result.fieldType === org.coursera.naptime.ari.graphql.types.NaptimeTypes.DataMapType)
@@ -258,13 +282,15 @@ class FieldBuilderMoreTest extends AssertionsForJUnit with MockitoSugar {
 
     val field = new RecordDataSchemaField(record)
     field.setName("myPassthrough2", new java.lang.StringBuilder())
-    field.setRecord(
-      new RecordDataSchema(
-        new Name("ParentRecord2", "org.test", new java.lang.StringBuilder()),
-        RecordType.RECORD))
+    field.setRecord(new RecordDataSchema(
+      new Name("ParentRecord2", "org.test", new java.lang.StringBuilder()),
+      RecordType.RECORD))
 
-    val result =
-      FieldBuilder.buildField(schemaMetadata, field, namespace = None, resourceName = resourceName)
+    val result = FieldBuilder.buildField(
+      schemaMetadata,
+      field,
+      namespace = None,
+      resourceName = resourceName)
 
     val innerDm = new DataMap()
     innerDm.put("x", "y")

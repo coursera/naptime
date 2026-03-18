@@ -61,7 +61,7 @@ class LocalFetcher @Inject()(naptimeRoutes: NaptimeRoutes) extends FetcherApi wi
       resourceSchema.name == request.resource.topLevelName &&
       resourceSchema.version.contains(request.resource.version)
     }
-    val queryString = request.arguments.toMap.mapValues(arg => List(stringifyArg(arg)))
+    val queryString: Map[String, Seq[String]] = request.arguments.toMap.map { case (k, v) => k -> Seq(stringifyArg(v)) }
     val url = s"/api/${request.resource.identifier}?" +
       queryString.map { case (key, value) => key + "=" + value.mkString(",") }.mkString("&")
     (for {
@@ -89,7 +89,6 @@ class LocalFetcher @Inject()(naptimeRoutes: NaptimeRoutes) extends FetcherApi wi
     } yield {
       logger.info(
         s"Making local request to ${request.resource.identifier} / ${fakePlayRequest.queryString}")
-      val taggedRequest = handler.tagRequest(fakePlayRequest)
       handler match {
         case naptimeAction: RestAction[_, _, _, _, _, _] =>
           naptimeAction

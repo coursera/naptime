@@ -286,10 +286,7 @@ class PlayJsonEngineTest extends AssertionsForJUnit {
     import play.api.libs.json.Writes
     implicit val strWrites = Writes.StringWrites
     val engine = PlayJsonRestActionCategoryEngine
-      .actionActionCategoryEngine[Int, Model, String](
-        strWrites,
-        Model.writes,
-        KeyFormat.intKeyFormat)
+      .actionActionCategoryEngine[Int, Model, String](strWrites, Model.writes, KeyFormat.intKeyFormat)
     val response = Ok("action result")
     val result = engine.mkResult(req, fields, reqFields, reqIncludes, pagination, response)
     assert(result.header.status === Status.OK)
@@ -300,10 +297,7 @@ class PlayJsonEngineTest extends AssertionsForJUnit {
     import play.api.libs.json.Writes
     implicit val strWrites = Writes.StringWrites
     val engine = PlayJsonRestActionCategoryEngine
-      .actionActionCategoryEngine[Int, Model, String](
-        strWrites,
-        Model.writes,
-        KeyFormat.intKeyFormat)
+      .actionActionCategoryEngine[Int, Model, String](strWrites, Model.writes, KeyFormat.intKeyFormat)
     val response = RestError(Errors.InternalServerError(msg = "error"))
     val result = engine.mkResult(req, fields, reqFields, reqIncludes, pagination, response)
     assert(result.header.status === Status.INTERNAL_SERVER_ERROR)

@@ -35,11 +35,7 @@ import scala.concurrent.duration.Duration
  * - afterQueryExtensions (line 60) — via full execution
  * - threshold companion object
  */
-class SlowLogMiddlewareMoreTest
-    extends AssertionsForJUnit
-    with MockitoSugar
-    with ScalaFutures
-    with IntegrationPatience {
+class SlowLogMiddlewareMoreTest extends AssertionsForJUnit with MockitoSugar with ScalaFutures with IntegrationPatience {
 
   private val logger = Logger(getClass)
 
@@ -70,8 +66,7 @@ class SlowLogMiddlewareMoreTest
     // Run a full query with debugMode=true which triggers afterQueryExtensions
     // via the sangria executor lifecycle
     val queryAst = QueryParser.parse("""{ __schema { queryType { name } } }""").get
-    val context =
-      SangriaGraphQlContext(noopFetcher, FakeRequest(), ExecutionContext.global, debugMode = true)
+    val context = SangriaGraphQlContext(noopFetcher, FakeRequest(), ExecutionContext.global, debugMode = true)
     val middleware = new SlowLogMiddleware(logger, isDebugMode = true)
 
     val result = Await.result(
@@ -90,8 +85,7 @@ class SlowLogMiddlewareMoreTest
   @Test
   def afterQueryExtensions_nonDebugMode_coveredViaFullExecution(): Unit = {
     val queryAst = QueryParser.parse("""{ __schema { queryType { name } } }""").get
-    val context =
-      SangriaGraphQlContext(noopFetcher, FakeRequest(), ExecutionContext.global, debugMode = false)
+    val context = SangriaGraphQlContext(noopFetcher, FakeRequest(), ExecutionContext.global, debugMode = false)
     val middleware = new SlowLogMiddleware(logger, isDebugMode = false)
 
     val result = Await.result(

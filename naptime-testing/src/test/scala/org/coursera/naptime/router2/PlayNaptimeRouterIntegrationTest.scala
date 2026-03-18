@@ -33,6 +33,7 @@ import org.coursera.naptime.resources.CollectionResource
 import org.coursera.naptime.resources.TopLevelCollectionResource
 import org.joda.time.DateTime
 import org.junit.Test
+import org.coursera.naptime.router2.NaptimeAttrKey
 import org.mockito.ArgumentMatchers._
 import org.mockito.Mockito._
 import org.scalatestplus.junit.AssertionsForJUnit
@@ -281,8 +282,8 @@ class PlayNaptimeRouterIntegrationTest
     assert(result.isDefined)
     val routeAction = result.get.asInstanceOf[RouteAction]
     val taggedRequest = routeAction.tagRequest(request)
-    assert(taggedRequest.tags.get(Router.NAPTIME_RESOURCE_NAME).contains(resource.getClass.getName))
-    assert(taggedRequest.tags.get(Router.NAPTIME_METHOD_NAME).contains(methodName))
+    assert(taggedRequest.attrs.get(NaptimeAttrKey.tags).getOrElse(Map.empty).get(Router.NAPTIME_RESOURCE_NAME).contains(resource.getClass.getName))
+    assert(taggedRequest.attrs.get(NaptimeAttrKey.tags).getOrElse(Map.empty).get(Router.NAPTIME_METHOD_NAME).contains(methodName))
   }
 
   @Test

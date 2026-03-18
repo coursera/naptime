@@ -1,3 +1,5 @@
+import NamedDependencies._
+
 name := "examples"
 
 routesGenerator := InjectedRoutesGenerator

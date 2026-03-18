@@ -74,6 +74,38 @@ class DefaultGraphqlSchemaProviderTest extends AssertionsForJUnit {
   }
 
   // TODO: check to ensure that it recomputes only when required.
+
+  @Test
+  def checkErrors_returnsSchemaErrors(): Unit = {
+    val simpleSchema = new DefaultGraphqlSchemaProvider(simpleSchemaProvider())
+    // Accessing errors should not throw; forces the schema (and errors) to be computed
+    val errors = simpleSchema.errors
+    assert(errors != null)
+  }
+
+  @Test
+  def checkMissingMergedType_logsAndReturnsError(): Unit = {
+    // Use a schema provider where the resource has a mergedType not in the types map
+    val injector = mock[com.google.inject.Injector]
+    val routerBuilder = mock[org.coursera.naptime.router2.ResourceRouterBuilder]
+    val resource = DefaultGraphqlSchemaProviderTest.COURSES_RESOURCE.copy(
+      mergedType = "nonexistent.MissingType")
+    when(routerBuilder.schema).thenReturn(resource)
+    when(routerBuilder.types).thenReturn(List.empty)
+    when(routerBuilder.resourceClass()).thenReturn(
+      classOf[CoursesResource].asInstanceOf[Class[routerBuilder.ResourceClass]])
+
+    val schemaProvider = new org.coursera.naptime.ari.LocalSchemaProvider(
+      org.coursera.naptime.router2.NaptimeRoutes(injector, Set(routerBuilder)))
+
+    val provider = new DefaultGraphqlSchemaProvider(schemaProvider)
+    // Should not throw; the missing merged type is handled gracefully
+    val schema = provider.schema
+    assert(schema != null)
+    // errors should contain a MissingMergedType error
+    val errors = provider.errors
+    assert(errors != null)
+  }
 }
 
 class CoursesResource

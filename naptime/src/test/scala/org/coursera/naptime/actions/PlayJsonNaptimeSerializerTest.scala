@@ -137,4 +137,70 @@ class PlayJsonNaptimeSerializerTest extends AssertionsForJUnit {
       testCase ===
         NaptimeSerializer.PlayJson.deserialize(NaptimeSerializer.PlayJson.serialize(testCase)))
   }
+
+  // ─────────────────────────────────────────────────────────────────────────────
+  // serializeList branch coverage: strings, numbers, booleans, null, nested
+  // arrays and nested objects inside a top-level array field.
+  // ─────────────────────────────────────────────────────────────────────────────
+
+  @Test
+  def serializeList_stringElements(): Unit = {
+    import play.api.libs.json.{JsArray, JsString}
+    val testCase = Json.obj("items" -> Json.arr("alpha", "beta", "gamma"))
+    val serialized = NaptimeSerializer.PlayJson.serialize(testCase)
+    val list = serialized.get("items").asInstanceOf[DataList]
+    assert(list.size() === 3)
+    assert(list.get(0) === "alpha")
+    assert(list.get(1) === "beta")
+    assert(list.get(2) === "gamma")
+  }
+
+  @Test
+  def serializeList_numberElements(): Unit = {
+    val testCase = Json.obj("nums" -> Json.arr(1, 2, 3))
+    val serialized = NaptimeSerializer.PlayJson.serialize(testCase)
+    val list = serialized.get("nums").asInstanceOf[DataList]
+    assert(list.size() === 3)
+  }
+
+  @Test
+  def serializeList_booleanElements(): Unit = {
+    val testCase = Json.obj("flags" -> Json.arr(true, false, true))
+    val serialized = NaptimeSerializer.PlayJson.serialize(testCase)
+    val list = serialized.get("flags").asInstanceOf[DataList]
+    assert(list.size() === 3)
+    assert(list.get(0) === java.lang.Boolean.TRUE)
+    assert(list.get(1) === java.lang.Boolean.FALSE)
+  }
+
+  @Test
+  def serializeList_nullElement(): Unit = {
+    import play.api.libs.json.JsNull
+    val testCase = Json.obj("mixed" -> Json.arr("a", JsNull, "b"))
+    val serialized = NaptimeSerializer.PlayJson.serialize(testCase)
+    val list = serialized.get("mixed").asInstanceOf[DataList]
+    assert(list.size() === 3)
+    assert(list.get(0) === "a")
+    assert(list.get(2) === "b")
+  }
+
+  @Test
+  def serializeList_nestedArrayElement(): Unit = {
+    val testCase = Json.obj("matrix" -> Json.arr(Json.arr(1, 2), Json.arr(3, 4)))
+    val serialized = NaptimeSerializer.PlayJson.serialize(testCase)
+    val outerList = serialized.get("matrix").asInstanceOf[DataList]
+    assert(outerList.size() === 2)
+    val innerList = outerList.get(0).asInstanceOf[DataList]
+    assert(innerList.size() === 2)
+  }
+
+  @Test
+  def serializeList_nestedObjectElement(): Unit = {
+    val testCase = Json.obj("items" -> Json.arr(Json.obj("x" -> 1), Json.obj("x" -> 2)))
+    val serialized = NaptimeSerializer.PlayJson.serialize(testCase)
+    val list = serialized.get("items").asInstanceOf[DataList]
+    assert(list.size() === 2)
+    val firstMap = list.get(0).asInstanceOf[DataMap]
+    assert(firstMap.get("x") !== null)
+  }
 }

@@ -24,17 +24,15 @@ import play.api.libs.json.Json
 import play.api.libs.streams.Accumulator
 import play.api.mvc.EssentialAction
 import play.api.mvc.RequestHeader
-import play.api.mvc.RequestTaggingHandler
 import play.api.mvc.Result
 import play.api.mvc.Results
-import play.api.mvc.request.RequestAttrKey
 
 import scala.concurrent.Future
 import scala.language.existentials
 
 object CollectionResourceRouter {
   private[naptime] def errorRoute(msg: String, resourceClass: Class[_]): RouteAction =
-    new EssentialAction with RequestTaggingHandler {
+    new EssentialAction with NaptimeRequestTaggingHandler {
       override def apply(request: RequestHeader): Accumulator[ByteString, Result] = {
         Accumulator(Sink.ignore.mapMaterializedValue { _ =>
           // TODO(saeta): use standardized error response format.
@@ -44,7 +42,7 @@ object CollectionResourceRouter {
 
       override def tagRequest(request: RequestHeader): RequestHeader =
         request.addAttr(
-          RequestAttrKey.Tags,
+          NaptimeAttrKey.tags,
           Map(Router.NAPTIME_RESOURCE_NAME -> resourceClass.getName))
     }
 

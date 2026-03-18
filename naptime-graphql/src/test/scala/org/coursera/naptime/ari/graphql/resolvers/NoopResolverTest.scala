@@ -12,8 +12,7 @@ import scala.concurrent.duration.Duration
 
 class NoopResolverTest extends AssertionsForJUnit {
 
-  private val ctx =
-    SangriaGraphQlContext(null, FakeRequest(), ExecutionContext.global, debugMode = false)
+  private val ctx = SangriaGraphQlContext(null, FakeRequest(), ExecutionContext.global, debugMode = false)
   private val resolver = new NoopResolver
 
   @Test def resolve_emptyDeferred_returnsEmptyVector(): Unit = {
@@ -28,7 +27,7 @@ class NoopResolverTest extends AssertionsForJUnit {
     val response = Await.result(results.head, Duration("5 seconds"))
     response match {
       case Right(NaptimeResponse(elements, _, _, _, _)) => assertResult(0)(elements.size)
-      case other                                        => fail(s"Unexpected response: $other")
+      case other => fail(s"Unexpected response: $other")
     }
   }
 

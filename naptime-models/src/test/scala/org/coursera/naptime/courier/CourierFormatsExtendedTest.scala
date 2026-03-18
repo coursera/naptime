@@ -100,8 +100,7 @@ class CourierFormatsExtendedTest extends AssertionsForJUnit {
     val dataMap = new DataMap()
     dataMap.put("items", list)
     val result = CourierFormats.dataMapToObj(dataMap)
-    assertResult(JsObject(Seq("items" -> JsArray(Seq(JsString("item1"), JsString("item2"))))))(
-      result)
+    assertResult(JsObject(Seq("items" -> JsArray(Seq(JsString("item1"), JsString("item2"))))))(result)
   }
 
   @Test
@@ -187,11 +186,9 @@ class CourierFormatsExtendedTest extends AssertionsForJUnit {
 
   @Test
   def recordToJsObject_simpleRecord_serializes(): Unit = {
-    val schema = DataTemplateUtil
-      .parseSchema(
-        """{"name":"S","type":"record","fields":[{"name":"x","type":"int"}]}"""
-      )
-      .asInstanceOf[RecordDataSchema]
+    val schema = DataTemplateUtil.parseSchema(
+      """{"name":"S","type":"record","fields":[{"name":"x","type":"int"}]}"""
+    ).asInstanceOf[RecordDataSchema]
     val dataMap = new DataMap()
     dataMap.put("x", Integer.valueOf(7))
     val result = CourierFormats.recordToJsObject(dataMap, schema)
@@ -202,11 +199,9 @@ class CourierFormatsExtendedTest extends AssertionsForJUnit {
 
   @Test
   def jsObjectToRecord_simpleRecord_deserializes(): Unit = {
-    val schema = DataTemplateUtil
-      .parseSchema(
-        """{"name":"R","type":"record","fields":[{"name":"y","type":"string"}]}"""
-      )
-      .asInstanceOf[RecordDataSchema]
+    val schema = DataTemplateUtil.parseSchema(
+      """{"name":"R","type":"record","fields":[{"name":"y","type":"string"}]}"""
+    ).asInstanceOf[RecordDataSchema]
     val jsObj = JsObject(Seq("y" -> JsString("hello")))
     val result = CourierFormats.jsObjectToRecord(jsObj, schema)
     assertResult("hello")(result.getString("y"))
@@ -217,8 +212,7 @@ class CourierFormatsExtendedTest extends AssertionsForJUnit {
   @Test
   def jsObjectToUnion_singleEntry_deserializes(): Unit = {
     import com.linkedin.data.schema.UnionDataSchema
-    val unionSchema = DataTemplateUtil
-      .parseSchema("""["string","int"]""")
+    val unionSchema = DataTemplateUtil.parseSchema("""["string","int"]""")
       .asInstanceOf[UnionDataSchema]
     val jsObj = JsObject(Seq("string" -> JsString("hello")))
     val result = CourierFormats.jsObjectToUnion(jsObj, unionSchema)
@@ -229,8 +223,7 @@ class CourierFormatsExtendedTest extends AssertionsForJUnit {
   def jsObjectToUnion_multipleEntries_throwsReadException(): Unit = {
     import com.linkedin.data.schema.UnionDataSchema
     import org.coursera.naptime.courier.Exceptions.ReadException
-    val unionSchema = DataTemplateUtil
-      .parseSchema("""["string","int"]""")
+    val unionSchema = DataTemplateUtil.parseSchema("""["string","int"]""")
       .asInstanceOf[UnionDataSchema]
     val jsObj = JsObject(Seq("string" -> JsString("a"), "int" -> JsNumber(1)))
     intercept[ReadException] {

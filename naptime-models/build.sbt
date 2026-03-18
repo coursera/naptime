@@ -1,3 +1,6 @@
+import NaptimeBuild._
+import NamedDependencies._
+
 name := "naptime-models"
 
 libraryDependencies ++= Seq(
@@ -6,10 +9,7 @@ libraryDependencies ++= Seq(
   playJson,
   scalaLogging,
   junitInterface,
-  junit,
   scalatest,
-  scalatestPlusJunit,
-  scalatestPlusMockito,
-  mockito)
+  scalatestPlusJunit)
 
 org.coursera.courier.sbt.CourierPlugin.courierSettings

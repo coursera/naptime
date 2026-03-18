@@ -52,7 +52,7 @@ class CollectionResourceTest extends AssertionsForJUnit with ResourceTestImplici
     val resource = makeResource
     resource.OkIfPresent(Some("hello")) match {
       case ok: Ok[_] => assertResult("hello")(ok.content)
-      case other     => fail(s"Expected Ok but got $other")
+      case other => fail(s"Expected Ok but got $other")
     }
   }
 
@@ -109,8 +109,7 @@ class CollectionResourceTest extends AssertionsForJUnit with ResourceTestImplici
   @Test
   def pathParser_parsesKnownPath(): Unit = {
     val resource = makeResource
-    val result =
-      resource.pathParser.parse(s"/${resource.resourceName}.v${resource.resourceVersion}/123")
+    val result = resource.pathParser.parse(s"/${resource.resourceName}.v${resource.resourceVersion}/123")
     assert(!result.isEmpty)
   }
 }
@@ -122,9 +121,7 @@ object CollectionResourceTest {
     implicit val format: OFormat[Widget] = Json.format[Widget]
   }
 
-  class TestResource(
-      implicit val executionContext: ExecutionContext,
-      val materializer: Materializer)
+  class TestResource(implicit val executionContext: ExecutionContext, val materializer: Materializer)
       extends TopLevelCollectionResource[Int, Widget] {
 
     override def keyFormat: KeyFormat[Int] = KeyFormat.intKeyFormat
