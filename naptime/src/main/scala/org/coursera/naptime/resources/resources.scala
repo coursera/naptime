@@ -134,6 +134,11 @@ trait CollectionResource[ParentResource <: Resource[_], K, M] extends Resource[M
   def Nap[RACType, ResponseType] =
     new RestActionBuilder[RACType, Unit, AnyContent, K, M, ResponseType](
       HeaderAccessControl.allowAll,
+      // Note: The default Nap builder always yields AnyContentAsEmpty and does not read the
+      // request body. This is intentional — naptime resources that need body parsing must use
+      // .rawJsonBody() or .jsonBody[T]() explicitly. Play 2.8 removed the zero-arg
+      // BodyParsers constructor, so the old BodyParsers.parse.default is no longer available
+      // without injecting a BodyParsers instance.
       BodyParser[AnyContent]("anyContent") { _ =>
         Accumulator.done(Right(AnyContentAsEmpty: AnyContent))
       },
